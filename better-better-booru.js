@@ -264,11 +264,13 @@ function parseListing(xml, mode) {
 				Danbooru.Blacklist.blacklists.push(tag);
 			}
 		}
-		
+
+		var blacklist_used = Danbooru.Blacklist.apply();
+
 		if (mode == "search") {
 			document.getElementById("blacklist-list").innerHTML = "";
-			
-			if (Danbooru.Blacklist.apply())
+
+			if (blacklist_used)
 				Danbooru.Blacklist.update_sidebar();
 			else
 				document.getElementById("blacklist-box").style.display = "none";
