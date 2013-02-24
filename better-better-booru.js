@@ -13,12 +13,12 @@
 
 /* True or false settings */
 // Global
-var show_loli = true;
-var show_shota = true;
+var show_loli = false;
+var show_shota = false;
 var fix_links = true; // Also removes all the junk after the post ID in the URL. Automatically set if the above are true.
 
-var hide_upgrade_message = true;
-var hide_advertisements = true;
+var hide_upgrade_message = false;
+var hide_advertisements = false;
 var hide_statusnotice = false;
 
 // Popular
