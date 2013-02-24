@@ -254,29 +254,24 @@ function parseListing(xml, mode) {
 
 	// Blacklist.
 	if (mode == "search" || mode == "popular" || mode == "notes") {
-		if (checkLoginStatus()) {
-			// If logged in, apply the blacklist to the new image list.
-			Danbooru.Blacklist.apply();
-		}
-		else {
-			// If not logged in, swap in the script blacklist and apply it.
-			if (script_blacklisted_tags.replace(/\s+/, "").length) {
-				var blacklisttags = script_blacklisted_tags.replace(/(rating:[qes])\w+/, "$1").split(" ");
+		if (!checkLoginStatus() && script_blacklisted_tags.replace(/\s+/, "").length) {
+			var blacklisttags = script_blacklisted_tags.replace(/(rating:[qes])\w+/, "$1").split(" ");
 
-				Danbooru.Blacklist.blacklists.length = 0;
+			Danbooru.Blacklist.blacklists.length = 0;
 
-				for (var i = 0, bl = blacklisttags.length; i < bl; i++) {
-					var tag = Danbooru.Blacklist.parse_entry(blacklisttags[i]);
-					Danbooru.Blacklist.blacklists.push(tag);
-				}
+			for (var i = 0, bl = blacklisttags.length; i < bl; i++) {
+				var tag = Danbooru.Blacklist.parse_entry(blacklisttags[i]);
+				Danbooru.Blacklist.blacklists.push(tag);
 			}
-
-			Danbooru.Blacklist.apply();
 		}
-
+		
 		if (mode == "search") {
 			document.getElementById("blacklist-list").innerHTML = "";
-			Danbooru.Blacklist.update_sidebar();
+			
+			if (Danbooru.Blacklist.apply())
+				Danbooru.Blacklist.update_sidebar();
+			else
+				document.getElementById("blacklist-box").style.display = "none";
 		}
 	}
 }
