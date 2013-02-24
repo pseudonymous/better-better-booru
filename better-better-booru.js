@@ -4,8 +4,8 @@
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
 // @include        http://*.donmai.us/*
 // @include        http://donmai.us/*
-// @include        http://*e621.net/*
 // @exclude        http://trac.donmai.us/*
+// @version        1
 // @grant          none
 // ==/UserScript==
 
