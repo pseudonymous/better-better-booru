@@ -312,17 +312,15 @@ function parsePost(xml) {
 				var newheight = sampheight;
 				var newurl = sampurl;
 				var alttxt = "sample";
-				var imgmsg = '<p id="image-resize-notice">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + url + '" id="image-resize-link">view original</a>)</p>';
 			}
 			else {
 				var newwidth = width;
 				var newheight = height;
 				var newurl = url;
 				var alttxt = url.substring(url.lastIndexOf("/") + 1, url.lastIndexOf("."));
-				var imgmsg = "";
 			}
 
-			container.innerHTML = '<div id="note-container"></div> <img alt="' + alttxt + '" data-large-height="' + sampheight + '" data-large-width="' + sampwidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newheight + '" width="' + newwidth + '" id="image" src="' + newurl + '" />' + imgmsg;
+			container.innerHTML = '<div id="note-container"></div> <img alt="' + alttxt + '" data-large-height="' + sampheight + '" data-large-width="' + sampwidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newheight + '" width="' + newwidth + '" id="image" src="' + newurl + '" />';
 
 			// Make use of what Danbooru has provided us.
 			if (!imageexists)
