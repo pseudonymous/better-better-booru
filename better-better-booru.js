@@ -286,11 +286,12 @@ function parsePost(xml) {
 
 	if (myImg.id) {
 		var ext = myImg.file_ext;
-		var url = "/data/" + myImg.md5 + "." + ext;
+		var md5 = myImg.md5;
+		var url = "/data/" + md5 + "." + ext;
 		var height = myImg.image_height;
 		var width = myImg.image_width;
 		var ratio = 850 / width;
-		var sampurl = url.replace(/data\/(\w+)\.\w+$/, "data/sample/sample-$1.jpg");
+		var sampurl = "/data/sample/sample-" + md5 + ".jpg";
 		var sampheight = Math.round(height * ratio);
 		var sampwidth = 850;
 
@@ -334,7 +335,7 @@ function parsePost(xml) {
 
 		// Add favorites count
 		if (fav_count) {
-			var favs = /fav:/.exec(myImg.fav_string);
+			var favs = myImg.fav_string.match(/fav:/g);
 			var num_favs = (favs === null ? 0 : favs.length );
 			var target = document.getElementById("score-for-post-" + myImg.id).parentNode;
 
