@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name           better_better_booru_mod
+// @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
 // @version        1
@@ -18,6 +18,12 @@ script.appendChild(document.createTextNode('('+ injectMe +')();'));
 (document.body || document.head || document.documentElement).appendChild(script);
 
 function injectMe () { // This is needed to make this script work in Chrome.
+
+
+	/********************************/
+	/* Don't touch above this line! */
+	/********************************/
+
 
 	/* True or false settings */
 	// Global
