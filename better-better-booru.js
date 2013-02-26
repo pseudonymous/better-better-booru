@@ -268,8 +268,9 @@ function injectMe () { // This is needed to make this script work in Chrome.
 
 		// Blacklist.
 		if (mode == "search" || mode == "popular" || mode == "notes") {
-			if (!checkLoginStatus() && script_blacklisted_tags.replace(/\s+/, "").length) {
-				var blacklistTags = script_blacklisted_tags.replace(/(rating:[qes])\w+/, "$1").split(" ");
+
+			if (!checkLoginStatus() && /\w/.test(script_blacklisted_tags)) {
+				var blacklistTags = script_blacklisted_tags.replace(/\s+/g, "").replace(/(rating:[qes])\w+/, "$1").split(" ");
 
 				Danbooru.Blacklist.blacklists.length = 0;
 
@@ -543,14 +544,10 @@ function injectMe () { // This is needed to make this script work in Chrome.
 	function fetchMeta(name) {
 		var tag = document.getElementsByName(name)[0];
 
-		if (tag)
-			var data = tag.getAttribute("content");
-		else
-			return null;
-
-		if (data)
-			return data;
-		else
+		if (tag) {
+			if (tag.hasAttribute("content"))
+				return tag.getAttribute("content");
+		} else
 			return null;
 	}
 
