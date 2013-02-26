@@ -169,30 +169,30 @@ function parseListing(xml, mode) {
 
 	// Use JSON results for searches and pool collections.
 	if (mode == "search") {
-		var imgdiv = '//div[@id="posts"]';
+		var targetId = "posts";
 		var posts = xml;
 	}
 	else if (mode == "pool") { // API no longer returns image information about pool contents?
-		var imgdiv = '';
+		var targetId = '';
 		var posts = xml.posts;
 	}
 	else if (mode == "popular") {
-		var imgdiv = '//section[@id="content"]';
+		var targetId = "content";
 		var posts = xml;
 	}
 	else if (mode == "notes") {
-		var imgdiv = '//div[@id="a-index"]';
+		var targetId = "a-index";
 		var posts = xml;
 		var out = "<h1>Notes</h1>";
 	}
 
-	var where = document.evaluate(imgdiv, document, null, 9, null).singleNodeValue;
+	var where = document.getElementById(targetId);
 	var paginator = document.evaluate('//div[@class="paginator"]', where, null, 9, null).singleNodeValue;
 
 	// Result preparation.
 	for (var i = 0, pl = posts.length; i < pl; i++) {
 		var post = posts[i];
-		var imgid = post.id;
+		var imgId = post.id;
 		var style = "";
 		var uploader = post.uploader_id //Only user id provided in the new API?
 		var score = post.score;
@@ -203,8 +203,8 @@ function parseListing(xml, mode) {
 		var title = tags + " user:" + uploader + " rating:" + rating + " score:" + score;
 		var md5 = post.md5;
 		var ext = post.file_ext;
-		var fileurl = "/data/" + md5 + "." + ext;
-		var thumbnailurl = "/ssd/data/preview/" + md5 + ".jpg";
+		var fileUrl = "/data/" + md5 + "." + ext;
+		var thumbnailUrl = "/ssd/data/preview/" + md5 + ".jpg";
 
 		// Don't display loli/shota if the user has opted so and skip to the next image.
 		if (!show_loli && /\bloli\b/.test(tags))
@@ -233,16 +233,16 @@ function parseListing(xml, mode) {
 
 		// eek, huge line.
 		if (mode == "search" || mode == "notes" || mode == "popular") {
-			out += '<article class="post-preview" id="post_' + imgid + '" data-id="' + imgid + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgid + '"><img title="' + title + '" src="' + thumbnailurl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileurl + '">Direct Download</a></span></article>';
+			out += '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
 		}
 	}
 
 	// Fix paginator with user's custom limit.
 	if (allowUserLimit() && paginator) {
-		var pagelinks = document.evaluate('.//a', paginator, null, 6, null);
+		var pageLinks = document.evaluate('.//a', paginator, null, 6, null);
 
-		for (var i = 0, isl = pagelinks.snapshotLength; i < isl; i++) {
-			pagelinks.snapshotItem(i).href = pagelinks.snapshotItem(i).href + "&limit=" + thumbnail_count;
+		for (var i = 0, isl = pageLinks.snapshotLength; i < isl; i++) {
+			pageLinks.snapshotItem(i).href = pageLinks.snapshotItem(i).href + "&limit=" + thumbnail_count;
 		}
 	}
 
@@ -255,22 +255,22 @@ function parseListing(xml, mode) {
 	// Blacklist.
 	if (mode == "search" || mode == "popular" || mode == "notes") {
 		if (!checkLoginStatus() && script_blacklisted_tags.replace(/\s+/, "").length) {
-			var blacklisttags = script_blacklisted_tags.replace(/(rating:[qes])\w+/, "$1").split(" ");
+			var blacklistTags = script_blacklisted_tags.replace(/(rating:[qes])\w+/, "$1").split(" ");
 
 			Danbooru.Blacklist.blacklists.length = 0;
 
-			for (var i = 0, bl = blacklisttags.length; i < bl; i++) {
-				var tag = Danbooru.Blacklist.parse_entry(blacklisttags[i]);
+			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
+				var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
 				Danbooru.Blacklist.blacklists.push(tag);
 			}
 		}
 
-		var blacklist_used = Danbooru.Blacklist.apply();
+		var blacklistUsed = Danbooru.Blacklist.apply();
 
 		if (mode == "search") {
 			document.getElementById("blacklist-list").innerHTML = "";
 
-			if (blacklist_used)
+			if (blacklistUsed)
 				Danbooru.Blacklist.update_sidebar();
 			else
 				document.getElementById("blacklist-box").style.display = "none";
@@ -281,7 +281,7 @@ function parseListing(xml, mode) {
 function parsePost(xml) {
 	myImg = xml;
 
-	var imageexists = (document.getElementById("image") === null ? false : true);
+	var imageExists = (document.getElementById("image") === null ? false : true);
 	var container = document.getElementById("image-container");
 
 	if (myImg.id) {
@@ -291,9 +291,9 @@ function parsePost(xml) {
 		var height = myImg.image_height;
 		var width = myImg.image_width;
 		var ratio = 850 / width;
-		var sampurl = "/data/sample/sample-" + md5 + ".jpg";
-		var sampheight = Math.round(height * ratio);
-		var sampwidth = 850;
+		var sampUrl = "/data/sample/sample-" + md5 + ".jpg";
+		var sampHeight = Math.round(height * ratio);
+		var sampWidth = 850;
 
 		if (ext == "swf") {
 			// Create flash object.
@@ -305,30 +305,105 @@ function parsePost(xml) {
 				'<p>You must download this file manually.</p>';
 		}
 		else {
-			if (checkSetting("default-image-size", "large", load_sample_first) && ratio < 1) {
-				var newwidth = sampwidth;
-				var newheight = sampheight;
-				var newurl = sampurl;
-				var alttxt = "sample";
+			var useSample = (checkSetting("default-image-size", "large", load_sample_first) && ratio < 1 ? true : false);
+			
+			if (useSample) {
+				var newWidth = sampWidth;
+				var newHeight = sampHeight;
+				var newUrl = sampUrl;
+				var altTxt = "sample";
 			}
 			else {
-				var newwidth = width;
-				var newheight = height;
-				var newurl = url;
-				var alttxt = url.substring(url.lastIndexOf("/") + 1, url.lastIndexOf("."));
+				var newWidth = width;
+				var newHeight = height;
+				var newUrl = url;
+				var altTxt = url.substring(url.lastIndexOf("/") + 1, url.lastIndexOf("."));
 			}
 
-			container.innerHTML = '<div id="note-container"></div> <img alt="' + alttxt + '" data-large-height="' + sampheight + '" data-large-width="' + sampwidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newheight + '" width="' + newwidth + '" id="image" src="' + newurl + '" />';
+			container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" />';
+
+			// Alter sample/original
+			if (ratio < 1) {
+				var resizeNotice = document.getElementById("image-resize-notice");
+				
+				if (resizeNotice)
+					resizeNotice.parentNode.removeChild(resizeNotice);
+					
+				var bbbResizeNotice = document.createElement("div");				
+				bbbResizeNotice.className = "ui-corner-all ui-state-highlight notice";
+				bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + sampUrl + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span>';
+				container.parentNode.insertBefore(bbbResizeNotice , container);
+				
+				var swapInit = true;
+				var image = document.getElementById("image");
+				var sampleNotice = document.getElementById("bbb-sample-notice");
+				var originalNotice = document.getElementById("bbb-original-notice");
+				var imgStatus = document.getElementById("bbb-img-status");
+				
+				if (useSample)
+					sampleNotice.style.display = "";
+				else
+					originalNotice.style.display = "";
+					
+				document.getElementById("bbb-sample-link").addEventListener("click", function(event) {
+					if (swapInit)
+						swapInit = false;
+						
+					image.src = this.href;
+					imgStatus.innerHTML = "Loading sample image...";
+					event.preventDefault();
+				}, false);
+				document.getElementById("bbb-original-link").addEventListener("click", function(event) {
+					if (swapInit)
+						swapInit = false;
+						
+					image.src = this.href;
+					imgStatus.innerHTML = "Loading original image...";
+					event.preventDefault();
+				}, false);
+				image.addEventListener("load", function(event) {
+					imgStatus.innerHTML = "";
+					
+					if (image.src.indexOf("/sample/") == -1) {
+						sampleNotice.style.display = "none";
+						originalNotice.style.display = "";
+						image.height = height;
+						image.width = width;
+						
+						if (!swapInit) {
+							$("#image").data("scale_factor", 1); // Fix Danbooru. Remove after officially fixed.
+							image.style.height = height + "px";
+							image.style.width = width + "px";
+						}
+					}
+					else {
+						sampleNotice.style.display = "";
+						originalNotice.style.display = "none";
+						image.height = sampHeight;
+						image.width = sampWidth;
+						
+						if (!swapInit) {
+							$("#image").data("scale_factor", 1); // Fix Danbooru. Remove after officially fixed.
+							image.style.height = sampHeight + "px";
+							image.style.width = sampWidth + "px";
+						}
+					}
+					
+					swapInit = false;
+					Danbooru.Note.Box.scale_all();
+					Danbooru.Post.place_jlist_ads();
+				}, false);
+			}
 
 			// Make use of what Danbooru has provided us.
-			if (!imageexists)
+			if (!imageExists)
 				document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false); // Make the "Add note" link work.
 
 			document.getElementById("image").addEventListener("click", Danbooru.Note.Box.toggle_all, false); // Make notes toggle when clicking the image.
-			Danbooru.Post.initialize_post_image_resize_links(); // Make original image toggle when clicking resized notice ("view original").
+			//Danbooru.Post.initialize_post_image_resize_links(); // Make original image toggle when clicking resized notice ("view original").
 			Danbooru.Note.load_all(); // Load/reload notes.
 		}
-
+		
 		// Resize image if desired.
 		if (checkSetting("always-resize-images", "true", image_resize))
 			document.getElementById("image-resize-to-window-link").click();
@@ -336,10 +411,10 @@ function parsePost(xml) {
 		// Add favorites count
 		if (fav_count) {
 			var favs = myImg.fav_string.match(/fav:/g);
-			var num_favs = (favs === null ? 0 : favs.length );
+			var numFavs = (favs === null ? 0 : favs.length );
 			var target = document.getElementById("score-for-post-" + myImg.id).parentNode;
 
-			target.innerHTML += '<li>Favorites: ' + num_favs + '</li>';
+			target.innerHTML += '<li>Favorites: ' + numFavs + '</li>';
 		}
 
 		// Display comments.
@@ -386,19 +461,19 @@ function keyCheck(e) {
 }
 
 function arrowNav(dir) {
-	if (/page=1000|page=[ab]/.test(location.href)) { // For pages 1000+.
-		var pagelinks = document.evaluate('//div[@class="paginator"]//a', document, null, 6, null);
+	if (/page=(1000|[ab])/.test(location.href)) { // For pages 1000+.
+		var pageLinks = document.evaluate('//div[@class="paginator"]//a', document, null, 6, null);
 
-		if (pagelinks.snapshotItem(1)) {
+		if (pageLinks.snapshotItem(1)) {
 			switch (dir) {
-				case "left": location.href = pagelinks.snapshotItem(0).href; break;
-				case "right": location.href = pagelinks.snapshotItem(1).href; break;
+				case "left": location.href = pageLinks.snapshotItem(0).href; break;
+				case "right": location.href = pageLinks.snapshotItem(1).href; break;
 				default: break;
 			}
 		}
 		else {
 			switch (dir) {
-				case "right": location.href = pagelinks.snapshotItem(0).href; break;
+				case "right": location.href = pageLinks.snapshotItem(0).href; break;
 				default: break;
 			}
 		}
@@ -472,15 +547,15 @@ function checkLoginStatus() {
 		return false;
 }
 
-function checkSetting(metaname, metadata, script_setting) {
+function checkSetting(metaName, metaData, scriptSetting) {
 	if (checkLoginStatus()) {
-		if (fetchMeta(metaname) === metadata)
+		if (fetchMeta(metaName) === metaData)
 			return true;
 		else
 			return false;
 	}
 	else
-		return script_setting;
+		return scriptSetting;
 }
 
 function searchAdd() {
@@ -507,10 +582,10 @@ function searchAdd() {
 }
 
 function removeTagHeaders() {
-	var taglist = document.getElementById("tag-list");
-	var newlist = taglist.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h\d>.+?<\/h\d>/, "<h1>Tags</h1>");
+	var tagList = document.getElementById("tag-list");
+	var newList = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
 
-	taglist.innerHTML = newlist;
+	tagList.innerHTML = newList;
 }
 
 function getCookie() {
@@ -531,14 +606,14 @@ function getCookie() {
 	return out;
 }
 
-function createCookie(cname, cvalue, expyear) {
-	var data = cname + "=" + cvalue + "; path=/";
+function createCookie(cName, cValue, expYear) {
+	var data = cName + "=" + cValue + "; path=/";
 
-	if (expyear !== null) {
-		var expdate = new Date();
-		expdate.setFullYear(expdate.getFullYear() + expyear);
-		expdate.toUTCString();
-		data += "; expires=" + expdate;
+	if (expYear !== null) {
+		var expDate = new Date();
+		expDate.setFullYear(expDate.getFullYear() + expYear);
+		expDate.toUTCString();
+		data += "; expires=" + expDate;
 	}
 
 	document.cookie = data;
