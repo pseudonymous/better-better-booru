@@ -268,7 +268,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 
 		// Blacklist.
 		if (mode == "search" || mode == "popular" || mode == "notes") {
-			if (!checkLoginStatus() && /\w/.test(script_blacklisted_tags)) {
+			if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) {
 				var blacklistTags = script_blacklisted_tags.replace(/\s+/g, "").replace(/(rating:[qes])\w+/, "$1").split(" ");
 
 				Danbooru.Blacklist.blacklists.length = 0;
@@ -335,6 +335,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 				}
 
 				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" />';
+				var img = document.getElementById("image");
 
 				// Alter sample/original
 				if (ratio < 1) {
@@ -349,7 +350,6 @@ function injectMe () { // This is needed to make this script work in Chrome.
 					container.parentNode.insertBefore(bbbResizeNotice , container);
 
 					var swapInit = true;
-					var image = document.getElementById("image");
 					var sampleNotice = document.getElementById("bbb-sample-notice");
 					var originalNotice = document.getElementById("bbb-original-notice");
 					var imgStatus = document.getElementById("bbb-img-status");
@@ -363,7 +363,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 						if (swapInit)
 							swapInit = false;
 
-						image.src = this.href;
+						img.src = this.href;
 						imgStatus.innerHTML = "Loading sample image...";
 						event.preventDefault();
 					}, false);
@@ -371,35 +371,35 @@ function injectMe () { // This is needed to make this script work in Chrome.
 						if (swapInit)
 							swapInit = false;
 
-						image.src = this.href;
+						img.src = this.href;
 						imgStatus.innerHTML = "Loading original image...";
 						event.preventDefault();
 					}, false);
-					image.addEventListener("load", function(event) {
+					img.addEventListener("load", function(event) {
 						imgStatus.innerHTML = "";
 
-						if (image.src.indexOf("/sample/") == -1) {
+						if (img.src.indexOf("/sample/") == -1) {
 							sampleNotice.style.display = "none";
 							originalNotice.style.display = "";
-							image.height = height;
-							image.width = width;
+							img.height = height;
+							img.width = width;
 
 							if (!swapInit) {
 								$("#image").data("scale_factor", 1); // Fix Danbooru. Remove after officially fixed.
-								image.style.height = height + "px";
-								image.style.width = width + "px";
+								img.style.height = height + "px";
+								img.style.width = width + "px";
 							}
 						}
 						else {
 							sampleNotice.style.display = "";
 							originalNotice.style.display = "none";
-							image.height = sampHeight;
-							image.width = sampWidth;
+							img.height = sampHeight;
+							img.width = sampWidth;
 
 							if (!swapInit) {
 								$("#image").data("scale_factor", 1); // Fix Danbooru. Remove after officially fixed.
-								image.style.height = sampHeight + "px";
-								image.style.width = sampWidth + "px";
+								img.style.height = sampHeight + "px";
+								img.style.width = sampWidth + "px";
 							}
 						}
 
@@ -413,8 +413,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 				if (!imageExists)
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false); // Make the "Add note" link work.
 
-				document.getElementById("image").addEventListener("click", Danbooru.Note.Box.toggle_all, false); // Make notes toggle when clicking the image.
-				//Danbooru.Post.initialize_post_image_resize_links(); // Make original image toggle when clicking resized notice ("view original").
+				img.addEventListener("click", Danbooru.Note.Box.toggle_all, false); // Make notes toggle when clicking the image.
 				Danbooru.Note.load_all(); // Load/reload notes.
 			}
 
@@ -545,9 +544,11 @@ function injectMe () { // This is needed to make this script work in Chrome.
 
 		if (tag) {
 			if (tag.hasAttribute("content"))
-				return tag.getAttribute("content");
+				return tag.content;
+			else
+				return null;
 		} else
-			return null;
+			return undefined;
 	}
 
 	function checkLoginStatus() {
@@ -627,23 +628,6 @@ function injectMe () { // This is needed to make this script work in Chrome.
 		}
 
 		document.cookie = data;
-	}
-
-	function filterOther() {
-		// Replace the thumbnails of blacklisted posts.
-		var imgs = document.getElementsByTagName("img");
-		var blacklist = blacklistInit();
-
-		for (var i = 0, il = imgs.length; i < il; i++) {
-			var img = imgs[i];
-			var tags = img.title;
-
-			if (isBlacklisted(blacklist, tags)) {
-				img.src = "/blacklisted-preview.png";
-				img.removeAttribute("height");
-				img.removeAttribute("width");
-			}
-		}
 	}
 
 	// Does anyone use these options? Adblock should pretty much cover the ads.
