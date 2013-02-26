@@ -268,7 +268,6 @@ function injectMe () { // This is needed to make this script work in Chrome.
 
 		// Blacklist.
 		if (mode == "search" || mode == "popular" || mode == "notes") {
-
 			if (!checkLoginStatus() && /\w/.test(script_blacklisted_tags)) {
 				var blacklistTags = script_blacklisted_tags.replace(/\s+/g, "").replace(/(rating:[qes])\w+/, "$1").split(" ");
 
@@ -321,7 +320,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 			}
 			else {
 				var useSample = (checkSetting("default-image-size", "large", load_sample_first) && ratio < 1 ? true : false);
-				
+
 				if (useSample) {
 					var newWidth = sampWidth;
 					var newHeight = sampHeight;
@@ -340,30 +339,30 @@ function injectMe () { // This is needed to make this script work in Chrome.
 				// Alter sample/original
 				if (ratio < 1) {
 					var resizeNotice = document.getElementById("image-resize-notice");
-					
+
 					if (resizeNotice)
 						resizeNotice.parentNode.removeChild(resizeNotice);
-						
-					var bbbResizeNotice = document.createElement("div");				
+
+					var bbbResizeNotice = document.createElement("div");
 					bbbResizeNotice.className = "ui-corner-all ui-state-highlight notice";
 					bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + sampUrl + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span>';
 					container.parentNode.insertBefore(bbbResizeNotice , container);
-					
+
 					var swapInit = true;
 					var image = document.getElementById("image");
 					var sampleNotice = document.getElementById("bbb-sample-notice");
 					var originalNotice = document.getElementById("bbb-original-notice");
 					var imgStatus = document.getElementById("bbb-img-status");
-					
+
 					if (useSample)
 						sampleNotice.style.display = "";
 					else
 						originalNotice.style.display = "";
-						
+
 					document.getElementById("bbb-sample-link").addEventListener("click", function(event) {
 						if (swapInit)
 							swapInit = false;
-							
+
 						image.src = this.href;
 						imgStatus.innerHTML = "Loading sample image...";
 						event.preventDefault();
@@ -371,20 +370,20 @@ function injectMe () { // This is needed to make this script work in Chrome.
 					document.getElementById("bbb-original-link").addEventListener("click", function(event) {
 						if (swapInit)
 							swapInit = false;
-							
+
 						image.src = this.href;
 						imgStatus.innerHTML = "Loading original image...";
 						event.preventDefault();
 					}, false);
 					image.addEventListener("load", function(event) {
 						imgStatus.innerHTML = "";
-						
+
 						if (image.src.indexOf("/sample/") == -1) {
 							sampleNotice.style.display = "none";
 							originalNotice.style.display = "";
 							image.height = height;
 							image.width = width;
-							
+
 							if (!swapInit) {
 								$("#image").data("scale_factor", 1); // Fix Danbooru. Remove after officially fixed.
 								image.style.height = height + "px";
@@ -396,14 +395,14 @@ function injectMe () { // This is needed to make this script work in Chrome.
 							originalNotice.style.display = "none";
 							image.height = sampHeight;
 							image.width = sampWidth;
-							
+
 							if (!swapInit) {
 								$("#image").data("scale_factor", 1); // Fix Danbooru. Remove after officially fixed.
 								image.style.height = sampHeight + "px";
 								image.style.width = sampWidth + "px";
 							}
 						}
-						
+
 						swapInit = false;
 						Danbooru.Note.Box.scale_all();
 						Danbooru.Post.place_jlist_ads();
@@ -418,7 +417,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 				//Danbooru.Post.initialize_post_image_resize_links(); // Make original image toggle when clicking resized notice ("view original").
 				Danbooru.Note.load_all(); // Load/reload notes.
 			}
-			
+
 			// Resize image if desired.
 			if (checkSetting("always-resize-images", "true", image_resize))
 				document.getElementById("image-resize-to-window-link").click();
