@@ -334,10 +334,11 @@ function injectMe () { // This is needed to make this script work in Chrome.
 					var altTxt = url.substring(url.lastIndexOf("/") + 1, url.lastIndexOf("."));
 				}
 
-				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" />';
+				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 				var img = document.getElementById("image");
+				var bbbLoader = document.getElementById("bbb-loader");
 
-				// Alter sample/original
+				// Enable image swapping between the original and sample image.
 				if (ratio < 1) {
 					var resizeNotice = document.getElementById("image-resize-notice");
 
@@ -363,7 +364,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 						if (swapInit)
 							swapInit = false;
 
-						img.src = this.href;
+						bbbLoader.src = this.href;
 						imgStatus.innerHTML = "Loading sample image...";
 						event.preventDefault();
 					}, false);
@@ -371,13 +372,21 @@ function injectMe () { // This is needed to make this script work in Chrome.
 						if (swapInit)
 							swapInit = false;
 
-						img.src = this.href;
+						bbbLoader.src = this.href;
 						imgStatus.innerHTML = "Loading original image...";
 						event.preventDefault();
 					}, false);
+					bbbLoader.addEventListener("load", function(event) {
+						img.src = this.src;
+						this.src = "about:blank";
+						imgStatus.innerHTML = "";				
+					}, false);
+					bbbLoader.addEventListener("error", function(event) {
+						if (this.src != "about:blank")
+							imgStatus.innerHTML = "Loading failed!";
+						event.preventDefault();						
+					}, false);
 					img.addEventListener("load", function(event) {
-						imgStatus.innerHTML = "";
-
 						if (img.src.indexOf("/sample/") == -1) {
 							sampleNotice.style.display = "none";
 							originalNotice.style.display = "";
