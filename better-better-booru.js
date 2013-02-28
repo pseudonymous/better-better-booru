@@ -11,12 +11,6 @@
 
 // Have a nice day. - A Pseudonymous Coder
 
-// Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
-var script = document.createElement('script');
-script.type = "text/javascript";
-script.appendChild(document.createTextNode('('+ injectMe +')();'));
-(document.body || document.head || document.documentElement).appendChild(script);
-
 function injectMe () { // This is needed to make this script work in Chrome.
 
 
@@ -158,7 +152,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 			xmlhttp.onreadystatechange = function() {
 				if (xmlhttp.readyState == 4) { // 4 = "loaded"
 					if (xmlhttp.status == 200) { // 200 = "OK"
-						xml = JSON.parse(xmlhttp.responseText);
+						var xml = JSON.parse(xmlhttp.responseText);
 
 						if (mode == "search" || mode == "pool" || mode == "popular" || mode == "notes")
 							parseListing(xml, mode);
@@ -177,24 +171,18 @@ function injectMe () { // This is needed to make this script work in Chrome.
 	/* Functions for creating content from retrieved info */
 	function parseListing(xml, mode) {
 		var out = "";
+		var posts = xml;
 
 		// Use JSON results for searches and pool collections.
-		if (mode == "search") {
+		if (mode == "search")
 			var targetId = "posts";
-			var posts = xml;
-		}
-		else if (mode == "pool") { // API no longer returns image information about pool contents?
+		else if (mode == "pool") // API no longer returns image information about pool contents?
 			var targetId = '';
-			var posts = xml.posts;
-		}
-		else if (mode == "popular") {
+		else if (mode == "popular")
 			var targetId = "content";
-			var posts = xml;
-		}
 		else if (mode == "notes") {
 			var targetId = "a-index";
-			var posts = xml;
-			var out = "<h1>Notes</h1>";
+			out = "<h1>Notes</h1>";
 		}
 
 		var where = document.getElementById(targetId);
@@ -309,12 +297,11 @@ function injectMe () { // This is needed to make this script work in Chrome.
 
 			if (ext == "swf") {
 				// Create flash object.
-				container.innerHTML = '<div id="note-container"></div> <object height="' + height + '" width="' + width + '"> <params name="movie" value="' + url + '"> <embed allowscriptaccess="never" src="' + url + '" height="' + height + '" width="' + width + '"> </params> </object> <p><a href="' + url + '">Save this flash (right click and save)</a></p>'
+				container.innerHTML = '<div id="note-container"></div> <object height="' + height + '" width="' + width + '"> <params name="movie" value="' + url + '"> <embed allowscriptaccess="never" src="' + url + '" height="' + height + '" width="' + width + '"> </params> </object> <p><a href="' + url + '">Save this flash (right click and save)</a></p>';
 			}
 			else if (height === null) {
 				// Create manual download.
-				container.innerHTML = '<h2><a href="' + url + '">Download</a></h2>' +
-					'<p>You must download this file manually.</p>';
+				container.innerHTML = '<h2><a href="' + url + '">Download</a></h2> <p>You must download this file manually.</p>';
 			}
 			else {
 				var useSample = (checkSetting("default-image-size", "large", load_sample_first) && ratio < 1 ? true : false);
@@ -593,7 +580,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 			var newTag = getVar("tags", where[i].getElementsByTagName("a")[1].href);
 			var newLink = "/post/index?tags=" + newTag + tag;
 			where[i].innerHTML = '<a href="' + newLink + '">+</a> ' + where[i].innerHTML;
-			var newLink = "/post/index?tags=-" + newTag + tag;
+			newLink = "/post/index?tags=-" + newTag + tag;
 			where[i].innerHTML = '<a href="' + newLink + '">-</a> ' + where[i].innerHTML;
 		}
 	}
@@ -693,3 +680,9 @@ function injectMe () { // This is needed to make this script work in Chrome.
 	}
 
 } // End of injectMe.
+
+// Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
+var script = document.createElement('script');
+script.type = "text/javascript";
+script.appendChild(document.createTextNode('(' + injectMe + ')();'));
+(document.body || document.head || document.documentElement).appendChild(script);
