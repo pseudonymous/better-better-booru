@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        2
+// @version        2.1
 // @include        http://*.donmai.us/*
 // @include        http://donmai.us/*
 // @exclude        http://trac.donmai.us/*
@@ -524,7 +524,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 			else
 				url = url.replace(/page=\d*/, "page=" + page) + limit;
 
-			location.href = url.replace(/(&)+|(\?)&+|(.)&+$|/g, "$1$2$3"); // Clean up any "&" problems and load.
+			location.href = url.replace(/(&)+|(\?)&+|(.)&+$/g, "$1$2$3"); // Clean up any "&" problems and load.
 		}
 	}
 
