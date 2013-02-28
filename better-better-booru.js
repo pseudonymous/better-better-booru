@@ -37,7 +37,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 	var hide_statusnotice = false;
 
 	// Search
-	var enable_arrow_nav = true; // Allow the use of the left and right keys to navigate post/pool index pages. Doesn't work when input has focus.
+	var enable_arrow_nav = false; // Allow the use of the left and right keys to navigate post/pool index pages. Doesn't work when input has focus.
 	var add_border = true; // Add a light blue border to Shota and pink border to Loli.
 	var search_add = true; // Add the + and - shortcuts to the tag list for including or excluding search terms.
 	var thumbnail_count = 0; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
@@ -150,9 +150,6 @@ function injectMe () { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function searchPost() {
-	}
-
 	function fetchJSON(url, mode) {
 		// Retrieve JSON.
 		var xmlhttp = new XMLHttpRequest();
@@ -168,8 +165,8 @@ function injectMe () { // This is needed to make this script work in Chrome.
 						else if (mode == "post")
 							parsePost(xml);
 					}
-	//        else // Debug
-	//          GM_log(xmlhttp.statusText);
+					// else // Debug
+						// GM_log(xmlhttp.statusText);
 				}
 			};
 			xmlhttp.open("GET", url, true);
@@ -208,7 +205,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 			var post = posts[i];
 			var imgId = post.id;
 			var style = "";
-			var uploader = post.uploader_id //Only user id provided in the new API?
+			var uploader = post.uploader_id; //Only user id provided in the new API?
 			var score = post.score;
 			var rating = post.rating;
 			var tags = post.tag_string;
@@ -219,6 +216,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 			var ext = post.file_ext;
 			var fileUrl = "/data/" + md5 + "." + ext;
 			var thumbnailUrl = "/ssd/data/preview/" + md5 + ".jpg";
+			var search = (/tags=/.test(location.search) ? "?tags=" + getVar("tags") : "");
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
 			if (!show_loli && /\bloli\b/.test(tags))
@@ -247,7 +245,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 
 			// eek, huge line.
 			if (mode == "search" || mode == "notes" || mode == "popular") {
-				out += '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
+				out += '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
 			}
 		}
 
@@ -379,15 +377,15 @@ function injectMe () { // This is needed to make this script work in Chrome.
 					bbbLoader.addEventListener("load", function(event) {
 						img.src = this.src;
 						this.src = "about:blank";
-						imgStatus.innerHTML = "";				
+						imgStatus.innerHTML = "";
 					}, false);
 					bbbLoader.addEventListener("error", function(event) {
 						if (this.src != "about:blank")
 							imgStatus.innerHTML = "Loading failed!";
-						event.preventDefault();						
+						event.preventDefault();
 					}, false);
 					img.addEventListener("load", function(event) {
-						if (img.src.indexOf("/sample/") == -1) {
+						if (!/\/sample\//.test(img.src)) {
 							sampleNotice.style.display = "none";
 							originalNotice.style.display = "";
 							img.height = height;
@@ -458,19 +456,16 @@ function injectMe () { // This is needed to make this script work in Chrome.
 	}
 
 	function getVar(getVar, url) {
-		// Wow I actually found a good use for my get variable method.
 		if (!url)
 			url = location.href;
 
-		var search = new RegExp(getVar + "=.+?(?=&)");
-		var result = new String(search.exec(url));
+		var search = new RegExp(getVar + "=.*?(?=[#&]|$)");
+		var result = search.exec(url);
 
-		if (result == "null") {
-			var search = new RegExp(getVar + "=.+");
-			var result = new String(search.exec(url));
-		}
-
-		return result.split("=")[1];
+		if (result === null)
+			return null;
+		else
+			return result[0].split("=")[1];
 	}
 
 	function keyCheck(e) {
@@ -591,12 +586,14 @@ function injectMe () { // This is needed to make this script work in Chrome.
 
 		if (!tag)
 			tag = "";
+		else
+			tag = "+" + tag;
 
 		for (var i = 0, wl = where.length; i < wl; i++) {
 			var newTag = getVar("tags", where[i].getElementsByTagName("a")[1].href);
-			var newLink = "/post/index?tags=" + newTag + " " + tag;
+			var newLink = "/post/index?tags=" + newTag + tag;
 			where[i].innerHTML = '<a href="' + newLink + '">+</a> ' + where[i].innerHTML;
-			var newLink = "/post/index?tags=-" + newTag + " " + tag;
+			var newLink = "/post/index?tags=-" + newTag + tag;
 			where[i].innerHTML = '<a href="' + newLink + '">-</a> ' + where[i].innerHTML;
 		}
 	}
