@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        2.2
+// @version        2.3
 // @include        http://*.donmai.us/*
 // @include        http://donmai.us/*
 // @exclude        http://trac.donmai.us/*
@@ -11,13 +11,19 @@
 
 // Have a nice day. - A Pseudonymous Coder
 
-function injectMe () { // This is needed to make this script work in Chrome.
+function injectMe() { // This is needed to make this script work in Chrome.
 
 
 	/********************************/
 	/* Don't touch above this line! */
 	/********************************/
 
+	/* Help */
+	// When editing settings, make sure you always maintain the same format. Leave equal signs, quotation marks, and semicolons alone.
+	// For true/false settings, you simply use true to turn on the option or false to turn it off. Never use quotation marks for these.
+	// For numerical settings, you simply provide the desired number value. Never use quotation marks for these.
+	// For settings in quotation marks, you will be provided with special instructions about what to do. Just remember to keep
+	// the quotation marks and also make sure not to add any extra ones.
 
 	/* True or false settings */
 	// Global
@@ -37,7 +43,6 @@ function injectMe () { // This is needed to make this script work in Chrome.
 	var thumbnail_count = 0; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
-	var sample_resize = true; // When you click an image, it switches between the sample and full image.
 	var image_resize = false; // When initially loading, scale down large images to fit the browser window as needed.
 	var load_sample_first = true; // Use sample images when available.
 	var remove_tag_headers = false; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
@@ -53,8 +58,8 @@ function injectMe () { // This is needed to make this script work in Chrome.
 
 	// Blacklist
 	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
-	// must be separated by a space. The whole blacklist must remain inside of quotation marks. Using empty quotation marks will disable
-	// the blacklist. When logged in and as long as it is not blank, your account blacklist will override this blacklist.
+	// must be separated by a space. The whole blacklist must remain inside of quotation marks. Using empty quotation marks (ex:"") will
+	// disable the script blacklist. When logged in, your account blacklist will override this blacklist.
 	// Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the
 	// following case: "spoilers, blood death"
 	var script_blacklisted_tags = "";
@@ -247,6 +252,9 @@ function injectMe () { // This is needed to make this script work in Chrome.
 		}
 
 		// Replace results with new results.
+		if (!posts.length)
+			out += '<p>Nobody here but us chickens!</p> <p><a href="javascript:history.back()">Go back</a></p>';
+
 		if (paginator)
 			where.innerHTML = out + paginator.outerHTML;
 		else
@@ -255,7 +263,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 		// Blacklist.
 		if (mode == "search" || mode == "popular" || mode == "notes") {
 			if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) {
-				var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(" ");
+				var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
 
 				Danbooru.Blacklist.blacklists.length = 0;
 
@@ -316,7 +324,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 					var newWidth = width;
 					var newHeight = height;
 					var newUrl = url;
-					var altTxt = url.substring(url.lastIndexOf("/") + 1, url.lastIndexOf("."));
+					var altTxt = md5;
 				}
 
 				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
@@ -502,7 +510,7 @@ function injectMe () { // This is needed to make this script work in Chrome.
 			if (page < 1 || page > 1000)
 				return;
 
-			var url = location.href.replace(/#.+$/, ""); // Get rid of hash portion.
+			var url = location.href.split("#")[0]; // Get rid of hash portion.
 
 			if (!/\?/.test(url))
 				url += "?page=" + page + limit; // Search string not found so create one.
