@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        2.3
+// @version        2.4
 // @include        http://*.donmai.us/*
 // @include        http://donmai.us/*
 // @exclude        http://trac.donmai.us/*
@@ -256,7 +256,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			out += '<p>Nobody here but us chickens!</p> <p><a href="javascript:history.back()">Go back</a></p>';
 
 		if (paginator)
-			where.innerHTML = out + paginator.outerHTML;
+			where.innerHTML = out + outerHTML(paginator);
 		else
 			where.innerHTML = out;
 
@@ -409,6 +409,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						Danbooru.Note.Box.scale_all();
 						Danbooru.Post.place_jlist_ads();
 					}, false);
+				}
+
+				if (!checkLoginStatus()) {
+					var options = document.evaluate('//aside[@id="sidebar"]/section[4]/ul', document, null, 9, null).singleNodeValue;
+
+					options.innerHTML = '<li><a href="#" id="image-resize-to-window-link">Resize to window</a></li> <li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + md5 + '.jpg">Find similar</a></li>';
+					Danbooru.Post.initialize_post_image_resize_to_window_link();
 				}
 
 				// Make use of what Danbooru has provided us.
@@ -629,6 +636,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		document.cookie = data;
+	}
+
+	function outerHTML(node){
+		// If IE, Chrome, or newer FF version take the internal method otherwise build one. More thanks to random forums for clearing up outerHTML support.
+		return node.outerHTML ||
+			(function(n) {
+				var div = document.createElement('div'), outer;
+
+				div.appendChild( n.cloneNode(true) );
+				outer = div.innerHTML;
+				div = null;
+
+				return outer;
+		  })(node);
 	}
 
 	// Does anyone use these options? Adblock should pretty much cover the ads.
