@@ -411,6 +411,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 				}
 
+				// Enable the "Resize to window" and "Find similar" options for logged out users.
 				if (!checkLoginStatus()) {
 					var options = document.evaluate('//aside[@id="sidebar"]/section[4]/ul', document, null, 9, null).singleNodeValue;
 
