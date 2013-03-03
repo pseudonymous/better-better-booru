@@ -236,10 +236,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var outId = "";
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
-			if (!show_loli && /\bloli\b/.test(tags))
+			if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags))) {
+				outId = new RegExp("\\b" + imgId + "(?=\\s|$)");
+				out = out.replace(outId, outNew);
 				continue;
-			if (!show_shota && /\bshota\b/.test(tags))
-				continue;
+			}
 
 			// Apply appropriate thumbnail borders. Borders override each other in this order: Loli > Shota > Flagged > Pending > Child > Parent
 			if (add_border) {
