@@ -292,28 +292,26 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where.innerHTML = out;
 
 		// Blacklist.
-		if (mode == "search" || mode == "popular" || mode == "notes") {
-			if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) {
-				var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
+		if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) {
+			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
 
-				Danbooru.Blacklist.blacklists.length = 0;
+			Danbooru.Blacklist.blacklists.length = 0;
 
-				for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
-					var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
-					Danbooru.Blacklist.blacklists.push(tag);
-				}
+			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
+				var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
+				Danbooru.Blacklist.blacklists.push(tag);
 			}
+		}
 
-			var blacklistUsed = Danbooru.Blacklist.apply();
+		var blacklistUsed = Danbooru.Blacklist.apply();
 
-			if (mode == "search") {
-				document.getElementById("blacklist-list").innerHTML = "";
+		if (mode == "search") {
+			document.getElementById("blacklist-list").innerHTML = "";
 
-				if (blacklistUsed)
-					Danbooru.Blacklist.update_sidebar();
-				else
-					document.getElementById("blacklist-box").style.display = "none";
-			}
+			if (blacklistUsed)
+				Danbooru.Blacklist.update_sidebar();
+			else
+				document.getElementById("blacklist-box").style.display = "none";
 		}
 	}
 
