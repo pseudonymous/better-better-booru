@@ -2,7 +2,9 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        2.4
+// @version        3.0
+// @updateURL      https://userscripts.org/scripts/source/100614.meta.js
+// @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @include        http://*.donmai.us/*
 // @include        http://donmai.us/*
 // @exclude        http://trac.donmai.us/*
@@ -92,6 +94,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			searchJSON("notes");
 		else if (/\/explore\/posts\/popular/.test(url))
 			searchJSON("popular");
+		else if (/\/pools\/\d+/.test(url))
+			searchJSON("pool");
 	}
 
 	if (hide_upgrade_notice)
@@ -126,7 +130,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Functions */
 
 	/* Functions for creating a url and retrieving info from it */
-	function searchJSON(mode) {
+	function searchJSON(mode, xml) {
 		if (mode == "search") {
 			var url = location.href.replace(/\/?(posts)?\/?(\?|$)/, "/posts.json?");
 
@@ -147,9 +151,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var url = location.href.replace(/\/popular\/?/, "/popular.json");
 			fetchJSON(url, "popular");
 		}
+		else if (mode == "pool") {
+			var url = location.href.replace(/\/pools\/(\d+)/, "/pools/$1.json");
+			fetchJSON(url, "pool");
+		}
+		else if (mode == "poolsearch") {
+			var poolIds = xml.post_ids.split(" ");
+			var page = (/page=\d+/.test(location.search) ? parseInt(getVar("page"), 10) : 1);
+			var postIds = poolIds.slice((page - 1) * 20, ((page - 1) * 20) + 20);
+
+			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
+		}
 	}
 
-	function fetchJSON(url, mode) {
+	function fetchJSON(url, mode, optArg) {
 		// Retrieve JSON.
 		var xmlhttp = new XMLHttpRequest();
 
@@ -159,10 +174,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					if (xmlhttp.status == 200) { // 200 = "OK"
 						var xml = JSON.parse(xmlhttp.responseText);
 
-						if (mode == "search" || mode == "pool" || mode == "popular" || mode == "notes")
+						if (mode == "search" || mode == "popular" || mode == "notes")
 							parseListing(xml, mode);
 						else if (mode == "post")
 							parsePost(xml);
+						else if (mode == "pool")
+							searchJSON("poolsearch", xml);
+						else if (mode == "poolsearch")
+							parseListing(xml, "pool", optArg);
 					}
 					// else // Debug
 						// GM_log(xmlhttp.statusText);
@@ -174,17 +193,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	/* Functions for creating content from retrieved info */
-	function parseListing(xml, mode) {
+	function parseListing(xml, mode, optArg) {
 		var out = "";
 		var posts = xml;
 
 		// Use JSON results for searches and pool collections.
 		if (mode == "search")
 			var targetId = "posts";
-		else if (mode == "pool") // API no longer returns image information about pool contents?
-			var targetId = '';
 		else if (mode == "popular")
 			var targetId = "content";
+		else if (mode == "pool") {
+			var targetId = "content";
+			var orderedPostIds = optArg;
+			out = orderedPostIds.join(" ");
+		}
 		else if (mode == "notes") {
 			var targetId = "a-index";
 			out = "<h1>Notes</h1>";
@@ -198,7 +220,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var post = posts[i];
 			var imgId = post.id;
 			var style = "";
-			var uploader = post.uploader_id; //Only user id provided in the new API?
+			var uploader = post.uploader_name;
 			var score = post.score;
 			var rating = post.rating;
 			var tags = post.tag_string;
@@ -209,7 +231,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var ext = post.file_ext;
 			var fileUrl = "/data/" + md5 + "." + ext;
 			var thumbnailUrl = "/ssd/data/preview/" + md5 + ".jpg";
-			var search = (/tags=/.test(location.search) ? "?tags=" + getVar("tags") : "");
+			var search = "";
+			var outNew = "";
+			var outId = "";
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
 			if (!show_loli && /\bloli\b/.test(tags))
@@ -238,7 +262,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// eek, huge line.
 			if (mode == "search" || mode == "notes" || mode == "popular") {
+				search = (/tags=/.test(location.search) ? "?tags=" + getVar("tags") : "");
 				out += '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
+			}
+			else if (mode == "pool") {
+				search = "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1];
+				outId = new RegExp("\\b" + imgId + "\\b");
+				outNew = '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
+				out = out.replace(outId, outNew);
 			}
 		}
 
@@ -553,8 +584,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (tag.hasAttribute("content"))
 				return tag.content;
 			else
-				return null;
-		} else
+				return undefined;
+		}
+		else
 			return undefined;
 	}
 
