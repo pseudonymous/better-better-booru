@@ -205,7 +205,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (mode == "pool") {
 			var targetId = "content";
 			var orderedPostIds = optArg;
-			out = orderedPostIds.join(" ");
+			out = "\f,;" + orderedPostIds.join("\f,;");
 		}
 		else if (mode == "notes") {
 			var targetId = "a-index";
@@ -237,8 +237,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
 			if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags))) {
-				outId = new RegExp("\\b" + imgId + "(?=\\s|$)");
-				out = out.replace(outId, outNew);
+				if (mode == "pool") {
+					outId = new RegExp("\f,;" + imgId + "(?=<|\f|$)");
+					out = out.replace(outId, outNew);
+				}
+				
 				continue;
 			}
 
@@ -268,7 +271,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 			else if (mode == "pool") {
 				search = "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1];
-				outId = new RegExp("\\b" + imgId + "(?=\\s|$)");
+				outId = new RegExp("\f,;" + imgId + "(?=<|\f|$)");
 				outNew = '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
 				out = out.replace(outId, outNew);
 			}
