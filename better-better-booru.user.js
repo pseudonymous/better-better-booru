@@ -205,9 +205,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						var paginator = document.evaluate('//div[@class="paginator"]', where, null, 9, null).singleNodeValue;
 						var newPaginator = /<div class="paginator">(.+?)<\/div>/.exec(xmlhttp.responseText)[1];
 
-						if (newPaginator) {
+						if (newPaginator)
 							paginator.innerHTML = newPaginator;
-						}
 					}
 				}
 			};
@@ -320,8 +319,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where.innerHTML = out;
 
 		// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
-		if (mode == "search" && allowUserLimit())
-			fetchPages(location.href + "&limit=" + thumbnail_count, where);
+		if (mode == "search" && allowUserLimit()) {
+			var pageUrl = location.href.split("#")[0];
+			
+			if (/\?/.test(pageUrl))
+				pageUrl += "&limit=" + thumbnail_count;
+			else
+				pageUrl += "?limit=" + thumbnail_count;
+				
+			fetchPages(pageUrl, where);
+		}
 
 		// Blacklist.
 		if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) {
