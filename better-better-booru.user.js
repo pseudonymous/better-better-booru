@@ -2,12 +2,13 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        3.0
+// @version        3.1
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @include        http://*.donmai.us/*
 // @include        http://donmai.us/*
 // @exclude        http://trac.donmai.us/*
+// @run-at         document-end
 // @grant          none
 // ==/UserScript==
 
@@ -192,6 +193,29 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
+	function fetchPages(url, where) {
+		// Retrieve page to get paginator.
+		var xmlhttp = new XMLHttpRequest();
+
+		if (xmlhttp !== null) {
+			xmlhttp.onreadystatechange = function() {
+				if (xmlhttp.readyState == 4) { // 4 = "loaded"
+					if (xmlhttp.status == 200) { // 200 = "OK"
+
+						var paginator = document.evaluate('//div[@class="paginator"]', where, null, 9, null).singleNodeValue;
+						var newPaginator = /<div class="paginator">(.+?)<\/div>/.exec(xmlhttp.responseText)[1];
+
+						if (newPaginator) {
+							paginator.innerHTML = newPaginator;
+						}
+					}
+				}
+			};
+			xmlhttp.open("GET", url, true);
+			xmlhttp.send(null);
+		}
+	}
+
 	/* Functions for creating content from retrieved info */
 	function parseListing(xml, mode, optArg) {
 		var out = "";
@@ -230,7 +254,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var md5 = post.md5;
 			var ext = post.file_ext;
 			var fileUrl = "/data/" + md5 + "." + ext;
-			var thumbnailUrl = "/ssd/data/preview/" + md5 + ".jpg";
+			var thumbnailUrl = (!post.image_height || ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg");
 			var search = "";
 			var outNew = "";
 			var outId = "";
@@ -241,7 +265,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					outId = new RegExp("\f,;" + imgId + "(?=<|\f|$)");
 					out = out.replace(outId, outNew);
 				}
-				
+
 				continue;
 			}
 
@@ -295,6 +319,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else
 			where.innerHTML = out;
 
+		// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
+		if (mode == "search" && allowUserLimit())
+			fetchPages(location.href + "&limit=" + thumbnail_count, where);
+
 		// Blacklist.
 		if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) {
 			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
@@ -340,7 +368,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Create flash object.
 				container.innerHTML = '<div id="note-container"></div> <object height="' + height + '" width="' + width + '"> <params name="movie" value="' + url + '"> <embed allowscriptaccess="never" src="' + url + '" height="' + height + '" width="' + width + '"> </params> </object> <p><a href="' + url + '">Save this flash (right click and save)</a></p>';
 			}
-			else if (height === null) {
+			else if (!height) {
 				// Create manual download.
 				container.innerHTML = '<h2><a href="' + url + '">Download</a></h2> <p>You must download this file manually.</p>';
 			}
