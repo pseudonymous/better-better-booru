@@ -817,14 +817,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function hideCommentMessage() {
-		var x = document.getElementById("comments");
-		if (!x)
-			x = document.getElementById("comment-list");
-		if (x)
-			x.getElementsByTagName("div")[0].style.display = "none";
-	}
-
 	function hideUpgradeNotice() {
 		var x = document.getElementById("upgrade-account-notice");
 		if (x)
