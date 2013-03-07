@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        3.1
+// @version        3.2
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @include        http://*.donmai.us/*
@@ -21,6 +21,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Don't touch above this line! */
 	/********************************/
 
+
 	/* Help */
 	// When editing settings, make sure you always maintain the same format. Leave equal signs, quotation marks, and semicolons alone.
 	// For true/false settings, you simply use true to turn on the option or false to turn it off. Never use quotation marks for these.
@@ -32,12 +33,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Global
 	var show_loli = false;
 	var show_shota = false;
-	var fix_links = true; // Also removes all the junk after the post ID in the URL. Automatically set if the above are true.
+	var enable_bbb = true; // Disabling this will disable many main features related to images and their listings (thumbnail_count, image_resize, load_sample_first, border colors, script_blacklisted_tags). Has no effect if show_loli or show_shota are true.
+	var clean_links = false; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 
 	var hide_sign_up_notice = false;
 	var hide_upgrade_notice = false;
 	var hide_advertisements = false;
-	var hide_statusnotice = false;
 
 	// Search
 	var enable_arrow_nav = false; // Allow the use of the left and right keys to navigate post/pool index pages. Doesn't work when input has focus.
@@ -48,6 +49,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Post
 	var image_resize = false; // When initially loading, scale down large images to fit the browser window as needed.
 	var load_sample_first = true; // Use sample images when available.
+	var hide_original_notice = false; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
+	var disable_post_arrow_navigation = false; // Disable arrow navigation between posts and allow right/left arrow keys to scroll the window for large images. Arrow navigation still works for switching between pages.
 	var remove_tag_headers = false; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
 	var fav_count = true; // Add the number of favorites to the sidebar information.
 
@@ -84,7 +87,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	var myImg = {}; // Image related global variables
 
-	if (fix_links || show_loli || show_shota) {
+	if (enable_bbb || show_loli || show_shota) {
 		var url = location.pathname;
 
 		if (/\/posts\/\d+/.test(url))
@@ -112,8 +115,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		hideEtology();
 	}
 
-	if (hide_statusnotice)
-		hideStatusNotice();
+	if (clean_links)
+		cleanLinks();
+	
+	if (disable_post_arrow_navigation)
+		disablePostArrowNav();
 
 	if (enable_arrow_nav) {
 		var paginator = document.evaluate('//div[@class="paginator" or @class="pagination"]', document, null, 9, null).singleNodeValue;
@@ -122,11 +128,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			window.addEventListener("keydown", keyCheck, false);
 	}
 
-	if (search_add && /^\/(posts)?\/?$/.test(location.pathname))
+	if (search_add)
 		searchAdd();
 
-	if (remove_tag_headers && /posts\/\d+/.test(location.pathname))
+	if (remove_tag_headers)
 		removeTagHeaders();
+
+	if (fav_count)
+		favCount();
 
 	/* Functions */
 
@@ -219,15 +228,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function parseListing(xml, mode, optArg) {
 		var out = "";
 		var posts = xml;
+		var search = "";
 
 		// Use JSON results for searches and pool collections.
-		if (mode == "search")
+		if (mode == "search") {
 			var targetId = "posts";
+			search = (/\?tags=/.test(location.search) && !clean_links ? "?tags=" + getVar("tags") : "");
+		}
 		else if (mode == "popular")
 			var targetId = "content";
 		else if (mode == "pool") {
 			var targetId = "content";
 			var orderedPostIds = optArg;
+			search = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1] : "");
 			out = "\f,;" + orderedPostIds.join("\f,;");
 		}
 		else if (mode == "notes") {
@@ -254,7 +267,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var ext = post.file_ext;
 			var fileUrl = "/data/" + md5 + "." + ext;
 			var thumbnailUrl = (!post.image_height || ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg");
-			var search = "";
 			var outNew = "";
 			var outId = "";
 
@@ -289,11 +301,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// eek, huge line.
 			if (mode == "search" || mode == "notes" || mode == "popular") {
-				search = (/tags=/.test(location.search) ? "?tags=" + getVar("tags") : "");
 				out += '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
 			}
 			else if (mode == "pool") {
-				search = "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1];
 				outId = new RegExp("\f,;" + imgId + "(?=<|\f|$)");
 				outNew = '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
 				out = out.replace(outId, outNew);
@@ -321,12 +331,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
 		if (mode == "search" && allowUserLimit()) {
 			var pageUrl = location.href.split("#")[0];
-			
+
 			if (/\?/.test(pageUrl))
 				pageUrl += "&limit=" + thumbnail_count;
 			else
 				pageUrl += "?limit=" + thumbnail_count;
-				
+
 			fetchPages(pageUrl, where);
 		}
 
@@ -364,6 +374,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var ext = myImg.file_ext;
 			var md5 = myImg.md5;
 			var url = "/data/" + md5 + "." + ext;
+			var hasLarge = myImg.has_large;
 			var height = myImg.image_height;
 			var width = myImg.image_width;
 			var ratio = 850 / width;
@@ -380,7 +391,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				container.innerHTML = '<h2><a href="' + url + '">Download</a></h2> <p>You must download this file manually.</p>';
 			}
 			else {
-				var useSample = (checkSetting("default-image-size", "large", load_sample_first) && ratio < 1 ? true : false);
+				var useSample = (checkSetting("default-image-size", "large", load_sample_first) && hasLarge);
 
 				if (useSample) {
 					var newWidth = sampWidth;
@@ -400,7 +411,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var bbbLoader = document.getElementById("bbb-loader");
 
 				// Enable image swapping between the original and sample image.
-				if (ratio < 1) {
+				if (hasLarge) {
 					var resizeNotice = document.getElementById("image-resize-notice");
 
 					if (resizeNotice)
@@ -408,19 +419,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					var bbbResizeNotice = document.createElement("div");
 					bbbResizeNotice.className = "ui-corner-all ui-state-highlight notice";
-					bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + sampUrl + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span>';
+					bbbResizeNotice.style.position = "relative";
+					bbbResizeNotice.style.display = "none";
+					bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + sampUrl + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
 					container.parentNode.insertBefore(bbbResizeNotice , container);
 
 					var swapInit = true;
 					var sampleNotice = document.getElementById("bbb-sample-notice");
 					var originalNotice = document.getElementById("bbb-original-notice");
 					var imgStatus = document.getElementById("bbb-img-status");
+					var closeOriginalNotice = document.getElementById("close-original-notice");
 
-					if (useSample)
+					if (useSample) {
 						sampleNotice.style.display = "";
-					else
+						bbbResizeNotice.style.display = "";
+					}
+					else if (!getCookie()["bbb_hide_original_notice"] && !hide_original_notice) {
 						originalNotice.style.display = "";
-
+						closeOriginalNotice.style.display = "";
+						bbbResizeNotice.style.display = "";
+					}
+					
 					document.getElementById("bbb-sample-link").addEventListener("click", function(event) {
 						if (swapInit)
 							swapInit = false;
@@ -449,8 +468,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 					img.addEventListener("load", function(event) {
 						if (!/\/sample\//.test(img.src)) {
-							sampleNotice.style.display = "none";
-							originalNotice.style.display = "";
+							if (getCookie()["bbb_hide_original_notice"] || hide_original_notice)
+								bbbResizeNotice.style.display = "none";
+							else {
+								sampleNotice.style.display = "none";
+								originalNotice.style.display = "";
+								closeOriginalNotice.style.display = "";
+							}
+
 							img.height = height;
 							img.width = width;
 
@@ -463,6 +488,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						else {
 							sampleNotice.style.display = "";
 							originalNotice.style.display = "none";
+							closeOriginalNotice.style.display = "none";
 							img.height = sampHeight;
 							img.width = sampWidth;
 
@@ -477,6 +503,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						Danbooru.Note.Box.scale_all();
 						Danbooru.Post.place_jlist_ads();
 					}, false);
+					closeOriginalNotice.addEventListener("click", function(event) {
+						bbbResizeNotice.style.display = "none";
+						createCookie("bbb_hide_original_notice", "true", 1);
+					}, false);
 				}
 
 				// Enable the "Resize to window" and "Find similar" options for logged out users.
@@ -488,28 +518,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				// Make use of what Danbooru has provided us.
-				if (!imageExists)
+				if (!imageExists && checkLoginStatus())
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false); // Make the "Add note" link work.
 
 				img.addEventListener("click", Danbooru.Note.Box.toggle_all, false); // Make notes toggle when clicking the image.
 				Danbooru.Note.load_all(); // Load/reload notes.
+
+				// Resize image if desired.
+				if (checkSetting("always-resize-images", "true", image_resize))
+					document.getElementById("image-resize-to-window-link").click();
 			}
-
-			// Resize image if desired.
-			if (checkSetting("always-resize-images", "true", image_resize))
-				document.getElementById("image-resize-to-window-link").click();
-
-			// Add favorites count
-			if (fav_count) {
-				var favs = myImg.fav_string.match(/fav:/g);
-				var numFavs = (favs === null ? 0 : favs.length );
-				var target = document.getElementById("score-for-post-" + myImg.id).parentNode;
-
-				target.innerHTML += '<li>Favorites: ' + numFavs + '</li>';
-			}
-
-			// Display comments.
-			document.getElementById("comments").getElementsByTagName("div")[0].removeAttribute("style");
 		}
 	}
 
@@ -546,6 +564,39 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			arrowNav("left");
 		else if (e.keyCode == 39)
 			arrowNav("right");
+	}
+
+	function disablePostArrowNav() {
+		if (/\/posts\/\d+/.test(location.pathname)) {
+			$(document).ready( function() {
+				$(document).unbind("keydown.left");
+				$(document).unbind("keydown.right");
+			});
+		}
+	}
+
+	function cleanLinks() {
+		if (/\/posts\/\d+/.test(location.pathname)) {
+			var target = document.evaluate('//div[@id="pool-nav"]//a', document, null, 6, null)
+
+			for (var i = 0, isl = target.snapshotLength; i < isl; i++) {
+				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];;
+			}
+		}
+		else if (/\/pools\/\d+/.test(location.pathname)) {
+			var target = document.evaluate('//section[@id="content"]/article/a', document, null, 6, null)
+
+			for (var i = 0, isl = target.snapshotLength; i < isl; i++) {
+				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];;
+			}
+		}
+		else if (/^\/(posts|$)/.test(location.pathname)) {
+			var target = document.evaluate('//div[@id="posts"]/article/a', document, null, 6, null)
+
+			for (var i = 0, isl = target.snapshotLength; i < isl; i++) {
+				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];;
+			}
+		}
 	}
 
 	function arrowNav(dir) {
@@ -646,35 +697,50 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function searchAdd() {
-		// Where = array of <li> in tag-sidebar.
-		var where = document.getElementById("tag-box");
+		if (/^\/(posts)?\/?$/.test(location.pathname)) {
+			// Where = array of <li> in tag-sidebar.
+			var where = document.getElementById("tag-box");
 
-		if (!where)
-			return;
-		else
-			where = where.getElementsByTagName("li");
+			if (!where)
+				return;
+			else
+				where = where.getElementsByTagName("li");
 
-		var tag = getVar("tags");
+			var tag = getVar("tags");
 
-		if (!tag)
-			tag = "";
-		else
-			tag = "+" + tag;
+			if (!tag)
+				tag = "";
+			else
+				tag = "+" + tag;
 
-		for (var i = 0, wl = where.length; i < wl; i++) {
-			var newTag = getVar("tags", where[i].getElementsByTagName("a")[1].href);
-			var newLink = "/post/index?tags=" + newTag + tag;
-			where[i].innerHTML = '<a href="' + newLink + '">+</a> ' + where[i].innerHTML;
-			newLink = "/post/index?tags=-" + newTag + tag;
-			where[i].innerHTML = '<a href="' + newLink + '">-</a> ' + where[i].innerHTML;
+			for (var i = 0, wl = where.length; i < wl; i++) {
+				var newTag = getVar("tags", where[i].getElementsByTagName("a")[1].href);
+				var newLink = "/post/index?tags=" + newTag + tag;
+				where[i].innerHTML = '<a href="' + newLink + '">+</a> ' + where[i].innerHTML;
+				newLink = "/post/index?tags=-" + newTag + tag;
+				where[i].innerHTML = '<a href="' + newLink + '">-</a> ' + where[i].innerHTML;
+			}
 		}
 	}
 
 	function removeTagHeaders() {
-		var tagList = document.getElementById("tag-list");
-		var newList = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
+		if (/posts\/\d+/.test(location.pathname)) {
+			var tagList = document.getElementById("tag-list");
+			var newList = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
 
-		tagList.innerHTML = newList;
+			tagList.innerHTML = newList;
+		}
+	}
+
+	function favCount() {
+		if (/\/posts\/\d+/.test(url)) {
+			// Add favorites count
+			var favs = fetchMeta("favorites").match(/fav:/g);
+			var numFavs = (favs === null ? 0 : favs.length );
+			var target = document.getElementById("score-for-post-" + fetchMeta("post-id")).parentNode;
+
+			target.innerHTML += '<li>Favorites: ' + numFavs + '</li>';
+		}
 	}
 
 	function getCookie() {
@@ -719,7 +785,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				div = null;
 
 				return outer;
-		  })(node);
+			})(node);
 	}
 
 	// Does anyone use these options? Adblock should pretty much cover the ads.
@@ -769,13 +835,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var x = document.getElementById("sign-up-notice");
 		if (x)
 			x.style.display = "none";
-	}
-
-	function hideStatusNotice() {
-		var img = document.evaluate('//div[@class="status-notice"]', document, null, 6, null);
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++) {
-			img.snapshotItem(i).style.display = "none";
-		}
 	}
 
 } // End of injectMe.
