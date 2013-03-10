@@ -95,7 +95,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			searchJSON("post");
 		else if (/^\/(posts|$)/.test(url))
 			searchJSON("search");
-		else if (/^\/notes/.test(url))
+		else if (/^\/notes/.test(url) && /group_by=post/.test(location.search))
 			searchJSON("notes");
 		else if (/\/explore\/posts\/popular/.test(url))
 			searchJSON("popular");
@@ -236,8 +236,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var targetId = "posts";
 			search = (/\?tags=/.test(location.search) && !clean_links ? "?tags=" + getVar("tags") : "");
 		}
-		else if (mode == "popular")
-			var targetId = "content";
+		else if (mode == "popular") {
+			var targetId = "c-explore-posts";
+			out = outerHTML(document.getElementById("a-index")).split("<article")[0];
+		}
 		else if (mode == "pool") {
 			var targetId = "content";
 			var orderedPostIds = optArg;
@@ -257,7 +259,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var post = posts[i];
 			var imgId = post.id;
 			var style = "";
-			var uploader = post.uploader_name;
+			var uploader = (post.uploader_name !== undefined ? post.uploader_name : post.uploader_id); // I could've sworn this was fixed. Whatever the case, this method will prevent undefined until it really is fixed.
 			var score = post.score;
 			var rating = post.rating;
 			var tags = post.tag_string;
@@ -358,7 +360,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		// Apply the blacklist and update the sidebar for search listings.
-		if (mode == "search") {
+		if (mode == "search" || mode == "popular") {
 			document.getElementById("blacklist-list").innerHTML = "";
 
 			if (Danbooru.Blacklist.apply())
