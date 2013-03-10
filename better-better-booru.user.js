@@ -509,7 +509,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (!checkLoginStatus()) {
 					var options = document.evaluate('//aside[@id="sidebar"]/section[4]/ul', document, null, 9, null).singleNodeValue;
 
-					options.innerHTML = '<li><a href="#" id="image-resize-to-window-link">Resize to window</a></li> <li><a href="#" id="listnotetoggle">Toggle notes</a></li> <li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + md5 + '.jpg">Find similar</a></li>';
+					options.innerHTML = '<li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + md5 + '.jpg">Find similar</a></li>';
 					Danbooru.Post.initialize_post_image_resize_to_window_link();
 				}
 
