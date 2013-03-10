@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        3.2
+// @version        3.3
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @include        http://*.donmai.us/*
@@ -41,16 +41,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var hide_advertisements = false;
 
 	// Search
-	var enable_arrow_nav = false; // Allow the use of the left and right keys to navigate post/pool index pages. Doesn't work when input has focus.
+	var enable_arrow_nav = false; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
 	var add_border = true; // Add a light blue border to Shota and pink border to Loli.
 	var search_add = true; // Add the + and - shortcuts to the tag list for including or excluding search terms.
+	var remove_width_limit = false; // Allow thumbnails to expand past 5 columns. Please note this option is aimed at widescreen users and has limited testing at the moment.
 	var thumbnail_count = 0; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
-	var image_resize = false; // When initially loading, scale down large images to fit the browser window as needed.
+	var alternate_image_swap = false; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
+	var image_resize = true; // When initially loading, scale down large images to fit the browser window as needed.
 	var load_sample_first = true; // Use sample images when available.
 	var hide_original_notice = false; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
-	var disable_post_arrow_navigation = false; // Disable arrow navigation between posts and allow right/left arrow keys to scroll the window for large images. Arrow navigation still works for switching between pages.
 	var remove_tag_headers = false; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
 	var fav_count = true; // Add the number of favorites to the sidebar information.
 
@@ -87,6 +88,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	var myImg = {}; // Image related global variables
 
+	if (remove_width_limit)
+		removeWidthLimit();
+
 	if (enable_bbb || show_loli || show_shota) {
 		var url = location.pathname;
 
@@ -117,9 +121,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	if (clean_links)
 		cleanLinks();
-	
-	if (disable_post_arrow_navigation)
-		disablePostArrowNav();
 
 	if (enable_arrow_nav) {
 		var paginator = document.evaluate('//div[@class="paginator" or @class="pagination"]', document, null, 9, null).singleNodeValue;
@@ -168,7 +169,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (mode == "poolsearch") {
 			var poolIds = xml.post_ids.split(" ");
 			var page = (/page=\d+/.test(location.search) ? parseInt(getVar("page"), 10) : 1);
-			var postIds = poolIds.slice((page - 1) * 20, ((page - 1) * 20) + 20);
+			var postIds = poolIds.slice((page - 1) * 20, page * 20);
 
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
 		}
@@ -340,7 +341,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			fetchPages(pageUrl, where);
 		}
 
-		// Blacklist.
+		// Load the script blacklist if not logged in.
 		if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) {
 			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
 
@@ -352,12 +353,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 		}
 
-		var blacklistUsed = Danbooru.Blacklist.apply();
-
+		// Apply the blacklist and update the sidebar for search listings.
 		if (mode == "search") {
 			document.getElementById("blacklist-list").innerHTML = "";
 
-			if (blacklistUsed)
+			if (Danbooru.Blacklist.apply())
 				Danbooru.Blacklist.update_sidebar();
 			else
 				document.getElementById("blacklist-box").style.display = "none";
@@ -382,15 +382,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var sampHeight = Math.round(height * ratio);
 			var sampWidth = 850;
 
-			if (ext == "swf") {
-				// Create flash object.
+			if (ext == "swf") // Create flash object.
 				container.innerHTML = '<div id="note-container"></div> <object height="' + height + '" width="' + width + '"> <params name="movie" value="' + url + '"> <embed allowscriptaccess="never" src="' + url + '" height="' + height + '" width="' + width + '"> </params> </object> <p><a href="' + url + '">Save this flash (right click and save)</a></p>';
-			}
-			else if (!height) {
-				// Create manual download.
+			else if (!height) // Create manual download.
 				container.innerHTML = '<h2><a href="' + url + '">Download</a></h2> <p>You must download this file manually.</p>';
-			}
-			else {
+			else { // Create image
 				var useSample = (checkSetting("default-image-size", "large", load_sample_first) && hasLarge);
 
 				if (useSample) {
@@ -439,7 +435,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						closeOriginalNotice.style.display = "";
 						bbbResizeNotice.style.display = "";
 					}
-					
+
 					document.getElementById("bbb-sample-link").addEventListener("click", function(event) {
 						if (swapInit)
 							swapInit = false;
@@ -509,19 +505,54 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 				}
 
-				// Enable the "Resize to window" and "Find similar" options for logged out users.
+				// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
 				if (!checkLoginStatus()) {
 					var options = document.evaluate('//aside[@id="sidebar"]/section[4]/ul', document, null, 9, null).singleNodeValue;
 
-					options.innerHTML = '<li><a href="#" id="image-resize-to-window-link">Resize to window</a></li> <li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + md5 + '.jpg">Find similar</a></li>';
+					options.innerHTML = '<li><a href="#" id="image-resize-to-window-link">Resize to window</a></li> <li><a href="#" id="listnotetoggle">Toggle notes</a></li> <li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + md5 + '.jpg">Find similar</a></li>';
 					Danbooru.Post.initialize_post_image_resize_to_window_link();
 				}
 
-				// Make use of what Danbooru has provided us.
-				if (!imageExists && checkLoginStatus())
-					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false); // Make the "Add note" link work.
+				 // Make the "Add note" link work.
+				if (!imageExists && document.getElementById("translate") !== null)
+					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
 
-				img.addEventListener("click", Danbooru.Note.Box.toggle_all, false); // Make notes toggle when clicking the image.
+
+				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
+					img.addEventListener("click", Danbooru.Note.Box.toggle_all, false);
+				}
+				else { // Make a "Toggle Notes" link in the options bar.
+					if (document.getElementById("listnotetoggle") === null) { // For logged in ussers.
+						var translateOption = document.getElementById("translate").parentNode;
+						var listNoteToggle = document.createElement("li");
+
+						listNoteToggle.innerHTML = '<a href="#" id="listnotetoggle">Toggle notes</a>';
+						translateOption.parentNode.insertBefore(listNoteToggle, translateOption);
+					}
+
+					document.getElementById("listnotetoggle").addEventListener("click", function(event) {Danbooru.Note.Box.toggle_all(); event.preventDefault();}, false);
+
+					// Make clicking the image swap between the original and sample image when available.
+					if (hasLarge) {
+						img.addEventListener("click", function(event) {
+							if (/\/sample\//.test(img.src)) {
+								if (swapInit)
+									swapInit = false;
+
+								bbbLoader.src = url;
+								imgStatus.innerHTML = "Loading original image...";
+							}
+							else {
+								if (swapInit)
+									swapInit = false;
+
+								bbbLoader.src = sampUrl;
+								imgStatus.innerHTML = "Loading sample image...";
+							}
+						}, false);
+					}
+				}
+
 				Danbooru.Note.load_all(); // Load/reload notes.
 
 				// Resize image if desired.
@@ -561,18 +592,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (document.activeElement.type == "text" || document.activeElement.type == "textarea")
 			return;
 		else if (e.keyCode == 37)
-			arrowNav("left");
+			danbooruNav("left");
 		else if (e.keyCode == 39)
-			arrowNav("right");
+			danbooruNav("right");
 	}
 
-	function disablePostArrowNav() {
-		if (/\/posts\/\d+/.test(location.pathname)) {
-			$(document).ready( function() {
-				$(document).unbind("keydown.left");
-				$(document).unbind("keydown.right");
-			});
-		}
+	function danbooruNav(dir) {
+		if (dir === "left")
+			Danbooru.Paginator.prev_page();
+		else if (dir === "right")
+			Danbooru.Paginator.next_page();
 	}
 
 	function cleanLinks() {
@@ -596,57 +625,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++) {
 				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];;
 			}
-		}
-	}
-
-	function arrowNav(dir) {
-		if (/page=(1000|[ab])/.test(location.href)) { // For pages 1000+.
-			var pageLinks = document.evaluate('//div[@class="paginator"]//a', document, null, 6, null);
-
-			if (pageLinks.snapshotItem(1)) {
-				switch (dir) {
-					case "left": location.href = pageLinks.snapshotItem(0).href; break;
-					case "right": location.href = pageLinks.snapshotItem(1).href; break;
-					default: break;
-				}
-			}
-			else {
-				switch (dir) {
-					case "right": location.href = pageLinks.snapshotItem(0).href; break;
-					default: break;
-				}
-			}
-		}
-		else { // For pages under 1000.
-			var page = parseInt(getVar("page"), 10);
-			var limit = "";
-
-			if (!page) {
-				page = 1;
-
-				if (allowUserLimit())
-					limit = "&limit=" + thumbnail_count;
-			}
-
-			switch (dir) {
-				case "left": page--; break;
-				case "right": page++; break;
-				default: break;
-			}
-
-			if (page < 1 || page > 1000)
-				return;
-
-			var url = location.href.split("#")[0]; // Get rid of hash portion.
-
-			if (!/\?/.test(url))
-				url += "?page=" + page + limit; // Search string not found so create one.
-			else if (!/page=\d*/.test(url))
-				url += "&page=" + page + limit;
-			else
-				url = url.replace(/page=\d*/, "page=" + page) + limit;
-
-			location.href = url.replace(/(&)+|(\?)&+|(.)&+$/g, "$1$2$3"); // Clean up any "&" problems and load.
 		}
 	}
 
@@ -738,10 +716,36 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var favs = fetchMeta("favorites").match(/fav:/g);
 			var numFavs = (favs === null ? 0 : favs.length );
 			var target = document.getElementById("score-for-post-" + fetchMeta("post-id")).parentNode;
+			var listFavorites = document.createElement("li");
 
-			target.innerHTML += '<li>Favorites: ' + numFavs + '</li>';
+			listFavorites.innerHTML = "Favorites: " + numFavs;
+			target.parentNode.insertBefore(listFavorites, target);
 		}
 	}
+
+	function removeWidthLimit() {
+		if (/^\/(posts)?\/?$/.test(location.pathname)){
+			document.getElementById("posts").style.maxWidth = "none";
+			document.getElementById("content").style.width = "auto";
+;
+			function adjustWidthLimit() {
+				var availableWidth = document.getElementById("a-index").offsetWidth - document.getElementById("sidebar").offsetWidth - document.getElementById("jlist-rss-ads-for-show").offsetWidth;
+				var contentDif = document.getElementById("content").offsetWidth - document.getElementById("posts").offsetWidth; // Get the padding + border difference since "posts" is inside "content".
+				document.getElementById("posts").style.maxWidth = availableWidth - contentDif + "px";
+			}
+
+			adjustWidthLimit();
+
+			function resizeTimer() {
+				if (!resizeTimeout)
+					var resizeTimeout = setTimeout(function() { adjustWidthLimit();	}, 100);
+			}
+
+
+			window.addEventListener("resize", resizeTimer, false);
+		}
+	}
+
 
 	function getCookie() {
 		// Return associative array with cookie values.
