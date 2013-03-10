@@ -88,9 +88,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	var myImg = {}; // Image related global variables
 
-	if (remove_width_limit)
-		removeWidthLimit();
-
 	if (enable_bbb || show_loli || show_shota) {
 		var url = location.pathname;
 
@@ -105,6 +102,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (/\/pools\/\d+/.test(url))
 			searchJSON("pool");
 	}
+
+	if (remove_width_limit)
+		removeWidthLimit();
 
 	if (hide_upgrade_notice)
 		hideUpgradeNotice();
@@ -328,6 +328,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where.innerHTML = out + outerHTML(paginator);
 		else
 			where.innerHTML = out;
+
+		// Fix the width again for the potential initially blank pages.
+		if (remove_width_limit)
+			removeWidthLimit();
 
 		// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
 		if (mode == "search" && allowUserLimit()) {
