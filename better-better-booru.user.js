@@ -89,17 +89,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var myImg = {}; // Image related global variables
 
 	if (enable_bbb || show_loli || show_shota) {
-		var url = location.pathname;
+		var urlPath = location.pathname;
 
-		if (/\/posts\/\d+/.test(url))
+		if (/\/posts\/\d+/.test(urlPath))
 			searchJSON("post");
-		else if (/^\/(posts|$)/.test(url))
+		else if (/^\/(posts|$)/.test(urlPath))
 			searchJSON("search");
-		else if (/^\/notes/.test(url) && /group_by=post/.test(location.search))
+		else if (/^\/notes/.test(urlPath) && /group_by=post/.test(location.search))
 			searchJSON("notes");
-		else if (/\/explore\/posts\/popular/.test(url))
+		else if (/\/explore\/posts\/popular/.test(urlPath))
 			searchJSON("popular");
-		else if (/\/pools\/\d+/.test(url))
+		else if (/\/pools\/\d+/.test(urlPath))
 			searchJSON("pool");
 	}
 
@@ -125,7 +125,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (enable_arrow_nav) {
 		var paginator = document.evaluate('//div[@class="paginator" or @class="pagination"]', document, null, 9, null).singleNodeValue;
 
-		if (paginator) // If the paginator exists, arrow navigation should be applicable.
+		if (paginator || /\/explore\/posts\/popular/.test(location.pathname)) // If the paginator exists, arrow navigation should be applicable.
 			window.addEventListener("keydown", keyCheck, false);
 	}
 
@@ -604,10 +604,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function danbooruNav(dir) {
-		if (dir === "left")
-			Danbooru.Paginator.prev_page();
-		else if (dir === "right")
-			Danbooru.Paginator.next_page();
+		if (/\/explore\/posts\/popular/.test(location.pathname)) {
+			if (dir === "left")
+				Danbooru.PostPopular.nav_prev();
+			else if (dir === "right")
+				Danbooru.PostPopular.nav_next();
+		}
+		else {
+			if (dir === "left")
+				Danbooru.Paginator.prev_page();
+			else if (dir === "right")
+				Danbooru.Paginator.next_page();
+		}
 	}
 
 	function cleanLinks() {
@@ -717,7 +725,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function favCount() {
-		if (/\/posts\/\d+/.test(url)) {
+		if (/\/posts\/\d+/.test(location.pathname)) {
 			// Add favorites count
 			var favs = fetchMeta("favorites").match(/fav:/g);
 			var numFavs = (favs === null ? 0 : favs.length );
