@@ -237,8 +237,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			search = (/\?tags=/.test(location.search) && !clean_links ? "?tags=" + getVar("tags") : "");
 		}
 		else if (mode == "popular") {
-			var targetId = "c-explore-posts";
-			out = outerHTML(document.getElementById("a-index")).split("<article")[0];
+			var targetId = "a-index";
+			out = document.getElementById("a-index").innerHTML.split("<article")[0];
 		}
 		else if (mode == "pool") {
 			var targetId = "content";
