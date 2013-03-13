@@ -86,8 +86,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/********************************/
 
 
-	var myImg = {}; // Image related global variables
-
 	if (enable_bbb || show_loli || show_shota) {
 		var urlPath = location.pathname;
 
@@ -371,18 +369,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function parsePost(xml) {
-		myImg = xml;
-
+		var post = xml;
 		var imageExists = (document.getElementById("image") === null ? false : true);
 		var container = document.getElementById("image-container");
 
-		if (myImg.id) {
-			var ext = myImg.file_ext;
-			var md5 = myImg.md5;
+		if (post.id) {
+			var ext = post.file_ext;
+			var md5 = post.md5;
 			var url = "/data/" + md5 + "." + ext;
-			var hasLarge = myImg.has_large;
-			var height = myImg.image_height;
-			var width = myImg.image_width;
+			var hasLarge = post.has_large;
+			var height = post.image_height;
+			var width = post.image_width;
 			var ratio = 850 / width;
 			var sampUrl = "/data/sample/sample-" + md5 + ".jpg";
 			var sampHeight = Math.round(height * ratio);
@@ -739,13 +736,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function removeWidthLimit() {
 		if (/^\/(posts)?\/?$/.test(location.pathname)){
-			document.getElementById("posts").style.maxWidth = "none";
-			document.getElementById("content").style.width = "auto";
-;
+			var postsDiv = document.getElementById("posts");
+			var contentSection = document.getElementById("content");
+
+			postsDiv.style.maxWidth = "none";
+			contentSection.style.paddingLeft = "0.5em";
+			contentSection.style.width = "auto";
+
 			function adjustWidthLimit() {
 				var availableWidth = document.getElementById("a-index").offsetWidth - document.getElementById("sidebar").offsetWidth - document.getElementById("jlist-rss-ads-for-show").offsetWidth;
-				var contentDif = document.getElementById("content").offsetWidth - document.getElementById("posts").offsetWidth; // Get the padding + border difference since "posts" is inside "content".
-				document.getElementById("posts").style.maxWidth = availableWidth - contentDif + "px";
+				var contentDif = contentSection.offsetWidth - postsDiv.offsetWidth; // Get the padding + border difference since "posts" is inside "content".
+				postsDiv.style.maxWidth = availableWidth - contentDif + "px";
 			}
 
 			adjustWidthLimit();
