@@ -45,7 +45,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var enable_arrow_nav = false; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
 	var add_border = true; // Add a light blue border to Shota and pink border to Loli.
 	var search_add = true; // Add the + and - shortcuts to the tag list for including or excluding search terms.
-	var remove_width_limit = false; // Allow thumbnails to expand past 5 columns. Please note this option is aimed at widescreen users and has limited testing at the moment.
+	var remove_width_limit = false; // Allow thumbnails to attempt to fill unused space. Please note this option is aimed at widescreen users and has limited testing at the moment.
 	var thumbnail_count = 0; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
