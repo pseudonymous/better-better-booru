@@ -39,6 +39,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var hide_sign_up_notice = false;
 	var hide_upgrade_notice = false;
 	var hide_advertisements = false;
+	var hide_tos_notice = false;
 
 	// Search
 	var enable_arrow_nav = false; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
@@ -85,7 +86,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Don't touch below this line! */
 	/********************************/
 
-	
+
 	/* Global Variables */
 	var gUrl = location.href.split("#")[0]; // URL without the anchor
 	var gUrlPath = location.pathname; // URL path only
@@ -114,6 +115,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	if (hide_sign_up_notice)
 		hideSignUpNotice();
+
+	if (hide_tos_notice)
+		hideTOSNotice();
 
 	if (hide_advertisements) {
 		hideAdvertisements();
@@ -530,7 +534,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					img.addEventListener("click", Danbooru.Note.Box.toggle_all, false);
 				}
 				else { // Make a "Toggle Notes" link in the options bar.
-					if (document.getElementById("listnotetoggle") === null) { // For logged in ussers.
+					if (document.getElementById("listnotetoggle") === null) { // For logged in users.
 						var translateOption = document.getElementById("translate").parentNode;
 						var listNoteToggle = document.createElement("li");
 
@@ -650,7 +654,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else
 			return false;
 	}
-	
+
 	function currentLoc() {
 		if (/\/posts\/\d+/.test(gUrlPath))
 			return "post";
@@ -867,6 +871,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (x)
 			x.style.display = "none";
 	}
+
+	function hideTOSNotice() {
+		var x = document.getElementById("tos-notice");
+		if (x)
+			x.style.display = "none";
+	}
+
 
 } // End of injectMe.
 
