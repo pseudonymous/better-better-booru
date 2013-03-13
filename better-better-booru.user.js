@@ -85,19 +85,24 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Don't touch below this line! */
 	/********************************/
 
+	
+	/* Global Variables */
+	var gUrl = location.href.split("#")[0]; // URL without the anchor
+	var gUrlPath = location.pathname; // URL path only
+	var gUrlQuery = location.search; // URL query string only
+	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool)
 
+	/* "INIT" */
 	if (enable_bbb || show_loli || show_shota) {
-		var urlPath = location.pathname;
-
-		if (/\/posts\/\d+/.test(urlPath))
+		if (gLoc === "post")
 			searchJSON("post");
-		else if (/^\/(posts|$)/.test(urlPath))
+		else if (gLoc === "search")
 			searchJSON("search");
-		else if (/^\/notes/.test(urlPath) && /group_by=post/.test(location.search))
+		else if (gLoc === "notes")
 			searchJSON("notes");
-		else if (/\/explore\/posts\/popular/.test(urlPath))
+		else if (gLoc === "popular")
 			searchJSON("popular");
-		else if (/\/pools\/\d+/.test(urlPath))
+		else if (gLoc === "pool")
 			searchJSON("pool");
 	}
 
@@ -123,7 +128,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (enable_arrow_nav) {
 		var paginator = document.evaluate('//div[@class="paginator" or @class="pagination"]', document, null, 9, null).singleNodeValue;
 
-		if (paginator || /\/explore\/posts\/popular/.test(location.pathname)) // If the paginator exists, arrow navigation should be applicable.
+		if (paginator || gLoc === "popular") // If the paginator exists, arrow navigation should be applicable.
 			window.addEventListener("keydown", keyCheck, false);
 	}
 
@@ -141,7 +146,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Functions for creating a url and retrieving info from it */
 	function searchJSON(mode, xml) {
 		if (mode == "search") {
-			var url = location.href.replace(/\/?(posts)?\/?(\?|$)/, "/posts.json?");
+			var url = gUrl.replace(/\/?(posts)?\/?(\?|$)/, "/posts.json?");
 
 			if (allowUserLimit())
 				url += "&limit=" + thumbnail_count;
@@ -149,24 +154,24 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			fetchJSON(url, "search");
 		}
 		else if (mode == "post") {
-			var url = location.href.replace(/\/posts\/(\d+).*/, "/posts/$1.json");
+			var url = gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json");
 			fetchJSON(url, "post");
 		}
 		else if (mode == "notes") {
-			var url = location.href.replace(/\/notes\/?/, "/notes.json");
+			var url = gUrl.replace(/\/notes\/?/, "/notes.json");
 			fetchJSON(url, "notes");
 		}
 		else if (mode == "popular") {
-			var url = location.href.replace(/\/popular\/?/, "/popular.json");
+			var url = gUrl.replace(/\/popular\/?/, "/popular.json");
 			fetchJSON(url, "popular");
 		}
 		else if (mode == "pool") {
-			var url = location.href.replace(/\/pools\/(\d+)/, "/pools/$1.json");
+			var url = gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json");
 			fetchJSON(url, "pool");
 		}
 		else if (mode == "poolsearch") {
 			var poolIds = xml.post_ids.split(" ");
-			var page = (/page=\d+/.test(location.search) ? parseInt(getVar("page"), 10) : 1);
+			var page = (/page=\d+/.test(gUrlQuery) ? parseInt(getVar("page"), 10) : 1);
 			var postIds = poolIds.slice((page - 1) * 20, page * 20);
 
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
@@ -232,7 +237,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Use JSON results for searches and pool collections.
 		if (mode == "search") {
 			var targetId = "posts";
-			search = (/\?tags=/.test(location.search) && !clean_links ? "?tags=" + getVar("tags") : "");
+			search = (/\?tags=/.test(gUrlQuery) && !clean_links ? "?tags=" + getVar("tags") : "");
 		}
 		else if (mode == "popular") {
 			var targetId = "a-index";
@@ -241,7 +246,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (mode == "pool") {
 			var targetId = "content";
 			var orderedPostIds = optArg;
-			search = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1] : "");
+			search = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(gUrlPath)[1] : "");
 			out = "\f,;" + orderedPostIds.join("\f,;");
 		}
 		else if (mode == "notes") {
@@ -335,7 +340,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
 		if (mode == "search" && allowUserLimit()) {
-			var pageUrl = location.href.split("#")[0];
+			var pageUrl = gUrl;
 
 			if (/\?/.test(pageUrl))
 				pageUrl += "&limit=" + thumbnail_count;
@@ -580,7 +585,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function getVar(getVar, url) {
 		if (!url)
-			url = location.href;
+			url = gUrl;
 
 		var search = new RegExp(getVar + "=.*?(?=[#&]|$)");
 		var result = search.exec(url);
@@ -601,7 +606,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function danbooruNav(dir) {
-		if (/\/explore\/posts\/popular/.test(location.pathname)) {
+		if (gLoc === "popular") {
 			if (dir === "left")
 				Danbooru.PostPopular.nav_prev();
 			else if (dir === "right")
@@ -616,21 +621,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function cleanLinks() {
-		if (/\/posts\/\d+/.test(location.pathname)) {
+		if (gLoc === "post") {
 			var target = document.evaluate('//div[@id="pool-nav"]//a', document, null, 6, null)
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++) {
 				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];;
 			}
 		}
-		else if (/\/pools\/\d+/.test(location.pathname)) {
+		else if (gLoc === "pool") {
 			var target = document.evaluate('//section[@id="content"]/article/a', document, null, 6, null)
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++) {
 				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];;
 			}
 		}
-		else if (/^\/(posts|$)/.test(location.pathname)) {
+		else if (gLoc === "search") {
 			var target = document.evaluate('//div[@id="posts"]/article/a', document, null, 6, null)
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++) {
@@ -640,15 +645,30 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function allowUserLimit() {
-		if (thumbnail_count > 0 && /^\/(posts)?\/?$/.test(location.pathname) && !/(page|limit)=\d/.test(location.search))
+		if (thumbnail_count > 0 && gLoc === "search" && !/(page|limit)=\d/.test(gUrlQuery))
 			return true;
 		else
 			return false;
 	}
+	
+	function currentLoc() {
+		if (/\/posts\/\d+/.test(gUrlPath))
+			return "post";
+		else if (/^\/(posts|$)/.test(gUrlPath))
+			return "search";
+		else if (/^\/notes/.test(gUrlPath) && /group_by=post/.test(gUrlQuery))
+			return "notes";
+		else if (/\/explore\/posts\/popular/.test(gUrlPath))
+			return "popular";
+		else if (/\/pools\/\d+/.test(gUrlPath))
+			return "pool";
+		else
+			return undefined;
+	}
 
 	function checkUrls() {
 		for (var i = 0, vul = valid_urls.length; i < vul; i++) {
-			if (valid_urls[i] == location.href.substring(0, location.href.lastIndexOf("post")))
+			if (valid_urls[i] == gUrl.substring(0, gUrl.lastIndexOf("post")))
 				return true;
 		}
 		return false;
@@ -686,7 +706,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function searchAdd() {
-		if (/^\/(posts)?\/?$/.test(location.pathname)) {
+		if (gLoc === "search") {
 			// Where = array of <li> in tag-sidebar.
 			var where = document.getElementById("tag-box");
 
@@ -713,7 +733,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function removeTagHeaders() {
-		if (/posts\/\d+/.test(location.pathname)) {
+		if (gLoc === "post") {
 			var tagList = document.getElementById("tag-list");
 			var newList = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
 
@@ -722,7 +742,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function favCount() {
-		if (/\/posts\/\d+/.test(location.pathname)) {
+		if (gLoc === "post") {
 			// Add favorites count
 			var favs = fetchMeta("favorites").match(/fav:/g);
 			var numFavs = (favs === null ? 0 : favs.length );
@@ -735,7 +755,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function removeWidthLimit() {
-		if (/^\/(posts)?\/?$/.test(location.pathname)){
+		if (gLoc === "search") {
 			var postsDiv = document.getElementById("posts");
 			var contentSection = document.getElementById("content");
 
