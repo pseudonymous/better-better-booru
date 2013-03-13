@@ -94,18 +94,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool)
 
 	/* "INIT" */
-	if (enable_bbb || show_loli || show_shota) {
-		if (gLoc === "post")
-			searchJSON("post");
-		else if (gLoc === "search")
-			searchJSON("search");
-		else if (gLoc === "notes")
-			searchJSON("notes");
-		else if (gLoc === "popular")
-			searchJSON("popular");
-		else if (gLoc === "pool")
-			searchJSON("pool");
-	}
+	if ((enable_bbb || show_loli || show_shota) && (gLoc !== undefined))
+		searchJSON(gLoc);
 
 	if (remove_width_limit)
 		removeWidthLimit();
