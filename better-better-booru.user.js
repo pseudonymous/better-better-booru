@@ -231,7 +231,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Use JSON results for searches and pool collections.
 		if (mode == "search") {
 			var targetId = "posts";
-			search = (/\?tags=/.test(gUrlQuery) && !clean_links ? "?tags=" + getVar("tags") : "");
+			search = (/tags=/.test(gUrlQuery) && !clean_links ? "?tags=" + getVar("tags") : "");
 		}
 		else if (mode == "popular") {
 			var targetId = "a-index";
