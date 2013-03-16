@@ -113,14 +113,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		hideAdvertisements();
 		hideYourAdHere();
 		hideIframes();
-		hideEtology();
 	}
 
 	if (clean_links)
 		cleanLinks();
 
 	if (enable_arrow_nav) {
-		var paginator = document.evaluate('//div[@class="paginator" or @class="pagination"]', document, null, 9, null).singleNodeValue;
+		var paginator = document.getElementsByClassName("paginator")[0];
 
 		if (paginator || gLoc === "popular") // If the paginator exists, arrow navigation should be applicable.
 			window.addEventListener("keydown", keyCheck, false);
@@ -200,7 +199,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function fetchPages(url, where) {
+	function fetchPages(url) {
 		// Retrieve page to get paginator.
 		var xmlhttp = new XMLHttpRequest();
 
@@ -209,7 +208,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (xmlhttp.readyState == 4) { // 4 = "loaded"
 					if (xmlhttp.status == 200) { // 200 = "OK"
 
-						var paginator = document.evaluate('//div[@class="paginator"]', where, null, 9, null).singleNodeValue;
+						var paginator = document.getElementsByClassName("paginator")[0];
 						var newPaginator = /<div class="paginator">(.+?)<\/div>/.exec(xmlhttp.responseText)[1];
 
 						if (newPaginator)
@@ -249,7 +248,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		var where = document.getElementById(targetId);
-		var paginator = document.evaluate('//div[@class="paginator"]', where, null, 9, null).singleNodeValue;
+		var paginator = document.getElementsByClassName("paginator")[0];
 
 		// Result preparation.
 		for (var i = 0, pl = posts.length; i < pl; i++) {
@@ -341,7 +340,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else
 				pageUrl += "?limit=" + thumbnail_count;
 
-			fetchPages(pageUrl, where);
+			fetchPages(pageUrl);
 		}
 
 		// Load the script blacklist if not logged in.
@@ -822,13 +821,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	// Does anyone use these options? Adblock should pretty much cover the ads.
-	function hideEtology() {
-		var img = document.evaluate('//div[@class="etology"]', document, null, 6, null);
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++) {
-			img.snapshotItem(i).style.display = "none";
-		}
-	}
-
 	function hideAdvertisements() {
 		var img = document.evaluate('//img[@alt="Advertisement"]', document, null, 6, null);
 		for (var i = 0, isl = img.snapshotLength; i < isl; i++) {
