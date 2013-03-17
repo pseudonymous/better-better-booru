@@ -33,7 +33,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Global
 	var show_loli = false;
 	var show_shota = false;
-	var enable_bbb = true; // Disabling this will disable many main features related to images and their listings (thumbnail_count, image_resize, load_sample_first, border colors, script_blacklisted_tags). Has no effect if show_loli or show_shota are true.
+	var enable_bbb = true; // Disabling this will disable many main features related to images and their listings (thumbnail_count, image_resize, load_sample_first, loli/shota borders, script_blacklisted_tags). Has no effect if show_loli or show_shota are true.
 	var clean_links = false; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 
 	var hide_sign_up_notice = false;
@@ -43,7 +43,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	// Search
 	var enable_arrow_nav = false; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
-	var add_border = true; // Add a light blue border to Shota and pink border to Loli.
+	var add_border = true; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
+	var enable_custom_borders = false; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
 	var search_add = true; // Add the + and - shortcuts to the tag list for including or excluding search terms.
 	var remove_width_limit = false; // Allow thumbnails to attempt to fill unused space. Please note this option is aimed at widescreen users and has limited testing at the moment.
 	var thumbnail_count = 0; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
@@ -63,6 +64,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var parent_border = "#00FF00";
 	var pending_border = "#0000FF";
 	var flagged_border = "#FF0000";
+	var deleted_border = "#000000";
 
 	// Blacklist
 	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
@@ -124,6 +126,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (paginator || gLoc === "popular") // If the paginator exists, arrow navigation should be applicable.
 			window.addEventListener("keydown", keyCheck, false);
 	}
+
+	if (add_border || enable_custom_borders)
+		customBorders();
 
 	if (search_add)
 		searchAdd();
@@ -254,12 +259,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		for (var i = 0, pl = posts.length; i < pl; i++) {
 			var post = posts[i];
 			var imgId = post.id;
-			var style = "";
-			var uploader = (post.uploader_name !== undefined ? post.uploader_name : post.uploader_id); // I could've sworn this was fixed. Whatever the case, this method will prevent undefined until it really is fixed.
+			var thumbClass = "post-preview";
+			var uploader = post.uploader_name;
 			var score = post.score;
 			var rating = post.rating;
 			var tags = post.tag_string;
 			var parent = (post.parent_id !== null ? post.parent_id : "");
+			var flags = "";
 			var alt = tags;
 			var title = tags + " user:" + uploader + " rating:" + rating + " score:" + score;
 			var md5 = post.md5;
@@ -279,32 +285,40 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				continue;
 			}
 
-			// Apply appropriate thumbnail borders. Borders override each other in this order: Loli > Shota > Flagged > Pending > Child > Parent
+			// Apply appropriate thumbnail borders. Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
 			if (add_border) {
 				if (/\bloli\b/.test(tags))
-					style = "border: 2px solid " + loli_border + ";";
+					thumbClass += " post-status-loli";
 				else if (/\bshota\b/.test(tags))
-					style = "border: 2px solid " + shota_border + ";";
+					thumbClass += " post-status-shota";
 			}
 
-			if (style === "") {
-				if (post.is_flagged)
-					style = "border: 2px solid " + flagged_border + ";";
-				else if (post.is_pending)
-					style = "border: 2px solid " + pending_border + ";";
-				else if (parent !== "")
-					style = "border: 2px solid " + child_border + ";";
+			if (thumbClass === "post-preview") {
+				if (post.is_deleted) {
+					thumbClass += " post-status-deleted";
+					flags = "deleted";
+				}
+				else if (post.is_flagged) {
+					thumbClass += " post-status-flagged";
+					flags = "flagged";
+				}
+				else if (post.is_pending) {
+					thumbClass += " post-status-pending";
+					flags = "pending";
+				}
+				else if (post.parent_id !== null)
+					thumbClass += " post-status-has-parent";
 				else if (post.has_children)
-					style = "border: 2px solid " + parent_border + ";";
+					thumbClass += " post-status-has-children";
 			}
 
 			// eek, huge line.
 			if (mode == "search" || mode == "notes" || mode == "popular") {
-				out += '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
+				out += '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
 			}
 			else if (mode == "pool") {
 				outId = new RegExp("\f,;" + imgId + "(?=<|\f|$)");
-				outNew = '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.width + '" data-height="' + post.height + '" data-flags="' + post.status + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '" style="' + style + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
+				outNew = '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
 				out = out.replace(outId, outNew);
 			}
 		}
@@ -723,6 +737,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				where[i].innerHTML = '<a href="' + newLink + '">-</a> ' + where[i].innerHTML;
 			}
 		}
+	}
+
+	function customBorders() {
+		var borderStyles = document.createElement("style");
+
+		borderStyles.type = "text/css";
+
+		if (add_border)
+			borderStyles.innerHTML += " .post-preview.post-status-shota img{border: 2px solid " + shota_border + " !important;} .post-preview.post-status-loli img{border: 2px solid" + loli_border + " !important;}";
+
+		if (enable_custom_borders)
+			borderStyles.innerHTML += " .post-preview.post-status-has-parent img{border-color:" + child_border + " !important;} .post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;} .post-preview.post-status-has-children img{border-color:" + parent_border + " !important;} .post-preview.post-status-pending img{border-color:" + pending_border + " !important;} .post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;}";
+
+		document.getElementsByTagName("head")[0].appendChild(borderStyles);
 	}
 
 	function removeTagHeaders() {
