@@ -272,7 +272,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var ext = post.file_ext;
 			var fileUrl = "/data/" + md5 + "." + ext;
 			var thumbnailUrl = (!post.image_height || ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg");
-			var outNew = "";
 			var outId = "";
 			var thumb = "";
 
@@ -280,7 +279,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags))) {
 				if (mode == "pool") {
 					outId = new RegExp("\f,;" + imgId + "(?=<|\f|$)");
-					out = out.replace(outId, outNew);
+					out = out.replace(outId, "");
 				}
 
 				continue;
