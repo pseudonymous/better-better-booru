@@ -274,6 +274,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var thumbnailUrl = (!post.image_height || ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg");
 			var outNew = "";
 			var outId = "";
+			var thumb = "";
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
 			if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags))) {
@@ -313,13 +314,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			// eek, huge line.
-			if (mode == "search" || mode == "notes" || mode == "popular") {
-				out += '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
-			}
+			thumb = '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
+
+			// Generate output
+			if (mode == "search" || mode == "notes" || mode == "popular")
+				out += thumb;
 			else if (mode == "pool") {
 				outId = new RegExp("\f,;" + imgId + "(?=<|\f|$)");
-				outNew = '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
-				out = out.replace(outId, outNew);
+				out = out.replace(outId, thumb);
 			}
 		}
 
@@ -370,9 +372,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		// Apply the blacklist and update the sidebar for search listings.
-		// Apply the blacklist and update the sidebar for search listings.
 		var blacklistUsed = Danbooru.Blacklist.apply();
-		
+
 		if (mode == "search" || mode == "popular") {
 			document.getElementById("blacklist-list").innerHTML = "";
 
