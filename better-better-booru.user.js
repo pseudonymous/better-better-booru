@@ -370,10 +370,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		// Apply the blacklist and update the sidebar for search listings.
+		// Apply the blacklist and update the sidebar for search listings.
+		var blacklistUsed = Danbooru.Blacklist.apply();
+		
 		if (mode == "search" || mode == "popular") {
 			document.getElementById("blacklist-list").innerHTML = "";
 
-			if (Danbooru.Blacklist.apply())
+			if (blacklistUsed)
 				Danbooru.Blacklist.update_sidebar();
 			else
 				document.getElementById("blacklist-box").style.display = "none";
