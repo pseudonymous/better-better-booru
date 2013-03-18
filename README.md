@@ -11,7 +11,6 @@ Changelog
  * Updated keyboard navigation in response to Danbooru's change to the "wasd" format and added an option to allow arrow navigation for pages.
  * Updated custom border colors to support deleted posts and work as a standalone feature.
  * Added an option for an alternate mode that allows switching between the original and sample images by clicking on the image.
- * Added an option to allow the search listing thumbnails to attempt to fill any unused space.
  * Added an option to hide the TOS notice.
 * Version 3.2:
  * Added an option to allow the "Viewing original" notice to be hidden.
