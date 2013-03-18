@@ -46,7 +46,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var add_border = true; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
 	var enable_custom_borders = false; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
 	var search_add = true; // Add the + and - shortcuts to the tag list for including or excluding search terms.
-	var remove_width_limit = false; // Allow thumbnails to attempt to fill unused space. Please note this option is aimed at widescreen users and has limited testing at the moment.
 	var thumbnail_count = 0; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
@@ -98,9 +97,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* "INIT" */
 	if ((enable_bbb || show_loli || show_shota) && (gLoc !== undefined))
 		searchJSON(gLoc);
-
-	if (remove_width_limit)
-		removeWidthLimit();
 
 	if (hide_upgrade_notice)
 		hideUpgradeNotice();
@@ -341,10 +337,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where.innerHTML = out + outerHTML(paginator);
 		else
 			where.innerHTML = out;
-
-		// Fix the width again for the potential initially blank pages.
-		if (remove_width_limit)
-			removeWidthLimit();
 
 		// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
 		if (mode == "search" && allowUserLimit()) {
@@ -666,7 +658,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return "post";
 		else if (/^\/(posts|$)/.test(gUrlPath))
 			return "search";
-		else if (/^\/notes/.test(gUrlPath) && /group_by=post/.test(gUrlQuery))
+		else if (/^\/notes/.test(gUrlPath) && !/group_by=note/.test(gUrlQuery))
 			return "notes";
 		else if (/\/explore\/posts\/popular/.test(gUrlPath))
 			return "popular";
@@ -777,34 +769,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			target.parentNode.insertBefore(listFavorites, target);
 		}
 	}
-
-	function removeWidthLimit() {
-		if (gLoc === "search") {
-			var postsDiv = document.getElementById("posts");
-			var contentSection = document.getElementById("content");
-
-			postsDiv.style.maxWidth = "none";
-			contentSection.style.paddingLeft = "0.5em";
-			contentSection.style.width = "auto";
-
-			function adjustWidthLimit() {
-				var availableWidth = document.getElementById("a-index").offsetWidth - document.getElementById("sidebar").offsetWidth - document.getElementById("jlist-rss-ads-for-show").offsetWidth;
-				var contentDif = contentSection.offsetWidth - postsDiv.offsetWidth; // Get the padding + border difference since "posts" is inside "content".
-				postsDiv.style.maxWidth = availableWidth - contentDif + "px";
-			}
-
-			adjustWidthLimit();
-
-			function resizeTimer() {
-				if (!resizeTimeout)
-					var resizeTimeout = setTimeout(function() { adjustWidthLimit();	}, 100);
-			}
-
-
-			window.addEventListener("resize", resizeTimer, false);
-		}
-	}
-
 
 	function getCookie() {
 		// Return associative array with cookie values.
