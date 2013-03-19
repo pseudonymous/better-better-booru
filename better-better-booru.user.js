@@ -54,7 +54,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var load_sample_first = true; // Use sample images when available.
 	var hide_original_notice = false; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
 	var remove_tag_headers = false; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
-	var fav_count = true; // Add the number of favorites to the sidebar information.
 
 	// Set Border Colors. Use CSS hex values for colors. http://www.w3schools.com/CSS/css_colors.asp
 	var loli_border = "#FFC0CB";
@@ -131,9 +130,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	if (remove_tag_headers)
 		removeTagHeaders();
-
-	if (fav_count)
-		favCount();
 
 	/* Functions */
 
@@ -754,19 +750,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var newList = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
 
 			tagList.innerHTML = newList;
-		}
-	}
-
-	function favCount() {
-		if (gLoc === "post") {
-			// Add favorites count
-			var favs = fetchMeta("favorites").match(/fav:/g);
-			var numFavs = (favs === null ? 0 : favs.length );
-			var target = document.getElementById("score-for-post-" + fetchMeta("post-id")).parentNode;
-			var listFavorites = document.createElement("li");
-
-			listFavorites.innerHTML = "Favorites: " + numFavs;
-			target.parentNode.insertBefore(listFavorites, target);
 		}
 	}
 
