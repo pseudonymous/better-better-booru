@@ -12,6 +12,7 @@ Changelog
  * Updated custom border colors to support deleted posts and work as a standalone feature.
  * Added an option for an alternate mode that allows switching between the original and sample images by clicking on the image.
  * Added an option to hide the TOS notice.
+ * Removed the option for number of favorites since Danbooru has this feature built in now.
 * Version 3.2:
  * Added an option to allow the "Viewing original" notice to be hidden.
  * Added an option to remove the search info appended to post links.
