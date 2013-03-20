@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        3.3
+// @version        4.0
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @include        http://*.donmai.us/*
@@ -91,11 +91,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gUrl = location.href.split("#")[0]; // URL without the anchor
 	var gUrlPath = location.pathname; // URL path only
 	var gUrlQuery = location.search; // URL query string only
-	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool)
+	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
 
 	/* "INIT" */
-	if ((enable_bbb || show_loli || show_shota) && (gLoc !== undefined))
-		searchJSON(gLoc);
+	if (gLoc !== undefined) {
+		if (gLoc === "comments") {
+			if ((document.getElementsByTagName("img").length < 5) && (show_loli || show_shota)) {
+				Danbooru.notice("Hidden comment detected.");
+				searchJSON(gLoc);
+			}
+		}
+		else if (enable_bbb || show_loli || show_shota) // For regular thumbnail listings
+			searchJSON(gLoc);
+	}
 
 	if (hide_upgrade_notice)
 		hideUpgradeNotice();
@@ -166,6 +174,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
 		}
+		else if (mode == "comments") {
+			var url = gUrl.replace(/\/comments\/?/, "/comments.json");
+			fetchJSON(url, "comments");
+		}
 	}
 
 	function fetchJSON(url, mode, optArg) {
@@ -186,6 +198,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							searchJSON("poolsearch", xml);
 						else if (mode == "poolsearch")
 							parseListing(xml, "pool", optArg);
+						else if (mode == "comments")
+							parseComments(xml);
 					}
 					// else // Debug
 						// GM_log(xmlhttp.statusText);
@@ -196,7 +210,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function fetchPages(url) {
+	function fetchPages(url, mode, optArg) {
 		// Retrieve page to get paginator.
 		var xmlhttp = new XMLHttpRequest();
 
@@ -205,11 +219,42 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (xmlhttp.readyState == 4) { // 4 = "loaded"
 					if (xmlhttp.status == 200) { // 200 = "OK"
 
-						var paginator = document.getElementsByClassName("paginator")[0];
-						var newPaginator = /<div class="paginator">(.+?)<\/div>/.exec(xmlhttp.responseText)[1];
+						if (mode === "paginator") { // Fetch updated paginator for first page of searches.
+							var paginator = document.getElementsByClassName("paginator")[0];
+							var newPaginator = /<div class="paginator">(.+?)<\/div>/i.exec(xmlhttp.responseText)[1];
 
-						if (newPaginator)
-							paginator.innerHTML = newPaginator;
+							if (newPaginator)
+								paginator.innerHTML = newPaginator;
+						}
+						else if (mode === "comments") { // Fetch post to get comments and tag color codes.
+							var childSpan = document.createElement("span");
+							var target = optArg.getElementsByClassName("comments-for-post")[0];
+
+							childSpan.innerHTML = /<div class="list-of-comments">[\S\s]+?<\/form>[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
+
+							while (childSpan.children[0])
+								target.appendChild(childSpan.children[0]);
+
+							childSpan.innerHTML = /<section id="tag-list">[\S\s]+?<\/section>/i.exec(xmlhttp.responseText)[0];
+							target = optArg.getElementsByClassName("row list-of-tags")[0];
+
+							for (var i = 1; i < 5; i++) {
+								var category = "category-" + i;
+								var categoryList = childSpan.getElementsByClassName(category);
+
+								if (categoryList) {
+									for (var j = 0, cll = categoryList.length; j < cll; j++) {
+										var tag = categoryList[j].children[1].textContent.replace(/\s/g, "_");
+										var match = new RegExp('(<span class="category-)0("> <[^>]+>' + escapeRegEx(tag) + '<\/a> <\/span>)');
+
+										target.innerHTML = target.innerHTML.replace(match, "$1" + i + "$2");
+									}
+								}
+							}
+
+							Danbooru.Blacklist.initialize_all()
+							Danbooru.Comment.initialize_all();
+						}
 					}
 				}
 			};
@@ -343,7 +388,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else
 				pageUrl += "?limit=" + thumbnail_count;
 
-			fetchPages(pageUrl);
+			fetchPages(pageUrl, "paginator");
 		}
 
 		// Load the script blacklist if not logged in.
@@ -568,6 +613,59 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
+	function parseComments(xml) {
+		var comments = xml;
+		var existingComments = document.getElementsByClassName("post post-preview");
+		var eci = 0;
+
+		for (var i = 0, cl = comments.length; i < cl; i++) {
+			var comment = comments[i];
+			var existingComment = existingComments[eci];
+			var tags = comment.tag_string;
+
+			if (!existingComment || comment.id != existingComment.getAttribute("data-id")) {
+				if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)))
+					continue;
+				else if (!/\b(loli|shota)\b/.test(tags)) {
+					Danbooru.error("Loading of hidden loli/shota comment(s) failed due to new comments being made between the page and API loading times. Please refresh.");
+					return;
+				}
+
+				var tagLinks = tags.split(" ");
+				var parent = (comment.parent_id !== null ? comment.parent_id : "");
+				var flags = "";
+				var thumbClass = (/\bloli\b/.test(tags) ? " post-status-loli" : " post-status-shota");
+
+				if (comment.is_deleted)
+					flags = "deleted";
+				else if (comment.is_flagged)
+					flags = "flagged";
+				else if (comment.is_pending)
+					flags = "pending";
+
+				for (var it = 0, itl = tagLinks.length; it < itl; it++) {
+					tagLinks[it] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[it]) + '">' + tagLinks[it] + '</a> </span>';
+				}
+
+				tagsLinks = tagLinks.join(" ");
+
+				var childSpan = document.createElement("span");
+
+				childSpan.innerHTML = '<div class="post post-preview' + thumbClass + '" data-tags="' + comment.tag_string + '" data-uploader="' + comment.uploader_name + '" data-rating="' + comment.rating + '" data-flags="' + flags + '" data-score="' + comment.score + '" data-parent-id="' + parent + '" data-has-children="' + comment.has_children + '" data-id="' + comment.id + '" data-width="' + comment.image_width + '" data-height="' + comment.image_height + '"> <div class="preview"> <a href="/posts/' + comment.id + '"> <img alt="' + comment.md5 + '" src="/ssd/data/preview/' + comment.md5 + '.jpg" /> </a> </div> <div class="comments-for-post" data-post-id="' + comment.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="2013-03-18T17:31-04:00" title="2013-03-18 17:31:38 -0400">2013-03-18 17:31</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + comment.uploader_id + '">' + comment.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + comment.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + comment.id + '">' + comment.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> <div class="row notices"> <\/div> </div> <div class="clearfix"></div> </div>';
+
+				if (!existingComment)
+					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
+				else
+					existingComment.parentNode.insertBefore(childSpan.firstChild, existingComment);
+
+				fetchPages("/posts/" + comment.id, "comments", existingComments[eci]);
+				eci++; // Bump the value since this is a live nodelist. Real time changes can alter the length.
+			}
+			else
+				eci++; // Bump the value since this is a live nodelist. Real time changes can alter the length.
+		}
+	}
+
 	/* Functions for support, extra features, and content manipulation */
 	function isThere(url) {
 		// Checks if file exists. Thanks to some random forum!
@@ -656,6 +754,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return "search";
 		else if (/^\/notes/.test(gUrlPath) && !/group_by=note/.test(gUrlQuery))
 			return "notes";
+		else if (/^\/comments\/?$/.test(gUrlPath) && !/group_by=comment/.test(gUrlQuery))
+			return "comments";
 		else if (/\/explore\/posts\/popular/.test(gUrlPath))
 			return "popular";
 		else if (/\/pools\/\d+/.test(gUrlPath))
@@ -796,6 +896,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				return outer;
 			})(node);
+	}
+
+	function escapeRegEx(regEx) {
+		return regEx.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 	}
 
 	// Does anyone use these options? Adblock should pretty much cover the ads.
