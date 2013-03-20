@@ -643,7 +643,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				else if (comment.is_pending)
 					flags = "pending";
 
-				for (var it = 0, itl = tagLinks.length; it < itl; it++) {
+				for (var it = 0, tll = tagLinks.length; it < tll; it++) {
 					tagLinks[it] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[it]) + '">' + tagLinks[it] + '</a> </span>';
 				}
 
@@ -659,10 +659,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					existingComment.parentNode.insertBefore(childSpan.firstChild, existingComment);
 
 				fetchPages("/posts/" + comment.id, "comments", existingComments[eci]);
-				eci++; // Bump the value since this is a live nodelist. Real time changes can alter the length.
 			}
-			else
-				eci++; // Bump the value since this is a live nodelist. Real time changes can alter the length.
+
+			eci++;
 		}
 	}
 
