@@ -191,13 +191,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						var xml = JSON.parse(xmlhttp.responseText);
 
 						if (mode == "search" || mode == "popular" || mode == "notes")
-							parseListing(xml, mode);
+							parseListing(xml);
 						else if (mode == "post")
 							parsePost(xml);
 						else if (mode == "pool")
 							searchJSON("poolsearch", xml);
 						else if (mode == "poolsearch")
-							parseListing(xml, "pool", optArg);
+							parseListing(xml, optArg);
 						else if (mode == "comments")
 							parseComments(xml);
 					}
@@ -252,7 +252,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 								}
 							}
 
-							Danbooru.Blacklist.initialize_all()
+							blacklistInit();
 							Danbooru.Comment.initialize_all();
 						}
 					}
@@ -264,32 +264,35 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	/* Functions for creating content from retrieved info */
-	function parseListing(xml, mode, optArg) {
+	function parseListing(xml, optArg) {
 		var out = "";
 		var posts = xml;
 		var search = "";
 
+		// If no posts, do nothing.
+		if (!posts.length)
+			return;
+
 		// Use JSON results for searches and pool collections.
-		if (mode == "search") {
-			var targetId = "posts";
+		if (gLoc == "search") {
+			var where = document.getElementById("posts");
 			search = (/tags=/.test(gUrlQuery) && !clean_links ? "?tags=" + getVar("tags") : "");
 		}
-		else if (mode == "popular") {
-			var targetId = "a-index";
+		else if (gLoc == "popular") {
+			var where = document.getElementById("a-index");
 			out = document.getElementById("a-index").innerHTML.split("<article")[0];
 		}
-		else if (mode == "pool") {
-			var targetId = "content";
+		else if (gLoc == "pool") {
+			var where = document.getElementById("a-show").getElementsByTagName("section")[0];
 			var orderedPostIds = optArg;
 			search = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(gUrlPath)[1] : "");
 			out = "\f,;" + orderedPostIds.join("\f,;");
 		}
-		else if (mode == "notes") {
-			var targetId = "a-index";
+		else if (gLoc == "notes") {
+			var where = document.getElementById("a-index");
 			out = "<h1>Notes</h1>";
 		}
 
-		var where = document.getElementById(targetId);
 		var paginator = document.getElementsByClassName("paginator")[0];
 
 		// Result preparation.
@@ -314,7 +317,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
 			if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags))) {
-				if (mode == "pool") {
+				if (gLoc == "pool") {
 					outId = new RegExp("\f,;" + imgId + "(?=<|\f|$)");
 					out = out.replace(outId, "");
 				}
@@ -353,9 +356,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			thumb = '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
 
 			// Generate output
-			if (mode == "search" || mode == "notes" || mode == "popular")
+			if (gLoc == "search" || gLoc == "notes" || gLoc == "popular")
 				out += thumb;
-			else if (mode == "pool") {
+			else if (gLoc == "pool") {
 				outId = new RegExp("\f,;" + imgId + "(?=<|\f|$)");
 				out = out.replace(outId, thumb);
 			}
@@ -371,16 +374,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		// Replace results with new results.
-		if (!posts.length)
-			out += '<p>Nobody here but us chickens!</p> <p><a href="javascript:history.back()">Go back</a></p>';
-
 		if (paginator)
 			where.innerHTML = out + outerHTML(paginator);
 		else
 			where.innerHTML = out;
 
 		// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
-		if (mode == "search" && allowUserLimit()) {
+		if (gLoc == "search" && allowUserLimit()) {
 			var pageUrl = gUrl;
 
 			if (/\?/.test(pageUrl))
@@ -391,29 +391,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			fetchPages(pageUrl, "paginator");
 		}
 
-		// Load the script blacklist if not logged in.
-		if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) {
-			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
-
-			Danbooru.Blacklist.blacklists.length = 0;
-
-			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
-				var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
-				Danbooru.Blacklist.blacklists.push(tag);
-			}
-		}
-
-		// Apply the blacklist and update the sidebar for search listings.
-		var blacklistUsed = Danbooru.Blacklist.apply();
-
-		if (mode == "search" || mode == "popular") {
-			document.getElementById("blacklist-list").innerHTML = "";
-
-			if (blacklistUsed)
-				Danbooru.Blacklist.update_sidebar();
-			else
-				document.getElementById("blacklist-box").style.display = "none";
-		}
+		// Blacklist
+		blacklistInit();
 	}
 
 	function parsePost(xml) {
@@ -627,7 +606,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)))
 					continue;
 				else if (!/\b(loli|shota)\b/.test(tags)) {
-					Danbooru.error("Loading of hidden loli/shota comment(s) failed due to new comments being made between the page and API loading times. Please refresh.");
+					Danbooru.error("Loading of hidden loli/shota post(s) failed. Please refresh.");
 					return;
 				}
 
@@ -643,8 +622,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				else if (comment.is_pending)
 					flags = "pending";
 
-				for (var it = 0, tll = tagLinks.length; it < tll; it++) {
-					tagLinks[it] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[it]) + '">' + tagLinks[it] + '</a> </span>';
+				for (var j = 0, tll = tagLinks.length; j < tll; j++) {
+					tagLinks[j] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[j]) + '">' + tagLinks[j] + '</a> </span>';
 				}
 
 				tagsLinks = tagLinks.join(" ");
@@ -666,6 +645,33 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	/* Functions for support, extra features, and content manipulation */
+	function blacklistInit() {
+		Danbooru.Blacklist.blacklists.length = 0;
+
+		if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
+			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
+
+			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
+				var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
+				Danbooru.Blacklist.blacklists.push(tag);
+			}
+		}
+		else // Reload the account blacklist.
+			Danbooru.Blacklist.parse_entries();
+
+		// Apply the blacklist and update the sidebar for search listings.
+		var blacklistUsed = Danbooru.Blacklist.apply();
+
+		if (gLoc == "search" || gLoc == "popular") {
+			document.getElementById("blacklist-list").innerHTML = "";
+
+			if (blacklistUsed)
+				Danbooru.Blacklist.update_sidebar();
+			else
+				document.getElementById("blacklist-box").style.display = "none";
+		}
+	}
+
 	function isThere(url) {
 		// Checks if file exists. Thanks to some random forum!
 		var req = new XMLHttpRequest(); // XMLHttpRequest object.
