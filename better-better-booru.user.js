@@ -96,10 +96,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* "INIT" */
 	if (gLoc !== undefined) {
 		if (gLoc === "comments") {
-			if ((document.getElementsByTagName("img").length < 5) && (show_loli || show_shota)) {
-				Danbooru.notice("Hidden comment detected.");
+			if ((document.getElementsByTagName("img").length < 5) && (show_loli || show_shota))
 				searchJSON(gLoc);
-			}
 		}
 		else if (enable_bbb || show_loli || show_shota) // For regular thumbnail listings
 			searchJSON(gLoc);
