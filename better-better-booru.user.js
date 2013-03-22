@@ -226,15 +226,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 						else if (mode === "comments") { // Fetch post to get comments and tag color codes.
 							var childSpan = document.createElement("span");
-							var target = optArg.getElementsByClassName("comments-for-post")[0];
-
-							childSpan.innerHTML = /<div class="row notices">[\S\s]+?<\/form>[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
-
-							while (childSpan.children[0])
-								target.appendChild(childSpan.children[0]);
-
+							var post = optArg[0];
+							var postId = optArg[1];
+							
+							// Fix the tag colors.
 							childSpan.innerHTML = /<section id="tag-list">[\S\s]+?<\/section>/i.exec(xmlhttp.responseText)[0];
-							target = optArg.getElementsByClassName("row list-of-tags")[0];
+
+							var target = post.getElementsByClassName("row list-of-tags")[0];
 
 							for (var i = 1; i < 5; i++) {
 								var category = "category-" + i;
@@ -249,6 +247,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 									}
 								}
 							}
+
+							// Fix the comments.
+							childSpan.innerHTML = /<div class="row notices">[\S\s]+?<\/form>[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
+							
+							var comments =  childSpan.getElementsByClassName("comment");
+							var numComments = comments.length;
+							var toShow = 6; // Number of comments to display.
+							
+							if (numComments > toShow) {
+								for (var i = 0, toHide = numComments - toShow; i < toHide; i++)
+									comments[i].style.display = "none";
+									
+								childSpan.getElementsByClassName("row notices")[0].innerHTML = '<span class="info" id="threshold-comments-notice-for-' + postId + '"> <a href="/comments?include_below_threshold=true&amp;post_id=' + postId + '" data-remote="true">Show all comments</a> </span>';
+							}
+
+							
+							// Add it all in and get it ready.
+							target = post.getElementsByClassName("comments-for-post")[0];
+
+							while (childSpan.children[0])
+								target.appendChild(childSpan.children[0]);								
 
 							blacklistInit();
 							Danbooru.Comment.initialize_all();
@@ -591,16 +610,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function parseComments(xml) {
-		var comments = xml;
-		var existingComments = document.getElementsByClassName("post post-preview");
+		var posts = xml;
+		var existingPosts = document.getElementsByClassName("post post-preview");
 		var eci = 0;
 
-		for (var i = 0, cl = comments.length; i < cl; i++) {
-			var comment = comments[i];
-			var existingComment = existingComments[eci];
-			var tags = comment.tag_string;
+		for (var i = 0, cl = posts.length; i < cl; i++) {
+			var post = posts[i];
+			var existingPost = existingPosts[eci];
+			var tags = post.tag_string;
 
-			if (!existingComment || comment.id != existingComment.getAttribute("data-id")) {
+			if (!existingPost || post.id != existingPost.getAttribute("data-id")) {
 				if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)))
 					continue;
 				else if (!/\b(loli|shota)\b/.test(tags)) {
@@ -609,15 +628,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				var tagLinks = tags.split(" ");
-				var parent = (comment.parent_id !== null ? comment.parent_id : "");
+				var parent = (post.parent_id !== null ? post.parent_id : "");
 				var flags = "";
 				var thumbClass = (/\bloli\b/.test(tags) ? " post-status-loli" : " post-status-shota");
 
-				if (comment.is_deleted)
+				if (post.is_deleted)
 					flags = "deleted";
-				else if (comment.is_flagged)
+				else if (post.is_flagged)
 					flags = "flagged";
-				else if (comment.is_pending)
+				else if (post.is_pending)
 					flags = "pending";
 
 				for (var j = 0, tll = tagLinks.length; j < tll; j++) {
@@ -628,14 +647,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div class="post post-preview' + thumbClass + '" data-tags="' + comment.tag_string + '" data-uploader="' + comment.uploader_name + '" data-rating="' + comment.rating + '" data-flags="' + flags + '" data-score="' + comment.score + '" data-parent-id="' + parent + '" data-has-children="' + comment.has_children + '" data-id="' + comment.id + '" data-width="' + comment.image_width + '" data-height="' + comment.image_height + '"> <div class="preview"> <a href="/posts/' + comment.id + '"> <img alt="' + comment.md5 + '" src="/ssd/data/preview/' + comment.md5 + '.jpg" /> </a> </div> <div class="comments-for-post" data-post-id="' + comment.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + comment.created_at + '" title="' + comment.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + comment.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + comment.uploader_id + '">' + comment.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + comment.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + comment.id + '">' + comment.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div class="post post-preview' + thumbClass + '" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + flags + '" data-score="' + post.score + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="/ssd/data/preview/' + post.md5 + '.jpg" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
-				if (!existingComment)
+				if (!existingPost)
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
 				else
-					existingComment.parentNode.insertBefore(childSpan.firstChild, existingComment);
+					existingPost.parentNode.insertBefore(childSpan.firstChild, existingPost);
 
-				fetchPages("/posts/" + comment.id, "comments", existingComments[eci]);
+				fetchPages("/posts/" + post.id, "comments", [existingPosts[eci], post.id]);
 			}
 
 			eci++;
