@@ -33,7 +33,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Global
 	var show_loli = false;
 	var show_shota = false;
-	var enable_bbb = true; // Disabling this will disable many main features related to images and their listings (thumbnail_count, image_resize, load_sample_first, loli/shota borders, script_blacklisted_tags). Has no effect if show_loli or show_shota are true.
+	var enable_bbb = true; // Disabling this will disable many main features related to images and their listings (thumbnail_count, image_resize, load_sample_first, script_blacklisted_tags). Has no effect if show_loli or show_shota are true.
+
+	var add_border = true; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
+	var enable_custom_borders = false; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
 	var clean_links = false; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 
 	var hide_sign_up_notice = false;
@@ -43,8 +46,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	// Search
 	var enable_arrow_nav = false; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
-	var add_border = true; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
-	var enable_custom_borders = false; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
 	var search_add = true; // Add the + and - shortcuts to the tag list for including or excluding search terms.
 	var thumbnail_count = 0; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
@@ -199,6 +200,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						else if (mode == "comments")
 							parseComments(xml);
 					}
+					else if (xmlhttp.status == 403)
+						Danbooru.error("Better Better Booru: Error retrieving information. Access denied.");
+					else if (xmlhttp.status == 421)
+						Danbooru.error("Better Better Booru: Error retrieving information. Your API access is currently throttled. Please try again later.");
 					// else // Debug
 						// GM_log(xmlhttp.statusText);
 				}
@@ -228,7 +233,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							var childSpan = document.createElement("span");
 							var post = optArg[0];
 							var postId = optArg[1];
-							
+
 							// Fix the tag colors.
 							childSpan.innerHTML = /<section id="tag-list">[\S\s]+?<\/section>/i.exec(xmlhttp.responseText)[0];
 
@@ -250,26 +255,24 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 							// Fix the comments.
 							childSpan.innerHTML = /<div class="row notices">[\S\s]+?<\/form>[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
-							
+
 							var comments =  childSpan.getElementsByClassName("comment");
 							var numComments = comments.length;
 							var toShow = 6; // Number of comments to display.
-							
+
 							if (numComments > toShow) {
 								for (var i = 0, toHide = numComments - toShow; i < toHide; i++)
 									comments[i].style.display = "none";
-									
+
 								childSpan.getElementsByClassName("row notices")[0].innerHTML = '<span class="info" id="threshold-comments-notice-for-' + postId + '"> <a href="/comments?include_below_threshold=true&amp;post_id=' + postId + '" data-remote="true">Show all comments</a> </span>';
 							}
 
-							
 							// Add it all in and get it ready.
 							target = post.getElementsByClassName("comments-for-post")[0];
 
 							while (childSpan.children[0])
-								target.appendChild(childSpan.children[0]);								
+								target.appendChild(childSpan.children[0]);
 
-							blacklistInit();
 							Danbooru.Comment.initialize_all();
 						}
 					}
@@ -342,32 +345,23 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				continue;
 			}
 
-			// Apply appropriate thumbnail borders. Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
-			if (add_border) {
-				if (/\bloli\b/.test(tags))
-					thumbClass += " post-status-loli";
-				else if (/\bshota\b/.test(tags))
-					thumbClass += " post-status-shota";
+			// Apply appropriate thumbnail borders.
+			if (post.is_deleted) {
+				thumbClass += " post-status-deleted";
+				flags = "deleted";
 			}
-
-			if (thumbClass === "post-preview") {
-				if (post.is_deleted) {
-					thumbClass += " post-status-deleted";
-					flags = "deleted";
-				}
-				else if (post.is_flagged) {
-					thumbClass += " post-status-flagged";
-					flags = "flagged";
-				}
-				else if (post.is_pending) {
-					thumbClass += " post-status-pending";
-					flags = "pending";
-				}
-				else if (post.parent_id !== null)
-					thumbClass += " post-status-has-parent";
-				else if (post.has_children)
-					thumbClass += " post-status-has-children";
+			if (post.is_flagged) {
+				thumbClass += " post-status-flagged";
+				flags = "flagged";
 			}
+			if (post.is_pending) {
+				thumbClass += " post-status-pending";
+				flags = "pending";
+			}
+			if (post.parent_id !== null)
+				thumbClass += " post-status-has-parent";
+			if (post.has_children)
+				thumbClass += " post-status-has-children";
 
 			// eek, huge line.
 			thumb = '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img title="' + title + '" src="' + thumbnailUrl + '" alt="' + tags + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
@@ -623,21 +617,31 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)))
 					continue;
 				else if (!/\b(loli|shota)\b/.test(tags)) {
-					Danbooru.error("Loading of hidden loli/shota post(s) failed. Please refresh.");
+					Danbooru.error("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.");
 					return;
 				}
 
 				var tagLinks = tags.split(" ");
 				var parent = (post.parent_id !== null ? post.parent_id : "");
 				var flags = "";
-				var thumbClass = (/\bloli\b/.test(tags) ? " post-status-loli" : " post-status-shota");
+				var thumbClass = "post post-preview";
 
-				if (post.is_deleted)
+				if (post.is_deleted) {
+					thumbClass += " post-status-deleted";
 					flags = "deleted";
-				else if (post.is_flagged)
+				}
+				if (post.is_flagged) {
+					thumbClass += " post-status-flagged";
 					flags = "flagged";
-				else if (post.is_pending)
+				}
+				if (post.is_pending) {
+					thumbClass += " post-status-pending";
 					flags = "pending";
+				}
+				if (post.parent_id !== null)
+					thumbClass += " post-status-has-parent";
+				if (post.has_children)
+					thumbClass += " post-status-has-children";
 
 				for (var j = 0, tll = tagLinks.length; j < tll; j++) {
 					tagLinks[j] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[j]) + '">' + tagLinks[j] + '</a> </span>';
@@ -647,7 +651,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div class="post post-preview' + thumbClass + '" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + flags + '" data-score="' + post.score + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="/ssd/data/preview/' + post.md5 + '.jpg" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div class="' + thumbClass + '" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + flags + '" data-score="' + post.score + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="/ssd/data/preview/' + post.md5 + '.jpg" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				if (!existingPost)
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
@@ -655,6 +659,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					existingPost.parentNode.insertBefore(childSpan.firstChild, existingPost);
 
 				fetchPages("/posts/" + post.id, "comments", [existingPosts[eci], post.id]);
+				blacklistInit();
 			}
 
 			eci++;
@@ -857,11 +862,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		borderStyles.type = "text/css";
 
-		if (add_border)
-			borderStyles.innerHTML += " .post-preview.post-status-shota img{border: 2px solid " + shota_border + " !important;} .post-preview.post-status-loli img{border: 2px solid" + loli_border + " !important;}";
-
+		// Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
 		if (enable_custom_borders)
-			borderStyles.innerHTML += " .post-preview.post-status-has-parent img{border-color:" + child_border + " !important;} .post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;} .post-preview.post-status-has-children img{border-color:" + parent_border + " !important;} .post-preview.post-status-pending img{border-color:" + pending_border + " !important;} .post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;}";
+			borderStyles.innerHTML += " .post-preview.post-status-has-children img{border-color:" + parent_border + " !important;} .post-preview.post-status-has-parent img{border-color:" + child_border + " !important;} .post-preview.post-status-pending img{border-color:" + pending_border + " !important;} .post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;} .post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;}";
+
+		if (add_border)
+			borderStyles.innerHTML += ' .post-preview[data-tags~="shota"] img{border: 2px solid ' + shota_border + ' !important;} .post-preview[data-tags~="loli"] img{border: 2px solid ' + loli_border + ' !important;}';
 
 		document.getElementsByTagName("head")[0].appendChild(borderStyles);
 	}
