@@ -7,7 +7,9 @@ Various tweaks to make Danbooru better.
 Changelog
 ----------
 * Version 4.0:
- * Added in support for displaying loli/shota posts in the comments pages. 
+ * Added in support for displaying loli/shota posts in the comments pages.
+ * Updated loli/shota borders to work as a standalone feature.
+ * Updated blacklist and pool support in response to changes on Danbooru.
 * Version 3.3:
  * Updated to work with Danbooru's new popular page layout.
  * Updated keyboard navigation in response to Danbooru's change to the "wasd" format and added an option to allow arrow navigation for pages.
