@@ -288,6 +288,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var out = "";
 		var posts = xml;
 		var search = "";
+		var where;
 
 		// If no posts, do nothing.
 		if (!posts.length)
@@ -295,21 +296,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Use JSON results for searches and pool collections.
 		if (gLoc == "search") {
-			var where = document.getElementById("posts");
+			where = document.getElementById("posts");
 			search = (/tags=/.test(gUrlQuery) && !clean_links ? "?tags=" + getVar("tags") : "");
 		}
 		else if (gLoc == "popular") {
-			var where = document.getElementById("a-index");
+			where = document.getElementById("a-index");
 			out = document.getElementById("a-index").innerHTML.split("<article")[0];
 		}
 		else if (gLoc == "pool") {
-			var where = document.getElementById("a-show").getElementsByTagName("section")[0];
 			var orderedPostIds = optArg;
+			where = document.getElementById("a-show").getElementsByTagName("section")[0];
 			search = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(gUrlPath)[1] : "");
 			out = "\f,;" + orderedPostIds.join("\f,;");
 		}
 		else if (gLoc == "notes") {
-			var where = document.getElementById("a-index");
+			where = document.getElementById("a-index");
 			out = "<h1>Notes</h1>";
 		}
 
