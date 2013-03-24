@@ -236,19 +236,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		Danbooru.notice("Page info used");
 		
 		// Retrieve info in the page.
-		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
-		var infoHref = infoLink.href;
-		var infoText = infoLink.parentNode.textContent;
+		var infoHref = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue.href;
 	
 		if (document.getElementById("image")) { // Regular image.
+			var img = document.getElementById("image");
+
 			var imgInfo = {
 				id: parseInt(fetchMeta("post-id"), 10),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
 				url: infoHref,
-				image_height: parseInt(/\(\d+x(\d+)\)/.exec(infoText)[1], 10),
-				image_width: parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10),
-				has_large: (parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10) > 850 ? true : false)
+				image_height: parseInt(img.getAttribute("data-original-height"), 10),
+				image_width: parseInt(img.getAttribute("data-original-width"), 10),
+				has_large: (parseInt(img.getAttribute("data-original-width"), 10) > 850 ? true : false)
 			};
 		}
 		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
