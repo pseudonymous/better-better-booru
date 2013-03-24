@@ -251,14 +251,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			};
 		}
 		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
+			var object = document.getElementById("image-container").getElementsByTagName("object")[0];
+			
 			var imgInfo = {
 				id: parseInt(fetchMeta("post-id"), 10),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoLink.href)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoLink.href)[1],
 				url: infoLink.href,
-				image_height: parseInt(document.getElementById("image-container").getElementsByTagName("object")[0].height, 10),
-				image_width: parseInt(document.getElementById("image-container").getElementsByTagName("object")[0].width, 10),
-				has_large: (parseInt(document.getElementById("image-container").getElementsByTagName("object")[0].width, 10) > 850 ? true : false)
+				image_height: parseInt(object.height, 10),
+				image_width: parseInt(object.width, 10),
+				has_large: (parseInt(object.width, 10) > 850 ? true : false)
 			};
 		}
 		else {
