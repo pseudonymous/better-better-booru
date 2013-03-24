@@ -237,14 +237,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		
 		// Retrieve info in the page.
 		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
+		var infoHref = infoLink.href;
 		var infoText = infoLink.parentNode.textContent;
 	
 		if (document.getElementById("image")) { // Regular image.
 			var imgInfo = {
 				id: parseInt(fetchMeta("post-id"), 10),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoLink.href)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoLink.href)[1],
-				url: infoLink.href,
+				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
+				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
+				url: infoHref,
 				image_height: parseInt(/\(\d+x(\d+)\)/.exec(infoText)[1], 10),
 				image_width: parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10),
 				has_large: (parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10) > 850 ? true : false)
@@ -255,9 +256,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			
 			var imgInfo = {
 				id: parseInt(fetchMeta("post-id"), 10),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoLink.href)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoLink.href)[1],
-				url: infoLink.href,
+				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
+				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
+				url: infoHref,
 				image_height: parseInt(object.height, 10),
 				image_width: parseInt(object.width, 10),
 				has_large: (parseInt(object.width, 10) > 850 ? true : false)
@@ -266,9 +267,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else {
 			var imgInfo = {
 				id: parseInt(fetchMeta("post-id"), 10),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoLink.href)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoLink.href)[1],
-				url: infoLink.href,
+				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
+				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
+				url: infoHref,
 				image_height: null,
 				image_width: null,
 				has_large: false
