@@ -95,14 +95,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
 
 	/* "INIT" */
-	if (gLoc !== undefined) {
-		if (gLoc === "comments") {
-			if ((document.getElementsByTagName("img").length < 5) && (show_loli || show_shota))
-				searchJSON(gLoc);
-		}
-		else if (enable_bbb || show_loli || show_shota) // For regular thumbnail listings
-			searchJSON(gLoc);
-	}
+	if ((gLoc !== undefined) && (enable_bbb || show_loli || show_shota))
+		searchJSON(gLoc);
 
 	if (hide_upgrade_notice)
 		hideUpgradeNotice();
@@ -174,8 +168,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
 		}
 		else if (mode == "comments") {
-			var url = gUrl.replace(/\/comments\/?/, "/comments.json");
-			fetchJSON(url, "comments");
+			if (document.getElementsByClassName("post-preview").length < 5) {
+				var url = gUrl.replace(/\/comments\/?/, "/comments.json");
+				fetchJSON(url, "comments");
+			}
 		}
 	}
 
@@ -204,6 +200,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						Danbooru.error("Better Better Booru: Error retrieving information. Access denied.");
 					else if (xmlhttp.status == 421)
 						Danbooru.error("Better Better Booru: Error retrieving information. Your API access is currently throttled. Please try again later.");
+					else if (xmlhttp.status == 401)
+						Danbooru.error("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API.");
+					else if (xmlhttp.status == 500)
+						Danbooru.error("Better Better Booru: Error retrieving information. Internal server error.");
+					else if (xmlhttp.status == 503)
+						Danbooru.error("Better Better Booru: Error retrieving information. Service unavailable.");
 					// else // Debug
 						// GM_log(xmlhttp.statusText);
 				}
@@ -276,6 +278,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							Danbooru.Comment.initialize_all();
 						}
 					}
+					else if (xmlhttp.status == 500)
+						Danbooru.error("Better Better Booru: Error retrieving information. Internal server error.");
+					else if (xmlhttp.status == 503)
+						Danbooru.error("Better Better Booru: Error retrieving information. Service unavailable.");
 				}
 			};
 			xmlhttp.open("GET", url, true);
