@@ -192,7 +192,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function fetchJSON(url, mode, optArg) {
 		Danbooru.notice("API used");
-		
+
 		// Retrieve JSON.
 		var xmlhttp = new XMLHttpRequest();
 
@@ -231,13 +231,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			xmlhttp.send(null);
 		}
 	}
-	
+
 	function fetchInfo() {
 		Danbooru.notice("Page info used");
-		
+
 		// Retrieve info in the page.
 		var infoHref = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue.href;
-	
+
 		if (document.getElementById("image")) { // Regular image.
 			var img = document.getElementById("image");
 
@@ -253,7 +253,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
 			var object = document.getElementById("image-container").getElementsByTagName("object")[0];
-			
+
 			var imgInfo = {
 				id: parseInt(fetchMeta("post-id"), 10),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
@@ -265,7 +265,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			};
 		}
 		else {
-			var imgInfo = {
+			var imgInfo = { // Manual download.
 				id: parseInt(fetchMeta("post-id"), 10),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
@@ -275,7 +275,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				has_large: false
 			};
 		}
-		
+
 		parsePost(imgInfo);
 	}
 
@@ -789,7 +789,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else {
 			var result = result[0].split("=")[1];
 
-			if (/\d+/.test(result))
+			if (/^\d+$/.test(result))
 				return parseInt(result, 10);
 			else
 				return result;
