@@ -137,32 +137,47 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Functions for creating a url and retrieving info from it */
 	function searchJSON(mode, xml) {
 		if (mode == "search") {
-			var url = gUrl.replace(/\/?(posts)?\/?(\?|$)/, "/posts.json?");
+			var numImages = getVar("limit") || thumbnail_count || 20; // Custom thumbnail limits have been added to Danbooru settings so this will need to be updated to include account settings.
 
-			if (allowUserLimit())
-				url += "&limit=" + thumbnail_count;
+			if (document.getElementsByClassName("post-preview").length < numImages) {
+				var url = gUrl.replace(/\/?(posts)?\/?(\?|$)/, "/posts.json?");
 
-			fetchJSON(url, "search");
+				if (allowUserLimit())
+					url += "&limit=" + thumbnail_count;
+
+				fetchJSON(url, "search");
+			}
 		}
 		else if (mode == "post") {
-			var url = gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json");
-			fetchJSON(url, "post");
+			if (document.getElementById("image-container").getElementsByTagName("object")[0] || document.getElementById("image") || /Save this file/.test(document.getElementById("image-container").textContent)) { //document.getElementById("image-container").getElementsByTagName("object")[0]%20+%20"\n"%20+%20document.getElementById("image")
+				fetchInfo();
+			}
+			else {
+				var url = gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json");
+				fetchJSON(url, "post");
+			}
 		}
 		else if (mode == "notes") {
-			var url = gUrl.replace(/\/notes\/?/, "/notes.json");
-			fetchJSON(url, "notes");
+			if (document.getElementsByClassName("post-preview").length < 20) {
+				var url = gUrl.replace(/\/notes\/?/, "/notes.json");
+				fetchJSON(url, "notes");
+			}
 		}
 		else if (mode == "popular") {
-			var url = gUrl.replace(/\/popular\/?/, "/popular.json");
-			fetchJSON(url, "popular");
+			if (document.getElementsByClassName("post-preview").length < 20) {
+				var url = gUrl.replace(/\/popular\/?/, "/popular.json");
+				fetchJSON(url, "popular");
+			}
 		}
 		else if (mode == "pool") {
-			var url = gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json");
-			fetchJSON(url, "pool");
+			if (document.getElementsByClassName("post-preview").length < 20) {
+				var url = gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json");
+				fetchJSON(url, "pool");
+			}
 		}
 		else if (mode == "poolsearch") {
 			var poolIds = xml.post_ids.split(" ");
-			var page = (/page=\d+/.test(gUrlQuery) ? parseInt(getVar("page"), 10) : 1);
+			var page = getVar("page") || 1;
 			var postIds = poolIds.slice((page - 1) * 20, page * 20);
 
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
@@ -176,6 +191,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function fetchJSON(url, mode, optArg) {
+		Danbooru.notice("API used");
+		
 		// Retrieve JSON.
 		var xmlhttp = new XMLHttpRequest();
 
@@ -214,9 +231,53 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			xmlhttp.send(null);
 		}
 	}
+	
+	function fetchInfo() {
+		Danbooru.notice("Page info used");
+		
+		// Retrieve info in the page.
+		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
+		var infoText = infoLink.parentNode.textContent;
+	
+		if (document.getElementById("image")) { // Regular image.
+			var imgInfo = {
+				id: parseInt(fetchMeta("post-id"), 10),
+				file_ext: /data\/.+?\.(.+?)$/.exec(infoLink.href)[1],
+				md5: /data\/(.+?)\..+?$/.exec(infoLink.href)[1],
+				url: infoLink.href,
+				image_height: parseInt(/\(\d+x(\d+)\)/.exec(infoText)[1], 10),
+				image_width: parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10),
+				has_large: (parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10) > 850 ? true : false)
+			};
+		}
+		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
+			var imgInfo = {
+				id: parseInt(fetchMeta("post-id"), 10),
+				file_ext: /data\/.+?\.(.+?)$/.exec(infoLink.href)[1],
+				md5: /data\/(.+?)\..+?$/.exec(infoLink.href)[1],
+				url: infoLink.href,
+				image_height: parseInt(document.getElementById("image-container").getElementsByTagName("object")[0].height, 10),
+				image_width: parseInt(document.getElementById("image-container").getElementsByTagName("object")[0].width, 10),
+				has_large: (parseInt(document.getElementById("image-container").getElementsByTagName("object")[0].width, 10) > 850 ? true : false)
+			};
+		}
+		else {
+			var imgInfo = {
+				id: parseInt(fetchMeta("post-id"), 10),
+				file_ext: /data\/.+?\.(.+?)$/.exec(infoLink.href)[1],
+				md5: /data\/(.+?)\..+?$/.exec(infoLink.href)[1],
+				url: infoLink.href,
+				image_height: null,
+				image_width: null,
+				has_large: false
+			};
+		}
+		
+		parsePost(imgInfo);
+	}
 
 	function fetchPages(url, mode, optArg) {
-		// Retrieve page to get paginator.
+		// Retrieve an actual page for certain pieces of information.
 		var xmlhttp = new XMLHttpRequest();
 
 		if (xmlhttp !== null) {
@@ -231,7 +292,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							if (newPaginator)
 								paginator.innerHTML = newPaginator;
 						}
-						else if (mode === "comments") { // Fetch post to get comments and tag color codes.
+						else if (mode === "comments") { // Fetch post to get comments and tag colors.
 							var childSpan = document.createElement("span");
 							var post = optArg[0];
 							var postId = optArg[1];
@@ -433,7 +494,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (ext == "swf") // Create flash object.
 				container.innerHTML = '<div id="note-container"></div> <object height="' + height + '" width="' + width + '"> <params name="movie" value="' + url + '"> <embed allowscriptaccess="never" src="' + url + '" height="' + height + '" width="' + width + '"> </params> </object> <p><a href="' + url + '">Save this flash (right click and save)</a></p>';
 			else if (!height) // Create manual download.
-				container.innerHTML = '<h2><a href="' + url + '">Download</a></h2> <p>You must download this file manually.</p>';
+				container.innerHTML = '<p><a href="' + url + '">Save this file (right click and save)</a></p>';
 			else { // Create image
 				var useSample = (checkSetting("default-image-size", "large", load_sample_first) && hasLarge);
 
@@ -722,8 +783,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (result === null)
 			return null;
-		else
-			return result[0].split("=")[1];
+		else {
+			var result = result[0].split("=")[1];
+
+			if (/\d+/.test(result))
+				return parseInt(result, 10);
+			else
+				return result;
+		}
 	}
 
 	function keyCheck(e) {
