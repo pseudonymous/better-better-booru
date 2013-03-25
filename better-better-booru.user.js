@@ -136,10 +136,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Functions for creating a url and retrieving info from it */
 	function searchJSON(mode, xml) {
-		if (mode == "search") {
-			var numImages = getVar("limit") || thumbnail_count || 20; // Custom thumbnail limits have been added to Danbooru settings so this will need to be updated to include account settings.
+		var numThumbs = document.getElementsByClassName("post-preview").length;
 
-			if (document.getElementsByClassName("post-preview").length < numImages) {
+		if (mode == "search") {
+			var numDesired = getVar("limit") || thumbnail_count || 20; // Custom thumbnail limits have been added to Danbooru settings so this will need to be updated to include account settings.
+
+			if (numThumbs < numDesired) {
 				var url = gUrl.replace(/\/?(posts)?\/?(\?|$)/, "/posts.json?");
 
 				if (allowUserLimit())
@@ -149,7 +151,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 		}
 		else if (mode == "post") {
-			if (document.getElementById("image-container").getElementsByTagName("object")[0] || document.getElementById("image") || /Save this file/.test(document.getElementById("image-container").textContent)) { //document.getElementById("image-container").getElementsByTagName("object")[0]%20+%20"\n"%20+%20document.getElementById("image")
+			if (document.getElementById("image-container").getElementsByTagName("object")[0] || document.getElementById("image") || /Save this file/.test(document.getElementById("image-container").textContent)) {
 				fetchInfo();
 			}
 			else {
@@ -158,19 +160,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 		}
 		else if (mode == "notes") {
-			if (document.getElementsByClassName("post-preview").length < 20) {
+			if (numThumbs < 20) {
 				var url = gUrl.replace(/\/notes\/?/, "/notes.json");
 				fetchJSON(url, "notes");
 			}
 		}
 		else if (mode == "popular") {
-			if (document.getElementsByClassName("post-preview").length < 20) {
+			if (numThumbs < 20) {
 				var url = gUrl.replace(/\/popular\/?/, "/popular.json");
 				fetchJSON(url, "popular");
 			}
 		}
 		else if (mode == "pool") {
-			if (document.getElementsByClassName("post-preview").length < 20) {
+			if (numThumbs < 20) {
 				var url = gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json");
 				fetchJSON(url, "pool");
 			}
@@ -183,7 +185,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
 		}
 		else if (mode == "comments") {
-			if (document.getElementsByClassName("post-preview").length < 5) {
+			if (numThumbs < 5) {
 				var url = gUrl.replace(/\/comments\/?/, "/comments.json");
 				fetchJSON(url, "comments");
 			}
@@ -276,7 +278,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			};
 		}
 
-		parsePost(imgInfo);
+		var timer = setTimeout(function(){parsePost(imgInfo)},1); // Timer is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 	}
 
 	function fetchPages(url, mode, optArg) {
@@ -665,7 +667,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 				}
 
-				Danbooru.Note.load_all(); // Load/reload notes.
+				// Load/reload notes.
+				Danbooru.Note.load_all();
 
 				// Resize image if desired.
 				if (checkSetting("always-resize-images", "true", image_resize))
