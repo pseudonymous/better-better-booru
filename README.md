@@ -8,6 +8,7 @@ Changelog
 ----------
 * Version 4.0:
  * Added in support for displaying loli/shota posts in the comments pages.
+ * Reduced unnecessary API calls to Danbooru.
  * Updated loli/shota borders to work as a standalone feature.
  * Updated blacklist and pool support in response to changes on Danbooru.
 * Version 3.3:
