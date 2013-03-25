@@ -141,7 +141,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (mode == "search") {
 			var numDesired = getVar("limit") || thumbnail_count || 20; // Custom thumbnail limits have been added to Danbooru settings so this will need to be updated to include account settings.
 
-			if (numThumbs < numDesired) {
+			if (numThumbs != numDesired) {
 				var url = gUrl.replace(/\/?(posts)?\/?(\?|$)/, "/posts.json?");
 
 				if (allowUserLimit())
@@ -151,28 +151,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 		}
 		else if (mode == "post") {
-			if (document.getElementById("image-container").getElementsByTagName("object")[0] || document.getElementById("image") || /Save this file/.test(document.getElementById("image-container").textContent)) {
+			if (document.getElementById("image-container").getElementsByTagName("object")[0] || document.getElementById("image") || /Save this file/.test(document.getElementById("image-container").textContent))
 				fetchInfo();
-			}
 			else {
 				var url = gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json");
 				fetchJSON(url, "post");
 			}
 		}
 		else if (mode == "notes") {
-			if (numThumbs < 20) {
+			if (numThumbs != 20) {
 				var url = gUrl.replace(/\/notes\/?/, "/notes.json");
 				fetchJSON(url, "notes");
 			}
 		}
 		else if (mode == "popular") {
-			if (numThumbs < 20) {
+			if (numThumbs != 20) {
 				var url = gUrl.replace(/\/popular\/?/, "/popular.json");
 				fetchJSON(url, "popular");
 			}
 		}
 		else if (mode == "pool") {
-			if (numThumbs < 20) {
+			if (numThumbs != 20) {
 				var url = gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json");
 				fetchJSON(url, "pool");
 			}
@@ -185,7 +184,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
 		}
 		else if (mode == "comments") {
-			if (numThumbs < 5) {
+			if (numThumbs != 5) {
 				var url = gUrl.replace(/\/comments\/?/, "/comments.json");
 				fetchJSON(url, "comments");
 			}
