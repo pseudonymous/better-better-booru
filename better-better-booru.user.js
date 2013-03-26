@@ -139,7 +139,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var numThumbs = document.getElementsByClassName("post-preview").length;
 
 		if (mode == "search") {
-			var numDesired = getVar("limit") || thumbnail_count || 20; // Custom thumbnail limits have been added to Danbooru settings so this will need to be updated to include account settings.
+			if (allowUserLimit())
+				var numDesired = thumbnail_count || 20; // Custom thumbnail limits have been added to Danbooru settings so this will need to be updated to include account settings.
+			else
+				var numDesired = getVar("limit") || 20;
 
 			if (numThumbs != numDesired) {
 				var url = gUrl.replace(/\/?(posts)?\/?(\?|$)/, "/posts.json?");
