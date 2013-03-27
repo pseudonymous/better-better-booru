@@ -821,7 +821,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function limitFix() {
 		var links = document.evaluate('//div[@id="page"]//a[starts-with(@href, "/posts?")]', document, null, 6, null);
-		var paginator = document.getElementsByClassName("paginator")[0];
 
 		for (var i = 0, lsl = links.snapshotLength; i < lsl; i++) {
 			var link = links.snapshotItem(i);
