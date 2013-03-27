@@ -97,14 +97,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
 
 	/* "INIT" */
-	if (gLoc !== undefined) {
-		if (show_all || show_loli || show_shota || show_deleted) // API only features.
-			searchJSON(gLoc);
-		else // Alternate mode for features.
-			modifyPage(gLoc);
-	}
-	else if (!checkLoginStatus()) // Apply script blacklist to unknown pages when logged out.
-		delayMe(function(){blacklistInit()});
+	if (show_all || show_loli || show_shota || show_deleted) // API only features.
+		searchJSON(gLoc);
+	else // Alternate mode for features.
+		modifyPage(gLoc);
 
 	if (hide_upgrade_notice)
 		hideUpgradeNotice();
@@ -203,6 +199,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				fetchJSON(url, "comments");
 			}
 		}
+		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
+			delayMe(function(){blacklistInit()});
 	}
 
 	function fetchJSON(url, mode, optArg) {
@@ -253,21 +251,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (!needPostAPI())
 				fetchInfo();
 		}
-		else if (mode == "search") {
-			if (allowUserLimit()) {
-				var url = gUrl;
+		else if (mode == "search" && allowUserLimit()) {
+			var url = gUrl;
 
-				if (/\?/.test(url))
-					url += "&limit=" + thumbnail_count
-				else
-					url += "?limit=" + thumbnail_count
+			if (/\?/.test(url))
+				url += "&limit=" + thumbnail_count
+			else
+				url += "?limit=" + thumbnail_count
 
-				fetchPages(url, "thumbnails");
-			}
-			else if (!checkLoginStatus())
-				delayMe(function(){blacklistInit()});
+			fetchPages(url, "thumbnails");
 		}
-		else if (!checkLoginStatus()) // Apply script blacklist to all other known pages when logged out.
+		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
 			delayMe(function(){blacklistInit()});
 
 	}
