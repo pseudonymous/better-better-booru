@@ -401,7 +401,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							childSpan.innerHTML = /<article class="post-preview"[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
 
 							document.getElementById("posts").innerHTML = childSpan.innerHTML;
-							
+
 							// Thumbnail classes and titles
 							Danbooru.Post.initialize_titles();
 
@@ -820,7 +820,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function limitFix() {
-		var links = document.evaluate('//page//a[starts-with(@href, "/posts?")]', document, null, 6, null);
+		var links = document.evaluate('//div[@id="page"]//a[starts-with(@href, "/posts?")]', document, null, 6, null);
 		var paginator = document.getElementsByClassName("paginator")[0];
 
 		for (var i = 0, lsl = links.snapshotLength; i < lsl; i++) {
