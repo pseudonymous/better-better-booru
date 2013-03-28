@@ -146,12 +146,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var numThumbs = document.getElementsByClassName("post-preview").length;
 
 		if (mode == "search") {
-			if (allowUserLimit())
-				var numDesired = thumbnail_count || 20; // Custom thumbnail limits have been added to Danbooru settings so this will need to be updated to include account settings.
-			else
-				var numDesired = getVar("limit") || 20;
+			var numExpected = getVar("limit") || 20;
 
-			if (numThumbs != numDesired) {
+			if (allowUserLimit())
+				var numDesired = thumbnail_count;
+			else
+				var numDesired = numExpected;
+
+			if (numThumbs != numDesired || numThumbs < numExpected) {
 				var url = gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?");
 
 				if (allowUserLimit())
@@ -229,9 +231,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					else if (xmlhttp.status == 403)
 						Danbooru.error("Better Better Booru: Error retrieving information. Access denied.");
 					else if (xmlhttp.status == 421)
-						Danbooru.error("Better Better Booru: Error retrieving information. Your API access is currently throttled. Please try again later.");
+						Danbooru.error("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.");
 					else if (xmlhttp.status == 401)
-						Danbooru.error("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API.");
+						Danbooru.error("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API for hidden image information.");
 					else if (xmlhttp.status == 500)
 						Danbooru.error("Better Better Booru: Error retrieving information. Internal server error.");
 					else if (xmlhttp.status == 503)
@@ -299,7 +301,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				has_large: (parseInt(object.width, 10) > 850 ? true : false)
 			};
 		}
-		else if (/The artist requested removal/.test(document.getElementById("image-container").textContent)) {
+		else if (/The artist requested removal/.test(document.getElementById("image-container").textContent)) { // Image removed by artist request.
 			var infoText = infoLink.parentNode.textContent;
 
 			var imgInfo = {
@@ -359,7 +361,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 								if (categoryList) {
 									for (var j = 0, cll = categoryList.length; j < cll; j++) {
-										var tag = categoryList[j].children[1].textContent.replace(/\s/g, "_");
+										var tag = categoryList[j].children[1].textContent;
 										var match = new RegExp('(<span class="category-)0("> <[^>]+>' + escapeRegEx(tag) + '<\/a> <\/span>)');
 
 										target.innerHTML = target.innerHTML.replace(match, "$1" + i + "$2");
@@ -496,7 +498,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		// Fix paginator with user's custom limit.
-		if (allowUserLimit() && paginator) {
+		if (gLoc == "search" && allowUserLimit() && paginator) {
 			var pageLinks = document.evaluate('.//a', paginator, null, 6, null);
 
 			for (var i = 0, isl = pageLinks.snapshotLength; i < isl; i++) {
@@ -731,24 +733,25 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var posts = xml;
 		var existingPosts = document.getElementsByClassName("post post-preview");
 		var eci = 0;
+		var endTotal = 5;
 
-		for (var i = 0, cl = posts.length; i < cl; i++) {
+		for (var i = 0, pl = posts.length; i < pl; i++) {
 			var post = posts[i];
 			var existingPost = existingPosts[eci];
 			var tags = post.tag_string;
 
 			if (!existingPost || post.id != existingPost.getAttribute("data-id")) {
-				if (!show_all && ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags))))
+				if (!/\b(?:loli|shota)\b/.test(tags)) {
 					continue;
-				else if (!/\b(?:loli|shota)\b/.test(tags)) {
-					Danbooru.error("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.");
-					return;
+				}
+				else if (!show_all && ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)))) {
+					endTotal--;
+					continue;
 				}
 
 				var tagLinks = tags.split(" ");
 				var parent = (post.parent_id !== null ? post.parent_id : "");
 				var flags = "";
-				var thumbClass = "post post-preview";
 
 				if (post.is_deleted)
 					flags = "deleted";
@@ -758,7 +761,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					flags = "pending";
 
 				for (var j = 0, tll = tagLinks.length; j < tll; j++) {
-					tagLinks[j] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[j]) + '">' + tagLinks[j] + '</a> </span>';
+					tagLinks[j] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[j]) + '">' + tagLinks[j].replace(/_/g, " ") + '</a> </span> ';
 				}
 
 				tagsLinks = tagLinks.join(" ");
@@ -777,6 +780,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			eci++;
 		}
+
+		// If we don't have the expected number of posts, the API info and page are too out of sync.
+		if (existingPosts.length != endTotal)
+			Danbooru.error("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.");
 
 		// Thumbnail classes and titles
 		Danbooru.Post.initialize_titles();
@@ -919,7 +926,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function allowUserLimit() {
-		if (thumbnail_count > 0 && gLoc == "search" && !/(?:page|limit)=\d/.test(gUrlQuery))
+		if (thumbnail_count > 0 && !/(?:page|limit)=\d/.test(gUrlQuery))
 			return true;
 		else
 			return false;
