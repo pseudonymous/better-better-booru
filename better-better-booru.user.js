@@ -741,9 +741,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var tags = post.tag_string;
 
 			if (!existingPost || post.id != existingPost.getAttribute("data-id")) {
-				if (!/\b(?:loli|shota)\b/.test(tags)) {
+				if (!/\b(?:loli|shota)\b/.test(tags))
 					continue;
-				}
 				else if (!show_all && ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)))) {
 					endTotal--;
 					continue;
@@ -841,7 +840,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				link.href += "&limit=" + thumbnail_count;
 		}
 
-		if (gLoc == "search")
+		if (gLoc == "search" || gLoc == "post")
 			document.getElementById("search-box").getElementsByTagName("form")[0].innerHTML += '<input name="limit" value="' + thumbnail_count + '" type="hidden">';
 
 	}
@@ -868,7 +867,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (result === null)
 			return null;
 		else {
-			var result = result[0].split("=")[1];
+			result = result[0].split("=")[1];
 
 			if (/^\d+$/.test(result))
 				return parseInt(result, 10);
