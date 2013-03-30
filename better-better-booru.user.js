@@ -298,7 +298,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				url: infoHref,
 				image_height: parseInt(object.height, 10),
 				image_width: parseInt(object.width, 10),
-				has_large: (parseInt(object.width, 10) > 850 ? true : false)
+				has_large: false
 			};
 		}
 		else if (/The artist requested removal/.test(document.getElementById("image-container").textContent)) { // Image removed by artist request.
@@ -673,9 +673,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
 				if (!checkLoginStatus()) {
-					var options = document.evaluate('//aside[@id="sidebar"]/section[4]/ul', document, null, 9, null).singleNodeValue;
+					var options = document.createElement("section");
+					var history = document.evaluate('//aside[@id="sidebar"]/section[last()]', document, null, 9, null).singleNodeValue;
 
-					options.innerHTML = '<li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + md5 + '.jpg">Find similar</a></li>';
+					options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + md5 + '.jpg">Find similar</a></li></ul>';
+					history.parentNode.insertBefore(options, history);
 					Danbooru.Post.initialize_post_image_resize_to_window_link();
 				}
 
