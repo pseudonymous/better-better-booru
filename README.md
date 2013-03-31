@@ -6,8 +6,9 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
-* Version ?.?:
+* Version 4.1:
  * Reduced unnecessary API calls to Danbooru.
+ * Improved comment handling to reduce errors caused by out of sync information.
 * Version 4.0:
  * Added in support for displaying loli/shota posts in the comments pages.
  * Updated loli/shota borders to work as a standalone feature.
