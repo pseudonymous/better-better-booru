@@ -997,10 +997,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function searchAdd() {
-		if (gLoc == "search") {
+		if (gLoc == "search" || gLoc == "post") {
 			// Where = array of <li> in tag-sidebar.
 			var where = document.getElementById("tag-box");
 
+			if (!where)
+				where = document.getElementById("tag-list");
+				
 			if (!where)
 				return;
 			else
