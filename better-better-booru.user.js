@@ -144,21 +144,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Functions for creating a url and retrieving info from it */
 	function searchJSON(mode, xml) {
 		var numThumbs = document.getElementsByClassName("post-preview").length;
+		var limit = ""
 
 		if (mode == "search") {
 			var numExpected = getVar("limit") || 20;
 
-			if (allowUserLimit())
+			if (allowUserLimit()) {
 				var numDesired = thumbnail_count;
+				limit = "&limit=" + thumbnail_count
+			}
 			else
 				var numDesired = numExpected;
 
 			if (numThumbs != numDesired || numThumbs < numExpected) {
-				var url = gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?");
-
-				if (allowUserLimit())
-					url += "&limit=" + thumbnail_count;
-
+				var url = gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit;
 				fetchJSON(url, "search");
 			}
 		}
@@ -206,8 +205,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function fetchJSON(url, mode, optArg) {
-		Danbooru.notice("API used");
-
 		// Retrieve JSON.
 		var xmlhttp = new XMLHttpRequest();
 
@@ -238,8 +235,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						Danbooru.error("Better Better Booru: Error retrieving information. Internal server error.");
 					else if (xmlhttp.status == 503)
 						Danbooru.error("Better Better Booru: Error retrieving information. Service unavailable.");
-					// else // Debug
-						// GM_log(xmlhttp.statusText);
 				}
 			};
 			xmlhttp.open("GET", url, true);
@@ -269,8 +264,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function fetchInfo() {
-		Danbooru.notice("Page info used");
-
 		// Retrieve info in the page. (Alternative to fetchJSON)
 		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
 		var infoHref = infoLink.href;
@@ -339,7 +332,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					if (xmlhttp.status == 200) { // 200 = "OK"
 
 						if (mode == "paginator") { // Fetch updated paginator for first page of searches.
-							var paginator = document.getElementsByClassName("paginator")[0];
+							var paginator = optArg;
 							var newPaginator = /<div class="paginator">(.+?)<\/div>/i.exec(xmlhttp.responseText)[1];
 
 							if (newPaginator)
@@ -422,6 +415,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var posts = xml;
 		var search = "";
 		var where;
+		var paginator = document.getElementsByClassName("paginator")[0];
 
 		// If no posts, do nothing.
 		if (!posts.length)
@@ -446,8 +440,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where = document.getElementById("a-index");
 			out = "<h1>Notes</h1>";
 		}
-
-		var paginator = document.getElementsByClassName("paginator")[0];
 
 		// Result preparation.
 		for (var i = 0, pl = posts.length; i < pl; i++) {
@@ -497,32 +489,32 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 		}
 
-		// Fix paginator with user's custom limit.
-		if (gLoc == "search" && allowUserLimit() && paginator) {
-			var pageLinks = document.evaluate('.//a', paginator, null, 6, null);
+		// Replace results with new results.
+		if (paginator) {
+			where.innerHTML = out + outerHTML(paginator);
+			paginator = document.getElementsByClassName("paginator")[0];
+			
+			if (gLoc == "search" && allowUserLimit()) {
+				// Fix existing paginator with user's custom limit.
+				var pageLinks = document.evaluate('.//a', paginator, null, 6, null);
 
-			for (var i = 0, isl = pageLinks.snapshotLength; i < isl; i++) {
-				pageLinks.snapshotItem(i).href = pageLinks.snapshotItem(i).href + "&limit=" + thumbnail_count;
+				for (var i = 0, isl = pageLinks.snapshotLength; i < isl; i++)
+					pageLinks.snapshotItem(i).href = pageLinks.snapshotItem(i).href + "&limit=" + thumbnail_count;
+				
+				// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
+				var pageUrl = gUrl;
+
+				if (/\?/.test(pageUrl))
+					pageUrl += "&limit=" + thumbnail_count;
+				else
+					pageUrl += "?limit=" + thumbnail_count;
+
+				fetchPages(pageUrl, "paginator", paginator);			
 			}
 		}
-
-		// Replace results with new results.
-		if (paginator)
-			where.innerHTML = out + outerHTML(paginator);
 		else
 			where.innerHTML = out;
 
-		// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
-		if (gLoc == "search" && allowUserLimit()) {
-			var pageUrl = gUrl;
-
-			if (/\?/.test(pageUrl))
-				pageUrl += "&limit=" + thumbnail_count;
-			else
-				pageUrl += "?limit=" + thumbnail_count;
-
-			fetchPages(pageUrl, "paginator");
-		}
 
 		// Thumbnail classes and titles
 		Danbooru.Post.initialize_titles();
@@ -1096,7 +1088,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function delayMe(func) {
-		var timer = setTimeout(func,1);
+		var timer = setTimeout(func, 0);
 	}
 
 	function escapeRegEx(regEx) {
