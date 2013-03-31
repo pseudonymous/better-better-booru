@@ -7,8 +7,11 @@ Various tweaks to make Danbooru better.
 Changelog
 ----------
 * Version 4.1:
- * Reduced unnecessary API calls to Danbooru.
- * Improved comment handling to reduce errors caused by out of sync information.
+ * Added a "show all" option to allow the display of all hidden posts with one setting.
+ * Added a "show deleted" option to allow a choice in the display of deleted posts.
+ * Updated to reduce unnecessary API calls in order to avoid the API limit and improve overall speed. All options (excluding hidden post/show_xxxx options) can now function without the API, meaning they can be used without being logged in.
+ * Updated the options to allow all of them to function independently of each other.
+ * Updated comment handling to reduce errors caused by out of sync information.
 * Version 4.0:
  * Added in support for displaying loli/shota posts in the comments pages.
  * Updated loli/shota borders to work as a standalone feature.
