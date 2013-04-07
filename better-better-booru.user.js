@@ -493,14 +493,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (paginator) {
 			where.innerHTML = out + outerHTML(paginator);
 			paginator = document.getElementsByClassName("paginator")[0];
-			
+
 			if (gLoc == "search" && allowUserLimit()) {
 				// Fix existing paginator with user's custom limit.
 				var pageLinks = document.evaluate('.//a', paginator, null, 6, null);
 
 				for (var i = 0, isl = pageLinks.snapshotLength; i < isl; i++)
 					pageLinks.snapshotItem(i).href = pageLinks.snapshotItem(i).href + "&limit=" + thumbnail_count;
-				
+
 				// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
 				var pageUrl = gUrl;
 
@@ -509,7 +509,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				else
 					pageUrl += "?limit=" + thumbnail_count;
 
-				fetchPages(pageUrl, "paginator", paginator);			
+				fetchPages(pageUrl, "paginator", paginator);
 			}
 		}
 		else
@@ -994,7 +994,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			if (!where)
 				where = document.getElementById("tag-list");
-				
+
 			if (!where)
 				return;
 			else
@@ -1097,42 +1097,42 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Does anyone use these options? Adblock should pretty much cover the ads.
 	function hideAdvertisements() {
 		var img = document.evaluate('//img[@alt="Advertisement"]', document, null, 6, null);
-		
+
 		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
 			img.snapshotItem(i).style.display = "none";
 	}
 
 	function hideYourAdHere() {
 		var img = document.evaluate('//img[@alt="Your Ad Here"]', document, null, 6, null);
-		
+
 		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
 			img.snapshotItem(i).style.display = "none";
 	}
 
 	function hideIframes() {
 		var img = document.evaluate('//iframe[contains(@src, "jlist")]', document, null, 6, null);
-		
+
 		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
 			img.snapshotItem(i).style.display = "none";
 	}
 
 	function hideUpgradeNotice() {
 		var x = document.getElementById("upgrade-account-notice");
-		
+
 		if (x)
 			x.style.display = "none";
 	}
 
 	function hideSignUpNotice() {
 		var x = document.getElementById("sign-up-notice");
-		
+
 		if (x)
 			x.style.display = "none";
 	}
 
 	function hideTOSNotice() {
 		var x = document.getElementById("tos-notice");
-		
+
 		if (x)
 			x.style.display = "none";
 	}
