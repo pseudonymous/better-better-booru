@@ -226,7 +226,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							parseComments(xml);
 					}
 					else if (xmlhttp.status == 403)
-						Danbooru.error("Better Better Booru: Error retrieving information. Access denied.");
+						Danbooru.error("Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information.");
 					else if (xmlhttp.status == 421)
 						Danbooru.error("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.");
 					else if (xmlhttp.status == 401)
@@ -634,7 +634,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							img.width = width;
 
 							if (!swapInit) {
-								$("#image").data("scale_factor", 1); // Fix Danbooru. Remove after officially fixed.
+								$("#image").data("scale_factor", 1);
 								img.style.height = height + "px";
 								img.style.width = width + "px";
 							}
@@ -647,7 +647,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							img.width = sampWidth;
 
 							if (!swapInit) {
-								$("#image").data("scale_factor", 1); // Fix Danbooru. Remove after officially fixed.
+								$("#image").data("scale_factor", 1);
 								img.style.height = sampHeight + "px";
 								img.style.width = sampWidth + "px";
 							}
@@ -725,7 +725,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function parseComments(xml) {
 		var posts = xml;
-		var existingPosts = document.getElementsByClassName("post post-preview");
+		var existingPosts = document.getElementsByClassName("post post-preview"); // Live node list so adding/removing a "post post-preview" class item immediately changes this.
 		var eci = 0;
 		var endTotal = 5;
 
@@ -735,13 +735,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var tags = post.tag_string;
 
 			if (!existingPost || post.id != existingPost.getAttribute("data-id")) {
-				if (!/\b(?:loli|shota)\b/.test(tags))
+				if (!/\b(?:loli|shota)\b/.test(tags)) // API post isn't loli/shota and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
 					continue;
-				else if (!show_all && ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)))) {
+				else if (!show_all && ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)))) { // Skip loli/shota if the user has selected to do so.
 					endTotal--;
 					continue;
 				}
 
+				// Prepare the post information.
 				var tagLinks = tags.split(" ");
 				var parent = (post.parent_id !== null ? post.parent_id : "");
 				var flags = "";
@@ -753,21 +754,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				else if (post.is_pending)
 					flags = "pending";
 
-				for (var j = 0, tll = tagLinks.length; j < tll; j++) {
+				for (var j = 0, tll = tagLinks.length; j < tll; j++)
 					tagLinks[j] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[j]) + '">' + tagLinks[j].replace(/_/g, " ") + '</a> </span> ';
-				}
 
 				tagsLinks = tagLinks.join(" ");
 
+				// Create the new post.
 				var childSpan = document.createElement("span");
 
 				childSpan.innerHTML = '<div class="post post-preview" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + flags + '" data-score="' + post.score + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="/ssd/data/preview/' + post.md5 + '.jpg" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
-				if (!existingPost)
+				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
-				else
+				else // Insert new post before the post that should follow it.
 					existingPost.parentNode.insertBefore(childSpan.firstChild, existingPost);
 
+				// Get the tag colors and comments.
 				fetchPages("/posts/" + post.id, "comments", [existingPosts[eci], post.id]);
 			}
 
@@ -787,14 +789,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Functions for support, extra features, and content manipulation */
 	function blacklistInit() {
-		Danbooru.Blacklist.blacklists.length = 0;
+		Danbooru.Blacklist.entries.length = 0;
 
 		if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
 			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
 
 			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
 				var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
-				Danbooru.Blacklist.blacklists.push(tag);
+				Danbooru.Blacklist.entries.push(tag);
 			}
 		}
 		else // Reload the account blacklist.
@@ -898,23 +900,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (gLoc == "post") {
 			var target = document.evaluate('//div[@id="pool-nav"]//a', document, null, 6, null)
 
-			for (var i = 0, isl = target.snapshotLength; i < isl; i++) {
-				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];;
-			}
+			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
+				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];
 		}
 		else if (gLoc == "pool") {
 			var target = document.evaluate('//section[@id="content"]/article/a', document, null, 6, null)
 
-			for (var i = 0, isl = target.snapshotLength; i < isl; i++) {
-				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];;
-			}
+			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
+				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];
 		}
 		else if (gLoc == "search") {
 			var target = document.evaluate('//div[@id="posts"]/article/a', document, null, 6, null)
 
-			for (var i = 0, isl = target.snapshotLength; i < isl; i++) {
-				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];;
-			}
+			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
+				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];
 		}
 	}
 
@@ -1098,39 +1097,42 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Does anyone use these options? Adblock should pretty much cover the ads.
 	function hideAdvertisements() {
 		var img = document.evaluate('//img[@alt="Advertisement"]', document, null, 6, null);
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++) {
+		
+		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
 			img.snapshotItem(i).style.display = "none";
-		}
 	}
 
 	function hideYourAdHere() {
 		var img = document.evaluate('//img[@alt="Your Ad Here"]', document, null, 6, null);
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++) {
+		
+		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
 			img.snapshotItem(i).style.display = "none";
-		}
 	}
 
 	function hideIframes() {
 		var img = document.evaluate('//iframe[contains(@src, "jlist")]', document, null, 6, null);
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++) {
+		
+		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
 			img.snapshotItem(i).style.display = "none";
-		}
 	}
 
 	function hideUpgradeNotice() {
 		var x = document.getElementById("upgrade-account-notice");
+		
 		if (x)
 			x.style.display = "none";
 	}
 
 	function hideSignUpNotice() {
 		var x = document.getElementById("sign-up-notice");
+		
 		if (x)
 			x.style.display = "none";
 	}
 
 	function hideTOSNotice() {
 		var x = document.getElementById("tos-notice");
+		
 		if (x)
 			x.style.display = "none";
 	}
