@@ -12,6 +12,7 @@ Changelog
  * Updated to reduce unnecessary API calls in order to avoid the API limit and improve overall speed. All options (excluding hidden post/show_xxxx options) can now function without the API, meaning they can be used without being logged in.
  * Updated the options to allow all of them to function independently of each other.
  * Updated comment handling to reduce errors caused by out of sync information.
+ * Updated blacklist support in response to changes on Danbooru.
 * Version 4.0:
  * Added in support for displaying loli/shota posts in the comments pages.
  * Updated loli/shota borders to work as a standalone feature.
