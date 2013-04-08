@@ -144,17 +144,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Functions for creating a url and retrieving info from it */
 	function searchJSON(mode, xml) {
 		var numThumbs = document.getElementsByClassName("post-preview").length;
-		var limit = ""
+		var limit = "";
 
 		if (mode == "search") {
 			var numExpected = getVar("limit") || 20;
+			var numDesired = 0;
 
 			if (allowUserLimit()) {
-				var numDesired = thumbnail_count;
-				limit = "&limit=" + thumbnail_count
+				numDesired = thumbnail_count;
+				limit = "&limit=" + thumbnail_count;
 			}
 			else
-				var numDesired = numExpected;
+				numDesired = numExpected;
 
 			if (numThumbs != numDesired || numThumbs < numExpected) {
 				var url = gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit;
@@ -165,26 +166,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (!needPostAPI())
 				fetchInfo();
 			else {
-				var url = gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json");
-				fetchJSON(url, "post");
+				fetchJSON(gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json"), "post");
 			}
 		}
 		else if (mode == "notes") {
 			if (numThumbs != 20) {
-				var url = gUrl.replace(/\/notes\/?/, "/notes.json");
-				fetchJSON(url, "notes");
+				fetchJSON(gUrl.replace(/\/notes\/?/, "/notes.json"), "notes");
 			}
 		}
 		else if (mode == "popular") {
 			if (numThumbs != 20) {
-				var url = gUrl.replace(/\/popular\/?/, "/popular.json");
-				fetchJSON(url, "popular");
+				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
 			}
 		}
 		else if (mode == "pool") {
 			if (numThumbs != 20) {
-				var url = gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json");
-				fetchJSON(url, "pool");
+				fetchJSON(gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
 			}
 		}
 		else if (mode == "poolsearch") {
@@ -196,12 +193,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode == "comments") {
 			if (numThumbs != 5) {
-				var url = gUrl.replace(/\/comments\/?/, "/comments.json");
-				fetchJSON(url, "comments");
+				fetchJSON(gUrl.replace(/\/comments\/?/, "/comments.json"), "comments");
 			}
 		}
 		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
-			delayMe(function(){blacklistInit()});
+			delayMe(function(){blacklistInit();});
 	}
 
 	function fetchJSON(url, mode, optArg) {
@@ -252,14 +248,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var url = gUrl;
 
 			if (/\?/.test(url))
-				url += "&limit=" + thumbnail_count
+				url += "&limit=" + thumbnail_count;
 			else
-				url += "?limit=" + thumbnail_count
+				url += "?limit=" + thumbnail_count;
 
 			fetchPages(url, "thumbnails");
 		}
 		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
-			delayMe(function(){blacklistInit()});
+			delayMe(function(){blacklistInit();});
 
 	}
 
@@ -267,11 +263,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Retrieve info in the page. (Alternative to fetchJSON)
 		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
 		var infoHref = infoLink.href;
+		var imgInfo;
 
 		if (document.getElementById("image")) { // Regular image.
 			var img = document.getElementById("image");
 
-			var imgInfo = {
+			imgInfo = {
 				id: parseInt(fetchMeta("post-id"), 10),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
@@ -284,7 +281,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
 			var object = document.getElementById("image-container").getElementsByTagName("object")[0];
 
-			var imgInfo = {
+			imgInfo = {
 				id: parseInt(fetchMeta("post-id"), 10),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
@@ -297,7 +294,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (/The artist requested removal/.test(document.getElementById("image-container").textContent)) { // Image removed by artist request.
 			var infoText = infoLink.parentNode.textContent;
 
-			var imgInfo = {
+			imgInfo = {
 				id: parseInt(fetchMeta("post-id"), 10),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
@@ -308,7 +305,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			};
 		}
 		else {
-			var imgInfo = { // Manual download.
+			imgInfo = { // Manual download.
 				id: parseInt(fetchMeta("post-id"), 10),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
@@ -319,7 +316,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			};
 		}
 
-		delayMe(function(){parsePost(imgInfo)}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
+		delayMe(function(){parsePost(imgInfo);}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 	}
 
 	function fetchPages(url, mode, optArg) {
