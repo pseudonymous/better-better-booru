@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        4.1
+// @version        5.0
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @include        http://*.donmai.us/*
@@ -15,6 +15,10 @@
 // Have a nice day. - A Pseudonymous Coder
 
 function injectMe() { // This is needed to make this script work in Chrome.
+	/*
+	 * NOTE: You no longer need to edit this script to change settings!
+	 * Use the "BBB Settings" button in the menu instead.
+	 */
 	var defaults = {
 		show_all: false,
 		show_loli: false,
@@ -132,9 +136,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.appendChild(header);
 		for (var i in defaults) {
 			var pref = "bbb_"+i;
-			if (typeof(localStorage[pref]) === 'undefined')
-				localStorage[pref] = defaults[i];
-
 			var label = document.createElement("label");
 			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+labels[i]+"</span>";
 			label.style.padding = "5px 0";
@@ -216,10 +217,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	injectSettings();
 
-	/********************************/
-	/* Don't touch above this line! */
-	/********************************/
+	for (var i in defaults) {
+		var pref = "bbb_"+i;
+		if (typeof(localStorage[pref]) === 'undefined')
+			localStorage[pref] = defaults[i];
+	}
 
+	function toBool(str) { return str == "true"; }
 
 	/* Help */
 	// When editing settings, make sure you always maintain the same format. Leave equal signs, quotation marks, and semicolons alone.
@@ -230,41 +234,41 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* True or false settings */
 	// Global
-	var show_all = false; // Equivalent to setting show_loli, show_shota, and show_deleted to true.
+	var show_all = toBool(localStorage["bbb_show_all"]); // Equivalent to setting show_loli, show_shota, and show_deleted to true.
 
-	var show_loli = false;
-	var show_shota = false;
-	var show_deleted = false; // Show all deleted posts.
+	var show_loli = toBool(localStorage["bbb_show_loli"]);
+	var show_shota = toBool(localStorage["bbb_show_shota"]);
+	var show_deleted = toBool(localStorage["bbb_show_deleted"]); // Show all deleted posts.
 
-	var add_border = true; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
-	var enable_custom_borders = false; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
-	var clean_links = false; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
+	var add_border = toBool(localStorage["bbb_add_border"]); // Add borders to shota and loli. You may set the colors under "Set Border Colors".
+	var enable_custom_borders = toBool(localStorage["bbb_enable_custom_borders"]); // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
+	var clean_links = toBool(localStorage["bbb_clean_links"]); // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 
-	var hide_sign_up_notice = false;
-	var hide_upgrade_notice = false;
-	var hide_advertisements = false;
-	var hide_tos_notice = false;
+	var hide_sign_up_notice = toBool(localStorage["bbb_hide_sign_up_notice"]);
+	var hide_upgrade_notice = toBool(localStorage["bbb_hide_upgrade_notice"]);
+	var hide_advertisements = toBool(localStorage["bbb_hide_advertisements"]);
+	var hide_tos_notice = toBool(localStorage["bbb_hide_tos_notice"]);
 
 	// Search
-	var enable_arrow_nav = false; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
-	var search_add = true; // Add the + and - shortcuts to the tag list for including or excluding search terms.
-	var thumbnail_count = 0; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
+	var enable_arrow_nav = toBool(localStorage["bbb_enable_arrow_nav"]); // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
+	var search_add = toBool(localStorage["bbb_search_add"]); // Add the + and - shortcuts to the tag list for including or excluding search terms.
+	var thumbnail_count = Number(localStorage["bbb_thumbnail_count"]); // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
-	var alternate_image_swap = false; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
-	var image_resize = true; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
-	var load_sample_first = true; // Use sample images when available. When logged in, your account settings will override this setting.
-	var hide_original_notice = false; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
-	var remove_tag_headers = false; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
+	var alternate_image_swap = toBool(localStorage["bbb_alternate_image_swap"]); // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
+	var image_resize = toBool(localStorage["bbb_image_resize"]); // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
+	var load_sample_first = toBool(localStorage["bbb_load_sample_first"]); // Use sample images when available. When logged in, your account settings will override this setting.
+	var hide_original_notice = toBool(localStorage["bbb_hide_original_notice"]); // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
+	var remove_tag_headers = toBool(localStorage["bbb_remove_tag_headers"]); // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
 
 	// Set Border Colors. Use CSS hex values for colors. http://www.w3schools.com/CSS/css_colors.asp
-	var loli_border = "#FFC0CB";
-	var shota_border = "#66CCFF";
-	var child_border = "#CCCC00";
-	var parent_border = "#00FF00";
-	var pending_border = "#0000FF";
-	var flagged_border = "#FF0000";
-	var deleted_border = "#000000";
+	var loli_border = localStorage["bbb_loli_border"];
+	var shota_border = localStorage["bbb_shota_border"];
+	var child_border = localStorage["bbb_child_border"];
+	var parent_border = localStorage["bbb_parent_border"];
+	var pending_border = localStorage["bbb_pending_border"];
+	var flagged_border = localStorage["bbb_flagged_border"];
+	var deleted_border = localStorage["bbb_deleted_border"];
 
 	// Blacklist
 	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
@@ -272,7 +276,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// disable the script blacklist. When logged in, your account blacklist will override this blacklist.
 	// Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the
 	// following case: "spoilers, blood death"
-	var script_blacklisted_tags = "";
+	var script_blacklisted_tags = localStorage["bbb_script_blacklisted_tags"];
 
 	// List of valid URL's to parse for. Feel free to suggest more!
 	var valid_urls = [
@@ -282,11 +286,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		"http://sonohara.donmai.us/",
 		"http://testbooru.donmau.us"
 	];
-
-
-	/********************************/
-	/* Don't touch below this line! */
-	/********************************/
 
 
 	/* Global Variables */
