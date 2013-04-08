@@ -6,6 +6,8 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 5.0:
+ * Added settings panel so that people no longer need to edit the script to change settings. This also happens to fix automatic updating.
 * Version 4.1:
  * Added a "show all" option to allow the display of all hidden posts with one setting.
  * Added a "show deleted" option to allow a choice in the display of deleted posts.
