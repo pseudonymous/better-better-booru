@@ -15,6 +15,94 @@
 // Have a nice day. - A Pseudonymous Coder
 
 function injectMe() { // This is needed to make this script work in Chrome.
+	var defaults = {
+		show_all: false,
+		show_loli: false,
+		show_shota: false,
+		show_deleted: false,
+		add_border: true,
+		enable_custom_borders: false,
+		clean_links: false,
+		hide_sign_up_notice: false,
+		hide_upgrade_notice: false,
+		hide_advertisements: false,
+		hide_tos_notice: false,
+		enable_arrow_nav: false,
+		search_add: true,
+		thumbnail_count: 0,
+		alternate_image_swap: false,
+		image_resize: true,
+		load_sample_first: true,
+		hide_original_notice: false,
+		remove_tag_headers: false,
+		loli_border: "#FFC0CB",
+		shota_border: "#66CCFF",
+		child_border: "#CCCC00",
+		parent_border: "#00FF00",
+		pending_border: "#0000FF",
+		flagged_border: "#FF0000",
+		deleted_border: "#000000",
+		script_blacklisted_tags: ""
+	};
+	var labels = {
+		show_all: "Show All",
+		show_loli: "Show Loli",
+		show_shota: "Show Shota",
+		show_deleted: "Show Deleted",
+		add_border: "Add Borders",
+		enable_custom_borders: "Enable Custom Borders",
+		clean_links: "Clean Links",
+		hide_sign_up_notice: "Hide Sign Up Notice",
+		hide_upgrade_notice: "Hide Upgrade Notice",
+		hide_advertisements: "Hide Advertisements",
+		hide_tos_notice: "Hide TOS Notice",
+		enable_arrow_nav: "Enable Arrow Navigation",
+		search_add: "Search Add",
+		thumbnail_count: "Thumbnail Count",
+		alternate_image_swap: "Alternate Image Swap",
+		image_resize: "Resize Images",
+		load_sample_first: "Load Sample First",
+		hide_original_notice: "Hide Original Notice",
+		remove_tag_headers: "Remove Tag Headers",
+		loli_border: "Loli Border Color",
+		shota_border: "Shota Border Color",
+		child_border: "Child Border Color",
+		parent_border: "Parent Border Color",
+		pending_border: "Pending Border Color",
+		flagged_border: "Flagged Border Color",
+		deleted_border: "Deleted Border Color",
+		script_blacklisted_tags: "Blacklisted Tags"
+	};
+	// TODO
+	var explanations = {
+		show_all: "",
+		show_loli: "",
+		show_shota: "",
+		show_deleted: "",
+		add_border: "",
+		enable_custom_borders: "",
+		clean_links: "",
+		hide_sign_up_notice: "",
+		hide_upgrade_notice: "",
+		hide_advertisements: "",
+		hide_tos_notice: "",
+		enable_arrow_nav: "",
+		search_add: "",
+		thumbnail_count: "",
+		alternate_image_swap: "",
+		image_resize: "",
+		load_sample_first: "",
+		hide_original_notice: "",
+		remove_tag_headers: "",
+		loli_border: "",
+		shota_border: "",
+		child_border: "",
+		parent_border: "",
+		pending_border: "",
+		flagged_border: "",
+		deleted_border: "",
+		script_blacklisted_tags: ""
+	};
 
 	function injectSettings() {
 		var menu = document.getElementById("top");
@@ -32,61 +120,97 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function showSettings() {
+		var menu_exists = document.getElementById("bbb_menu");
+		if (menu_exists)
+		{
+			menu_exists.style.display = "block";
+			return;
+		}
 		var menu = document.createElement("div");
-		var defaults = {
-			show_all: false,
-			show_loli: false,
-			show_shota: false,
-			show_deleted: false,
-			add_border: true,
-			enable_custom_borders: false,
-			clean_links: false,
-			hide_sign_up_notice: false,
-			hide_upgrade_notice: false,
-			hide_advertisements: false,
-			hide_tos_notice: false,
-			enable_arrow_nav: false,
-			search_add: true,
-			thumbnail_count: 0,
-			alternate_image_swap: false,
-			image_resize: true,
-			load_sample_first: true,
-			hide_original_notice: false,
-			remove_tag_headers: false,
-			loli_border: "#FFC0CB",
-			shota_border: "#66CCFF",
-			child_border: "#CCCC00",
-			parent_border: "#00FF00",
-			pending_border: "#0000FF",
-			flagged_border: "#FF0000",
-			deleted_border: "#000000",
-			script_blacklisted_tags: ""
-		};
+		var header = document.createElement("h1");
+		header.innerHTML = "Better Better Booru Settings";
+		menu.appendChild(header);
 		for (var i in defaults) {
-			if (typeof(localStorage["bbb_"+i]) === 'undefined')
-				localStorage["bbb_"+i] = defaults[i];
+			var pref = "bbb_"+i;
+			if (typeof(localStorage[pref]) === 'undefined')
+				localStorage[pref] = defaults[i];
+
+			var label = document.createElement("label");
+			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+labels[i]+"</span>";
+			label.style.padding = "5px 0";
+			label.style.display = "block";
+
+			var item;
 
 			switch (typeof(defaults[i]))
 			{
 				case "boolean":
-					var item = document.createElement("input");
-					item.name = "bbb_"+i;
-					item.checked = localStorage[item.name];
-					item.onclick = function() {
-						localStorage[this.name] = this.checked;
-					};
+					item = document.createElement("input");
+					item.name = pref;
 					item.type = "checkbox";
-					menu.appendChild(item);
+					item.checked = localStorage[item.name] == "true";
+					item.onclick = function() { localStorage[this.name] = localStorage[this.name] == "true" ? "false" : "true"; };
+					break;
+				case "string":
+					item = document.createElement("input");
+					item.name = pref;
+					item.type = "text";
+					item.value = localStorage[item.name];
+					item.onchange = function() { localStorage[this.name] = this.value; }
+					break;
+				case "number":
+					item = document.createElement("input");
+					item.name = pref;
+					item.type = "text";
+					item.value = localStorage[item.name];
+					item.onchange = function() { localStorage[this.name] = Number(this.value); }
 					break;
 				default:
-					//console.log(typeof(defaults[i]));
+					console.log(typeof(defaults[i]));
 					break;
 			}
+			label.appendChild(item);
+			menu.appendChild(label);
 		}
+
+		var close = document.createElement("a");
+		close.innerHTML = "Close";
+		close.href = "#";
+		close.style.margin = "10px 0";
+		close.onclick = function() {
+			document.getElementById("bbb_menu").style.display = "none";
+			return false;
+		};
+
+		var reset = document.createElement("a");
+		reset.innerHTML = "Reset Settings";
+		reset.href = "#";
+		reset.style.cssFloat = "right";
+		reset.style.color = "#ff1100";
+		reset.onclick = function() {
+			for (var i in defaults) {
+				var pref = "bbb_"+i;
+				localStorage[pref] = defaults[i];
+			}
+			var bbb_menu = document.getElementById("bbb_menu");
+
+			// actually destroy it so it gets rebuilt.
+			bbb_menu.parentNode.removeChild(bbb_menu);
+			showSettings();
+
+			return false;
+		};
+
+		menu.appendChild(reset);
+		menu.appendChild(close);
+
+		menu.id = "bbb_menu";
 		menu.style.background = "white";
 		menu.style.position = "absolute";
 		menu.style.top = "0";
 		menu.style.left = "0";
+		menu.style.padding = "15px";
+		menu.style.boxShadow = "0 2px 2px rgba(0, 0, 0, 0.5)";
 		document.body.appendChild(menu);
 	}
 
