@@ -16,6 +16,81 @@
 
 function injectMe() { // This is needed to make this script work in Chrome.
 
+	function injectSettings() {
+		var menu = document.getElementById("top");
+		menu = menu.getElementsByTagName("menu");
+		menu = menu[1];
+
+		var link = document.createElement("a");
+		link.href = "#";
+		link.innerHTML = "BBB Settings";
+		link.onclick = showSettings;
+
+		var item = document.createElement("li");
+		item.appendChild(link);
+		menu.appendChild(item);
+	}
+
+	function showSettings() {
+		var menu = document.createElement("div");
+		var defaults = {
+			show_all: false,
+			show_loli: false,
+			show_shota: false,
+			show_deleted: false,
+			add_border: true,
+			enable_custom_borders: false,
+			clean_links: false,
+			hide_sign_up_notice: false,
+			hide_upgrade_notice: false,
+			hide_advertisements: false,
+			hide_tos_notice: false,
+			enable_arrow_nav: false,
+			search_add: true,
+			thumbnail_count: 0,
+			alternate_image_swap: false,
+			image_resize: true,
+			load_sample_first: true,
+			hide_original_notice: false,
+			remove_tag_headers: false,
+			loli_border: "#FFC0CB",
+			shota_border: "#66CCFF",
+			child_border: "#CCCC00",
+			parent_border: "#00FF00",
+			pending_border: "#0000FF",
+			flagged_border: "#FF0000",
+			deleted_border: "#000000",
+			script_blacklisted_tags: ""
+		};
+		for (var i in defaults) {
+			if (typeof(localStorage["bbb_"+i]) === 'undefined')
+				localStorage["bbb_"+i] = defaults[i];
+
+			switch (typeof(defaults[i]))
+			{
+				case "boolean":
+					var item = document.createElement("input");
+					item.name = "bbb_"+i;
+					item.checked = localStorage[item.name];
+					item.onclick = function() {
+						localStorage[this.name] = this.checked;
+					};
+					item.type = "checkbox";
+					menu.appendChild(item);
+					break;
+				default:
+					//console.log(typeof(defaults[i]));
+					break;
+			}
+		}
+		menu.style.background = "white";
+		menu.style.position = "absolute";
+		menu.style.top = "0";
+		menu.style.left = "0";
+		document.body.appendChild(menu);
+	}
+
+	injectSettings();
 
 	/********************************/
 	/* Don't touch above this line! */
