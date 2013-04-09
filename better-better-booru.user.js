@@ -114,6 +114,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
 		link.onclick = function() {
+			var target = document.documentElement || document.body;
+			
+			target.scrollTop = 0;
 			showSettings();
 			return false;
 		};
