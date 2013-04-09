@@ -113,7 +113,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var link = document.createElement("a");
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
-		link.onclick = showSettings;
+		link.onclick = function() {
+			showSettings();
+			return false;
+		};
 
 		var item = document.createElement("li");
 		item.appendChild(link);
