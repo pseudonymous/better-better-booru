@@ -388,9 +388,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
 		}
 		else if (mode == "comments") {
-			if (numThumbs != 5) {
+			if (numThumbs != 5)
 				fetchJSON(gUrl.replace(/\/comments\/?/, "/comments.json"), "comments");
-			}
 		}
 		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
 			delayMe(function(){blacklistInit();});
