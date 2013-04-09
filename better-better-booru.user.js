@@ -20,7 +20,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
 	var defaults = {
-		show_all: false,
 		show_loli: false,
 		show_shota: false,
 		show_deleted: false,
@@ -49,7 +48,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		script_blacklisted_tags: ""
 	};
 	var labels = {
-		show_all: "Show All",
 		show_loli: "Show Loli",
 		show_shota: "Show Shota",
 		show_deleted: "Show Deleted",
@@ -79,7 +77,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	};
 	// TODO
 	var explanations = {
-		show_all: "",
 		show_loli: "",
 		show_shota: "",
 		show_deleted: "",
@@ -212,6 +209,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.style.left = "0";
 		menu.style.padding = "15px";
 		menu.style.boxShadow = "0 2px 2px rgba(0, 0, 0, 0.5)";
+		menu.style.zIndex = "9001";
 		document.body.appendChild(menu);
 	}
 
@@ -234,8 +232,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* True or false settings */
 	// Global
-	var show_all = toBool(localStorage["bbb_show_all"]); // Equivalent to setting show_loli, show_shota, and show_deleted to true.
-
 	var show_loli = toBool(localStorage["bbb_show_loli"]);
 	var show_shota = toBool(localStorage["bbb_show_shota"]);
 	var show_deleted = toBool(localStorage["bbb_show_deleted"]); // Show all deleted posts.
@@ -295,7 +291,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
 
 	/* "INIT" */
-	if (show_all || show_loli || show_shota || show_deleted) // API only features.
+	if (show_loli || show_shota || show_deleted) // API only features.
 		searchJSON(gLoc);
 	else // Alternate mode for features.
 		modifyPage(gLoc);
@@ -363,24 +359,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (mode == "post") {
 			if (!needPostAPI())
 				fetchInfo();
-			else {
+			else
 				fetchJSON(gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json"), "post");
-			}
 		}
 		else if (mode == "notes") {
-			if (numThumbs != 20) {
+			if (numThumbs != 20)
 				fetchJSON(gUrl.replace(/\/notes\/?/, "/notes.json"), "notes");
-			}
 		}
 		else if (mode == "popular") {
-			if (numThumbs != 20) {
+			if (numThumbs != 20)
 				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
-			}
 		}
 		else if (mode == "pool") {
-			if (numThumbs != 20) {
+			if (numThumbs != 20)
 				fetchJSON(gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
-			}
 		}
 		else if (mode == "poolsearch") {
 			var poolIds = xml.post_ids.split(" ");
@@ -502,8 +494,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				has_large: (parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10) > 850 ? true : false)
 			};
 		}
-		else {
-			imgInfo = { // Manual download.
+		else { // Manual download.
+			imgInfo = {
 				id: parseInt(fetchMeta("post-id"), 10),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
@@ -655,7 +647,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var thumb = "";
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
-			if (!show_all && ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)) || (!show_deleted && post.is_deleted))) {
+			if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)) || (!show_deleted && post.is_deleted)) {
 				if (gLoc == "pool") {
 					outId = new RegExp("\f,;" + imgId + "(?=<|\f|$)");
 					out = out.replace(outId, "");
@@ -783,7 +775,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						sampleNotice.style.display = "";
 						bbbResizeNotice.style.display = "";
 					}
-					else if (!getCookie()["bbb_hide_original_notice"] && !hide_original_notice) {
+					else if (!hide_original_notice) {
 						originalNotice.style.display = "";
 						closeOriginalNotice.style.display = "";
 						bbbResizeNotice.style.display = "";
@@ -817,7 +809,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 					img.addEventListener("load", function(event) {
 						if (!/\/sample\//.test(img.src)) {
-							if (getCookie()["bbb_hide_original_notice"] || hide_original_notice)
+							if (hide_original_notice)
 								bbbResizeNotice.style.display = "none";
 							else {
 								sampleNotice.style.display = "none";
@@ -854,7 +846,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 					closeOriginalNotice.addEventListener("click", function(event) {
 						bbbResizeNotice.style.display = "none";
-						createCookie("bbb_hide_original_notice", "true", 1);
+						localStorage["bbb_hide_original_notice"] = true;
 					}, false);
 				}
 
@@ -932,7 +924,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (!existingPost || post.id != existingPost.getAttribute("data-id")) {
 				if (!/\b(?:loli|shota)\b/.test(tags)) // API post isn't loli/shota and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
 					continue;
-				else if (!show_all && ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)))) { // Skip loli/shota if the user has selected to do so.
+				else if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags))) { // Skip loli/shota if the user has selected to do so.
 					endTotal--;
 					continue;
 				}
