@@ -115,7 +115,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		link.innerHTML = "BBB Settings";
 		link.onclick = function() {
 			var target = document.documentElement || document.body;
-			
+
 			target.scrollTop = 0;
 			showSettings();
 			return false;
@@ -160,14 +160,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					item.name = pref;
 					item.type = "text";
 					item.value = localStorage[item.name];
-					item.onchange = function() { localStorage[this.name] = this.value; }
+					item.onchange = function() { localStorage[this.name] = this.value; };
 					break;
 				case "number":
 					item = document.createElement("input");
 					item.name = pref;
 					item.type = "text";
 					item.value = localStorage[item.name];
-					item.onchange = function() { localStorage[this.name] = Number(this.value); }
+					item.onchange = function() { localStorage[this.name] = Number(this.value); };
 					break;
 				default:
 					console.log(typeof(defaults[i]));
@@ -357,10 +357,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else
 				numDesired = numExpected;
 
-			if (numThumbs != numDesired || numThumbs < numExpected) {
-				var url = gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit;
-				fetchJSON(url, "search");
-			}
+			if (numThumbs != numDesired || numThumbs < numExpected)
+				fetchJSON(gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit, "search");
 		}
 		else if (mode == "post") {
 			if (!needPostAPI())
@@ -731,6 +729,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var sampUrl = "/data/sample/sample-" + md5 + ".jpg";
 			var sampHeight = Math.round(height * ratio);
 			var sampWidth = 850;
+			var newWidth = 0;
+			var newHeight = 0;
+			var newUrl = "";
+			var altTxt = "";
 
 			if (ext == "swf") // Create flash object.
 				container.innerHTML = '<div id="note-container"></div> <object height="' + height + '" width="' + width + '"> <params name="movie" value="' + url + '"> <embed allowscriptaccess="never" src="' + url + '" height="' + height + '" width="' + width + '"> </params> </object> <p><a href="' + url + '">Save this flash (right click and save)</a></p>';
@@ -740,16 +742,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var useSample = (checkSetting("default-image-size", "large", load_sample_first) && hasLarge);
 
 				if (useSample) {
-					var newWidth = sampWidth;
-					var newHeight = sampHeight;
-					var newUrl = sampUrl;
-					var altTxt = "sample";
+					newWidth = sampWidth;
+					newHeight = sampHeight;
+					newUrl = sampUrl;
+					altTxt = "sample";
 				}
 				else {
-					var newWidth = width;
-					var newHeight = height;
-					var newUrl = url;
-					var altTxt = md5;
+					newWidth = width;
+					newHeight = height;
+					newUrl = url;
+					altTxt = md5;
 				}
 
 				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
@@ -1089,20 +1091,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function cleanLinks() {
+		var target;
+
 		if (gLoc == "post") {
-			var target = document.evaluate('//div[@id="pool-nav"]//a', document, null, 6, null)
+			target = document.evaluate('//div[@id="pool-nav"]//a', document, null, 6, null);
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
 				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];
 		}
 		else if (gLoc == "pool") {
-			var target = document.evaluate('//section[@id="content"]/article/a', document, null, 6, null)
+			target = document.evaluate('//section[@id="content"]/article/a', document, null, 6, null);
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
 				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];
 		}
 		else if (gLoc == "search") {
-			var target = document.evaluate('//div[@id="posts"]/article/a', document, null, 6, null)
+			target = document.evaluate('//div[@id="posts"]/article/a', document, null, 6, null);
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
 				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];
