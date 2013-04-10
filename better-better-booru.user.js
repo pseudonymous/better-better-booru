@@ -136,7 +136,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var menu = document.createElement("div");
 		var header = document.createElement("h1");
 		header.innerHTML = "Better Better Booru Settings";
+		header.style.textAlign = "center";
 		menu.appendChild(header);
+
+		var scrollDiv = document.createElement("div");
+		scrollDiv.style.margin = "15px 0px";
+		menu.appendChild(scrollDiv);
+
 		for (var i in defaults) {
 			var pref = "bbb_"+i;
 			var label = document.createElement("label");
@@ -174,7 +180,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					break;
 			}
 			label.appendChild(item);
-			menu.appendChild(label);
+			scrollDiv.appendChild(label);
 		}
 
 		var close = document.createElement("a");
@@ -211,12 +217,30 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.id = "bbb_menu";
 		menu.style.background = "white";
 		menu.style.position = "absolute";
-		menu.style.top = "0";
-		menu.style.left = "0";
 		menu.style.padding = "15px";
 		menu.style.boxShadow = "0 2px 2px rgba(0, 0, 0, 0.5)";
 		menu.style.zIndex = "9001";
+		menu.style.visibility = "hidden";
 		document.body.appendChild(menu);
+
+		var docView = document.documentElement || document.body;
+		var docHeight = docView.clientHeight;
+		var menuHeight = (menu.clientHeight > docHeight - 50 ? docHeight - 50 : menu.clientHeight);
+		var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
+
+		menu.style.maxHeight = menuHeight - 30 + "px"; // The subtracted value is the margin doubled. Doing this since this is a controlled element that allows us to avoid some hassle.
+		scrollDiv.style.maxHeight = menuHeight - scrollDivDiff + "px";
+		menu.style.top = (docHeight - menuHeight) / 2 + "px";
+
+		var docWidth = docView.clientWidth;
+		var menuWidth = menu.clientWidth;
+
+		scrollDiv.style.minWidth = menuWidth + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
+		scrollDiv.style.overflowY = "auto";
+		menuWidth = menu.offsetWidth; // Get new width including potential sidebar.
+		menu.style.left = (docWidth - menuWidth) / 2 + "px";
+
+		menu.style.visibility = "visible";
 	}
 
 	injectSettings();
