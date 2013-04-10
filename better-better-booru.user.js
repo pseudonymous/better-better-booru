@@ -230,12 +230,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var menuWidth = menu.clientWidth;
 		var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
 
-		menu.style.maxHeight = menuHeight - 30 + "px"; // The subtracted value is the margin doubled. Doing this since this is a controlled element that allows us to avoid some hassle.
+		menu.style.maxHeight = menuHeight - 30 + "px"; // The subtracted value is the sum of the top and bottom padding. Doing this since this is a controlled element that allows us to avoid some hassle.
 		scrollDiv.style.maxHeight = menuHeight - scrollDivDiff + "px";
 		scrollDiv.style.minWidth = menuWidth + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
 		scrollDiv.style.overflowY = "auto";
 
-		menuWidth = menu.offsetWidth; // Get new width including potential sidebar.
+		menuWidth = menu.clientWidth; // Get new width including potential sidebar.
 		menu.style.top = (docHeight - menuHeight) / 2 + "px";
 		menu.style.left = (docWidth - menuWidth) / 2 + "px";
 		menu.style.visibility = "visible";
