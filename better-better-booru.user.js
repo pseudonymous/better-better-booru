@@ -220,10 +220,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.style.visibility = "hidden";
 		document.body.appendChild(menu);
 
-		var docView = document.documentElement || document.body;
-		var docHeight = docView.clientHeight;
-		var docWidth = docView.clientWidth;
-		var menuHeight = (menu.clientHeight > docHeight - 50 ? docHeight - 50 : menu.clientHeight);
+		var viewHeight = window.innerHeight;
+		var viewWidth = window.innerWidth;
+		var menuHeight = (menu.clientHeight > viewHeight - 50 ? viewHeight - 50 : menu.clientHeight);
 		var menuWidth = menu.clientWidth;
 		var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
 
@@ -233,8 +232,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.style.overflowY = "auto";
 
 		menuWidth = menu.clientWidth; // Get new width including potential sidebar.
-		menu.style.top = (docHeight - menuHeight) / 2 + "px";
-		menu.style.left = (docWidth - menuWidth) / 2 + "px";
+		menu.style.top = (viewHeight - menuHeight) / 2 + "px";
+		menu.style.left = (viewWidth - menuWidth) / 2 + "px";
 		menu.style.visibility = "visible";
 	}
 
