@@ -114,9 +114,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
 		link.onclick = function() {
-			var target = document.documentElement || document.body;
-
-			target.scrollTop = 0;
 			showSettings();
 			return false;
 		};
@@ -216,7 +213,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		menu.id = "bbb_menu";
 		menu.style.background = "white";
-		menu.style.position = "absolute";
+		menu.style.position = "fixed";
 		menu.style.padding = "15px";
 		menu.style.boxShadow = "0 2px 2px rgba(0, 0, 0, 0.5)";
 		menu.style.zIndex = "9001";
