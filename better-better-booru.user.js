@@ -38,6 +38,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		load_sample_first: true,
 		hide_original_notice: false,
 		remove_tag_headers: false,
+		post_tag_titles: false,
 		loli_border: "#FFC0CB",
 		shota_border: "#66CCFF",
 		child_border: "#CCCC00",
@@ -66,6 +67,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		load_sample_first: "Load Sample First",
 		hide_original_notice: "Hide Original Notice",
 		remove_tag_headers: "Remove Tag Headers",
+		post_tag_titles: "Post Tag Titles",
 		loli_border: "Loli Border Color",
 		shota_border: "Shota Border Color",
 		child_border: "Child Border Color",
@@ -95,6 +97,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		load_sample_first: "",
 		hide_original_notice: "",
 		remove_tag_headers: "",
+		post_tag_titles: "",
 		loli_border: "",
 		shota_border: "",
 		child_border: "",
@@ -108,7 +111,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function injectSettings() {
 		var menu = document.getElementById("top");
 		menu = menu.getElementsByTagName("menu");
-		menu = menu[1];
+		menu = menu[0];
 
 		var link = document.createElement("a");
 		link.href = "#";
@@ -123,7 +126,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		var item = document.createElement("li");
 		item.appendChild(link);
-		menu.appendChild(item);
+
+		var menuItems = menu.getElementsByTagName("li")
+		menu.insertBefore(item, menuItems[menuItems.length - 1]);
 	}
 
 	function showSettings() {
@@ -262,6 +267,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var load_sample_first = toBool(localStorage["bbb_load_sample_first"]); // Use sample images when available. When logged in, your account settings will override this setting.
 	var hide_original_notice = toBool(localStorage["bbb_hide_original_notice"]); // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
 	var remove_tag_headers = toBool(localStorage["bbb_remove_tag_headers"]); // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
+	var post_tag_titles = toBool(localStorage["bbb_post_tag_titles"]); // Revert post page titles to the more detailed full list of tags
 
 	// Set Border Colors. Use CSS hex values for colors. http://www.w3schools.com/CSS/css_colors.asp
 	var loli_border = localStorage["bbb_loli_border"];
@@ -336,6 +342,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (remove_tag_headers)
 		removeTagHeaders();
 
+	if (post_tag_titles)
+		postTagTitles();
+
 	if (thumbnail_count)
 		limitFix();
 
@@ -390,7 +399,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				fetchJSON(gUrl.replace(/\/comments\/?/, "/comments.json"), "comments");
 		}
 		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
-			delayMe(function(){blacklistInit();});
+			delayMe(blacklistInit);
 	}
 
 	function fetchJSON(url, mode, optArg) {
@@ -448,7 +457,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			fetchPages(url, "thumbnails");
 		}
 		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
-			delayMe(function(){blacklistInit();});
+			delayMe(blacklistInit);
 
 	}
 
@@ -462,25 +471,25 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var img = document.getElementById("image");
 
 			imgInfo = {
-				id: parseInt(fetchMeta("post-id"), 10),
+				id: Number(fetchMeta("post-id")),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
 				url: infoHref,
-				image_height: parseInt(img.getAttribute("data-original-height"), 10),
-				image_width: parseInt(img.getAttribute("data-original-width"), 10),
-				has_large: (parseInt(img.getAttribute("data-original-width"), 10) > 850 ? true : false)
+				image_height: Number(img.getAttribute("data-original-height")),
+				image_width: Number(img.getAttribute("data-original-width")),
+				has_large: (Number(img.getAttribute("data-original-width")) > 850 ? true : false)
 			};
 		}
 		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
 			var object = document.getElementById("image-container").getElementsByTagName("object")[0];
 
 			imgInfo = {
-				id: parseInt(fetchMeta("post-id"), 10),
+				id: Number(fetchMeta("post-id")),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
 				url: infoHref,
-				image_height: parseInt(object.height, 10),
-				image_width: parseInt(object.width, 10),
+				image_height: Number(object.height),
+				image_width: Number(object.width),
 				has_large: false
 			};
 		}
@@ -488,18 +497,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var infoText = infoLink.parentNode.textContent;
 
 			imgInfo = {
-				id: parseInt(fetchMeta("post-id"), 10),
+				id: Number(fetchMeta("post-id")),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
 				url: infoHref,
-				image_height: parseInt(/\(\d+x(\d+)\)/.exec(infoText)[1], 10),
-				image_width: parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10),
-				has_large: (parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10) > 850 ? true : false)
+				image_height: Number(/\(\d+x(\d+)\)/.exec(infoText)[1]),
+				image_width: Number(/\((\d+)x\d+\)/.exec(infoText)[1]),
+				has_large: (Number(/\((\d+)x\d+\)/.exec(infoText)[1]) > 850 ? true : false)
 			};
 		}
 		else { // Manual download.
 			imgInfo = {
-				id: parseInt(fetchMeta("post-id"), 10),
+				id: Number(fetchMeta("post-id")),
 				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
 				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
 				url: infoHref,
@@ -577,7 +586,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						else if (mode == "thumbnails") { // Fetch the thumbnails and paginator from the page of a search and replace the existing ones.
 							var childSpan = document.createElement("span");
 
-							childSpan.innerHTML = /<article class="post-preview"[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
+							childSpan.innerHTML = /<div id="posts">([\S\s]+?class="paginator"[\S\s]+?<\/div>[\S\s]+?)<\/div>/i.exec(xmlhttp.responseText)[1];
 
 							document.getElementById("posts").innerHTML = childSpan.innerHTML;
 
@@ -875,7 +884,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
 					img.addEventListener("click", Danbooru.Note.Box.toggle_all, false);
 				}
-				else { // Make a "Toggle Notes" link in the options bar.
+				else { // Make sample/original images swap when clicking the image.
+					// Make a "Toggle Notes" link in the options bar.
 					if (document.getElementById("listnotetoggle") === null) { // For logged in users.
 						var translateOption = document.getElementById("translate").parentNode;
 						var listNoteToggle = document.createElement("li");
@@ -1059,8 +1069,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else {
 			result = result[0].split("=")[1];
 
-			if (/^\d+$/.test(result))
-				return parseInt(result, 10);
+			if (/^-?\d+(\.\d+)?$/.test(result))
+				return Number(result);
 			else
 				return result;
 		}
@@ -1235,6 +1245,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			tagList.innerHTML = newList;
 		}
+	}
+
+	function postTagTitles() {
+		if (gLoc == "post")
+			document.title = fetchMeta("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
 	}
 
 	function getCookie() {
