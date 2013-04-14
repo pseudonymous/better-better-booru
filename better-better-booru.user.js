@@ -160,8 +160,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					item = document.createElement("input");
 					item.name = i;
 					item.type = "checkbox";
-					item.checked = settings[i] == true;
-					item.onclick = function() { settings[this.name] = this.checked == false ? false : true; };
+					item.checked = settings[i];
+					item.onclick = function() { settings[this.name] = this.checked; };
 					break;
 				case "string":
 					item = document.createElement("input");
