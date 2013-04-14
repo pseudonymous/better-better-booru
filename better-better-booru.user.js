@@ -282,31 +282,37 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		localStorage["bbb_settings"] = JSON.stringify(settings);
 	}
 
-	function updateSetting(setting, value) {
-		// Change & save a single setting without the panel. Currently only used for hiding the original notice with the "X".
-		settings[setting] = value;
-		saveSettings();
+	function updateSettings() {
+		// Change & save settings without the panel. Accepts a comma delimited list of alternating settings and values: setting1, value1, setting2, value2
+		for (var i = 0, al = arguments.length; i < al; i += 2) {
+			var setting = arguments[i];
+			var value = arguments[i + 1];
 
-		// Update menu if it exists.
-		var input = settingInputs[setting];
+			settings[setting] = value;
 
-		if (input) {
-			switch (typeof(value))
-			{
-				case "boolean":
-					input.checked = value;
-					break;
-				case "string":
-					input.value = value;
-					break;
-				case "number":
-					input.value = value;
-					break;
-				default:
-					console.log(typeof(value));
-					break;
+			// Update menu if it exists.
+			var input = settingInputs[setting];
+
+			if (input) {
+				switch (typeof(value))
+				{
+					case "boolean":
+						input.checked = value;
+						break;
+					case "string":
+						input.value = value;
+						break;
+					case "number":
+						input.value = value;
+						break;
+					default:
+						console.log(typeof(value));
+						break;
+				}
 			}
 		}
+
+		saveSettings();
 	}
 
 	loadSettings();
@@ -940,7 +946,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 					closeOriginalNotice.addEventListener("click", function(event) {
 						bbbResizeNotice.style.display = "none";
-						updateSetting("hide_original_notice", true);
+						updateSettings("hide_original_notice", true);
 					}, false);
 				}
 
