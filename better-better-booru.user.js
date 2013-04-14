@@ -19,7 +19,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * NOTE: You no longer need to edit this script to change settings!
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
-	var defaults = {
+	var settings = {}; // Container for settings
+
+	settings.defaults = {
 		show_loli: false,
 		show_shota: false,
 		show_deleted: false,
@@ -48,7 +50,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		deleted_border: "#000000",
 		script_blacklisted_tags: ""
 	};
-	var labels = {
+	settings.labels = {
 		show_loli: "Show Loli",
 		show_shota: "Show Shota",
 		show_deleted: "Show Deleted",
@@ -78,7 +80,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		script_blacklisted_tags: "Blacklisted Tags"
 	};
 	// TODO
-	var explanations = {
+	settings.explanations = {
 		show_loli: "",
 		show_shota: "",
 		show_deleted: "",
@@ -107,8 +109,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		deleted_border: "",
 		script_blacklisted_tags: ""
 	};
-	var settings = {};
-	var settingInputs = {};
+	settings.user = {};
+	settings.inputs = {};
 
 	function injectSettings() {
 		var menu = document.getElementById("top");
@@ -147,44 +149,44 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.style.margin = "15px 0px";
 		menu.appendChild(scrollDiv);
 
-		for (var i in defaults) {
+		for (var i in settings.defaults) {
 			var label = document.createElement("label");
-			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+labels[i]+"</span>";
+			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+settings.labels[i]+"</span>";
 			label.style.padding = "5px 0";
 			label.style.display = "block";
 
 			var item;
 
-			switch (typeof(settings[i]))
+			switch (typeof(settings.user[i]))
 			{
 				case "boolean":
 					item = document.createElement("input");
 					item.name = i;
 					item.type = "checkbox";
-					item.checked = settings[i];
-					item.onclick = function() { settings[this.name] = this.checked; };
+					item.checked = settings.user[i];
+					item.onclick = function() { settings.user[this.name] = this.checked; };
 					break;
 				case "string":
 					item = document.createElement("input");
 					item.name = i;
 					item.type = "text";
-					item.value = settings[i];
-					item.onchange = function() { settings[this.name] = this.value; };
+					item.value = settings.user[i];
+					item.onchange = function() { settings.user[this.name] = this.value; };
 					break;
 				case "number":
 					item = document.createElement("input");
 					item.name = i;
 					item.type = "text";
-					item.value = settings[i];
-					item.onchange = function() { settings[this.name] = Number(this.value); };
+					item.value = settings.user[i];
+					item.onchange = function() { settings.user[this.name] = Number(this.value); };
 					break;
 				default:
-					console.log(typeof(settings[i]));
+					console.log(typeof(settings.user[i]));
 					break;
 			}
 			label.appendChild(item);
 			scrollDiv.appendChild(label);
-			settingInputs[i] = item;
+			settings.inputs[i] = item;
 		}
 
 		var close = document.createElement("a");
@@ -221,7 +223,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		reset.style.padding = "5px";
 		reset.style.border = "1px solid #CCCCCC";
 		reset.onclick = function() {
-			settings = JSON.parse(JSON.stringify(defaults));
+			settings.user = JSON.parse(JSON.stringify(settings.defaults));
 			removeMenu();
 			showSettings();
 			return false;
@@ -267,19 +269,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function loadSettings() {
 		// Load stored settings.
 		if (typeof(localStorage["bbb_settings"]) === "undefined")
-			settings = JSON.parse(JSON.stringify(defaults)); // Clone object. Don't reference it.
+			settings.user = JSON.parse(JSON.stringify(settings.defaults)); // Clone object. Don't reference it.
 		else {
-			settings = JSON.parse(localStorage["bbb_settings"]);
+			settings.user = JSON.parse(localStorage["bbb_settings"]);
 
-			for (var i in defaults) {
-				if (typeof(settings[i]) === "undefined")
-					settings[i] = defaults[i];
+			for (var i in settings.defaults) {
+				if (typeof(settings.user[i]) === "undefined")
+					settings.user[i] = settings.defaults[i];
 			}
 		}
 	}
 
 	function saveSettings() {
-		localStorage["bbb_settings"] = JSON.stringify(settings);
+		localStorage["bbb_settings"] = JSON.stringify(settings.user);
 	}
 
 	function updateSettings() {
@@ -288,10 +290,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var setting = arguments[i];
 			var value = arguments[i + 1];
 
-			settings[setting] = value;
+			settings.user[setting] = value;
 
 			// Update menu if it exists.
-			var input = settingInputs[setting];
+			var input = settings.inputs[setting];
 
 			if (input) {
 				switch (typeof(value))
@@ -327,40 +329,40 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* True or false settings */
 	// Global
-	var show_loli = settings["show_loli"];
-	var show_shota = settings["show_shota"];
-	var show_deleted = settings["show_deleted"]; // Show all deleted posts.
+	var show_loli = settings.user["show_loli"];
+	var show_shota = settings.user["show_shota"];
+	var show_deleted = settings.user["show_deleted"]; // Show all deleted posts.
 
-	var add_border = settings["add_border"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
-	var enable_custom_borders = settings["enable_custom_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
-	var clean_links = settings["clean_links"]; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
+	var add_border = settings.user["add_border"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
+	var enable_custom_borders = settings.user["enable_custom_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
+	var clean_links = settings.user["clean_links"]; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 
-	var hide_sign_up_notice = settings["hide_sign_up_notice"];
-	var hide_upgrade_notice = settings["hide_upgrade_notice"];
-	var hide_tos_notice = settings["hide_tos_notice"];
-	var hide_original_notice = settings["hide_original_notice"]; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
-	var hide_advertisements = settings["hide_advertisements"];
+	var hide_sign_up_notice = settings.user["hide_sign_up_notice"];
+	var hide_upgrade_notice = settings.user["hide_upgrade_notice"];
+	var hide_tos_notice = settings.user["hide_tos_notice"];
+	var hide_original_notice = settings.user["hide_original_notice"]; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
+	var hide_advertisements = settings.user["hide_advertisements"];
 
 	// Search
-	var enable_arrow_nav = settings["enable_arrow_nav"]; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
-	var search_add = settings["search_add"]; // Add the + and - shortcuts to the tag list for including or excluding search terms.
-	var thumbnail_count = settings["thumbnail_count"]; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
+	var enable_arrow_nav = settings.user["enable_arrow_nav"]; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
+	var search_add = settings.user["search_add"]; // Add the + and - shortcuts to the tag list for including or excluding search terms.
+	var thumbnail_count = settings.user["thumbnail_count"]; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
-	var alternate_image_swap = settings["alternate_image_swap"]; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
-	var image_resize = settings["image_resize"]; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
-	var load_sample_first = settings["load_sample_first"]; // Use sample images when available. When logged in, your account settings will override this setting.
-	var remove_tag_headers = settings["remove_tag_headers"]; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
-	var post_tag_titles = settings["post_tag_titles"]; // Revert post page titles to the more detailed full list of tags
+	var alternate_image_swap = settings.user["alternate_image_swap"]; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
+	var image_resize = settings.user["image_resize"]; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
+	var load_sample_first = settings.user["load_sample_first"]; // Use sample images when available. When logged in, your account settings will override this setting.
+	var remove_tag_headers = settings.user["remove_tag_headers"]; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
+	var post_tag_titles = settings.user["post_tag_titles"]; // Revert post page titles to the more detailed full list of tags
 
 	// Set Border Colors. Use CSS hex values for colors. http://www.w3schools.com/CSS/css_colors.asp
-	var loli_border = settings["loli_border"];
-	var shota_border = settings["shota_border"];
-	var child_border = settings["child_border"];
-	var parent_border = settings["parent_border"];
-	var pending_border = settings["pending_border"];
-	var flagged_border = settings["flagged_border"];
-	var deleted_border = settings["deleted_border"];
+	var loli_border = settings.user["loli_border"];
+	var shota_border = settings.user["shota_border"];
+	var child_border = settings.user["child_border"];
+	var parent_border = settings.user["parent_border"];
+	var pending_border = settings.user["pending_border"];
+	var flagged_border = settings.user["flagged_border"];
+	var deleted_border = settings.user["deleted_border"];
 
 	// Blacklist
 	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
@@ -368,7 +370,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// disable the script blacklist. When logged in, your account blacklist will override this blacklist.
 	// Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the
 	// following case: "spoilers, blood death"
-	var script_blacklisted_tags = settings["script_blacklisted_tags"];
+	var script_blacklisted_tags = settings.user["script_blacklisted_tags"];
 
 	// List of valid URL's to parse for. Feel free to suggest more!
 	var valid_urls = [
