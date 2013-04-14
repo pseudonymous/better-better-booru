@@ -108,6 +108,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		script_blacklisted_tags: ""
 	};
 	var settings = {};
+	var settingInputs = {};
 
 	function injectSettings() {
 		var menu = document.getElementById("top");
@@ -183,6 +184,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 			label.appendChild(item);
 			scrollDiv.appendChild(label);
+			settingInputs[i] = item;
 		}
 
 		var close = document.createElement("a");
@@ -265,7 +267,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function loadSettings() {
 		// Load stored settings.
 		if (typeof(localStorage["bbb_settings"]) === "undefined")
-				settings = JSON.parse(JSON.stringify(defaults)); // Clone object. Don't reference it.
+			settings = JSON.parse(JSON.stringify(defaults)); // Clone object. Don't reference it.
 		else {
 			settings = JSON.parse(localStorage["bbb_settings"]);
 
@@ -284,6 +286,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Change & save a single setting without the panel. Currently only used for hiding the original notice with the "X".
 		settings[setting] = value;
 		saveSettings();
+
+		// Update menu if it exists.
+		var input = settingInputs[setting];
+
+		if (input) {
+			switch (typeof(value))
+			{
+				case "boolean":
+					input.checked = value;
+					break;
+				case "string":
+					input.value = value;
+					break;
+				case "number":
+					input.value = value;
+					break;
+				default:
+					console.log(typeof(value));
+					break;
+			}
+		}
 	}
 
 	loadSettings();
