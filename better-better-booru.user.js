@@ -28,15 +28,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		clean_links: false,
 		hide_sign_up_notice: false,
 		hide_upgrade_notice: false,
-		hide_advertisements: false,
 		hide_tos_notice: false,
+		hide_original_notice: false,
+		hide_advertisements: false,
 		enable_arrow_nav: false,
 		search_add: true,
 		thumbnail_count: 0,
 		alternate_image_swap: false,
 		image_resize: true,
 		load_sample_first: true,
-		hide_original_notice: false,
 		remove_tag_headers: false,
 		post_tag_titles: false,
 		loli_border: "#FFC0CB",
@@ -57,15 +57,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		clean_links: "Clean Links",
 		hide_sign_up_notice: "Hide Sign Up Notice",
 		hide_upgrade_notice: "Hide Upgrade Notice",
-		hide_advertisements: "Hide Advertisements",
 		hide_tos_notice: "Hide TOS Notice",
+		hide_original_notice: "Hide Original Notice",
+		hide_advertisements: "Hide Advertisements",
 		enable_arrow_nav: "Enable Arrow Navigation",
 		search_add: "Search Add",
 		thumbnail_count: "Thumbnail Count",
 		alternate_image_swap: "Alternate Image Swap",
 		image_resize: "Resize Images",
 		load_sample_first: "Load Sample First",
-		hide_original_notice: "Hide Original Notice",
 		remove_tag_headers: "Remove Tag Headers",
 		post_tag_titles: "Post Tag Titles",
 		loli_border: "Loli Border Color",
@@ -87,15 +87,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		clean_links: "",
 		hide_sign_up_notice: "",
 		hide_upgrade_notice: "",
-		hide_advertisements: "",
 		hide_tos_notice: "",
+		hide_original_notice: "",
+		hide_advertisements: "",
 		enable_arrow_nav: "",
 		search_add: "",
 		thumbnail_count: "",
 		alternate_image_swap: "",
 		image_resize: "",
 		load_sample_first: "",
-		hide_original_notice: "",
 		remove_tag_headers: "",
 		post_tag_titles: "",
 		loli_border: "",
@@ -107,6 +107,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		deleted_border: "",
 		script_blacklisted_tags: ""
 	};
+	var settings = {};
 
 	function injectSettings() {
 		var menu = document.getElementById("top");
@@ -146,7 +147,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.appendChild(scrollDiv);
 
 		for (var i in defaults) {
-			var pref = "bbb_"+i;
 			var label = document.createElement("label");
 			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+labels[i]+"</span>";
 			label.style.padding = "5px 0";
@@ -154,31 +154,31 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			var item;
 
-			switch (typeof(defaults[i]))
+			switch (typeof(settings[i]))
 			{
 				case "boolean":
 					item = document.createElement("input");
-					item.name = pref;
+					item.name = i;
 					item.type = "checkbox";
-					item.checked = localStorage[item.name] == "true";
-					item.onclick = function() { localStorage[this.name] = localStorage[this.name] == "true" ? "false" : "true"; };
+					item.checked = settings[i] == true;
+					item.onclick = function() { settings[this.name] = this.checked == false ? false : true; };
 					break;
 				case "string":
 					item = document.createElement("input");
-					item.name = pref;
+					item.name = i;
 					item.type = "text";
-					item.value = localStorage[item.name];
-					item.onchange = function() { localStorage[this.name] = this.value; };
+					item.value = settings[i];
+					item.onchange = function() { settings[this.name] = this.value; };
 					break;
 				case "number":
 					item = document.createElement("input");
-					item.name = pref;
+					item.name = i;
 					item.type = "text";
-					item.value = localStorage[item.name];
-					item.onchange = function() { localStorage[this.name] = Number(this.value); };
+					item.value = settings[i];
+					item.onchange = function() { settings[this.name] = Number(this.value); };
 					break;
 				default:
-					console.log(typeof(defaults[i]));
+					console.log(typeof(settings[i]));
 					break;
 			}
 			label.appendChild(item);
@@ -186,35 +186,48 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		var close = document.createElement("a");
-		close.innerHTML = "Close";
+		close.innerHTML = "Save & Close";
 		close.href = "#";
-		close.style.margin = "10px 0";
+		close.style.display = "inline-block";
+		close.style.margin = "0px 15px 0px 0px";
+		close.style.padding = "5px";
+		close.style.border = "1px solid #CCCCCC";
 		close.onclick = function() {
 			document.getElementById("bbb_menu").style.display = "none";
+			saveSettings();
+			return false;
+		};
+
+		var cancel = document.createElement("a");
+		cancel.innerHTML = "Cancel";
+		cancel.href = "#";
+		cancel.style.display = "inline-block";
+		cancel.style.padding = "5px";
+		cancel.style.border = "1px solid #CCCCCC";
+		cancel.onclick = function() {
+			loadSettings();
+			removeMenu();
 			return false;
 		};
 
 		var reset = document.createElement("a");
-		reset.innerHTML = "Reset Settings";
+		reset.innerHTML = "Reset to Defaults";
 		reset.href = "#";
+		reset.style.display = "inline-block";
 		reset.style.cssFloat = "right";
 		reset.style.color = "#ff1100";
+		reset.style.padding = "5px";
+		reset.style.border = "1px solid #CCCCCC";
 		reset.onclick = function() {
-			for (var i in defaults) {
-				var pref = "bbb_"+i;
-				localStorage[pref] = defaults[i];
-			}
-			var bbb_menu = document.getElementById("bbb_menu");
-
-			// actually destroy it so it gets rebuilt.
-			bbb_menu.parentNode.removeChild(bbb_menu);
+			settings = JSON.parse(JSON.stringify(defaults));
+			removeMenu();
 			showSettings();
-
 			return false;
 		};
 
-		menu.appendChild(reset);
 		menu.appendChild(close);
+		menu.appendChild(cancel);
+		menu.appendChild(reset);
 
 		menu.id = "bbb_menu";
 		menu.style.background = "white";
@@ -242,15 +255,39 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.style.visibility = "visible";
 	}
 
-	injectSettings();
+	function removeMenu() {
+		// Destroy the menu so that it gets rebuilt.
+		var bbb_menu = document.getElementById("bbb_menu");
 
-	for (var i in defaults) {
-		var pref = "bbb_"+i;
-		if (typeof(localStorage[pref]) === 'undefined')
-			localStorage[pref] = defaults[i];
+		bbb_menu.parentNode.removeChild(bbb_menu);
 	}
 
-	function toBool(str) { return str == "true"; }
+	function loadSettings() {
+		// Load stored settings.
+		if (typeof(localStorage["bbb_settings"]) === "undefined")
+				settings = JSON.parse(JSON.stringify(defaults)); // Clone object. Don't reference it.
+		else {
+			settings = JSON.parse(localStorage["bbb_settings"]);
+
+			for (var i in defaults) {
+				if (typeof(settings[i]) === "undefined")
+					settings[i] = defaults[i];
+			}
+		}
+	}
+
+	function saveSettings() {
+		localStorage["bbb_settings"] = JSON.stringify(settings);
+	}
+
+	function updateSetting(setting, value) {
+		// Change & save a single setting without the panel. Currently only used for hiding the original notice with the "X".
+		settings[setting] = value;
+		saveSettings();
+	}
+
+	loadSettings();
+	injectSettings();
 
 	/* Help */
 	// When editing settings, make sure you always maintain the same format. Leave equal signs, quotation marks, and semicolons alone.
@@ -261,40 +298,40 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* True or false settings */
 	// Global
-	var show_loli = toBool(localStorage["bbb_show_loli"]);
-	var show_shota = toBool(localStorage["bbb_show_shota"]);
-	var show_deleted = toBool(localStorage["bbb_show_deleted"]); // Show all deleted posts.
+	var show_loli = settings["show_loli"];
+	var show_shota = settings["show_shota"];
+	var show_deleted = settings["show_deleted"]; // Show all deleted posts.
 
-	var add_border = toBool(localStorage["bbb_add_border"]); // Add borders to shota and loli. You may set the colors under "Set Border Colors".
-	var enable_custom_borders = toBool(localStorage["bbb_enable_custom_borders"]); // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
-	var clean_links = toBool(localStorage["bbb_clean_links"]); // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
+	var add_border = settings["add_border"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
+	var enable_custom_borders = settings["enable_custom_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
+	var clean_links = settings["clean_links"]; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 
-	var hide_sign_up_notice = toBool(localStorage["bbb_hide_sign_up_notice"]);
-	var hide_upgrade_notice = toBool(localStorage["bbb_hide_upgrade_notice"]);
-	var hide_advertisements = toBool(localStorage["bbb_hide_advertisements"]);
-	var hide_tos_notice = toBool(localStorage["bbb_hide_tos_notice"]);
+	var hide_sign_up_notice = settings["hide_sign_up_notice"];
+	var hide_upgrade_notice = settings["hide_upgrade_notice"];
+	var hide_tos_notice = settings["hide_tos_notice"];
+	var hide_original_notice = settings["hide_original_notice"]; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
+	var hide_advertisements = settings["hide_advertisements"];
 
 	// Search
-	var enable_arrow_nav = toBool(localStorage["bbb_enable_arrow_nav"]); // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
-	var search_add = toBool(localStorage["bbb_search_add"]); // Add the + and - shortcuts to the tag list for including or excluding search terms.
-	var thumbnail_count = Number(localStorage["bbb_thumbnail_count"]); // Number of thumbnails to display per page. Use a number value of 0 to turn off.
+	var enable_arrow_nav = settings["enable_arrow_nav"]; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
+	var search_add = settings["search_add"]; // Add the + and - shortcuts to the tag list for including or excluding search terms.
+	var thumbnail_count = settings["thumbnail_count"]; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
-	var alternate_image_swap = toBool(localStorage["bbb_alternate_image_swap"]); // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
-	var image_resize = toBool(localStorage["bbb_image_resize"]); // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
-	var load_sample_first = toBool(localStorage["bbb_load_sample_first"]); // Use sample images when available. When logged in, your account settings will override this setting.
-	var hide_original_notice = toBool(localStorage["bbb_hide_original_notice"]); // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
-	var remove_tag_headers = toBool(localStorage["bbb_remove_tag_headers"]); // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
-	var post_tag_titles = toBool(localStorage["bbb_post_tag_titles"]); // Revert post page titles to the more detailed full list of tags
+	var alternate_image_swap = settings["alternate_image_swap"]; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
+	var image_resize = settings["image_resize"]; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
+	var load_sample_first = settings["load_sample_first"]; // Use sample images when available. When logged in, your account settings will override this setting.
+	var remove_tag_headers = settings["remove_tag_headers"]; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
+	var post_tag_titles = settings["post_tag_titles"]; // Revert post page titles to the more detailed full list of tags
 
 	// Set Border Colors. Use CSS hex values for colors. http://www.w3schools.com/CSS/css_colors.asp
-	var loli_border = localStorage["bbb_loli_border"];
-	var shota_border = localStorage["bbb_shota_border"];
-	var child_border = localStorage["bbb_child_border"];
-	var parent_border = localStorage["bbb_parent_border"];
-	var pending_border = localStorage["bbb_pending_border"];
-	var flagged_border = localStorage["bbb_flagged_border"];
-	var deleted_border = localStorage["bbb_deleted_border"];
+	var loli_border = settings["loli_border"];
+	var shota_border = settings["shota_border"];
+	var child_border = settings["child_border"];
+	var parent_border = settings["parent_border"];
+	var pending_border = settings["pending_border"];
+	var flagged_border = settings["flagged_border"];
+	var deleted_border = settings["deleted_border"];
 
 	// Blacklist
 	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
@@ -302,7 +339,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// disable the script blacklist. When logged in, your account blacklist will override this blacklist.
 	// Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the
 	// following case: "spoilers, blood death"
-	var script_blacklisted_tags = localStorage["bbb_script_blacklisted_tags"];
+	var script_blacklisted_tags = settings["script_blacklisted_tags"];
 
 	// List of valid URL's to parse for. Feel free to suggest more!
 	var valid_urls = [
@@ -880,7 +917,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 					closeOriginalNotice.addEventListener("click", function(event) {
 						bbbResizeNotice.style.display = "none";
-						localStorage["bbb_hide_original_notice"] = true;
+						updateSetting("hide_original_notice", true);
 					}, false);
 				}
 
