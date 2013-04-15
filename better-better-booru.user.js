@@ -112,6 +112,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	settings.user = {};
 	settings.inputs = {};
 
+	// Setting sections and ordering.
+	settings.thumbnails = ["show_loli", "show_shota", "show_deleted", "thumbnail_count", "add_border", "enable_custom_borders"];
+	settings.layoutHiding = ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements"];
+	settings.tagSidebar = ["search_add", "remove_tag_headers"];
+	settings.borderColors = ["loli_border", "shota_border", "child_border", "parent_border", "pending_border", "flagged_border", "deleted_border"];
+	settings.loggedOut = ["image_resize", "load_sample_first", "script_blacklisted_tags"];
+	settings.miscOptions = ["alternate_image_swap", "clean_links", "enable_arrow_nav", "post_tag_titles"];
+
 	function injectSettings() {
 		var menu = document.getElementById("top");
 		menu = menu.getElementsByTagName("menu");
@@ -149,45 +157,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.style.margin = "15px 0px";
 		menu.appendChild(scrollDiv);
 
-		for (var i in settings.defaults) {
-			var label = document.createElement("label");
-			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+settings.labels[i]+"</span>";
-			label.style.padding = "5px 0";
-			label.style.display = "block";
-
-			var item;
-
-			switch (typeof(settings.user[i]))
-			{
-				case "boolean":
-					item = document.createElement("input");
-					item.name = i;
-					item.type = "checkbox";
-					item.checked = settings.user[i];
-					item.onclick = function() { settings.user[this.name] = this.checked; };
-					break;
-				case "string":
-					item = document.createElement("input");
-					item.name = i;
-					item.type = "text";
-					item.value = settings.user[i];
-					item.onchange = function() { settings.user[this.name] = this.value; };
-					break;
-				case "number":
-					item = document.createElement("input");
-					item.name = i;
-					item.type = "text";
-					item.value = settings.user[i];
-					item.onchange = function() { settings.user[this.name] = Number(this.value); };
-					break;
-				default:
-					console.log(typeof(settings.user[i]));
-					break;
-			}
-			label.appendChild(item);
-			scrollDiv.appendChild(label);
-			settings.inputs[i] = item;
-		}
+		createSection("Images & Thumbnails", settings.thumbnails, scrollDiv);
+		createSection("Layout Hiding", settings.layoutHiding, scrollDiv);
+		createSection("Tag Sidebar", settings.tagSidebar, scrollDiv);
+		createSection("Misc.", settings.miscOptions, scrollDiv);
+		createSection("Logged Out Settings", settings.loggedOut, scrollDiv);
+		createSection("Border Colors", settings.borderColors, scrollDiv);
 
 		var close = document.createElement("a");
 		close.innerHTML = "Save & Close";
@@ -257,6 +232,57 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.style.top = (viewHeight - menuHeight) / 2 + "px";
 		menu.style.left = (viewWidth - menuWidth) / 2 + "px";
 		menu.style.visibility = "visible";
+	}
+
+	function createSection(header, settingList, target) {
+		var title = document.createElement("h3");
+		title.innerHTML = header;
+		title.style.padding = "10px 0px 0px 0px";
+		title.style.borderBottom = "2px solid #CCCCCC";
+		title.style.width = "85%";
+		target.appendChild(title);
+
+		for (var i = 0, sl = settingList.length; i < sl; i++) {
+			var setting = settingList[i];
+
+			var label = document.createElement("label");
+			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+settings.labels[setting]+"</span>";
+			label.style.padding = "5px 0";
+			label.style.display = "block";
+
+			var item;
+
+			switch (typeof(settings.user[setting]))
+			{
+				case "boolean":
+					item = document.createElement("input");
+					item.name = setting;
+					item.type = "checkbox";
+					item.checked = settings.user[setting];
+					item.onclick = function() { settings.user[this.name] = this.checked; };
+					break;
+				case "string":
+					item = document.createElement("input");
+					item.name = setting;
+					item.type = "text";
+					item.value = settings.user[setting];
+					item.onchange = function() { settings.user[this.name] = this.value; };
+					break;
+				case "number":
+					item = document.createElement("input");
+					item.name = setting;
+					item.type = "text";
+					item.value = settings.user[setting];
+					item.onchange = function() { settings.user[this.name] = Number(this.value); };
+					break;
+				default:
+					console.log(typeof(settings.user[setting]));
+					break;
+			}
+			label.appendChild(item);
+			target.appendChild(label);
+			settings.inputs[setting] = item;
+		}
 	}
 
 	function removeMenu() {
