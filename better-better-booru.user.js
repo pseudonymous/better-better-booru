@@ -25,15 +25,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_loli: false,
 		show_shota: false,
 		show_deleted: false,
-		add_border: true,
-		enable_custom_borders: false,
+		loli_shota_borders: true,
+		custom_borders: false,
 		clean_links: false,
 		hide_sign_up_notice: false,
 		hide_upgrade_notice: false,
 		hide_tos_notice: false,
 		hide_original_notice: false,
 		hide_advertisements: false,
-		enable_arrow_nav: false,
+		arrow_nav: false,
 		search_add: true,
 		thumbnail_count: 0,
 		alternate_image_swap: false,
@@ -54,15 +54,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_loli: "Show Loli",
 		show_shota: "Show Shota",
 		show_deleted: "Show Deleted",
-		add_border: "Add Borders",
-		enable_custom_borders: "Enable Custom Borders",
+		loli_shota_borders: "Loli & Shota Borders",
+		custom_borders: "Custom Borders",
 		clean_links: "Clean Links",
 		hide_sign_up_notice: "Hide Sign Up Notice",
 		hide_upgrade_notice: "Hide Upgrade Notice",
 		hide_tos_notice: "Hide TOS Notice",
 		hide_original_notice: "Hide Original Notice",
 		hide_advertisements: "Hide Advertisements",
-		enable_arrow_nav: "Enable Arrow Navigation",
+		arrow_nav: "Arrow Navigation",
 		search_add: "Search Add",
 		thumbnail_count: "Thumbnail Count",
 		alternate_image_swap: "Alternate Image Swap",
@@ -84,15 +84,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_loli: "",
 		show_shota: "",
 		show_deleted: "",
-		add_border: "",
-		enable_custom_borders: "",
+		loli_shota_borders: "",
+		custom_borders: "",
 		clean_links: "",
 		hide_sign_up_notice: "",
 		hide_upgrade_notice: "",
 		hide_tos_notice: "",
 		hide_original_notice: "",
 		hide_advertisements: "",
-		enable_arrow_nav: "",
+		arrow_nav: "",
 		search_add: "",
 		thumbnail_count: "",
 		alternate_image_swap: "",
@@ -113,12 +113,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	settings.inputs = {};
 
 	// Setting sections and ordering.
-	settings.thumbnails = ["show_loli", "show_shota", "show_deleted", "thumbnail_count", "add_border", "enable_custom_borders"];
-	settings.layoutHiding = ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements"];
-	settings.tagSidebar = ["search_add", "remove_tag_headers"];
-	settings.borderColors = ["loli_border", "shota_border", "child_border", "parent_border", "pending_border", "flagged_border", "deleted_border"];
-	settings.loggedOut = ["image_resize", "load_sample_first", "script_blacklisted_tags"];
-	settings.miscOptions = ["alternate_image_swap", "clean_links", "enable_arrow_nav", "post_tag_titles"];
+	settings.sections = {
+		image: ["show_loli", "show_shota", "show_deleted", "thumbnail_count", "loli_shota_borders", "custom_borders"],
+		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements"],
+		sidebar: ["search_add", "remove_tag_headers"],
+		border: ["loli_border", "shota_border", "child_border", "parent_border", "pending_border", "flagged_border", "deleted_border"],
+		loggedOut: ["image_resize", "load_sample_first", "script_blacklisted_tags"],
+		misc: ["alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"]
+	};
 
 	function injectSettings() {
 		var menu = document.getElementById("top");
@@ -157,12 +159,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.style.margin = "15px 0px";
 		menu.appendChild(scrollDiv);
 
-		createSection("Images & Thumbnails", settings.thumbnails, scrollDiv);
-		createSection("Layout Hiding", settings.layoutHiding, scrollDiv);
-		createSection("Tag Sidebar", settings.tagSidebar, scrollDiv);
-		createSection("Misc.", settings.miscOptions, scrollDiv);
-		createSection("Logged Out Settings", settings.loggedOut, scrollDiv);
-		createSection("Border Colors", settings.borderColors, scrollDiv);
+		createSection("Images & Thumbnails", settings.sections.image, scrollDiv);
+		createSection("Layout", settings.sections.layout, scrollDiv);
+		createSection("Tag Sidebar", settings.sections.sidebar, scrollDiv);
+		createSection("Misc.", settings.sections.misc, scrollDiv);
+		createSection("Logged Out Settings", settings.sections.loggedOut, scrollDiv);
+		createSection("Border Colors", settings.sections.border, scrollDiv);
 
 		var close = document.createElement("a");
 		close.innerHTML = "Save & Close";
@@ -359,8 +361,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var show_shota = settings.user["show_shota"];
 	var show_deleted = settings.user["show_deleted"]; // Show all deleted posts.
 
-	var add_border = settings.user["add_border"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
-	var enable_custom_borders = settings.user["enable_custom_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
+	var loli_shota_borders = settings.user["loli_shota_borders"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
+	var custom_borders = settings.user["custom_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
 	var clean_links = settings.user["clean_links"]; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 
 	var hide_sign_up_notice = settings.user["hide_sign_up_notice"];
@@ -370,7 +372,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var hide_advertisements = settings.user["hide_advertisements"];
 
 	// Search
-	var enable_arrow_nav = settings.user["enable_arrow_nav"]; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
+	var arrow_nav = settings.user["arrow_nav"]; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
 	var search_add = settings.user["search_add"]; // Add the + and - shortcuts to the tag list for including or excluding search terms.
 	var thumbnail_count = settings.user["thumbnail_count"]; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
@@ -415,6 +417,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
 
 	/* "INIT" */
+	if (loli_shota_borders || custom_borders || hide_advertisements)
+		customCSS();
+
 	if (show_loli || show_shota || show_deleted) // API only features.
 		searchJSON(gLoc);
 	else // Alternate mode for features.
@@ -438,15 +443,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (clean_links)
 		cleanLinks();
 
-	if (enable_arrow_nav) {
+	if (arrow_nav) {
 		var paginator = document.getElementsByClassName("paginator")[0];
 
 		if (paginator || gLoc == "popular") // If the paginator exists, arrow navigation should be applicable.
 			window.addEventListener("keydown", keyCheck, false);
 	}
-
-	if (add_border || enable_custom_borders)
-		customBorders();
 
 	if (search_add)
 		searchAdd();
@@ -978,6 +980,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 				}
 
+/* 				// Favorites listing. Still in the process of changing.
+				var postID = post.id;
+				var favItem = document.getElementById("favcount-for-post-" + postID).parentNode;
+
+				if (!favItem.children[1]) {
+					favItem.innerHTML += '<a href="/favorites?post_id=' + postID + '" data-remote="true" id="show-favlist-link">&raquo;</a><a href="#" data-remote="true" id="hide-favlist-link">&laquo;</a><div id="favlist"></div>';
+					Danbooru.initialize_favlist();
+				}
+*/
 				// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
 				if (!checkLoginStatus()) {
 					var options = document.createElement("section");
@@ -991,7 +1002,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				 // Make the "Add note" link work.
 				if (!imageExists && document.getElementById("translate") !== null)
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
-
 
 				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
 					img.addEventListener("click", Danbooru.Note.Box.toggle_all, false);
@@ -1335,19 +1345,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function customBorders() {
-		var borderStyles = document.createElement("style");
+	function customCSS() {
+		var customStyles = document.createElement("style");
 
-		borderStyles.type = "text/css";
+		customStyles.type = "text/css";
 
 		// Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
-		if (enable_custom_borders)
-			borderStyles.innerHTML += " .post-preview.post-status-has-children img{border-color:" + parent_border + " !important;} .post-preview.post-status-has-parent img{border-color:" + child_border + " !important;} .post-preview.post-status-pending img{border-color:" + pending_border + " !important;} .post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;} .post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;}";
+		if (custom_borders)
+			customStyles.innerHTML += " .post-preview.post-status-has-children img{border-color:" + parent_border + " !important;} .post-preview.post-status-has-parent img{border-color:" + child_border + " !important;} .post-preview.post-status-pending img{border-color:" + pending_border + " !important;} .post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;} .post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;}";
 
-		if (add_border)
-			borderStyles.innerHTML += ' .post-preview[data-tags~="shota"] img{border: 2px solid ' + shota_border + ' !important;} .post-preview[data-tags~="loli"] img{border: 2px solid ' + loli_border + ' !important;}';
+		if (loli_shota_borders)
+			customStyles.innerHTML += ' .post-preview[data-tags~="shota"] img{border: 2px solid ' + shota_border + ' !important;} .post-preview[data-tags~="loli"] img{border: 2px solid ' + loli_border + ' !important;}';
 
-		document.getElementsByTagName("head")[0].appendChild(borderStyles);
+		if (hide_advertisements)
+			customStyles.innerHTML += ' #content.with-ads {margin-right: 0em !important;}';
+
+		document.getElementsByTagName("head")[0].appendChild(customStyles);
 	}
 
 	function removeTagHeaders() {
