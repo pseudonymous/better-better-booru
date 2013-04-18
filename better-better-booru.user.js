@@ -227,7 +227,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		menu.style.maxHeight = menuHeight - 30 + "px"; // The subtracted value is the sum of the top and bottom padding. Doing this since this is a controlled element that allows us to avoid some hassle.
 		scrollDiv.style.maxHeight = menuHeight - scrollDivDiff + "px";
-		scrollDiv.style.minWidth = menuWidth + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
+		scrollDiv.style.minWidth = scrollDiv.clientWidth + scrollbarWidth() + 5 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
 		scrollDiv.style.overflowY = "auto";
 
 		menuWidth = menu.clientWidth; // Get new width including potential sidebar.
@@ -1432,6 +1432,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			msg = notice.innerHTML + "<hr/>" + msg;
 
 		noticeFunc(msg);
+	}
+
+	function scrollbarWidth() {
+		var scroller = document.createElement("div");
+		scroller.style.width = "150px";
+		scroller.style.height = "150px";
+		scroller.style.visibility = "hidden";
+		scroller.style.overflow = "scroll";
+		scroller.style.position = "absolute";
+		scroller.style.top = "0px";
+		scroller.style.left = "0px";
+		document.body.appendChild(scroller);
+		var scrollDiff = scroller.offsetWidth - scroller.clientWidth;
+		document.body.removeChild(scroller);
+
+		return scrollDiff;
 	}
 
 	function delayMe(func) {
