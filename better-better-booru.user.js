@@ -538,15 +538,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							parseComments(xml);
 					}
 					else if (xmlhttp.status == 403)
-						Danbooru.error("Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information.");
+						danbNotice("Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information.", true);
 					else if (xmlhttp.status == 421)
-						Danbooru.error("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.");
+						danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", true);
 					else if (xmlhttp.status == 401)
-						Danbooru.error("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API for hidden image information.");
+						danbNotice("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API for hidden image information.", true);
 					else if (xmlhttp.status == 500)
-						Danbooru.error("Better Better Booru: Error retrieving information. Internal server error.");
+						danbNotice("Better Better Booru: Error retrieving information. Internal server error.", true);
 					else if (xmlhttp.status == 503)
-						Danbooru.error("Better Better Booru: Error retrieving information. Service unavailable.");
+						danbNotice("Better Better Booru: Error retrieving information. Service unavailable.", true);
 				}
 			};
 			xmlhttp.open("GET", url, true);
@@ -712,9 +712,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 					}
 					else if (xmlhttp.status == 500)
-						Danbooru.error("Better Better Booru: Error retrieving information. Internal server error.");
+						danbNotice("Better Better Booru: Error retrieving information. Internal server error.", true);
 					else if (xmlhttp.status == 503)
-						Danbooru.error("Better Better Booru: Error retrieving information. Service unavailable.");
+						danbNotice("Better Better Booru: Error retrieving information. Service unavailable.", true);
 				}
 			};
 			xmlhttp.open("GET", url, true);
@@ -1104,7 +1104,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// If we don't have the expected number of posts, the API info and page are too out of sync.
 		if (existingPosts.length != endTotal)
-			Danbooru.error("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.");
+			danbNotice("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.", true);
 
 		// Thumbnail classes and titles
 		Danbooru.Post.initialize_titles();
@@ -1420,6 +1420,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				return outer;
 			})(node);
+	}
+
+	function danbNotice(txt, isError) {
+		// Display the notice or append information to it if it already exists. If a second true argument is provided, the notice is displayed as an error.
+		var noticeFunc = (isError ? Danbooru.error : Danbooru.notice);
+		var msg = txt;
+		var notice = document.getElementById("notice");
+
+		if (/\w/.test(notice.innerHTML))
+			msg = notice.innerHTML + "<hr/>" + msg;
+
+		noticeFunc(msg);
 	}
 
 	function delayMe(func) {
