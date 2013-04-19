@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        5.0
+// @version        5.1
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @include        http://*.donmai.us/*
@@ -980,15 +980,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 				}
 
-/* 				// Favorites listing. Still in the process of changing.
+ 				// Favorites listing.
 				var postID = post.id;
 				var favItem = document.getElementById("favcount-for-post-" + postID).parentNode;
 
 				if (!favItem.children[1]) {
 					favItem.innerHTML += '<a href="/favorites?post_id=' + postID + '" data-remote="true" id="show-favlist-link">&raquo;</a><a href="#" data-remote="true" id="hide-favlist-link">&laquo;</a><div id="favlist"></div>';
-					Danbooru.initialize_favlist();
+					Danbooru.Post.initialize_favlist();
 				}
-*/
+
 				// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
 				if (!checkLoginStatus()) {
 					var options = document.createElement("section");
