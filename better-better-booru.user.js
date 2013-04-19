@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        5.0
+// @version        5.1
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @include        http://*.donmai.us/*
@@ -303,6 +303,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
 
 	/* "INIT" */
+	if (add_border || enable_custom_borders || hide_advertisements)
+		customCSS();
+
 	if (show_loli || show_shota || show_deleted) // API only features.
 		searchJSON(gLoc);
 	else // Alternate mode for features.
@@ -332,9 +335,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (paginator || gLoc == "popular") // If the paginator exists, arrow navigation should be applicable.
 			window.addEventListener("keydown", keyCheck, false);
 	}
-
-	if (add_border || enable_custom_borders)
-		customBorders();
 
 	if (search_add)
 		searchAdd();
@@ -424,15 +424,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							parseComments(xml);
 					}
 					else if (xmlhttp.status == 403)
-						Danbooru.error("Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information.");
+						danbNotice("Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information.", true);
 					else if (xmlhttp.status == 421)
-						Danbooru.error("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.");
+						danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", true);
 					else if (xmlhttp.status == 401)
-						Danbooru.error("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API for hidden image information.");
+						danbNotice("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API for hidden image information.", true);
 					else if (xmlhttp.status == 500)
-						Danbooru.error("Better Better Booru: Error retrieving information. Internal server error.");
+						danbNotice("Better Better Booru: Error retrieving information. Internal server error.", true);
 					else if (xmlhttp.status == 503)
-						Danbooru.error("Better Better Booru: Error retrieving information. Service unavailable.");
+						danbNotice("Better Better Booru: Error retrieving information. Service unavailable.", true);
 				}
 			};
 			xmlhttp.open("GET", url, true);
@@ -598,9 +598,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 					}
 					else if (xmlhttp.status == 500)
-						Danbooru.error("Better Better Booru: Error retrieving information. Internal server error.");
+						danbNotice("Better Better Booru: Error retrieving information. Internal server error.", true);
 					else if (xmlhttp.status == 503)
-						Danbooru.error("Better Better Booru: Error retrieving information. Service unavailable.");
+						danbNotice("Better Better Booru: Error retrieving information. Service unavailable.", true);
 				}
 			};
 			xmlhttp.open("GET", url, true);
@@ -866,6 +866,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 				}
 
+ 				// Favorites listing.
+				var postID = post.id;
+				var favItem = document.getElementById("favcount-for-post-" + postID).parentNode;
+
+				if (!favItem.children[1]) {
+					favItem.innerHTML += '<a href="/favorites?post_id=' + postID + '" data-remote="true" id="show-favlist-link">&raquo;</a><a href="#" data-remote="true" id="hide-favlist-link">&laquo;</a><div id="favlist"></div>';
+					Danbooru.Post.initialize_favlist();
+				}
+
 				// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
 				if (!checkLoginStatus()) {
 					var options = document.createElement("section");
@@ -879,7 +888,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				 // Make the "Add note" link work.
 				if (!imageExists && document.getElementById("translate") !== null)
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
-
 
 				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
 					img.addEventListener("click", Danbooru.Note.Box.toggle_all, false);
@@ -982,7 +990,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// If we don't have the expected number of posts, the API info and page are too out of sync.
 		if (existingPosts.length != endTotal)
-			Danbooru.error("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.");
+			danbNotice("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.", true);
 
 		// Thumbnail classes and titles
 		Danbooru.Post.initialize_titles();
@@ -1223,19 +1231,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function customBorders() {
-		var borderStyles = document.createElement("style");
+	function customCSS() {
+		var customStyles = document.createElement("style");
 
-		borderStyles.type = "text/css";
+		customStyles.type = "text/css";
 
 		// Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
 		if (enable_custom_borders)
-			borderStyles.innerHTML += " .post-preview.post-status-has-children img{border-color:" + parent_border + " !important;} .post-preview.post-status-has-parent img{border-color:" + child_border + " !important;} .post-preview.post-status-pending img{border-color:" + pending_border + " !important;} .post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;} .post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;}";
+			customStyles.innerHTML += " .post-preview.post-status-has-children img{border-color:" + parent_border + " !important;} .post-preview.post-status-has-parent img{border-color:" + child_border + " !important;} .post-preview.post-status-pending img{border-color:" + pending_border + " !important;} .post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;} .post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;}";
 
 		if (add_border)
-			borderStyles.innerHTML += ' .post-preview[data-tags~="shota"] img{border: 2px solid ' + shota_border + ' !important;} .post-preview[data-tags~="loli"] img{border: 2px solid ' + loli_border + ' !important;}';
+			customStyles.innerHTML += ' .post-preview[data-tags~="shota"] img{border: 2px solid ' + shota_border + ' !important;} .post-preview[data-tags~="loli"] img{border: 2px solid ' + loli_border + ' !important;}';
 
-		document.getElementsByTagName("head")[0].appendChild(borderStyles);
+		if (hide_advertisements)
+			customStyles.innerHTML += ' #content.with-ads {margin-right: 0em !important;}';
+
+		document.getElementsByTagName("head")[0].appendChild(customStyles);
 	}
 
 	function removeTagHeaders() {
@@ -1295,6 +1306,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				return outer;
 			})(node);
+	}
+
+	function danbNotice(txt, isError) {
+		// Display the notice or append information to it if it already exists. If a second true argument is provided, the notice is displayed as an error.
+		var noticeFunc = (isError ? Danbooru.error : Danbooru.notice);
+		var msg = txt;
+		var notice = document.getElementById("notice");
+
+		if (/\w/.test(notice.innerHTML))
+			msg = notice.innerHTML + "<hr/>" + msg;
+
+		noticeFunc(msg);
 	}
 
 	function delayMe(func) {
