@@ -6,6 +6,13 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 5.1:
+ * Added a "post tag titles" option to allow reverting post page titles to the full list of tags.
+ * Added a link to Danbooru's favorites listing for regular members.
+ * Updated hiding advertisements to free up the blank space where ads usually are.
+ * Updated the error messages to not overwrite existing messages.
+ * Moved the "BBB Settings" menu link to the upper menu due to the secondary menu missing on some pages and breaking the script.
+ * Fixed the non-API "thumbnail count" method so that pages with no thumbnails don't break the script.
 * Version 5.0:
  * Added settings panel so that people no longer need to edit the script to change settings. This also happens to fix automatic updating.
  * Removed the "show_all" option since editing settings is much simpler now.
