@@ -199,7 +199,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(generalPage);
 		settings.el.generalPage = generalPage;
 
-		createSection("Images & Thumbnails (API/Account only features)", "", settings.sections.image, generalPage);
+		createSection("Images & Thumbnails", "", settings.sections.image, generalPage);
 		createSection("Layout", "", settings.sections.layout, generalPage);
 		createSection("Tag Sidebar", "", settings.sections.sidebar, generalPage);
 		createSection("Misc.", "", settings.sections.misc, generalPage);
