@@ -26,7 +26,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_shota: false,
 		show_deleted: false,
 		loli_shota_borders: true,
-		custom_borders: false,
+		custom_status_borders: false,
 		clean_links: false,
 		hide_sign_up_notice: false,
 		hide_upgrade_notice: false,
@@ -41,21 +41,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		load_sample_first: true,
 		remove_tag_headers: false,
 		post_tag_titles: false,
+		script_blacklisted_tags: "",
 		loli_border: "#FFC0CB",
 		shota_border: "#66CCFF",
 		child_border: "#CCCC00",
 		parent_border: "#00FF00",
 		pending_border: "#0000FF",
 		flagged_border: "#FF0000",
-		deleted_border: "#000000",
-		script_blacklisted_tags: ""
+		deleted_border: "#000000"
 	};
 	settings.labels = {
 		show_loli: "Show Loli",
 		show_shota: "Show Shota",
 		show_deleted: "Show Deleted",
 		loli_shota_borders: "Loli & Shota Borders",
-		custom_borders: "Custom Borders",
+		custom_status_borders: "Custom Status Borders",
 		clean_links: "Clean Links",
 		hide_sign_up_notice: "Hide Sign Up Notice",
 		hide_upgrade_notice: "Hide Upgrade Notice",
@@ -85,7 +85,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_shota: "",
 		show_deleted: "",
 		loli_shota_borders: "",
-		custom_borders: "",
+		custom_status_borders: "",
 		clean_links: "",
 		hide_sign_up_notice: "",
 		hide_upgrade_notice: "",
@@ -111,13 +111,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	};
 	settings.user = {};
 	settings.inputs = {};
+	settings.el = {}; // Elements.
 
 	// Setting sections and ordering.
 	settings.sections = {
-		image: ["show_loli", "show_shota", "show_deleted", "thumbnail_count", "loli_shota_borders", "custom_borders"],
+		image: ["show_loli", "show_shota", "show_deleted", "thumbnail_count"],
 		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements"],
 		sidebar: ["search_add", "remove_tag_headers"],
-		border: ["loli_border", "shota_border", "child_border", "parent_border", "pending_border", "flagged_border", "deleted_border"],
+		borderTypes: ["loli_shota_borders", "custom_status_borders"],
+		borderStyles: ["loli_border", "shota_border", "deleted_border", "flagged_border", "pending_border", "parent_border", "child_border"],
 		loggedOut: ["image_resize", "load_sample_first", "script_blacklisted_tags"],
 		misc: ["alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"]
 	};
@@ -143,38 +145,78 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function showSettings() {
-		var menu_exists = document.getElementById("bbb_menu");
-		if (menu_exists)
-		{
+		var menu_exists = settings.el.bbbMenu;
+
+		if (menu_exists) {
 			menu_exists.style.display = "block";
 			return;
 		}
+
 		var menu = document.createElement("div");
+		menu.id = "bbb_menu";
+		menu.style.visibility = "hidden";
+		settings.el.bbbMenu = menu;
+
 		var header = document.createElement("h1");
 		header.innerHTML = "Better Better Booru Settings";
 		header.style.textAlign = "center";
 		menu.appendChild(header);
 
+		var tabBar = document.createElement("div");
+		tabBar.style.padding = "0px 15px";
+		menu.appendChild(tabBar);
+
+		var generalTab = document.createElement("a");
+		generalTab.name = "general";
+		generalTab.href = "#";
+		generalTab.innerHTML = "General";
+		generalTab.className = "bbb-tab bbb-active-tab";
+		generalTab.onclick = function() {
+			tabHandler(this);
+			return false;
+		};
+		tabBar.appendChild(generalTab)
+
+		var borderTab = document.createElement("a");
+		borderTab.name = "borders";
+		borderTab.href = "#";
+		borderTab.innerHTML = "Borders";
+		borderTab.className = "bbb-tab";
+		borderTab.onclick = function() {
+			tabHandler(this);
+			return false;
+		};
+		tabBar.appendChild(borderTab)
+
 		var scrollDiv = document.createElement("div");
-		scrollDiv.style.margin = "15px 0px";
+		scrollDiv.className = "bbb-scroll-div";
 		menu.appendChild(scrollDiv);
 
-		createSection("Images & Thumbnails", settings.sections.image, scrollDiv);
-		createSection("Layout", settings.sections.layout, scrollDiv);
-		createSection("Tag Sidebar", settings.sections.sidebar, scrollDiv);
-		createSection("Misc.", settings.sections.misc, scrollDiv);
-		createSection("Logged Out Settings", settings.sections.loggedOut, scrollDiv);
-		createSection("Border Colors", settings.sections.border, scrollDiv);
+		var generalPage = document.createElement("div");
+		scrollDiv.appendChild(generalPage);
+		settings.el.generalPage = generalPage;
+
+		createSection("Images & Thumbnails", "", settings.sections.image, generalPage);
+		createSection("Layout", "", settings.sections.layout, generalPage);
+		createSection("Tag Sidebar", "", settings.sections.sidebar, generalPage);
+		createSection("Misc.", "", settings.sections.misc, generalPage);
+		createSection("Logged Out Settings", "", settings.sections.loggedOut, generalPage);
+
+		var bordersPage = document.createElement("div");
+		bordersPage.style.display = "none";
+		scrollDiv.appendChild(bordersPage);
+		settings.el.bordersPage = bordersPage;
+
+		createSection("Border Types", "", settings.sections.borderTypes, bordersPage);
+		createSection("Border Styles", "", settings.sections.borderStyles, bordersPage);
 
 		var close = document.createElement("a");
 		close.innerHTML = "Save & Close";
 		close.href = "#";
-		close.style.display = "inline-block";
-		close.style.margin = "0px 15px 0px 0px";
-		close.style.padding = "5px";
-		close.style.border = "1px solid #CCCCCC";
+		close.className = "bbb-button";
+		close.style.marginRight = "15px";
 		close.onclick = function() {
-			document.getElementById("bbb_menu").style.display = "none";
+			settings.el.bbbMenu.style.display = "none";
 			saveSettings();
 			return false;
 		};
@@ -182,9 +224,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var cancel = document.createElement("a");
 		cancel.innerHTML = "Cancel";
 		cancel.href = "#";
-		cancel.style.display = "inline-block";
-		cancel.style.padding = "5px";
-		cancel.style.border = "1px solid #CCCCCC";
+		cancel.className = "bbb-button";
 		cancel.onclick = function() {
 			loadSettings();
 			removeMenu();
@@ -194,13 +234,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var reset = document.createElement("a");
 		reset.innerHTML = "Reset to Defaults";
 		reset.href = "#";
-		reset.style.display = "inline-block";
+		reset.className = "bbb-button";
 		reset.style.cssFloat = "right";
 		reset.style.color = "#ff1100";
-		reset.style.padding = "5px";
-		reset.style.border = "1px solid #CCCCCC";
 		reset.onclick = function() {
-			settings.user = JSON.parse(JSON.stringify(settings.defaults));
+			loadDefaults();
 			removeMenu();
 			showSettings();
 			return false;
@@ -210,13 +248,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.appendChild(cancel);
 		menu.appendChild(reset);
 
-		menu.id = "bbb_menu";
-		menu.style.background = "white";
-		menu.style.position = "fixed";
-		menu.style.padding = "15px";
-		menu.style.boxShadow = "0 2px 2px rgba(0, 0, 0, 0.5)";
-		menu.style.zIndex = "9001";
-		menu.style.visibility = "hidden";
+		// Add menu to the DOM and manipulate the dimensions.
 		document.body.appendChild(menu);
 
 		var viewHeight = window.innerHeight;
@@ -225,32 +257,45 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var menuWidth = menu.clientWidth;
 		var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
 
-		menu.style.maxHeight = menuHeight - 30 + "px"; // The subtracted value is the sum of the top and bottom padding. Doing this since this is a controlled element that allows us to avoid some hassle.
-		scrollDiv.style.maxHeight = menuHeight - scrollDivDiff + "px";
-		scrollDiv.style.minWidth = scrollDiv.clientWidth + scrollbarWidth() + 5 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
-		scrollDiv.style.overflowY = "auto";
+		scrollDiv.style.maxHeight = viewHeight - 55 - scrollDivDiff + "px"; // The subtracted value is the sum of the top padding, bottom padding, and 25 for space at the bottom. Doing this since this is a controlled element that allows us to avoid some hassle.
+		scrollDiv.style.minWidth = 900 + scrollbarWidth() + 5 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
 
 		menuWidth = menu.clientWidth; // Get new width including potential sidebar.
-		menu.style.top = (viewHeight - menuHeight) / 2 + "px";
 		menu.style.left = (viewWidth - menuWidth) / 2 + "px";
 		menu.style.visibility = "visible";
 	}
 
-	function createSection(header, settingList, target) {
-		var title = document.createElement("h3");
-		title.innerHTML = header;
-		title.style.padding = "10px 0px 0px 0px";
-		title.style.borderBottom = "2px solid #CCCCCC";
-		title.style.width = "85%";
-		target.appendChild(title);
+	function createSection(title, desc, settingList, target) {
+		if (title) {
+			var header = document.createElement("h3");
+			header.innerHTML = title;
+			header.className = "bbb-section-header";
+			target.appendChild(header);
+		}
 
-		for (var i = 0, sl = settingList.length; i < sl; i++) {
+		if (desc) {
+			// Placeholder for potential use.
+		}
+
+		var sl = settingList.length;
+		var halfway = (sl > 1 ? Math.ceil(sl / 2) : 0);
+		var sectionDiv = document.createElement("div");
+		sectionDiv.className = "bbb-section";
+
+		if (halfway) {
+			var sideA = document.createElement("div");
+			var sideB = document.createElement("div");
+			sectionDiv.appendChild(sideA);
+			sectionDiv.appendChild(sideB);
+		}
+
+
+		for (var i = 0; i < sl; i++) {
 			var setting = settingList[i];
 
 			var label = document.createElement("label");
 			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+settings.labels[setting]+"</span>";
-			label.style.padding = "5px 0";
-			label.style.display = "block";
+			label.className = "bbb-label";
 
 			var item;
 
@@ -282,29 +327,63 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					break;
 			}
 			label.appendChild(item);
-			target.appendChild(label);
 			settings.inputs[setting] = item;
+
+			if (halfway) {
+				if (i < halfway)
+					sideA.appendChild(label);
+				else
+					sideB.appendChild(label);
+			}
+			else
+				sectionDiv.appendChild(label);
+
 		}
+
+		target.appendChild(sectionDiv);
+	}
+
+	function tabHandler(tab) {
+		var activeTab = document.getElementsByClassName("bbb-active-tab")[0];
+
+		if (tab == activeTab)
+			return;
+
+		activeTab.className = activeTab.className.replace("bbb-active-tab", "");
+		settings.el[activeTab.name + "Page"].style.display = "none";
+		tab.className += " bbb-active-tab";
+		settings.el[tab.name + "Page"].style.display = "block";
 	}
 
 	function removeMenu() {
 		// Destroy the menu so that it gets rebuilt.
-		var bbb_menu = document.getElementById("bbb_menu");
+		var menu = settings.el.bbbMenu;
 
-		bbb_menu.parentNode.removeChild(bbb_menu);
+		menu.parentNode.removeChild(menu);
+		settings.el = {};
 	}
 
 	function loadSettings() {
 		// Load stored settings.
 		if (typeof(localStorage["bbb_settings"]) === "undefined")
-			settings.user = JSON.parse(JSON.stringify(settings.defaults)); // Clone object. Don't reference it.
+			loadDefaults();
 		else {
 			settings.user = JSON.parse(localStorage["bbb_settings"]);
+			checkUser(settings.user, settings.defaults);
+		}
+	}
 
-			for (var i in settings.defaults) {
-				if (typeof(settings.user[i]) === "undefined")
-					settings.user[i] = settings.defaults[i];
-			}
+	function loadDefaults() {
+		settings.user = JSON.parse(JSON.stringify(settings.defaults)); // Clone object. Don't reference it.
+	}
+
+	function checkUser(user, defaults) {
+		// Verify the user has all the base settings and add them with their default values if they don't.
+		for (var i in defaults) {
+			if (typeof(user[i]) === "undefined")
+				user[i] = defaults[i];
+			else if (typeof(user[i]) === "object")
+				checkUser(user[i], defaults[i]);
 		}
 	}
 
@@ -362,7 +441,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var show_deleted = settings.user["show_deleted"]; // Show all deleted posts.
 
 	var loli_shota_borders = settings.user["loli_shota_borders"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
-	var custom_borders = settings.user["custom_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
+	var custom_status_borders = settings.user["custom_status_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
 	var clean_links = settings.user["clean_links"]; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 
 	var hide_sign_up_notice = settings.user["hide_sign_up_notice"];
@@ -417,28 +496,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
 
 	/* "INIT" */
-	if (loli_shota_borders || custom_borders || hide_advertisements)
-		customCSS();
+	customCSS(); // Contains the portions related to ads and notices.
 
 	if (show_loli || show_shota || show_deleted) // API only features.
 		searchJSON(gLoc);
 	else // Alternate mode for features.
 		modifyPage(gLoc);
-
-	if (hide_upgrade_notice)
-		hideUpgradeNotice();
-
-	if (hide_sign_up_notice)
-		hideSignUpNotice();
-
-	if (hide_tos_notice)
-		hideTOSNotice();
-
-	if (hide_advertisements) {
-		hideAdvertisements();
-		hideYourAdHere();
-		hideIframes();
-	}
 
 	if (clean_links)
 		cleanLinks();
@@ -1347,19 +1410,49 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function customCSS() {
 		var customStyles = document.createElement("style");
-
 		customStyles.type = "text/css";
 
+		var styles = "#bbb_menu {background-color: #FFFFFF;  border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 87.5%; padding: 15px; position: fixed; top: 25px; z-index: 9001;}" +
+		"#bbb_menu a:focus {outline: none;}" +
+		".bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px; overflow-y: auto;}" +
+		".bbb-section {margin: 5px 0px;}" +
+		".bbb-section > div {display: inline-block; vertical-align: top; width: 435px;}" +
+		".bbb-section > div:first-child {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}" +
+		".bbb-section-header {border-bottom: 2px solid #CCCCCC; padding-top: 10px; width: 750px;}" +
+		".bbb-label {display: block; padding: 5px 0px;}" +
+		".bbb-label:hover {background-color: #EEEEEE;}" +
+		".bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}" +
+		".bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}" +
+		".bbb-active-tab {background: #FFFFFF; border-width: 1px 1px 0px; padding: 5px 5px 6px;}";
+
 		// Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
-		if (custom_borders)
-			customStyles.innerHTML += " .post-preview.post-status-has-children img{border-color:" + parent_border + " !important;} .post-preview.post-status-has-parent img{border-color:" + child_border + " !important;} .post-preview.post-status-pending img{border-color:" + pending_border + " !important;} .post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;} .post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;}";
+		if (custom_status_borders)
+			styles += ".post-preview.post-status-has-children img{border-color:" + parent_border + " !important;}" +
+			".post-preview.post-status-has-parent img{border-color:" + child_border + " !important;}" +
+			".post-preview.post-status-pending img{border-color:" + pending_border + " !important;}" +
+			".post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;}" +
+			".post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;}";
 
 		if (loli_shota_borders)
-			customStyles.innerHTML += ' .post-preview[data-tags~="shota"] img{border: 2px solid ' + shota_border + ' !important;} .post-preview[data-tags~="loli"] img{border: 2px solid ' + loli_border + ' !important;}';
+			styles += '.post-preview[data-tags~="shota"] img{border: 2px solid ' + shota_border + ' !important;}' +
+			'.post-preview[data-tags~="loli"] img{border: 2px solid ' + loli_border + ' !important;}';
 
 		if (hide_advertisements)
-			customStyles.innerHTML += ' #content.with-ads {margin-right: 0em !important;}';
+			styles += '#content.with-ads {margin-right: 0em !important;}' +
+			'img[alt="Advertisement"] {display: none !important;}' +
+			'img[alt="Your Ad Here"] {display: none !important;}' +
+			'iframe {display: none !important;}';
 
+		if (hide_tos_notice)
+			styles += '#tos-notice {display: none !important;}';
+
+		if (hide_sign_up_notice)
+			styles += '#sign-up-notice {display: none !important;}';
+
+		if (hide_upgrade_notice)
+			styles += '#upgrade-account-notice {display: none !important;}';
+
+		customStyles.innerHTML = styles;
 		document.getElementsByTagName("head")[0].appendChild(customStyles);
 	}
 
@@ -1456,49 +1549,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function escapeRegEx(regEx) {
 		return regEx.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-	}
-
-	// Does anyone use these options? Adblock should pretty much cover the ads.
-	function hideAdvertisements() {
-		var img = document.evaluate('//img[@alt="Advertisement"]', document, null, 6, null);
-
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
-			img.snapshotItem(i).style.display = "none";
-	}
-
-	function hideYourAdHere() {
-		var img = document.evaluate('//img[@alt="Your Ad Here"]', document, null, 6, null);
-
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
-			img.snapshotItem(i).style.display = "none";
-	}
-
-	function hideIframes() {
-		var img = document.evaluate('//iframe[contains(@src, "jlist")]', document, null, 6, null);
-
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
-			img.snapshotItem(i).style.display = "none";
-	}
-
-	function hideUpgradeNotice() {
-		var x = document.getElementById("upgrade-account-notice");
-
-		if (x)
-			x.style.display = "none";
-	}
-
-	function hideSignUpNotice() {
-		var x = document.getElementById("sign-up-notice");
-
-		if (x)
-			x.style.display = "none";
-	}
-
-	function hideTOSNotice() {
-		var x = document.getElementById("tos-notice");
-
-		if (x)
-			x.style.display = "none";
 	}
 
 
