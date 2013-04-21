@@ -48,7 +48,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		parent_border: "#00FF00",
 		pending_border: "#0000FF",
 		flagged_border: "#FF0000",
-		deleted_border: "#000000"
+		deleted_border: "#000000",
+		direct_downloads: false
 	};
 	settings.labels = {
 		show_loli: "Show Loli",
@@ -77,7 +78,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		pending_border: "Pending Border Color",
 		flagged_border: "Flagged Border Color",
 		deleted_border: "Deleted Border Color",
-		script_blacklisted_tags: "Blacklisted Tags"
+		script_blacklisted_tags: "Blacklisted Tags",
+		direct_downloads: "Direct Downloads"
 	};
 	// TODO
 	settings.explanations = {
@@ -107,7 +109,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		pending_border: "",
 		flagged_border: "",
 		deleted_border: "",
-		script_blacklisted_tags: ""
+		script_blacklisted_tags: "",
+		direct_downloads: ""
 	};
 	settings.user = {};
 	settings.inputs = {};
@@ -115,7 +118,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	// Setting sections and ordering.
 	settings.sections = {
-		image: ["show_loli", "show_shota", "show_deleted", "thumbnail_count"],
+		image: ["show_loli", "show_shota", "show_deleted", "direct_downloads", "thumbnail_count"],
 		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements"],
 		sidebar: ["search_add", "remove_tag_headers"],
 		borderTypes: ["loli_shota_borders", "custom_status_borders"],
@@ -196,7 +199,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(generalPage);
 		settings.el.generalPage = generalPage;
 
-		createSection("Images & Thumbnails", "", settings.sections.image, generalPage);
+		createSection("Images & Thumbnails (API/Account only features)", "", settings.sections.image, generalPage);
 		createSection("Layout", "", settings.sections.layout, generalPage);
 		createSection("Tag Sidebar", "", settings.sections.sidebar, generalPage);
 		createSection("Misc.", "", settings.sections.misc, generalPage);
@@ -253,7 +256,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		var viewHeight = window.innerHeight;
 		var viewWidth = window.innerWidth;
-		var menuHeight = (menu.clientHeight > viewHeight - 50 ? viewHeight - 50 : menu.clientHeight);
 		var menuWidth = menu.clientWidth;
 		var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
 
@@ -453,6 +455,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Search
 	var arrow_nav = settings.user["arrow_nav"]; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
 	var search_add = settings.user["search_add"]; // Add the + and - shortcuts to the tag list for including or excluding search terms.
+	var direct_downloads = settings.user["direct_downloads"]; // Allow download managers for all search listings.
 	var thumbnail_count = settings.user["thumbnail_count"]; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
@@ -498,7 +501,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* "INIT" */
 	customCSS(); // Contains the portions related to ads and notices.
 
-	if (show_loli || show_shota || show_deleted) // API only features.
+	if (show_loli || show_shota || show_deleted || direct_downloads) // API only features.
 		searchJSON(gLoc);
 	else // Alternate mode for features.
 		modifyPage(gLoc);
@@ -543,7 +546,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else
 				numDesired = numExpected;
 
-			if (numThumbs != numDesired || numThumbs < numExpected)
+			if (numThumbs != numDesired || numThumbs < numExpected || direct_downloads)
 				fetchJSON(gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit, "search");
 		}
 		else if (mode == "post") {
@@ -601,11 +604,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							parseComments(xml);
 					}
 					else if (xmlhttp.status == 403)
-						danbNotice("Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information.", true);
+						danbNotice("Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads.", true);
 					else if (xmlhttp.status == 421)
 						danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", true);
 					else if (xmlhttp.status == 401)
-						danbNotice("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API for hidden image information.", true);
+						danbNotice("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads.", true);
 					else if (xmlhttp.status == 500)
 						danbNotice("Better Better Booru: Error retrieving information. Internal server error.", true);
 					else if (xmlhttp.status == 503)
@@ -854,7 +857,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				flags = "pending";
 
 			// eek, huge line.
-			thumb = '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img src="' + thumbnailUrl + '" alt="' + tags + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
+			thumb = '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img src="' + thumbnailUrl + '" alt="' + tags + '"></a></article>';
+			
+			if (direct_downloads)
+				thumb += '<a style="display: none;" href="' + fileUrl + '">Direct Download</a></span>';
 
 			// Generate output
 			if (gLoc == "search" || gLoc == "notes" || gLoc == "popular")
@@ -1423,7 +1429,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		".bbb-label:hover {background-color: #EEEEEE;}" +
 		".bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}" +
 		".bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}" +
-		".bbb-active-tab {background: #FFFFFF; border-width: 1px 1px 0px; padding: 5px 5px 6px;}";
+		".bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}";
 
 		// Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
 		if (custom_status_borders)
