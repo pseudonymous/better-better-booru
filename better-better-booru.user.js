@@ -645,58 +645,58 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Retrieve info in the page. (Alternative to fetchJSON)
 		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
 		var infoHref = infoLink.href;
-		var imgInfo;
+		var infoSection = infoLink.parentNode.parentNode;
+		var imgHeight = 0;
+		var imgWidth = 0;
+		var hasLarge = false;
+		var childNotice = document.getElementsByClassName("notice-child");
 
 		if (document.getElementById("image")) { // Regular image.
 			var img = document.getElementById("image");
 
-			imgInfo = {
-				id: Number(fetchMeta("post-id")),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
-				url: infoHref,
-				image_height: Number(img.getAttribute("data-original-height")),
-				image_width: Number(img.getAttribute("data-original-width")),
-				has_large: (Number(img.getAttribute("data-original-width")) > 850 ? true : false)
-			};
+			imgHeight = Number(img.getAttribute("data-original-height"));
+			imgWidth = Number(img.getAttribute("data-original-width"));
+			hasLarge = (Number(img.getAttribute("data-original-width")) > 850 ? true : false);
 		}
 		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
 			var object = document.getElementById("image-container").getElementsByTagName("object")[0];
 
-			imgInfo = {
-				id: Number(fetchMeta("post-id")),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
-				url: infoHref,
-				image_height: Number(object.height),
-				image_width: Number(object.width),
-				has_large: false
-			};
+			imgHeight = Number(object.height);
+			imgWidth = Number(object.width);
+			hasLarge = false;
 		}
 		else if (/The artist requested removal/.test(document.getElementById("image-container").textContent)) { // Image removed by artist request.
 			var infoText = infoLink.parentNode.textContent;
 
-			imgInfo = {
-				id: Number(fetchMeta("post-id")),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
-				url: infoHref,
-				image_height: Number(/\(\d+x(\d+)\)/.exec(infoText)[1]),
-				image_width: Number(/\((\d+)x\d+\)/.exec(infoText)[1]),
-				has_large: (Number(/\((\d+)x\d+\)/.exec(infoText)[1]) > 850 ? true : false)
-			};
+			imgHeight =  Number(/\(\d+x(\d+)\)/.exec(infoText)[1]);
+			imgWidth = Number(/\((\d+)x\d+\)/.exec(infoText)[1]);
+			hasLarge = (Number(/\((\d+)x\d+\)/.exec(infoText)[1]) > 850 ? true : false);
 		}
 		else { // Manual download.
-			imgInfo = {
-				id: Number(fetchMeta("post-id")),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
-				url: infoHref,
-				image_height: null,
-				image_width: null,
-				has_large: false
-			};
+			imgHeight =  null;
+			imgWidth = null;
+			hasLarge = false;
 		}
+
+		var imgInfo = {
+			id: Number(fetchMeta("post-id")),
+			file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
+			md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
+			url: infoHref,
+			fav_count: Number(document.getElementById("favcount-for-post-" + fetchMeta("post-id")).textContent),
+			has_children: (document.getElementsByClassName("notice-parent").length ? true : false),
+			parent_id: (childNotice.length ? Number(/\d+/.exec(childNotice[0].children[0].href)[0]) : null),
+			rating: /Rating:\s*(\w)/.exec(infoSection.textContent)[1].toLowerCase(),
+			score: Number(document.getElementById("score-for-post-" + fetchMeta("post-id")).textContent),
+			tag_string: fetchMeta("tags"),
+			uploader_name: /Uploader:\s*(.+?)\s*»/.exec(infoSection.textContent)[1],
+			is_deleted: (fetchMeta("post-is-deleted") == "false" ? false : true),
+			is_flagged: (fetchMeta("post-is-flagged") == "false" ? false : true),
+			is_pending: (fetchMeta("post-is-approvable" == "false" ? false : true)),
+			image_height: imgHeight,
+			image_width: imgWidth,
+			has_large: hasLarge
+		};
 
 		delayMe(function(){parsePost(imgInfo);}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 	}
@@ -917,14 +917,29 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var hasLarge = post.has_large;
 			var height = post.image_height;
 			var width = post.image_width;
-			var ratio = 850 / width;
+			var ratio = (width > 850 ? 850 / width : 1);
 			var sampUrl = "/data/sample/sample-" + md5 + ".jpg";
 			var sampHeight = Math.round(height * ratio);
-			var sampWidth = 850;
+			var sampWidth = Math.round(width * ratio);;
 			var newWidth = 0;
 			var newHeight = 0;
 			var newUrl = "";
 			var altTxt = "";
+			var favCount = post.fav_count;
+			var flags = "";
+			var hasChildren = post.has_children;
+			var parent = (post.parent_id !== null ? post.parent_id : "");
+			var rating = post.rating;
+			var score = post.score;
+			var tags = post.tag_string;
+			var uploader = post.uploader_name;
+
+			if (post.is_deleted)
+				flags = "deleted";
+			else if (post.is_flagged)
+				flags = "flagged";
+			else if (post.is_pending)
+				flags = "pending";
 
 			if (ext == "swf") // Create flash object.
 				container.innerHTML = '<div id="note-container"></div> <object height="' + height + '" width="' + width + '"> <params name="movie" value="' + url + '"> <embed allowscriptaccess="never" src="' + url + '" height="' + height + '" width="' + width + '"> </params> </object> <p><a href="' + url + '">Save this flash (right click and save)</a></p>';
@@ -946,7 +961,23 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					altTxt = md5;
 				}
 
-				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt +
+				'" data-fav-count="' + favCount +
+				'" data-flags="' + flags +
+				'" data-has-children="' + hasChildren +
+				'" data-parent-id="' + parent +
+				'" data-large-height="' + sampHeight +
+				'" data-large-width="' + sampWidth +
+				'" data-original-height="' + height +
+				'" data-original-width="' + width +
+				'" data-rating="' + rating +
+				'" data-score="' + score +
+				'" data-tags="' + tags +
+				'" data-uploader="' + uploader +
+				'" height="' + newHeight +
+				'" width="' + newWidth +
+				'" id="image" src="' + newUrl +
+				'" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 				var img = document.getElementById("image");
 				var bbbLoader = document.getElementById("bbb-loader");
 
@@ -1048,6 +1079,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						updateSettings("hide_original_notice", true);
 					}, false);
 				}
+
+				// Blacklist
+				blacklistInit();
 
  				// Favorites listing.
 				var postID = post.id;
@@ -1200,7 +1234,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Apply the blacklist and update the sidebar for search listings.
 		var blacklistUsed = Danbooru.Blacklist.apply();
 
-		if (gLoc == "search" || gLoc == "popular") {
+		if (gLoc == "search" || gLoc == "popular" || gLoc == "post") {
 			document.getElementById("blacklist-list").innerHTML = "";
 
 			if (blacklistUsed)
