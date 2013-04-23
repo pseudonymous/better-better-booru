@@ -21,105 +21,51 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 */
 	var settings = {}; // Container for settings
 
-	settings.defaults = {
-		alternate_image_swap: false,
-		arrow_nav: false,
-		child_border: "#CCCC00",
-		clean_links: false,
-		custom_status_borders: false,
-		deleted_border: "#000000",
-		direct_downloads: false,
-		flagged_border: "#FF0000",
-		hide_advertisements: false,
-		hide_original_notice: false,
-		hide_sign_up_notice: false,
-		hide_tos_notice: false,
-		hide_upgrade_notice: false,
-		image_resize: true,
-		load_sample_first: true,
-		loli_border: "#FFC0CB",
-		loli_shota_borders: true,
-		parent_border: "#00FF00",
-		pending_border: "#0000FF",
-		post_tag_titles: false,
-		remove_tag_headers: false,
-		script_blacklisted_tags: "",
-		search_add: true,
-		shota_border: "#66CCFF",
-		show_deleted: false,
-		show_loli: false,
-		show_shota: false,
-		thumbnail_count: 0
-	};
-	settings.labels = {
-		alternate_image_swap: "Alternate Image Swap",
-		arrow_nav: "Arrow Navigation",
-		child_border: "Child Border Color",
-		clean_links: "Clean Links",
-		custom_status_borders: "Custom Status Borders",
-		deleted_border: "Deleted Border Color",
-		direct_downloads: "Direct Downloads",
-		flagged_border: "Flagged Border Color",
-		hide_advertisements: "Hide Advertisements",
-		hide_original_notice: "Hide Original Notice",
-		hide_sign_up_notice: "Hide Sign Up Notice",
-		hide_tos_notice: "Hide TOS Notice",
-		hide_upgrade_notice: "Hide Upgrade Notice",
-		image_resize: "Resize Images",
-		load_sample_first: "Load Sample First",
-		loli_border: "Loli Border Color",
-		loli_shota_borders: "Loli & Shota Borders",
-		parent_border: "Parent Border Color",
-		pending_border: "Pending Border Color",
-		post_tag_titles: "Post Tag Titles",
-		remove_tag_headers: "Remove Tag Headers",
-		script_blacklisted_tags: "Blacklisted Tags",
-		search_add: "Search Add",
-		shota_border: "Shota Border Color",
-		show_deleted: "Show Deleted",
-		show_loli: "Show Loli",
-		show_shota: "Show Shota",
-		thumbnail_count: "Thumbnail Count"
-	};
-	// TODO
-	settings.explanations = {
-		alternate_image_swap: "",
-		arrow_nav: "",
-		child_border: "",
-		clean_links: "",
-		custom_status_borders: "",
-		deleted_border: "",
-		direct_downloads: "",
-		flagged_border: "",
-		hide_advertisements: "",
-		hide_original_notice: "",
-		hide_sign_up_notice: "",
-		hide_tos_notice: "",
-		hide_upgrade_notice: "",
-		image_resize: "",
-		load_sample_first: "",
-		loli_border: "",
-		loli_shota_borders: "",
-		parent_border: "",
-		pending_border: "",
-		post_tag_titles: "",
-		remove_tag_headers: "",
-		script_blacklisted_tags: "",
-		search_add: "",
-		shota_border: "",
-		show_deleted: "",
-		show_loli: "",
-		show_shota: "",
-		thumbnail_count: ""
+	function Option(def, lbl, exp) {
+		this.def = def; // Default
+		this.label = lbl;
+		this.explanation = exp;
+	}
+
+	settings.options = {
+		alternate_image_swap: new Option(false, "Alternate Image Swap", ""),
+		arrow_nav: new Option(false, "Arrow Navigation", ""),
+		child_border: new Option("#CCCC00", "Child Border Color", ""),
+		clean_links: new Option(false, "Clean Links", ""),
+		custom_status_borders: new Option(false, "Custom Status Borders", ""),
+		deleted_border: new Option("#000000", "Deleted Border Color", ""),
+		direct_downloads: new Option(false, "Direct Downloads", ""),
+		flagged_border: new Option("#FF0000", "Flagged Border Color", ""),
+		hide_advertisements: new Option(false, "Hide Advertisements", ""),
+		hide_ban_notice: new Option(false, "Hide Ban Notice", ""),
+		hide_original_notice: new Option(false, "Hide Original Notice", ""),
+		hide_sign_up_notice: new Option(false, "Hide Sign Up Notice", ""),
+		hide_tos_notice: new Option(false, "Hide TOS Notice", ""),
+		hide_upgrade_notice: new Option(false, "Hide Upgrade Notice", ""),
+		image_resize: new Option(true, "Resize Images", ""),
+		load_sample_first: new Option(true, "Load Sample First", ""),
+		loli_border: new Option("#FFC0CB", "Loli Border Color", ""),
+		loli_shota_borders: new Option(true, "Loli & Shota Borders", ""),
+		parent_border: new Option("#00FF00", "Parent Border Color", ""),
+		pending_border: new Option("#0000FF", "Pending Border Color", ""),
+		post_tag_titles: new Option(false, "Post Tag Titles", ""),
+		remove_tag_headers: new Option(false, "Remove Tag Headers", ""),
+		script_blacklisted_tags: new Option("", "Blacklisted Tags", ""),
+		search_add: new Option(true, "Search Add", ""),
+		shota_border: new Option("#66CCFF", "Shota Border Color", ""),
+		show_deleted: new Option(false, "Show Deleted", ""),
+		show_loli: new Option(false, "Show Loli", ""),
+		show_shota: new Option(false, "Show Shota", ""),
+		thumbnail_count: new Option(0, "Thumbnail Count", "")
 	};
 	settings.user = {};
 	settings.inputs = {};
-	settings.el = {}; // Elements.
+	settings.el = {}; // Menu elements.
 
 	// Setting sections and ordering.
 	settings.sections = {
 		image: ["show_loli", "show_shota", "show_deleted", "direct_downloads", "thumbnail_count"],
-		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements"],
+		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"],
 		sidebar: ["search_add", "remove_tag_headers"],
 		borderTypes: ["loli_shota_borders", "custom_status_borders"],
 		borderStyles: ["loli_border", "shota_border", "deleted_border", "flagged_border", "pending_border", "parent_border", "child_border"],
@@ -296,36 +242,59 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var setting = settingList[i];
 
 			var label = document.createElement("label");
-			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+settings.labels[setting]+"</span>";
+			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+settings.options[setting].label+"</span>";
 			label.className = "bbb-label";
 
 			var item;
-
-			switch (typeof(settings.user[setting]))
+			switch (setting)
 			{
-				case "boolean":
-					item = document.createElement("input");
+				case "thumbnail_count":
+					item = document.createElement("select");
 					item.name = setting;
-					item.type = "checkbox";
-					item.checked = settings.user[setting];
-					item.onclick = function() { settings.user[this.name] = this.checked; };
-					break;
-				case "string":
-					item = document.createElement("input");
-					item.name = setting;
-					item.type = "text";
-					item.value = settings.user[setting];
-					item.onchange = function() { settings.user[this.name] = this.value; };
-					break;
-				case "number":
-					item = document.createElement("input");
-					item.name = setting;
-					item.type = "text";
-					item.value = settings.user[setting];
-					item.onchange = function() { settings.user[this.name] = Number(this.value); };
+
+					var option = document.createElement("option");
+					option.innerHTML = "Disabled";
+					option.value = "0";
+					item.appendChild(option);
+
+					for (var i = 1; i <= 200; i++) {
+						option = document.createElement("option");
+						option.innerHTML = i;
+						option.value = i;
+						item.appendChild(option);
+					}
+
+					item.getElementsByTagName("option")[settings.user.thumbnail_count].selected = true;
+					item.onchange = function() { settings.user.thumbnail_count = Number(this.value); };
 					break;
 				default:
-					console.log(typeof(settings.user[setting]));
+					switch (typeof(settings.user[setting]))
+					{
+						case "boolean":
+							item = document.createElement("input");
+							item.name = setting;
+							item.type = "checkbox";
+							item.checked = settings.user[setting];
+							item.onclick = function() { settings.user[this.name] = this.checked; };
+							break;
+						case "string":
+							item = document.createElement("input");
+							item.name = setting;
+							item.type = "text";
+							item.value = settings.user[setting];
+							item.onchange = function() { settings.user[this.name] = this.value; };
+							break;
+						case "number":
+							item = document.createElement("input");
+							item.name = setting;
+							item.type = "text";
+							item.value = settings.user[setting];
+							item.onchange = function() { settings.user[this.name] = Number(this.value); };
+							break;
+						default:
+							console.log(typeof(settings.user[setting]));
+							break;
+					}
 					break;
 			}
 			label.appendChild(item);
@@ -339,7 +308,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 			else
 				sectionDiv.appendChild(label);
-
 		}
 
 		target.appendChild(sectionDiv);
@@ -371,21 +339,25 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			loadDefaults();
 		else {
 			settings.user = JSON.parse(localStorage["bbb_settings"]);
-			checkUser(settings.user, settings.defaults);
+			checkUser(settings.user, settings.options);
 		}
 	}
 
 	function loadDefaults() {
-		settings.user = JSON.parse(JSON.stringify(settings.defaults)); // Clone object. Don't reference it.
+		settings.user = {};
+
+		for (var i in settings.options) {
+			settings.user[i] = settings.options[i].def;
+		}
 	}
 
-	function checkUser(user, defaults) {
+	function checkUser(user, options) {
 		// Verify the user has all the base settings and add them with their default values if they don't.
-		for (var i in defaults) {
+		for (var i in options) {
 			if (typeof(user[i]) === "undefined")
-				user[i] = defaults[i];
+				user[i] = options[i].def;
 			else if (typeof(user[i]) === "object")
-				checkUser(user[i], defaults[i]);
+				checkUser(user[i], options[i]);
 		}
 	}
 
@@ -405,19 +377,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var input = settings.inputs[setting];
 
 			if (input) {
-				switch (typeof(value))
+				switch (setting)
 				{
-					case "boolean":
-						input.checked = value;
-						break;
-					case "string":
-						input.value = value;
-						break;
-					case "number":
-						input.value = value;
+					case "thumbnail_count":
+						input.getElementsByTagName("option")[settings.user.thumbnail_count].selected = true;
 						break;
 					default:
-						console.log(typeof(value));
+						switch (typeof(value))
+						{
+							case "boolean":
+								input.checked = value;
+								break;
+							case "string":
+								input.value = value;
+								break;
+							case "number":
+								input.value = value;
+								break;
+							default:
+								console.log(typeof(value));
+								break;
+						}
 						break;
 				}
 			}
@@ -451,6 +431,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var hide_tos_notice = settings.user["hide_tos_notice"];
 	var hide_original_notice = settings.user["hide_original_notice"]; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
 	var hide_advertisements = settings.user["hide_advertisements"];
+	var hide_ban_notice = settings.user["hide_ban_notice"];
 
 	// Search
 	var arrow_nav = settings.user["arrow_nav"]; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
@@ -961,23 +942,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					altTxt = md5;
 				}
 
-				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt +
-				'" data-fav-count="' + favCount +
-				'" data-flags="' + flags +
-				'" data-has-children="' + hasChildren +
-				'" data-parent-id="' + parent +
-				'" data-large-height="' + sampHeight +
-				'" data-large-width="' + sampWidth +
-				'" data-original-height="' + height +
-				'" data-original-width="' + width +
-				'" data-rating="' + rating +
-				'" data-score="' + score +
-				'" data-tags="' + tags +
-				'" data-uploader="' + uploader +
-				'" height="' + newHeight +
-				'" width="' + newWidth +
-				'" id="image" src="' + newUrl +
-				'" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-fav-count="' + favCount + '" data-flags="' + flags + '" data-has-children="' + hasChildren + '" data-parent-id="' + parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + height + '" data-original-width="' + width + '" data-rating="' + rating + '" data-score="' + score + '" data-tags="' + tags + '" data-uploader="' + uploader + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 				var img = document.getElementById("image");
 				var bbbLoader = document.getElementById("bbb-loader");
 
@@ -1452,7 +1417,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var customStyles = document.createElement("style");
 		customStyles.type = "text/css";
 
-		var styles = "#bbb_menu {background-color: #FFFFFF;  border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 87.5%; padding: 15px; position: fixed; top: 25px; z-index: 9001;}" +
+		var styles = "#bbb_menu {background-color: #FFFFFF;  border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 100%; padding: 15px; position: fixed; top: 25px; z-index: 9001;}" +
 		"#bbb_menu a:focus {outline: none;}" +
 		".bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px; overflow-y: auto;}" +
 		".bbb-section {margin: 5px 0px;}" +
@@ -1491,6 +1456,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (hide_upgrade_notice)
 			styles += '#upgrade-account-notice {display: none !important;}';
+
+		if (hide_ban_notice)
+			styles += '#ban-notice {display: none !important;}';
 
 		customStyles.innerHTML = styles;
 		document.getElementsByTagName("head")[0].appendChild(customStyles);
