@@ -21,42 +21,61 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 */
 	var settings = {}; // Container for settings
 
-	function Option(def, lbl, exp) {
-		this.def = def; // Default
+	function Option(type, def, lbl, expl, optPropObject) {
+		this.type = type;
+		this.def = def; // Default.
 		this.label = lbl;
-		this.explanation = exp;
+		this.expl = expl; // Explanation.
+
+		if (optPropObject) { // Additional properties provided in the form of an object.
+			for (var i in optPropObject)
+				this[i] = optPropObject[i];
+		}
 	}
 
+	/*
+	 * Option type notes
+	 * =================
+	 * By specifying a unique type, you can create a specialized menu option.
+	 *
+	 * Checkbox, text, and number do not require any extra properties.
+	 *
+	 * Dropdown requires either txtOptions or numOptions.
+	 * txtOptions = Object containing a list of options and their values
+	 * numOptions = Array containing the starting and ending numbers of the number range.
+	 * If txtOptions and numOptions are both provided, txtOptions are added first and numOptions are added after.
+	*/
+
 	settings.options = {
-		alternate_image_swap: new Option(false, "Alternate Image Swap", ""),
-		arrow_nav: new Option(false, "Arrow Navigation", ""),
-		child_border: new Option("#CCCC00", "Child Border Color", ""),
-		clean_links: new Option(false, "Clean Links", ""),
-		custom_status_borders: new Option(false, "Custom Status Borders", ""),
-		deleted_border: new Option("#000000", "Deleted Border Color", ""),
-		direct_downloads: new Option(false, "Direct Downloads", ""),
-		flagged_border: new Option("#FF0000", "Flagged Border Color", ""),
-		hide_advertisements: new Option(false, "Hide Advertisements", ""),
-		hide_ban_notice: new Option(false, "Hide Ban Notice", ""),
-		hide_original_notice: new Option(false, "Hide Original Notice", ""),
-		hide_sign_up_notice: new Option(false, "Hide Sign Up Notice", ""),
-		hide_tos_notice: new Option(false, "Hide TOS Notice", ""),
-		hide_upgrade_notice: new Option(false, "Hide Upgrade Notice", ""),
-		image_resize: new Option(true, "Resize Images", ""),
-		load_sample_first: new Option(true, "Load Sample First", ""),
-		loli_border: new Option("#FFC0CB", "Loli Border Color", ""),
-		loli_shota_borders: new Option(true, "Loli & Shota Borders", ""),
-		parent_border: new Option("#00FF00", "Parent Border Color", ""),
-		pending_border: new Option("#0000FF", "Pending Border Color", ""),
-		post_tag_titles: new Option(false, "Post Tag Titles", ""),
-		remove_tag_headers: new Option(false, "Remove Tag Headers", ""),
-		script_blacklisted_tags: new Option("", "Blacklisted Tags", ""),
-		search_add: new Option(true, "Search Add", ""),
-		shota_border: new Option("#66CCFF", "Shota Border Color", ""),
-		show_deleted: new Option(false, "Show Deleted", ""),
-		show_loli: new Option(false, "Show Loli", ""),
-		show_shota: new Option(false, "Show Shota", ""),
-		thumbnail_count: new Option(0, "Thumbnail Count", "")
+		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", ""),
+		arrow_nav: new Option("checkbox", false, "Arrow Navigation", ""),
+		child_border: new Option("text", "#CCCC00", "Child Border Color", ""),
+		clean_links: new Option("checkbox", false, "Clean Links", ""),
+		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", ""),
+		deleted_border: new Option("text", "#000000", "Deleted Border Color", ""),
+		direct_downloads: new Option("checkbox", false, "Direct Downloads", ""),
+		flagged_border: new Option("text", "#FF0000", "Flagged Border Color", ""),
+		hide_advertisements: new Option("checkbox", false, "Hide Advertisements", ""),
+		hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", ""),
+		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", ""),
+		hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", ""),
+		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", ""),
+		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", ""),
+		image_resize: new Option("checkbox", true, "Resize Images", ""),
+		load_sample_first: new Option("checkbox", true, "Load Sample First", ""),
+		loli_border: new Option("text", "#FFC0CB", "Loli Border Color", ""),
+		loli_shota_borders: new Option("checkbox", true, "Loli & Shota Borders", ""),
+		parent_border: new Option("text", "#00FF00", "Parent Border Color", ""),
+		pending_border: new Option("text", "#0000FF", "Pending Border Color", ""),
+		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", ""),
+		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", ""),
+		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", ""),
+		search_add: new Option("checkbox", true, "Search Add", ""),
+		shota_border: new Option("text", "#66CCFF", "Shota Border Color", ""),
+		show_deleted: new Option("checkbox", false, "Show Deleted", ""),
+		show_loli: new Option("checkbox", false, "Show Loli", ""),
+		show_shota: new Option("checkbox", false, "Show Shota", ""),
+		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "", {txtOptions:{Disabled:0}, numOptions:[1,200]})
 	};
 	settings.user = {};
 	settings.inputs = {};
@@ -121,7 +140,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		generalTab.innerHTML = "General";
 		generalTab.className = "bbb-tab bbb-active-tab";
 		generalTab.onclick = function() {
-			tabHandler(this);
+			changeTab(this);
 			return false;
 		};
 		tabBar.appendChild(generalTab)
@@ -132,7 +151,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		borderTab.innerHTML = "Borders";
 		borderTab.className = "bbb-tab";
 		borderTab.onclick = function() {
-			tabHandler(this);
+			changeTab(this);
 			return false;
 		};
 		tabBar.appendChild(borderTab)
@@ -145,19 +164,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(generalPage);
 		settings.el.generalPage = generalPage;
 
-		createSection("Images & Thumbnails", "", settings.sections.image, generalPage);
-		createSection("Layout", "", settings.sections.layout, generalPage);
-		createSection("Tag Sidebar", "", settings.sections.sidebar, generalPage);
-		createSection("Misc.", "", settings.sections.misc, generalPage);
-		createSection("Logged Out Settings", "", settings.sections.loggedOut, generalPage);
+		createSection(settings.sections.image, generalPage, "Images & Thumbnails");
+		createSection(settings.sections.layout, generalPage, "Layout");
+		createSection(settings.sections.sidebar, generalPage, "Tag Sidebar");
+		createSection(settings.sections.misc, generalPage, "Misc.");
+		createSection(settings.sections.loggedOut, generalPage, "Logged Out Settings");
 
 		var bordersPage = document.createElement("div");
 		bordersPage.style.display = "none";
 		scrollDiv.appendChild(bordersPage);
 		settings.el.bordersPage = bordersPage;
 
-		createSection("Border Types", "", settings.sections.borderTypes, bordersPage);
-		createSection("Border Styles", "", settings.sections.borderStyles, bordersPage);
+		createSection(settings.sections.borderTypes, bordersPage, "Border Types");
+		createSection(settings.sections.borderStyles, bordersPage, "Border Styles");
 
 		var close = document.createElement("a");
 		close.innerHTML = "Save & Close";
@@ -206,14 +225,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
 
 		scrollDiv.style.maxHeight = viewHeight - 55 - scrollDivDiff + "px"; // The subtracted value is the sum of the top padding, bottom padding, and 25 for space at the bottom. Doing this since this is a controlled element that allows us to avoid some hassle.
-		scrollDiv.style.minWidth = 900 + scrollbarWidth() + 5 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
+		scrollDiv.style.minWidth = 900 + scrollbarWidth() + 2 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
 
 		menuWidth = menu.clientWidth; // Get new width including potential sidebar.
 		menu.style.left = (viewWidth - menuWidth) / 2 + "px";
 		menu.style.visibility = "visible";
 	}
 
-	function createSection(title, desc, settingList, target) {
+	function createSection(settingList, target, title, desc) {
 		if (title) {
 			var header = document.createElement("h3");
 			header.innerHTML = title;
@@ -225,95 +244,130 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			// Placeholder for potential use.
 		}
 
+		var sectionDiv = document.createElement("div");
+		sectionDiv.className = "bbb-section-options";
+
 		var sl = settingList.length;
 		var halfway = (sl > 1 ? Math.ceil(sl / 2) : 0);
-		var sectionDiv = document.createElement("div");
-		sectionDiv.className = "bbb-section";
+		var optionTarget;
 
 		if (halfway) {
-			var sideA = document.createElement("div");
-			var sideB = document.createElement("div");
-			sectionDiv.appendChild(sideA);
-			sectionDiv.appendChild(sideB);
+			var leftSide = document.createElement("div");
+			var rightSide = document.createElement("div");
+			leftSide.className = "bbb-section-options-left";
+			rightSide.className = "bbb-section-options-right";
+			sectionDiv.appendChild(leftSide);
+			sectionDiv.appendChild(rightSide);
 		}
 
-
 		for (var i = 0; i < sl; i++) {
-			var setting = settingList[i];
-
-			var label = document.createElement("label");
-			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+settings.options[setting].label+"</span>";
-			label.className = "bbb-label";
-
-			var item;
-			switch (setting)
-			{
-				case "thumbnail_count":
-					item = document.createElement("select");
-					item.name = setting;
-
-					var option = document.createElement("option");
-					option.innerHTML = "Disabled";
-					option.value = "0";
-					item.appendChild(option);
-
-					for (var i = 1; i <= 200; i++) {
-						option = document.createElement("option");
-						option.innerHTML = i;
-						option.value = i;
-						item.appendChild(option);
-					}
-
-					item.getElementsByTagName("option")[settings.user.thumbnail_count].selected = true;
-					item.onchange = function() { settings.user.thumbnail_count = Number(this.value); };
-					break;
-				default:
-					switch (typeof(settings.user[setting]))
-					{
-						case "boolean":
-							item = document.createElement("input");
-							item.name = setting;
-							item.type = "checkbox";
-							item.checked = settings.user[setting];
-							item.onclick = function() { settings.user[this.name] = this.checked; };
-							break;
-						case "string":
-							item = document.createElement("input");
-							item.name = setting;
-							item.type = "text";
-							item.value = settings.user[setting];
-							item.onchange = function() { settings.user[this.name] = this.value; };
-							break;
-						case "number":
-							item = document.createElement("input");
-							item.name = setting;
-							item.type = "text";
-							item.value = settings.user[setting];
-							item.onchange = function() { settings.user[this.name] = Number(this.value); };
-							break;
-						default:
-							console.log(typeof(settings.user[setting]));
-							break;
-					}
-					break;
-			}
-			label.appendChild(item);
-			settings.inputs[setting] = item;
+			var settingName = settingList[i];
 
 			if (halfway) {
 				if (i < halfway)
-					sideA.appendChild(label);
+					optionTarget = leftSide;
 				else
-					sideB.appendChild(label);
+					optionTarget = rightSide;
 			}
 			else
-				sectionDiv.appendChild(label);
+				optionTarget = sectionDiv;
+
+			createOption(settingName, optionTarget);
 		}
 
 		target.appendChild(sectionDiv);
 	}
 
-	function tabHandler(tab) {
+	function createOption(settingName, target) {
+		var optionObject = settings.options[settingName];
+		var userSetting = settings.user[settingName];
+
+		var label = document.createElement("label");
+		label.className = "bbb-label";
+
+		var textSpan = document.createElement("span");
+		textSpan.className = "bbb-label-text";
+		textSpan.innerHTML = optionObject.label;
+		label.appendChild(textSpan);
+
+		var inputSpan = document.createElement("span");
+		inputSpan.className = "bbb-label-input";
+		label.appendChild(inputSpan);
+
+		var item;
+		switch (optionObject.type)
+		{
+			case "dropdown":
+				var txtOptions = optionObject.txtOptions;
+				var numOptions = optionObject.numOptions;
+				var selectOption;
+
+				item = document.createElement("select");
+				item.name = settingName;
+
+				if (txtOptions) {
+					for (var i in txtOptions) {
+						selectOption = document.createElement("option");
+						selectOption.innerHTML = i;
+						selectOption.value = txtOptions[i];
+
+						if (selectOption.value == userSetting)
+							selectOption.selected = true;
+
+						item.appendChild(selectOption);
+					}
+				}
+
+				if (numOptions) {
+					var i = numOptions[0];
+					var end = numOptions[1];
+
+					while (i <= end) {
+						selectOption = document.createElement("option");
+						selectOption.innerHTML = i;
+						selectOption.value = i;
+
+						if (selectOption.value == userSetting)
+							selectOption.selected = true;
+
+						item.appendChild(selectOption);
+						i++;
+					}
+				}
+
+				item.onchange = function() { settings.user[settingName] = Number(this.value); };
+				break;
+			case "checkbox":
+				item = document.createElement("input");
+				item.name = settingName;
+				item.type = "checkbox";
+				item.checked = userSetting;
+				item.onclick = function() { settings.user[settingName] = this.checked; };
+				break;
+			case "text":
+				item = document.createElement("input");
+				item.name = settingName;
+				item.type = "text";
+				item.value = userSetting;
+				item.onchange = function() { settings.user[settingName] = this.value; };
+				break;
+			case "number":
+				item = document.createElement("input");
+				item.name = settingName;
+				item.type = "text";
+				item.value = userSetting;
+				item.onchange = function() { settings.user[settingName] = Number(this.value); };
+				break;
+			default:
+				console.log("Better Better Booru Error: Unexpected object type. Type: " + optionObject.type);
+				break;
+		}
+		inputSpan.appendChild(item);
+		settings.inputs[settingName] = item;
+		target.appendChild(label);
+	}
+
+	function changeTab(tab) {
 		var activeTab = document.getElementsByClassName("bbb-active-tab")[0];
 
 		if (tab == activeTab)
@@ -368,36 +422,45 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function updateSettings() {
 		// Change & save settings without the panel. Accepts a comma delimited list of alternating settings and values: setting1, value1, setting2, value2
 		for (var i = 0, al = arguments.length; i < al; i += 2) {
-			var setting = arguments[i];
+			var settingName = arguments[i];
 			var value = arguments[i + 1];
+			var userSetting = settings.user[settingName];
+			var input = settings.inputs[settingName];
 
-			settings.user[setting] = value;
+			settings.user[settingName] = value;
 
 			// Update menu if it exists.
-			var input = settings.inputs[setting];
-
 			if (input) {
-				switch (setting)
+				var optionObject = settings.options[settingName];
+
+				switch (optionObject.type)
 				{
-					case "thumbnail_count":
-						input.getElementsByTagName("option")[settings.user.thumbnail_count].selected = true;
+					case "dropdown":
+						if (input.value != userSetting) {
+							var selectOptions = input.getElementsByTagName("option");
+
+
+							for (var i = 0, sol = selectOptions.length; i < sol; i++) {
+								var selectOption = selectOptions[i];
+
+								if (selectOption.value == userSetting) {
+									selectOption.selected = true;
+									break;
+								}
+							}
+						}
+						break;
+					case "checkbox":
+						input.checked = value;
+						break;
+					case "text":
+						input.value = value;
+						break;
+					case "number":
+						input.value = value;
 						break;
 					default:
-						switch (typeof(value))
-						{
-							case "boolean":
-								input.checked = value;
-								break;
-							case "string":
-								input.value = value;
-								break;
-							case "number":
-								input.value = value;
-								break;
-							default:
-								console.log(typeof(value));
-								break;
-						}
+						console.log("Better Better Booru Error: Unexpected object type. Type: " + optionObject.type);
 						break;
 				}
 			}
@@ -482,6 +545,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* "INIT" */
 	customCSS(); // Contains the portions related to ads and notices.
 
+	if (!isLoggedIn()) // Immediately apply script blacklist for logged out users.
+		delayMe(blacklistInit);
+
 	if (show_loli || show_shota || show_deleted || direct_downloads) // API only features.
 		searchJSON(gLoc);
 	else // Alternate mode for features.
@@ -559,8 +625,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (numThumbs != 5)
 				fetchJSON(gUrl.replace(/\/comments\/?/, "/comments.json"), "comments");
 		}
-		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
-			delayMe(blacklistInit);
 	}
 
 	function fetchJSON(url, mode, optArg) {
@@ -617,9 +681,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			fetchPages(url, "thumbnails");
 		}
-		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
-			delayMe(blacklistInit);
-
 	}
 
 	function fetchInfo() {
@@ -649,12 +710,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (/The artist requested removal/.test(document.getElementById("image-container").textContent)) { // Image removed by artist request.
 			var infoText = infoLink.parentNode.textContent;
 
-			imgHeight =  Number(/\(\d+x(\d+)\)/.exec(infoText)[1]);
+			imgHeight = Number(/\(\d+x(\d+)\)/.exec(infoText)[1]);
 			imgWidth = Number(/\((\d+)x\d+\)/.exec(infoText)[1]);
 			hasLarge = (Number(/\((\d+)x\d+\)/.exec(infoText)[1]) > 850 ? true : false);
 		}
 		else { // Manual download.
-			imgHeight =  null;
+			imgHeight = null;
 			imgWidth = null;
 			hasLarge = false;
 		}
@@ -725,7 +786,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							// Fix the comments.
 							childSpan.innerHTML = /<div class="row notices">[\S\s]+?<\/form>[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
 
-							var comments =  childSpan.getElementsByClassName("comment");
+							var comments = childSpan.getElementsByClassName("comment");
 							var numComments = comments.length;
 							var toShow = 6; // Number of comments to display.
 
@@ -1045,20 +1106,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 				}
 
-				// Blacklist
-				blacklistInit();
-
  				// Favorites listing.
 				var postID = post.id;
 				var favItem = document.getElementById("favcount-for-post-" + postID).parentNode;
 
-				if (!favItem.children[1] && checkLoginStatus()) {
+				if (!favItem.children[1] && isLoggedIn()) {
 					favItem.innerHTML += '<a href="/favorites?post_id=' + postID + '" data-remote="true" id="show-favlist-link">&raquo;</a><a href="#" data-remote="true" id="hide-favlist-link">&laquo;</a><div id="favlist"></div>';
 					Danbooru.Post.initialize_favlist();
 				}
 
 				// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
-				if (!checkLoginStatus()) {
+				if (!isLoggedIn()) {
 					var options = document.createElement("section");
 					var history = document.evaluate('//aside[@id="sidebar"]/section[last()]', document, null, 9, null).singleNodeValue;
 
@@ -1114,6 +1172,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (checkSetting("always-resize-images", "true", image_resize))
 					document.getElementById("image-resize-to-window-link").click();
 			}
+
+		// Blacklist
+		blacklistInit();
 		}
 	}
 
@@ -1185,7 +1246,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function blacklistInit() {
 		Danbooru.Blacklist.entries.length = 0;
 
-		if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
+		if (!isLoggedIn() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
 			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
 
 			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
@@ -1198,9 +1259,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Apply the blacklist and update the sidebar for search listings.
 		var blacklistUsed = Danbooru.Blacklist.apply();
+		var blacklistList = document.getElementById("blacklist-list");
 
-		if (gLoc == "search" || gLoc == "popular" || gLoc == "post") {
-			document.getElementById("blacklist-list").innerHTML = "";
+		if (blacklistList) {
+			blacklistList.innerHTML = "";
 
 			if (blacklistUsed)
 				Danbooru.Blacklist.update_sidebar();
@@ -1365,7 +1427,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return undefined;
 	}
 
-	function checkLoginStatus() {
+	function isLoggedIn() {
 		if (fetchMeta("current-user-id") !== "")
 			return true;
 		else
@@ -1373,7 +1435,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function checkSetting(metaName, metaData, scriptSetting) {
-		if (checkLoginStatus()) {
+		if (isLoggedIn()) {
 			if (fetchMeta(metaName) === metaData)
 				return true;
 			else
@@ -1417,15 +1479,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var customStyles = document.createElement("style");
 		customStyles.type = "text/css";
 
-		var styles = "#bbb_menu {background-color: #FFFFFF;  border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 100%; padding: 15px; position: fixed; top: 25px; z-index: 9001;}" +
+		var styles = "#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 14px; padding: 15px; position: fixed; top: 25px; z-index: 9001;}" +
 		"#bbb_menu a:focus {outline: none;}" +
 		".bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px; overflow-y: auto;}" +
-		".bbb-section {margin: 5px 0px;}" +
-		".bbb-section > div {display: inline-block; vertical-align: top; width: 435px;}" +
-		".bbb-section > div:first-child {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}" +
+		".bbb-section-options {margin: 5px 0px;}" +
+		".bbb-section-options-left, .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}" +
+		".bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}" +
 		".bbb-section-header {border-bottom: 2px solid #CCCCCC; padding-top: 10px; width: 750px;}" +
-		".bbb-label {display: block; padding: 5px 0px;}" +
+		".bbb-label {display: block; height: 34px; padding: 0px 5px; overflow: hidden;}" + // Overflow is used here to correct bbb-label-input float problems.
 		".bbb-label:hover {background-color: #EEEEEE;}" +
+		".bbb-label * {vertical-align: middle;}" +
+		".bbb-label span {display: inline-block; line-height: 34px;}" +
+		// ".bbb-label-text {}" +
+		".bbb-label-input {float: right;}" +
 		".bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}" +
 		".bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}" +
 		".bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}";
