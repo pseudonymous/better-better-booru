@@ -6,6 +6,12 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 5.x:
+ * Updated the settings panel layout.
+ * Updated to support blacklists on individual posts.
+ * Added a "hide ban notice" option.
+ * Fixed direct download support.
+ * Fixed clean link support when not using the API.
 * Version 5.1:
  * Added a "post tag titles" option to allow reverting post page titles to the full list of tags.
  * Added a link to Danbooru's favorites listing for regular members.
