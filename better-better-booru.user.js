@@ -1662,6 +1662,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var clone = el.cloneNode(false);
 		clone.style.width = "0px";
 		clone.style.height = "0px";
+		clone.style.visibility = "hidden";
+		clone.style.position = "absolute";
+		clone.style.top = "0px";
+		clone.style.left = "0px";
 		document.body.appendChild(clone);
 		var widthPadding = clone.clientWidth;
 		var heightPadding = clone.clientHeight;
