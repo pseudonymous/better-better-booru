@@ -47,35 +47,35 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	*/
 
 	settings.options = {
-		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", ""),
-		arrow_nav: new Option("checkbox", false, "Arrow Navigation", ""),
-		child_border: new Option("text", "#CCCC00", "Child Border Color", ""),
-		clean_links: new Option("checkbox", false, "Clean Links", ""),
-		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", ""),
-		deleted_border: new Option("text", "#000000", "Deleted Border Color", ""),
-		direct_downloads: new Option("checkbox", false, "Direct Downloads", ""),
-		flagged_border: new Option("text", "#FF0000", "Flagged Border Color", ""),
-		hide_advertisements: new Option("checkbox", false, "Hide Advertisements", ""),
-		hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", ""),
-		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", ""),
-		hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", ""),
-		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", ""),
-		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", ""),
-		image_resize: new Option("checkbox", true, "Resize Images", ""),
-		load_sample_first: new Option("checkbox", true, "Load Sample First", ""),
-		loli_border: new Option("text", "#FFC0CB", "Loli Border Color", ""),
-		loli_shota_borders: new Option("checkbox", true, "Loli & Shota Borders", ""),
-		parent_border: new Option("text", "#00FF00", "Parent Border Color", ""),
-		pending_border: new Option("text", "#0000FF", "Pending Border Color", ""),
-		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", ""),
-		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", ""),
-		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", ""),
-		search_add: new Option("checkbox", true, "Search Add", ""),
-		shota_border: new Option("text", "#66CCFF", "Shota Border Color", ""),
-		show_deleted: new Option("checkbox", false, "Show Deleted", ""),
-		show_loli: new Option("checkbox", false, "Show Loli", ""),
-		show_shota: new Option("checkbox", false, "Show Shota", ""),
-		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "", {txtOptions:{Disabled:0}, numOptions:[1,200]})
+		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
+		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
+		child_border: new Option("text", "#CCCC00", "Child Border Color", "Set the thumbnail border color for child images."),
+		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links."),
+		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
+		deleted_border: new Option("text", "#000000", "Deleted Border Color", "Set the thumbnail border color for deleted images."),
+		direct_downloads: new Option("checkbox", false, "Direct Downloads", "Allow download managers to download the images displayed in the search, pool, and popular listings."),
+		flagged_border: new Option("text", "#FF0000", "Flagged Border Color", "Set the thumbnail border color for flagged images."),
+		hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
+		hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
+		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"view original\" notice."),
+		hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
+		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Terms of Service agreement notice."),
+		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
+		image_resize: new Option("checkbox", true, "Resize Images", "Shrink large images to fit the browser window when initially loading an individual post."),
+		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post."),
+		loli_border: new Option("text", "#FFC0CB", "Loli Border Color", "Set the thumbnail border color for loli images."),
+		loli_shota_borders: new Option("checkbox", true, "Loli & Shota Borders", "Add thumbnail borders to loli and shota images."),
+		parent_border: new Option("text", "#00FF00", "Parent Border Color", "Set the thumbnail border color for parent images."),
+		pending_border: new Option("text", "#0000FF", "Pending Border Color", "Set the thumbnail border color for pending images."),
+		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
+		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
+		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br>Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br>Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death"),
+		search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list for adding and excluding additional search terms to the current search."),
+		shota_border: new Option("text", "#66CCFF", "Shota Border Color", "Set the thumbnail border color for shota images."),
+		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in thumbnail listings."),
+		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in thumbnail listings."),
+		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in thumbnail listings."),
+		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:{Disabled:0}, numOptions:[1,200]})
 	};
 	settings.user = {};
 	settings.inputs = {};
@@ -220,19 +220,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		document.body.appendChild(menu);
 
 		var viewHeight = window.innerHeight;
-		var viewWidth = window.innerWidth;
-		var menuWidth = menu.clientWidth;
 		var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
 
-		scrollDiv.style.maxHeight = viewHeight - 55 - scrollDivDiff + "px"; // The subtracted value is the sum of the top padding, bottom padding, and 25 for space at the bottom. Doing this since this is a controlled element that allows us to avoid some hassle.
+		scrollDiv.style.maxHeight = viewHeight - getPadding(menu).height - scrollDivDiff - 25 + "px"; // Subtract 25 for the bottom "margin".
 		scrollDiv.style.minWidth = 900 + scrollbarWidth() + 2 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
 
-		menuWidth = menu.clientWidth; // Get new width including potential sidebar.
+		var viewWidth = window.innerWidth;
+		var menuWidth = menu.clientWidth;
+
 		menu.style.left = (viewWidth - menuWidth) / 2 + "px";
 		menu.style.visibility = "visible";
 	}
 
-	function createSection(settingList, target, title, desc) {
+	function createSection(settingList, target, title) {
 		if (title) {
 			var header = document.createElement("h3");
 			header.innerHTML = title;
@@ -240,37 +240,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			target.appendChild(header);
 		}
 
-		if (desc) {
-			// Placeholder for potential use.
-		}
-
 		var sectionDiv = document.createElement("div");
 		sectionDiv.className = "bbb-section-options";
 
 		var sl = settingList.length;
 		var halfway = (sl > 1 ? Math.ceil(sl / 2) : 0);
-		var optionTarget;
 
-		if (halfway) {
-			var leftSide = document.createElement("div");
-			var rightSide = document.createElement("div");
-			leftSide.className = "bbb-section-options-left";
-			rightSide.className = "bbb-section-options-right";
-			sectionDiv.appendChild(leftSide);
-			sectionDiv.appendChild(rightSide);
-		}
+		var leftSide = document.createElement("div");
+		leftSide.className = "bbb-section-options-left";
+		sectionDiv.appendChild(leftSide);
+
+		var rightSide = document.createElement("div");
+		rightSide.className = "bbb-section-options-right";
+		sectionDiv.appendChild(rightSide);
+
+		var optionTarget = leftSide;
 
 		for (var i = 0; i < sl; i++) {
 			var settingName = settingList[i];
 
-			if (halfway) {
-				if (i < halfway)
-					optionTarget = leftSide;
-				else
+			if (halfway && i >= halfway)
 					optionTarget = rightSide;
-			}
-			else
-				optionTarget = sectionDiv;
 
 			createOption(settingName, optionTarget);
 		}
@@ -362,9 +352,54 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				console.log("Better Better Booru Error: Unexpected object type. Type: " + optionObject.type);
 				break;
 		}
-		inputSpan.appendChild(item);
 		settings.inputs[settingName] = item;
+		inputSpan.appendChild(item);
+
+		var explLink = document.createElement("a");
+		explLink.innerHTML = "?";
+		explLink.href = "#";
+		explLink.className = "bbb-expl-link";
+		explLink.onclick = function(event) {
+			showTip(event, settingName);
+			return false;
+		};
+		explLink.onmouseout = function() {
+			hideTip(settingName);
+		};
+		inputSpan.appendChild(explLink);
+
+		var explTip = document.createElement("div");
+		explTip.innerHTML = optionObject.expl;
+		explTip.className = "bbb-expl";
+		settings.el[settingName + "Expl"] = explTip;
+
 		target.appendChild(label);
+		target.appendChild(explTip);
+	}
+
+	function showTip(event, settingName) {
+		var x = event.clientX;
+		var y = event.clientY;
+		var explTip = settings.el[settingName + "Expl"];
+
+		explTip.style.visibility = "hidden";
+		explTip.style.display = "block";
+
+		var origHeight = explTip.clientHeight;
+		var padding = getPadding(explTip).width;
+
+		while (origHeight >= explTip.clientHeight && explTip.clientWidth > 15)
+			explTip.style.width = explTip.clientWidth - padding - 2 + "px";
+
+		explTip.style.width = explTip.clientWidth - padding + 2 + "px";
+
+		explTip.style.left =  x - explTip.offsetWidth - 2 + "px";
+		explTip.style.top =  y - explTip.offsetHeight - 2 + "px";
+		explTip.style.visibility = "visible";
+	}
+
+	function hideTip(settingName) {
+		settings.el[settingName + "Expl"].style.display = "none";
 	}
 
 	function changeTab(tab) {
@@ -817,6 +852,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 							// Blacklist
 							blacklistInit();
+
+							// Clean links
+							if (clean_links)
+								cleanLinks();
 						}
 					}
 					else if (xmlhttp.status == 500)
@@ -1489,9 +1528,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		".bbb-label {display: block; height: 34px; padding: 0px 5px; overflow: hidden;}" + // Overflow is used here to correct bbb-label-input float problems.
 		".bbb-label:hover {background-color: #EEEEEE;}" +
 		".bbb-label * {vertical-align: middle;}" +
-		".bbb-label span {display: inline-block; line-height: 34px;}" +
+		".bbb-label > span {display: inline-block; line-height: 34px;}" +
 		// ".bbb-label-text {}" +
 		".bbb-label-input {float: right;}" +
+		".bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; padding: 5px; position: fixed; width: 400px;}" +
+		".bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}" +
 		".bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}" +
 		".bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}" +
 		".bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}";
@@ -1615,6 +1656,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		document.body.removeChild(scroller);
 
 		return scrollDiff;
+	}
+
+	function getPadding(el) {
+		var clone = el.cloneNode(false);
+		clone.style.width = "0px";
+		clone.style.height = "0px";
+		document.body.appendChild(clone);
+		var widthPadding = clone.clientWidth;
+		var heightPadding = clone.clientHeight;
+		document.body.removeChild(clone);
+		return {width: widthPadding, height: heightPadding};
 	}
 
 	function delayMe(func) {
