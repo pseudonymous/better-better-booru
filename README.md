@@ -6,10 +6,10 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
-* Version 5.x:
+* Version 5.2:
+ * Added a "hide ban notice" option.
  * Updated the settings panel layout.
  * Updated to support blacklists on individual posts.
- * Added a "hide ban notice" option.
  * Fixed direct download support.
  * Fixed clean link support when not using the API.
 * Version 5.1:
