@@ -72,9 +72,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br>Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br>Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death"),
 		search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list for adding and excluding additional search terms to the current search."),
 		shota_border: new Option("text", "#66CCFF", "Shota Border Color", "Set the thumbnail border color for shota images."),
-		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in thumbnail listings."),
-		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in thumbnail listings."),
-		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in thumbnail listings."),
+		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
+		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comment, and notes listings."),
+		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comment, and notes listings."),
 		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:{Disabled:0}, numOptions:[1,200]})
 	};
 	settings.user = {};
@@ -325,7 +325,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 				}
 
-				item.onchange = function() { settings.user[settingName] = Number(this.value); };
+				item.onchange = function() { var selected = this.value; settings.user[settingName] = (/^-?\d+(\.\d+)?$/.test(selected) ? Number(selected) : selected); };
 				break;
 			case "checkbox":
 				item = document.createElement("input");
@@ -979,6 +979,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var thumbnailUrl = (!post.image_height || ext == "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg");
 			var outId = "";
 			var thumb = "";
+			var thumbClass = "post-preview";
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
 			if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)) || (!show_deleted && post.is_deleted)) {
@@ -991,15 +992,25 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			// Apply appropriate thumbnail borders.
-			if (post.is_deleted)
+			if (post.is_deleted) {
 				flags = "deleted";
-			else if (post.is_flagged)
+				thumbClass += " post-status-deleted";
+			}
+			if (post.is_flagged) {
 				flags = "flagged";
-			else if (post.is_pending)
+				thumbClass += " post-status-flagged";
+			}
+			if (post.is_pending) {
 				flags = "pending";
+				thumbClass += " post-status-pending";
+			}
+			if (post.has_children)
+				thumbClass += " post-status-has-children";
+			if (parent)
+				thumbClass += " post-status-has-parent";
 
 			// eek, huge line.
-			thumb = '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img src="' + thumbnailUrl + '" alt="' + tags + '"></a></article>';
+			thumb = '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img src="' + thumbnailUrl + '" alt="' + tags + '"></a></article>';
 
 			if (direct_downloads)
 				thumb += '<a style="display: none;" href="' + fileUrl + '">Direct Download</a></span>';
@@ -1301,13 +1312,24 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var tagLinks = tags.split(" ");
 				var parent = (post.parent_id !== null ? post.parent_id : "");
 				var flags = "";
+				var thumbClass = "post post-preview";
 
-				if (post.is_deleted)
+				if (post.is_deleted) {
 					flags = "deleted";
-				else if (post.is_flagged)
+					thumbClass += " post-status-deleted";
+				}
+				if (post.is_flagged) {
 					flags = "flagged";
-				else if (post.is_pending)
+					thumbClass += " post-status-flagged";
+				}
+				if (post.is_pending) {
 					flags = "pending";
+					thumbClass += " post-status-pending";
+				}
+				if (post.has_children)
+					thumbClass += " post-status-has-children";
+				if (parent)
+					thumbClass += " post-status-has-parent";
 
 				for (var j = 0, tll = tagLinks.length; j < tll; j++)
 					tagLinks[j] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[j]) + '">' + tagLinks[j].replace(/_/g, " ") + '</a> </span> ';
@@ -1317,7 +1339,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Create the new post.
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div class="post post-preview" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + flags + '" data-score="' + post.score + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="/ssd/data/preview/' + post.md5 + '.jpg" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div class="' + thumbClass + '" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + flags + '" data-score="' + post.score + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="/ssd/data/preview/' + post.md5 + '.jpg" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
