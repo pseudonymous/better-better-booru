@@ -516,7 +516,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		switch (mode) {
 			case "51":
 				old = {
-					// Conversion from the first versions using localStorage are only a partial conversion for all text options. Later conversions which shouldn't have to worry about type conversion for every setting can be done in full.
 					add_border: "loli_shota_borders",
 					alternate_image_swap: "alternate_image_swap",
 					child_border: "child_border",
