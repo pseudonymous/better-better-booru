@@ -108,7 +108,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var item = document.createElement("li");
 		item.appendChild(link);
 
-		var menuItems = menu.getElementsByTagName("li")
+		var menuItems = menu.getElementsByTagName("li");
 		menu.insertBefore(item, menuItems[menuItems.length - 1]);
 	}
 
@@ -143,7 +143,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			changeTab(this);
 			return false;
 		};
-		tabBar.appendChild(generalTab)
+		tabBar.appendChild(generalTab);
 
 		var borderTab = document.createElement("a");
 		borderTab.name = "borders";
@@ -154,7 +154,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			changeTab(this);
 			return false;
 		};
-		tabBar.appendChild(borderTab)
+		tabBar.appendChild(borderTab);
 
 		var scrollDiv = document.createElement("div");
 		scrollDiv.className = "bbb-scroll-div";
@@ -165,9 +165,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		settings.el.generalPage = generalPage;
 
 		createSection(settings.sections.image, generalPage, "Images & Thumbnails");
-		createSection(settings.sections.layout, generalPage, "Layout");
 		createSection(settings.sections.sidebar, generalPage, "Tag Sidebar");
 		createSection(settings.sections.misc, generalPage, "Misc.");
+		createSection(settings.sections.layout, generalPage, "Layout");
 		createSection(settings.sections.loggedOut, generalPage, "Logged Out Settings");
 
 		var bordersPage = document.createElement("div");
@@ -424,8 +424,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function loadSettings() {
 		// Load stored settings.
-		if (typeof(localStorage["bbb_settings"]) === "undefined")
-			loadDefaults();
+		if (typeof(localStorage["bbb_settings"]) === "undefined") {
+			if (typeof(localStorage["bbb_add_border"]) !== "undefined") {
+				convertSettings("51");
+				checkUser(settings.user, settings.options);
+			}
+			else
+				loadDefaults();
+		}
 		else {
 			settings.user = JSON.parse(localStorage["bbb_settings"]);
 			checkUser(settings.user, settings.options);
@@ -502,6 +508,62 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		saveSettings();
+	}
+
+	function convertSettings(mode) {
+		var old = {};
+
+		switch (mode) {
+			case "51":
+				old = {
+					// Conversion from the first versions using localStorage are only a partial conversion for all text options. Later conversions which shouldn't have to worry about type conversion for every setting can be done in full.
+					add_border: "loli_shota_borders",
+					alternate_image_swap: "alternate_image_swap",
+					child_border: "child_border",
+					clean_links: "clean_links",
+					deleted_border: "deleted_border",
+					enable_arrow_nav: "arrow_nav",
+					enable_custom_borders: "custom_status_borders",
+					flagged_border: "flagged_border",
+					hide_advertisements: "hide_advertisements",
+					hide_original_notice: "hide_original_notice",
+					hide_sign_up_notice: "hide_sign_up_notice",
+					hide_tos_notice: "hide_tos_notice",
+					hide_upgrade_notice: "hide_upgrade_notice",
+					image_resize: "image_resize",
+					load_sample_first: "load_sample_first",
+					loli_border: "loli_border",
+					parent_border: "parent_border",
+					pending_border: "pending_border",
+					post_tag_titles: "post_tag_titles",
+					remove_tag_headers: "remove_tag_headers",
+					script_blacklisted_tags: "script_blacklisted_tags",
+					search_add: "search_add",
+					shota_border: "shota_border",
+					show_deleted: "show_deleted",
+					show_loli: "show_loli",
+					show_shota: "show_shota",
+					thumbnail_count: "thumbnail_count"
+				};
+
+				function formatSetting(settingName) {
+					var setting = localStorage["bbb_" + settingName];
+
+					if (setting === "true")
+						return true;
+					else if (setting === "false")
+						return false;
+					else if (settingName === "thumbnail_count")
+						return Number(setting);
+					else
+						return setting;
+				}
+
+				for (var i in old) {
+					settings.user[old[i]] = formatSetting(i);
+				}
+				break;
+		}
 	}
 
 	loadSettings();
@@ -1001,7 +1063,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var ratio = (width > 850 ? 850 / width : 1);
 			var sampUrl = "/data/sample/sample-" + md5 + ".jpg";
 			var sampHeight = Math.round(height * ratio);
-			var sampWidth = Math.round(width * ratio);;
+			var sampWidth = Math.round(width * ratio);
 			var newWidth = 0;
 			var newHeight = 0;
 			var newUrl = "";
@@ -1145,7 +1207,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 				}
 
- 				// Favorites listing.
+				// Favorites listing.
 				var postID = post.id;
 				var favItem = document.getElementById("favcount-for-post-" + postID).parentNode;
 
@@ -1164,7 +1226,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					Danbooru.Post.initialize_post_image_resize_to_window_link();
 				}
 
-				 // Make the "Add note" link work.
+				// Make the "Add note" link work.
 				if (!imageExists && document.getElementById("translate") !== null)
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
 
