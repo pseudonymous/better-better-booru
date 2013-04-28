@@ -870,7 +870,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var postID = post.id;
 				var favItem = document.getElementById("favcount-for-post-" + postID).parentNode;
 
-				if (!favItem.children[1] && checkLoginStatus()) {
+				if (!favItem.children[1]) {
 					favItem.innerHTML += '<a href="/favorites?post_id=' + postID + '" data-remote="true" id="show-favlist-link">&raquo;</a><a href="#" data-remote="true" id="hide-favlist-link">&laquo;</a><div id="favlist"></div>';
 					Danbooru.Post.initialize_favlist();
 				}
