@@ -70,11 +70,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
 		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
 		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br>Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br>Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death"),
-		search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list for adding and excluding additional search terms to the current search."),
+		search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
 		shota_border: new Option("text", "#66CCFF", "Shota Border Color", "Set the thumbnail border color for shota images."),
 		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
-		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comment, and notes listings."),
-		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comment, and notes listings."),
+		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
+		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
 		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:{Disabled:0}, numOptions:[1,200]})
 	};
 	settings.user = {};
@@ -1010,7 +1010,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				thumbClass += " post-status-has-parent";
 
 			// eek, huge line.
-			thumb = '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img src="' + thumbnailUrl + '" alt="' + tags + '"></a></article>';
+			thumb = '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-user="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img src="' + thumbnailUrl + '" alt="' + tags + '"></a></article>';
 
 			if (direct_downloads)
 				thumb += '<a style="display: none;" href="' + fileUrl + '">Direct Download</a></span>';
@@ -1369,7 +1369,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		Danbooru.Blacklist.entries.length = 0;
 
 		if (!isLoggedIn() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
-			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
+			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").toLowerCase().split(",");
 
 			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
 				var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
