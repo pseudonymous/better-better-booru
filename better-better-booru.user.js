@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        5.0
+// @version        5.1
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @include        http://*.donmai.us/*
@@ -19,215 +19,554 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * NOTE: You no longer need to edit this script to change settings!
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
-	var defaults = {
-		show_loli: false,
-		show_shota: false,
-		show_deleted: false,
-		add_border: true,
-		enable_custom_borders: false,
-		clean_links: false,
-		hide_sign_up_notice: false,
-		hide_upgrade_notice: false,
-		hide_advertisements: false,
-		hide_tos_notice: false,
-		enable_arrow_nav: false,
-		search_add: true,
-		thumbnail_count: 0,
-		alternate_image_swap: false,
-		image_resize: true,
-		load_sample_first: true,
-		hide_original_notice: false,
-		remove_tag_headers: false,
-		loli_border: "#FFC0CB",
-		shota_border: "#66CCFF",
-		child_border: "#CCCC00",
-		parent_border: "#00FF00",
-		pending_border: "#0000FF",
-		flagged_border: "#FF0000",
-		deleted_border: "#000000",
-		script_blacklisted_tags: ""
+	var settings = {}; // Container for settings
+
+	function Option(type, def, lbl, expl, optPropObject) {
+		this.type = type;
+		this.def = def; // Default.
+		this.label = lbl;
+		this.expl = expl; // Explanation.
+
+		if (optPropObject) { // Additional properties provided in the form of an object.
+			for (var i in optPropObject)
+				this[i] = optPropObject[i];
+		}
+	}
+
+	/*
+	 * Option type notes
+	 * =================
+	 * By specifying a unique type, you can create a specialized menu option.
+	 *
+	 * Checkbox, text, and number do not require any extra properties.
+	 *
+	 * Dropdown requires either txtOptions or numOptions.
+	 * txtOptions = Object containing a list of options and their values
+	 * numOptions = Array containing the starting and ending numbers of the number range.
+	 * If txtOptions and numOptions are both provided, txtOptions are added first and numOptions are added after.
+	*/
+
+	settings.options = {
+		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
+		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
+		child_border: new Option("text", "#CCCC00", "Child Border Color", "Set the thumbnail border color for child images."),
+		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links."),
+		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
+		deleted_border: new Option("text", "#000000", "Deleted Border Color", "Set the thumbnail border color for deleted images."),
+		direct_downloads: new Option("checkbox", false, "Direct Downloads", "Allow download managers to download the images displayed in the search, pool, and popular listings."),
+		flagged_border: new Option("text", "#FF0000", "Flagged Border Color", "Set the thumbnail border color for flagged images."),
+		hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
+		hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
+		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"view original\" notice."),
+		hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
+		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Terms of Service agreement notice."),
+		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
+		image_resize: new Option("checkbox", true, "Resize Images", "Shrink large images to fit the browser window when initially loading an individual post."),
+		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post."),
+		loli_border: new Option("text", "#FFC0CB", "Loli Border Color", "Set the thumbnail border color for loli images."),
+		loli_shota_borders: new Option("checkbox", true, "Loli & Shota Borders", "Add thumbnail borders to loli and shota images."),
+		parent_border: new Option("text", "#00FF00", "Parent Border Color", "Set the thumbnail border color for parent images."),
+		pending_border: new Option("text", "#0000FF", "Pending Border Color", "Set the thumbnail border color for pending images."),
+		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
+		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
+		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br>Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br>Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death"),
+		search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
+		shota_border: new Option("text", "#66CCFF", "Shota Border Color", "Set the thumbnail border color for shota images."),
+		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
+		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
+		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
+		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:{Disabled:0}, numOptions:[1,200]})
 	};
-	var labels = {
-		show_loli: "Show Loli",
-		show_shota: "Show Shota",
-		show_deleted: "Show Deleted",
-		add_border: "Add Borders",
-		enable_custom_borders: "Enable Custom Borders",
-		clean_links: "Clean Links",
-		hide_sign_up_notice: "Hide Sign Up Notice",
-		hide_upgrade_notice: "Hide Upgrade Notice",
-		hide_advertisements: "Hide Advertisements",
-		hide_tos_notice: "Hide TOS Notice",
-		enable_arrow_nav: "Enable Arrow Navigation",
-		search_add: "Search Add",
-		thumbnail_count: "Thumbnail Count",
-		alternate_image_swap: "Alternate Image Swap",
-		image_resize: "Resize Images",
-		load_sample_first: "Load Sample First",
-		hide_original_notice: "Hide Original Notice",
-		remove_tag_headers: "Remove Tag Headers",
-		loli_border: "Loli Border Color",
-		shota_border: "Shota Border Color",
-		child_border: "Child Border Color",
-		parent_border: "Parent Border Color",
-		pending_border: "Pending Border Color",
-		flagged_border: "Flagged Border Color",
-		deleted_border: "Deleted Border Color",
-		script_blacklisted_tags: "Blacklisted Tags"
-	};
-	// TODO
-	var explanations = {
-		show_loli: "",
-		show_shota: "",
-		show_deleted: "",
-		add_border: "",
-		enable_custom_borders: "",
-		clean_links: "",
-		hide_sign_up_notice: "",
-		hide_upgrade_notice: "",
-		hide_advertisements: "",
-		hide_tos_notice: "",
-		enable_arrow_nav: "",
-		search_add: "",
-		thumbnail_count: "",
-		alternate_image_swap: "",
-		image_resize: "",
-		load_sample_first: "",
-		hide_original_notice: "",
-		remove_tag_headers: "",
-		loli_border: "",
-		shota_border: "",
-		child_border: "",
-		parent_border: "",
-		pending_border: "",
-		flagged_border: "",
-		deleted_border: "",
-		script_blacklisted_tags: ""
+	settings.user = {};
+	settings.inputs = {};
+	settings.el = {}; // Menu elements.
+
+	// Setting sections and ordering.
+	settings.sections = {
+		image: ["show_loli", "show_shota", "show_deleted", "direct_downloads", "thumbnail_count"],
+		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"],
+		sidebar: ["search_add", "remove_tag_headers"],
+		borderTypes: ["loli_shota_borders", "custom_status_borders"],
+		borderStyles: ["loli_border", "shota_border", "deleted_border", "flagged_border", "pending_border", "parent_border", "child_border"],
+		loggedOut: ["image_resize", "load_sample_first", "script_blacklisted_tags"],
+		misc: ["alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"]
 	};
 
 	function injectSettings() {
 		var menu = document.getElementById("top");
 		menu = menu.getElementsByTagName("menu");
-		menu = menu[1];
+		menu = menu[0];
 
 		var link = document.createElement("a");
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
 		link.onclick = function() {
-			var target = document.documentElement || document.body;
-
-			target.scrollTop = 0;
 			showSettings();
 			return false;
 		};
 
 		var item = document.createElement("li");
 		item.appendChild(link);
-		menu.appendChild(item);
+
+		var menuItems = menu.getElementsByTagName("li");
+		menu.insertBefore(item, menuItems[menuItems.length - 1]);
 	}
 
 	function showSettings() {
-		var menu_exists = document.getElementById("bbb_menu");
-		if (menu_exists)
-		{
+		var menu_exists = settings.el.bbbMenu;
+
+		if (menu_exists) {
 			menu_exists.style.display = "block";
 			return;
 		}
+
 		var menu = document.createElement("div");
+		menu.id = "bbb_menu";
+		menu.style.visibility = "hidden";
+		settings.el.bbbMenu = menu;
+
 		var header = document.createElement("h1");
 		header.innerHTML = "Better Better Booru Settings";
+		header.style.textAlign = "center";
 		menu.appendChild(header);
-		for (var i in defaults) {
-			var pref = "bbb_"+i;
-			var label = document.createElement("label");
-			label.innerHTML = "<span style='width: 250px; display: inline-block;'>"+labels[i]+"</span>";
-			label.style.padding = "5px 0";
-			label.style.display = "block";
 
-			var item;
+		var tabBar = document.createElement("div");
+		tabBar.style.padding = "0px 15px";
+		menu.appendChild(tabBar);
 
-			switch (typeof(defaults[i]))
-			{
-				case "boolean":
-					item = document.createElement("input");
-					item.name = pref;
-					item.type = "checkbox";
-					item.checked = localStorage[item.name] == "true";
-					item.onclick = function() { localStorage[this.name] = localStorage[this.name] == "true" ? "false" : "true"; };
-					break;
-				case "string":
-					item = document.createElement("input");
-					item.name = pref;
-					item.type = "text";
-					item.value = localStorage[item.name];
-					item.onchange = function() { localStorage[this.name] = this.value; };
-					break;
-				case "number":
-					item = document.createElement("input");
-					item.name = pref;
-					item.type = "text";
-					item.value = localStorage[item.name];
-					item.onchange = function() { localStorage[this.name] = Number(this.value); };
-					break;
-				default:
-					console.log(typeof(defaults[i]));
-					break;
-			}
-			label.appendChild(item);
-			menu.appendChild(label);
-		}
+		var generalTab = document.createElement("a");
+		generalTab.name = "general";
+		generalTab.href = "#";
+		generalTab.innerHTML = "General";
+		generalTab.className = "bbb-tab bbb-active-tab";
+		generalTab.onclick = function() {
+			changeTab(this);
+			return false;
+		};
+		tabBar.appendChild(generalTab);
+
+		var borderTab = document.createElement("a");
+		borderTab.name = "borders";
+		borderTab.href = "#";
+		borderTab.innerHTML = "Borders";
+		borderTab.className = "bbb-tab";
+		borderTab.onclick = function() {
+			changeTab(this);
+			return false;
+		};
+		tabBar.appendChild(borderTab);
+
+		var scrollDiv = document.createElement("div");
+		scrollDiv.className = "bbb-scroll-div";
+		menu.appendChild(scrollDiv);
+
+		var generalPage = document.createElement("div");
+		scrollDiv.appendChild(generalPage);
+		settings.el.generalPage = generalPage;
+
+		createSection(settings.sections.image, generalPage, "Images & Thumbnails");
+		createSection(settings.sections.sidebar, generalPage, "Tag Sidebar");
+		createSection(settings.sections.misc, generalPage, "Misc.");
+		createSection(settings.sections.layout, generalPage, "Layout");
+		createSection(settings.sections.loggedOut, generalPage, "Logged Out Settings");
+
+		var bordersPage = document.createElement("div");
+		bordersPage.style.display = "none";
+		scrollDiv.appendChild(bordersPage);
+		settings.el.bordersPage = bordersPage;
+
+		createSection(settings.sections.borderTypes, bordersPage, "Border Types");
+		createSection(settings.sections.borderStyles, bordersPage, "Border Styles");
 
 		var close = document.createElement("a");
-		close.innerHTML = "Close";
+		close.innerHTML = "Save & Close";
 		close.href = "#";
-		close.style.margin = "10px 0";
+		close.className = "bbb-button";
+		close.style.marginRight = "15px";
 		close.onclick = function() {
-			document.getElementById("bbb_menu").style.display = "none";
+			settings.el.bbbMenu.style.display = "none";
+			saveSettings();
+			return false;
+		};
+
+		var cancel = document.createElement("a");
+		cancel.innerHTML = "Cancel";
+		cancel.href = "#";
+		cancel.className = "bbb-button";
+		cancel.onclick = function() {
+			loadSettings();
+			removeMenu();
 			return false;
 		};
 
 		var reset = document.createElement("a");
-		reset.innerHTML = "Reset Settings";
+		reset.innerHTML = "Reset to Defaults";
 		reset.href = "#";
+		reset.className = "bbb-button";
 		reset.style.cssFloat = "right";
 		reset.style.color = "#ff1100";
 		reset.onclick = function() {
-			for (var i in defaults) {
-				var pref = "bbb_"+i;
-				localStorage[pref] = defaults[i];
-			}
-			var bbb_menu = document.getElementById("bbb_menu");
-
-			// actually destroy it so it gets rebuilt.
-			bbb_menu.parentNode.removeChild(bbb_menu);
+			loadDefaults();
+			removeMenu();
 			showSettings();
-
 			return false;
 		};
 
-		menu.appendChild(reset);
 		menu.appendChild(close);
+		menu.appendChild(cancel);
+		menu.appendChild(reset);
 
-		menu.id = "bbb_menu";
-		menu.style.background = "white";
-		menu.style.position = "absolute";
-		menu.style.top = "0";
-		menu.style.left = "0";
-		menu.style.padding = "15px";
-		menu.style.boxShadow = "0 2px 2px rgba(0, 0, 0, 0.5)";
-		menu.style.zIndex = "9001";
+		// Add menu to the DOM and manipulate the dimensions.
 		document.body.appendChild(menu);
+
+		var viewHeight = window.innerHeight;
+		var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
+
+		scrollDiv.style.maxHeight = viewHeight - getPadding(menu).height - scrollDivDiff - 25 + "px"; // Subtract 25 for the bottom "margin".
+		scrollDiv.style.minWidth = 900 + scrollbarWidth() + 2 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
+
+		var viewWidth = window.innerWidth;
+		var menuWidth = menu.clientWidth;
+
+		menu.style.left = (viewWidth - menuWidth) / 2 + "px";
+		menu.style.visibility = "visible";
 	}
 
+	function createSection(settingList, target, title) {
+		if (title) {
+			var header = document.createElement("h3");
+			header.innerHTML = title;
+			header.className = "bbb-section-header";
+			target.appendChild(header);
+		}
+
+		var sectionDiv = document.createElement("div");
+		sectionDiv.className = "bbb-section-options";
+
+		var sl = settingList.length;
+		var halfway = (sl > 1 ? Math.ceil(sl / 2) : 0);
+
+		var leftSide = document.createElement("div");
+		leftSide.className = "bbb-section-options-left";
+		sectionDiv.appendChild(leftSide);
+
+		var rightSide = document.createElement("div");
+		rightSide.className = "bbb-section-options-right";
+		sectionDiv.appendChild(rightSide);
+
+		var optionTarget = leftSide;
+
+		for (var i = 0; i < sl; i++) {
+			var settingName = settingList[i];
+
+			if (halfway && i >= halfway)
+					optionTarget = rightSide;
+
+			createOption(settingName, optionTarget);
+		}
+
+		target.appendChild(sectionDiv);
+	}
+
+	function createOption(settingName, target) {
+		var optionObject = settings.options[settingName];
+		var userSetting = settings.user[settingName];
+
+		var label = document.createElement("label");
+		label.className = "bbb-label";
+
+		var textSpan = document.createElement("span");
+		textSpan.className = "bbb-label-text";
+		textSpan.innerHTML = optionObject.label;
+		label.appendChild(textSpan);
+
+		var inputSpan = document.createElement("span");
+		inputSpan.className = "bbb-label-input";
+		label.appendChild(inputSpan);
+
+		var item;
+		switch (optionObject.type)
+		{
+			case "dropdown":
+				var txtOptions = optionObject.txtOptions;
+				var numOptions = optionObject.numOptions;
+				var selectOption;
+
+				item = document.createElement("select");
+				item.name = settingName;
+
+				if (txtOptions) {
+					for (var i in txtOptions) {
+						selectOption = document.createElement("option");
+						selectOption.innerHTML = i;
+						selectOption.value = txtOptions[i];
+
+						if (selectOption.value == userSetting)
+							selectOption.selected = true;
+
+						item.appendChild(selectOption);
+					}
+				}
+
+				if (numOptions) {
+					var i = numOptions[0];
+					var end = numOptions[1];
+
+					while (i <= end) {
+						selectOption = document.createElement("option");
+						selectOption.innerHTML = i;
+						selectOption.value = i;
+
+						if (selectOption.value == userSetting)
+							selectOption.selected = true;
+
+						item.appendChild(selectOption);
+						i++;
+					}
+				}
+
+				item.onchange = function() { var selected = this.value; settings.user[settingName] = (/^-?\d+(\.\d+)?$/.test(selected) ? Number(selected) : selected); };
+				break;
+			case "checkbox":
+				item = document.createElement("input");
+				item.name = settingName;
+				item.type = "checkbox";
+				item.checked = userSetting;
+				item.onclick = function() { settings.user[settingName] = this.checked; };
+				break;
+			case "text":
+				item = document.createElement("input");
+				item.name = settingName;
+				item.type = "text";
+				item.value = userSetting;
+				item.onchange = function() { settings.user[settingName] = this.value; };
+				break;
+			case "number":
+				item = document.createElement("input");
+				item.name = settingName;
+				item.type = "text";
+				item.value = userSetting;
+				item.onchange = function() { settings.user[settingName] = Number(this.value); };
+				break;
+			default:
+				console.log("Better Better Booru Error: Unexpected object type. Type: " + optionObject.type);
+				break;
+		}
+		settings.inputs[settingName] = item;
+		inputSpan.appendChild(item);
+
+		var explLink = document.createElement("a");
+		explLink.innerHTML = "?";
+		explLink.href = "#";
+		explLink.className = "bbb-expl-link";
+		explLink.onclick = function(event) {
+			showTip(event, settingName);
+			return false;
+		};
+		explLink.onmouseout = function() {
+			hideTip(settingName);
+		};
+		inputSpan.appendChild(explLink);
+
+		var explTip = document.createElement("div");
+		explTip.innerHTML = optionObject.expl;
+		explTip.className = "bbb-expl";
+		settings.el[settingName + "Expl"] = explTip;
+
+		target.appendChild(label);
+		target.appendChild(explTip);
+	}
+
+	function showTip(event, settingName) {
+		var x = event.clientX;
+		var y = event.clientY;
+		var explTip = settings.el[settingName + "Expl"];
+
+		explTip.style.visibility = "hidden";
+		explTip.style.display = "block";
+
+		var origHeight = explTip.clientHeight;
+		var padding = getPadding(explTip).width;
+
+		while (origHeight >= explTip.clientHeight && explTip.clientWidth > 15)
+			explTip.style.width = explTip.clientWidth - padding - 2 + "px";
+
+		explTip.style.width = explTip.clientWidth - padding + 2 + "px";
+
+		explTip.style.left =  x - explTip.offsetWidth - 2 + "px";
+		explTip.style.top =  y - explTip.offsetHeight - 2 + "px";
+		explTip.style.visibility = "visible";
+	}
+
+	function hideTip(settingName) {
+		settings.el[settingName + "Expl"].style.display = "none";
+	}
+
+	function changeTab(tab) {
+		var activeTab = document.getElementsByClassName("bbb-active-tab")[0];
+
+		if (tab == activeTab)
+			return;
+
+		activeTab.className = activeTab.className.replace("bbb-active-tab", "");
+		settings.el[activeTab.name + "Page"].style.display = "none";
+		tab.className += " bbb-active-tab";
+		settings.el[tab.name + "Page"].style.display = "block";
+	}
+
+	function removeMenu() {
+		// Destroy the menu so that it gets rebuilt.
+		var menu = settings.el.bbbMenu;
+
+		menu.parentNode.removeChild(menu);
+		settings.el = {};
+	}
+
+	function loadSettings() {
+		// Load stored settings.
+		if (typeof(localStorage["bbb_settings"]) === "undefined") {
+			if (typeof(localStorage["bbb_add_border"]) !== "undefined") {
+				convertSettings("51");
+				checkUser(settings.user, settings.options);
+			}
+			else
+				loadDefaults();
+		}
+		else {
+			settings.user = JSON.parse(localStorage["bbb_settings"]);
+			checkUser(settings.user, settings.options);
+		}
+	}
+
+	function loadDefaults() {
+		settings.user = {};
+
+		for (var i in settings.options) {
+			settings.user[i] = settings.options[i].def;
+		}
+	}
+
+	function checkUser(user, options) {
+		// Verify the user has all the base settings and add them with their default values if they don't.
+		for (var i in options) {
+			if (typeof(user[i]) === "undefined")
+				user[i] = options[i].def;
+			else if (typeof(user[i]) === "object")
+				checkUser(user[i], options[i]);
+		}
+	}
+
+	function saveSettings() {
+		localStorage["bbb_settings"] = JSON.stringify(settings.user);
+	}
+
+	function updateSettings() {
+		// Change & save settings without the panel. Accepts a comma delimited list of alternating settings and values: setting1, value1, setting2, value2
+		for (var i = 0, al = arguments.length; i < al; i += 2) {
+			var settingName = arguments[i];
+			var value = arguments[i + 1];
+			var userSetting = settings.user[settingName];
+			var input = settings.inputs[settingName];
+
+			settings.user[settingName] = value;
+
+			// Update menu if it exists.
+			if (input) {
+				var optionObject = settings.options[settingName];
+
+				switch (optionObject.type)
+				{
+					case "dropdown":
+						if (input.value != userSetting) {
+							var selectOptions = input.getElementsByTagName("option");
+
+
+							for (var i = 0, sol = selectOptions.length; i < sol; i++) {
+								var selectOption = selectOptions[i];
+
+								if (selectOption.value == userSetting) {
+									selectOption.selected = true;
+									break;
+								}
+							}
+						}
+						break;
+					case "checkbox":
+						input.checked = value;
+						break;
+					case "text":
+						input.value = value;
+						break;
+					case "number":
+						input.value = value;
+						break;
+					default:
+						console.log("Better Better Booru Error: Unexpected object type. Type: " + optionObject.type);
+						break;
+				}
+			}
+		}
+
+		saveSettings();
+	}
+
+	function convertSettings(mode) {
+		var old = {};
+
+		switch (mode) {
+			case "51":
+				old = {
+					add_border: "loli_shota_borders",
+					alternate_image_swap: "alternate_image_swap",
+					child_border: "child_border",
+					clean_links: "clean_links",
+					deleted_border: "deleted_border",
+					enable_arrow_nav: "arrow_nav",
+					enable_custom_borders: "custom_status_borders",
+					flagged_border: "flagged_border",
+					hide_advertisements: "hide_advertisements",
+					hide_original_notice: "hide_original_notice",
+					hide_sign_up_notice: "hide_sign_up_notice",
+					hide_tos_notice: "hide_tos_notice",
+					hide_upgrade_notice: "hide_upgrade_notice",
+					image_resize: "image_resize",
+					load_sample_first: "load_sample_first",
+					loli_border: "loli_border",
+					parent_border: "parent_border",
+					pending_border: "pending_border",
+					post_tag_titles: "post_tag_titles",
+					remove_tag_headers: "remove_tag_headers",
+					script_blacklisted_tags: "script_blacklisted_tags",
+					search_add: "search_add",
+					shota_border: "shota_border",
+					show_deleted: "show_deleted",
+					show_loli: "show_loli",
+					show_shota: "show_shota",
+					thumbnail_count: "thumbnail_count"
+				};
+
+				function formatSetting(settingName) {
+					var setting = localStorage["bbb_" + settingName];
+
+					if (setting === "true")
+						return true;
+					else if (setting === "false")
+						return false;
+					else if (settingName === "thumbnail_count")
+						return Number(setting);
+					else
+						return setting;
+				}
+
+				for (var i in old) {
+					settings.user[old[i]] = formatSetting(i);
+				}
+				break;
+		}
+	}
+
+	loadSettings();
 	injectSettings();
-
-	for (var i in defaults) {
-		var pref = "bbb_"+i;
-		if (typeof(localStorage[pref]) === 'undefined')
-			localStorage[pref] = defaults[i];
-	}
-
-	function toBool(str) { return str == "true"; }
 
 	/* Help */
 	// When editing settings, make sure you always maintain the same format. Leave equal signs, quotation marks, and semicolons alone.
@@ -238,39 +577,42 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* True or false settings */
 	// Global
-	var show_loli = toBool(localStorage["bbb_show_loli"]);
-	var show_shota = toBool(localStorage["bbb_show_shota"]);
-	var show_deleted = toBool(localStorage["bbb_show_deleted"]); // Show all deleted posts.
+	var show_loli = settings.user["show_loli"];
+	var show_shota = settings.user["show_shota"];
+	var show_deleted = settings.user["show_deleted"]; // Show all deleted posts.
 
-	var add_border = toBool(localStorage["bbb_add_border"]); // Add borders to shota and loli. You may set the colors under "Set Border Colors".
-	var enable_custom_borders = toBool(localStorage["bbb_enable_custom_borders"]); // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
-	var clean_links = toBool(localStorage["bbb_clean_links"]); // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
+	var loli_shota_borders = settings.user["loli_shota_borders"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
+	var custom_status_borders = settings.user["custom_status_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
+	var clean_links = settings.user["clean_links"]; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 
-	var hide_sign_up_notice = toBool(localStorage["bbb_hide_sign_up_notice"]);
-	var hide_upgrade_notice = toBool(localStorage["bbb_hide_upgrade_notice"]);
-	var hide_advertisements = toBool(localStorage["bbb_hide_advertisements"]);
-	var hide_tos_notice = toBool(localStorage["bbb_hide_tos_notice"]);
+	var hide_sign_up_notice = settings.user["hide_sign_up_notice"];
+	var hide_upgrade_notice = settings.user["hide_upgrade_notice"];
+	var hide_tos_notice = settings.user["hide_tos_notice"];
+	var hide_original_notice = settings.user["hide_original_notice"]; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
+	var hide_advertisements = settings.user["hide_advertisements"];
+	var hide_ban_notice = settings.user["hide_ban_notice"];
 
 	// Search
-	var enable_arrow_nav = toBool(localStorage["bbb_enable_arrow_nav"]); // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
-	var search_add = toBool(localStorage["bbb_search_add"]); // Add the + and - shortcuts to the tag list for including or excluding search terms.
-	var thumbnail_count = Number(localStorage["bbb_thumbnail_count"]); // Number of thumbnails to display per page. Use a number value of 0 to turn off.
+	var arrow_nav = settings.user["arrow_nav"]; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
+	var search_add = settings.user["search_add"]; // Add the + and - shortcuts to the tag list for including or excluding search terms.
+	var direct_downloads = settings.user["direct_downloads"]; // Allow download managers for all search listings.
+	var thumbnail_count = settings.user["thumbnail_count"]; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
-	var alternate_image_swap = toBool(localStorage["bbb_alternate_image_swap"]); // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
-	var image_resize = toBool(localStorage["bbb_image_resize"]); // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
-	var load_sample_first = toBool(localStorage["bbb_load_sample_first"]); // Use sample images when available. When logged in, your account settings will override this setting.
-	var hide_original_notice = toBool(localStorage["bbb_hide_original_notice"]); // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
-	var remove_tag_headers = toBool(localStorage["bbb_remove_tag_headers"]); // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
+	var alternate_image_swap = settings.user["alternate_image_swap"]; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
+	var image_resize = settings.user["image_resize"]; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
+	var load_sample_first = settings.user["load_sample_first"]; // Use sample images when available. When logged in, your account settings will override this setting.
+	var remove_tag_headers = settings.user["remove_tag_headers"]; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
+	var post_tag_titles = settings.user["post_tag_titles"]; // Revert post page titles to the more detailed full list of tags
 
 	// Set Border Colors. Use CSS hex values for colors. http://www.w3schools.com/CSS/css_colors.asp
-	var loli_border = localStorage["bbb_loli_border"];
-	var shota_border = localStorage["bbb_shota_border"];
-	var child_border = localStorage["bbb_child_border"];
-	var parent_border = localStorage["bbb_parent_border"];
-	var pending_border = localStorage["bbb_pending_border"];
-	var flagged_border = localStorage["bbb_flagged_border"];
-	var deleted_border = localStorage["bbb_deleted_border"];
+	var loli_border = settings.user["loli_border"];
+	var shota_border = settings.user["shota_border"];
+	var child_border = settings.user["child_border"];
+	var parent_border = settings.user["parent_border"];
+	var pending_border = settings.user["pending_border"];
+	var flagged_border = settings.user["flagged_border"];
+	var deleted_border = settings.user["deleted_border"];
 
 	// Blacklist
 	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
@@ -278,7 +620,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// disable the script blacklist. When logged in, your account blacklist will override this blacklist.
 	// Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the
 	// following case: "spoilers, blood death"
-	var script_blacklisted_tags = localStorage["bbb_script_blacklisted_tags"];
+	var script_blacklisted_tags = settings.user["script_blacklisted_tags"];
 
 	// List of valid URL's to parse for. Feel free to suggest more!
 	var valid_urls = [
@@ -297,44 +639,34 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
 
 	/* "INIT" */
-	if (show_loli || show_shota || show_deleted) // API only features.
+	customCSS(); // Contains the portions related to ads and notices.
+
+	if (!isLoggedIn()) // Immediately apply script blacklist for logged out users.
+		delayMe(blacklistInit);
+
+	if (show_loli || show_shota || show_deleted || direct_downloads) // API only features.
 		searchJSON(gLoc);
 	else // Alternate mode for features.
 		modifyPage(gLoc);
 
-	if (hide_upgrade_notice)
-		hideUpgradeNotice();
-
-	if (hide_sign_up_notice)
-		hideSignUpNotice();
-
-	if (hide_tos_notice)
-		hideTOSNotice();
-
-	if (hide_advertisements) {
-		hideAdvertisements();
-		hideYourAdHere();
-		hideIframes();
-	}
-
 	if (clean_links)
 		cleanLinks();
 
-	if (enable_arrow_nav) {
+	if (arrow_nav) {
 		var paginator = document.getElementsByClassName("paginator")[0];
 
 		if (paginator || gLoc == "popular") // If the paginator exists, arrow navigation should be applicable.
 			window.addEventListener("keydown", keyCheck, false);
 	}
 
-	if (add_border || enable_custom_borders)
-		customBorders();
-
 	if (search_add)
 		searchAdd();
 
 	if (remove_tag_headers)
 		removeTagHeaders();
+
+	if (post_tag_titles)
+		postTagTitles();
 
 	if (thumbnail_count)
 		limitFix();
@@ -357,7 +689,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else
 				numDesired = numExpected;
 
-			if (numThumbs != numDesired || numThumbs < numExpected)
+			if (numThumbs != numDesired || numThumbs < numExpected || direct_downloads)
 				fetchJSON(gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit, "search");
 		}
 		else if (mode == "post") {
@@ -389,8 +721,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (numThumbs != 5)
 				fetchJSON(gUrl.replace(/\/comments\/?/, "/comments.json"), "comments");
 		}
-		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
-			delayMe(function(){blacklistInit();});
 	}
 
 	function fetchJSON(url, mode, optArg) {
@@ -415,15 +745,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							parseComments(xml);
 					}
 					else if (xmlhttp.status == 403)
-						Danbooru.error("Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information.");
+						danbNotice("Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads.", true);
 					else if (xmlhttp.status == 421)
-						Danbooru.error("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.");
+						danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", true);
 					else if (xmlhttp.status == 401)
-						Danbooru.error("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API for hidden image information.");
+						danbNotice("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads.", true);
 					else if (xmlhttp.status == 500)
-						Danbooru.error("Better Better Booru: Error retrieving information. Internal server error.");
+						danbNotice("Better Better Booru: Error retrieving information. Internal server error.", true);
 					else if (xmlhttp.status == 503)
-						Danbooru.error("Better Better Booru: Error retrieving information. Service unavailable.");
+						danbNotice("Better Better Booru: Error retrieving information. Service unavailable.", true);
 				}
 			};
 			xmlhttp.open("GET", url, true);
@@ -447,67 +777,64 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			fetchPages(url, "thumbnails");
 		}
-		else if (!checkLoginStatus()) // Apply script blacklist to all other pages.
-			delayMe(function(){blacklistInit();});
-
 	}
 
 	function fetchInfo() {
 		// Retrieve info in the page. (Alternative to fetchJSON)
 		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
 		var infoHref = infoLink.href;
-		var imgInfo;
+		var infoSection = infoLink.parentNode.parentNode;
+		var imgHeight = 0;
+		var imgWidth = 0;
+		var hasLarge = false;
+		var childNotice = document.getElementsByClassName("notice-child");
 
 		if (document.getElementById("image")) { // Regular image.
 			var img = document.getElementById("image");
 
-			imgInfo = {
-				id: parseInt(fetchMeta("post-id"), 10),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
-				url: infoHref,
-				image_height: parseInt(img.getAttribute("data-original-height"), 10),
-				image_width: parseInt(img.getAttribute("data-original-width"), 10),
-				has_large: (parseInt(img.getAttribute("data-original-width"), 10) > 850 ? true : false)
-			};
+			imgHeight = Number(img.getAttribute("data-original-height"));
+			imgWidth = Number(img.getAttribute("data-original-width"));
+			hasLarge = (Number(img.getAttribute("data-original-width")) > 850 ? true : false);
 		}
 		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
 			var object = document.getElementById("image-container").getElementsByTagName("object")[0];
 
-			imgInfo = {
-				id: parseInt(fetchMeta("post-id"), 10),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
-				url: infoHref,
-				image_height: parseInt(object.height, 10),
-				image_width: parseInt(object.width, 10),
-				has_large: false
-			};
+			imgHeight = Number(object.height);
+			imgWidth = Number(object.width);
+			hasLarge = false;
 		}
 		else if (/The artist requested removal/.test(document.getElementById("image-container").textContent)) { // Image removed by artist request.
 			var infoText = infoLink.parentNode.textContent;
 
-			imgInfo = {
-				id: parseInt(fetchMeta("post-id"), 10),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
-				url: infoHref,
-				image_height: parseInt(/\(\d+x(\d+)\)/.exec(infoText)[1], 10),
-				image_width: parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10),
-				has_large: (parseInt(/\((\d+)x\d+\)/.exec(infoText)[1], 10) > 850 ? true : false)
-			};
+			imgHeight = Number(/\(\d+x(\d+)\)/.exec(infoText)[1]);
+			imgWidth = Number(/\((\d+)x\d+\)/.exec(infoText)[1]);
+			hasLarge = (Number(/\((\d+)x\d+\)/.exec(infoText)[1]) > 850 ? true : false);
 		}
 		else { // Manual download.
-			imgInfo = {
-				id: parseInt(fetchMeta("post-id"), 10),
-				file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
-				md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
-				url: infoHref,
-				image_height: null,
-				image_width: null,
-				has_large: false
-			};
+			imgHeight = null;
+			imgWidth = null;
+			hasLarge = false;
 		}
+
+		var imgInfo = {
+			id: Number(fetchMeta("post-id")),
+			file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
+			md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
+			url: infoHref,
+			fav_count: Number(document.getElementById("favcount-for-post-" + fetchMeta("post-id")).textContent),
+			has_children: (document.getElementsByClassName("notice-parent").length ? true : false),
+			parent_id: (childNotice.length ? Number(/\d+/.exec(childNotice[0].children[0].href)[0]) : null),
+			rating: /Rating:\s*(\w)/.exec(infoSection.textContent)[1].toLowerCase(),
+			score: Number(document.getElementById("score-for-post-" + fetchMeta("post-id")).textContent),
+			tag_string: fetchMeta("tags"),
+			uploader_name: /Uploader:\s*(.+?)\s*»/.exec(infoSection.textContent)[1],
+			is_deleted: (fetchMeta("post-is-deleted") == "false" ? false : true),
+			is_flagged: (fetchMeta("post-is-flagged") == "false" ? false : true),
+			is_pending: (fetchMeta("post-is-approvable" == "false" ? false : true)),
+			image_height: imgHeight,
+			image_width: imgWidth,
+			has_large: hasLarge
+		};
 
 		delayMe(function(){parsePost(imgInfo);}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 	}
@@ -555,7 +882,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							// Fix the comments.
 							childSpan.innerHTML = /<div class="row notices">[\S\s]+?<\/form>[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
 
-							var comments =  childSpan.getElementsByClassName("comment");
+							var comments = childSpan.getElementsByClassName("comment");
 							var numComments = comments.length;
 							var toShow = 6; // Number of comments to display.
 
@@ -577,7 +904,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						else if (mode == "thumbnails") { // Fetch the thumbnails and paginator from the page of a search and replace the existing ones.
 							var childSpan = document.createElement("span");
 
-							childSpan.innerHTML = /<article class="post-preview"[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
+							childSpan.innerHTML = /<div id="posts">([\S\s]+?class="paginator"[\S\s]+?<\/div>[\S\s]+?)<\/div>/i.exec(xmlhttp.responseText)[1];
 
 							document.getElementById("posts").innerHTML = childSpan.innerHTML;
 
@@ -586,12 +913,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 							// Blacklist
 							blacklistInit();
+
+							// Clean links
+							if (clean_links)
+								cleanLinks();
 						}
 					}
 					else if (xmlhttp.status == 500)
-						Danbooru.error("Better Better Booru: Error retrieving information. Internal server error.");
+						danbNotice("Better Better Booru: Error retrieving information. Internal server error.", true);
 					else if (xmlhttp.status == 503)
-						Danbooru.error("Better Better Booru: Error retrieving information. Service unavailable.");
+						danbNotice("Better Better Booru: Error retrieving information. Service unavailable.", true);
 				}
 			};
 			xmlhttp.open("GET", url, true);
@@ -648,6 +979,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var thumbnailUrl = (!post.image_height || ext == "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg");
 			var outId = "";
 			var thumb = "";
+			var thumbClass = "post-preview";
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
 			if ((!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)) || (!show_deleted && post.is_deleted)) {
@@ -660,15 +992,28 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			// Apply appropriate thumbnail borders.
-			if (post.is_deleted)
+			if (post.is_deleted) {
 				flags = "deleted";
-			else if (post.is_flagged)
+				thumbClass += " post-status-deleted";
+			}
+			if (post.is_flagged) {
 				flags = "flagged";
-			else if (post.is_pending)
+				thumbClass += " post-status-flagged";
+			}
+			if (post.is_pending) {
 				flags = "pending";
+				thumbClass += " post-status-pending";
+			}
+			if (post.has_children)
+				thumbClass += " post-status-has-children";
+			if (parent)
+				thumbClass += " post-status-has-parent";
 
 			// eek, huge line.
-			thumb = '<article class="post-preview" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-uploader="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img src="' + thumbnailUrl + '" alt="' + tags + '"></a><a style="display: none;" href="' + fileUrl + '">Direct Download</a></span></article>';
+			thumb = '<article class="' + thumbClass + '" id="post_' + imgId + '" data-id="' + imgId + '" data-tags="' + tags + '" data-user="' + uploader + '" data-rating="' + rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + flags + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-score="' + score + '"><a href="/posts/' + imgId + search + '"><img src="' + thumbnailUrl + '" alt="' + tags + '"></a></article>';
+
+			if (direct_downloads)
+				thumb += '<a style="display: none;" href="' + fileUrl + '">Direct Download</a></span>';
 
 			// Generate output
 			if (gLoc == "search" || gLoc == "notes" || gLoc == "popular")
@@ -725,14 +1070,29 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var hasLarge = post.has_large;
 			var height = post.image_height;
 			var width = post.image_width;
-			var ratio = 850 / width;
+			var ratio = (width > 850 ? 850 / width : 1);
 			var sampUrl = "/data/sample/sample-" + md5 + ".jpg";
 			var sampHeight = Math.round(height * ratio);
-			var sampWidth = 850;
+			var sampWidth = Math.round(width * ratio);
 			var newWidth = 0;
 			var newHeight = 0;
 			var newUrl = "";
 			var altTxt = "";
+			var favCount = post.fav_count;
+			var flags = "";
+			var hasChildren = post.has_children;
+			var parent = (post.parent_id !== null ? post.parent_id : "");
+			var rating = post.rating;
+			var score = post.score;
+			var tags = post.tag_string;
+			var uploader = post.uploader_name;
+
+			if (post.is_deleted)
+				flags = "deleted";
+			else if (post.is_flagged)
+				flags = "flagged";
+			else if (post.is_pending)
+				flags = "pending";
 
 			if (ext == "swf") // Create flash object.
 				container.innerHTML = '<div id="note-container"></div> <object height="' + height + '" width="' + width + '"> <params name="movie" value="' + url + '"> <embed allowscriptaccess="never" src="' + url + '" height="' + height + '" width="' + width + '"> </params> </object> <p><a href="' + url + '">Save this flash (right click and save)</a></p>';
@@ -754,7 +1114,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					altTxt = md5;
 				}
 
-				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + height + '" data-original-width="' + width + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-fav-count="' + favCount + '" data-flags="' + flags + '" data-has-children="' + hasChildren + '" data-parent-id="' + parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + height + '" data-original-width="' + width + '" data-rating="' + rating + '" data-score="' + score + '" data-tags="' + tags + '" data-uploader="' + uploader + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 				var img = document.getElementById("image");
 				var bbbLoader = document.getElementById("bbb-loader");
 
@@ -853,12 +1213,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, false);
 					closeOriginalNotice.addEventListener("click", function(event) {
 						bbbResizeNotice.style.display = "none";
-						localStorage["bbb_hide_original_notice"] = true;
+						updateSettings("hide_original_notice", true);
 					}, false);
 				}
 
+				// Favorites listing.
+				var postID = post.id;
+				var favItem = document.getElementById("favcount-for-post-" + postID).parentNode;
+
+				if (!favItem.children[1] && isLoggedIn()) {
+					favItem.innerHTML += '<a href="/favorites?post_id=' + postID + '" data-remote="true" id="show-favlist-link">&raquo;</a><a href="#" data-remote="true" id="hide-favlist-link">&laquo;</a><div id="favlist"></div>';
+					Danbooru.Post.initialize_favlist();
+				}
+
 				// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
-				if (!checkLoginStatus()) {
+				if (!isLoggedIn()) {
 					var options = document.createElement("section");
 					var history = document.evaluate('//aside[@id="sidebar"]/section[last()]', document, null, 9, null).singleNodeValue;
 
@@ -867,15 +1236,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					Danbooru.Post.initialize_post_image_resize_to_window_link();
 				}
 
-				 // Make the "Add note" link work.
+				// Make the "Add note" link work.
 				if (!imageExists && document.getElementById("translate") !== null)
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
-
 
 				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
 					img.addEventListener("click", Danbooru.Note.Box.toggle_all, false);
 				}
-				else { // Make a "Toggle Notes" link in the options bar.
+				else { // Make sample/original images swap when clicking the image.
+					// Make a "Toggle Notes" link in the options bar.
 					if (document.getElementById("listnotetoggle") === null) { // For logged in users.
 						var translateOption = document.getElementById("translate").parentNode;
 						var listNoteToggle = document.createElement("li");
@@ -914,6 +1283,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (checkSetting("always-resize-images", "true", image_resize))
 					document.getElementById("image-resize-to-window-link").click();
 			}
+
+		// Blacklist
+		blacklistInit();
 		}
 	}
 
@@ -940,13 +1312,24 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var tagLinks = tags.split(" ");
 				var parent = (post.parent_id !== null ? post.parent_id : "");
 				var flags = "";
+				var thumbClass = "post post-preview";
 
-				if (post.is_deleted)
+				if (post.is_deleted) {
 					flags = "deleted";
-				else if (post.is_flagged)
+					thumbClass += " post-status-deleted";
+				}
+				if (post.is_flagged) {
 					flags = "flagged";
-				else if (post.is_pending)
+					thumbClass += " post-status-flagged";
+				}
+				if (post.is_pending) {
 					flags = "pending";
+					thumbClass += " post-status-pending";
+				}
+				if (post.has_children)
+					thumbClass += " post-status-has-children";
+				if (parent)
+					thumbClass += " post-status-has-parent";
 
 				for (var j = 0, tll = tagLinks.length; j < tll; j++)
 					tagLinks[j] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[j]) + '">' + tagLinks[j].replace(/_/g, " ") + '</a> </span> ';
@@ -956,7 +1339,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Create the new post.
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div class="post post-preview" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + flags + '" data-score="' + post.score + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="/ssd/data/preview/' + post.md5 + '.jpg" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div class="' + thumbClass + '" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + flags + '" data-score="' + post.score + '" data-parent-id="' + parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="/ssd/data/preview/' + post.md5 + '.jpg" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
@@ -972,7 +1355,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// If we don't have the expected number of posts, the API info and page are too out of sync.
 		if (existingPosts.length != endTotal)
-			Danbooru.error("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.");
+			danbNotice("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.", true);
 
 		// Thumbnail classes and titles
 		Danbooru.Post.initialize_titles();
@@ -985,8 +1368,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function blacklistInit() {
 		Danbooru.Blacklist.entries.length = 0;
 
-		if (!checkLoginStatus() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
-			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").split(",");
+		if (!isLoggedIn() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
+			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").toLowerCase().split(",");
 
 			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
 				var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
@@ -998,9 +1381,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Apply the blacklist and update the sidebar for search listings.
 		var blacklistUsed = Danbooru.Blacklist.apply();
+		var blacklistList = document.getElementById("blacklist-list");
 
-		if (gLoc == "search" || gLoc == "popular") {
-			document.getElementById("blacklist-list").innerHTML = "";
+		if (blacklistList) {
+			blacklistList.innerHTML = "";
 
 			if (blacklistUsed)
 				Danbooru.Blacklist.update_sidebar();
@@ -1059,8 +1443,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else {
 			result = result[0].split("=")[1];
 
-			if (/^\d+$/.test(result))
-				return parseInt(result, 10);
+			if (/^-?\d+(\.\d+)?$/.test(result))
+				return Number(result);
 			else
 				return result;
 		}
@@ -1165,7 +1549,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return undefined;
 	}
 
-	function checkLoginStatus() {
+	function isLoggedIn() {
 		if (fetchMeta("current-user-id") !== "")
 			return true;
 		else
@@ -1173,7 +1557,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function checkSetting(metaName, metaData, scriptSetting) {
-		if (checkLoginStatus()) {
+		if (isLoggedIn()) {
 			if (fetchMeta(metaName) === metaData)
 				return true;
 			else
@@ -1213,19 +1597,61 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function customBorders() {
-		var borderStyles = document.createElement("style");
+	function customCSS() {
+		var customStyles = document.createElement("style");
+		customStyles.type = "text/css";
 
-		borderStyles.type = "text/css";
+		var styles = "#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 14px; padding: 15px; position: fixed; top: 25px; z-index: 9001;}" +
+		"#bbb_menu a:focus {outline: none;}" +
+		".bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px; overflow-y: auto;}" +
+		".bbb-section-options {margin: 5px 0px;}" +
+		".bbb-section-options-left, .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}" +
+		".bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}" +
+		".bbb-section-header {border-bottom: 2px solid #CCCCCC; padding-top: 10px; width: 750px;}" +
+		".bbb-label {display: block; height: 34px; padding: 0px 5px; overflow: hidden;}" + // Overflow is used here to correct bbb-label-input float problems.
+		".bbb-label:hover {background-color: #EEEEEE;}" +
+		".bbb-label * {vertical-align: middle;}" +
+		".bbb-label > span {display: inline-block; line-height: 34px;}" +
+		// ".bbb-label-text {}" +
+		".bbb-label-input {float: right;}" +
+		".bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; padding: 5px; position: fixed; width: 400px;}" +
+		".bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}" +
+		".bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}" +
+		".bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}" +
+		".bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}";
 
 		// Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
-		if (enable_custom_borders)
-			borderStyles.innerHTML += " .post-preview.post-status-has-children img{border-color:" + parent_border + " !important;} .post-preview.post-status-has-parent img{border-color:" + child_border + " !important;} .post-preview.post-status-pending img{border-color:" + pending_border + " !important;} .post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;} .post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;}";
+		if (custom_status_borders)
+			styles += ".post-preview.post-status-has-children img{border-color:" + parent_border + " !important;}" +
+			".post-preview.post-status-has-parent img{border-color:" + child_border + " !important;}" +
+			".post-preview.post-status-pending img{border-color:" + pending_border + " !important;}" +
+			".post-preview.post-status-flagged img{border-color:" + flagged_border + " !important;}" +
+			".post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;}";
 
-		if (add_border)
-			borderStyles.innerHTML += ' .post-preview[data-tags~="shota"] img{border: 2px solid ' + shota_border + ' !important;} .post-preview[data-tags~="loli"] img{border: 2px solid ' + loli_border + ' !important;}';
+		if (loli_shota_borders)
+			styles += '.post-preview[data-tags~="shota"] img{border: 2px solid ' + shota_border + ' !important;}' +
+			'.post-preview[data-tags~="loli"] img{border: 2px solid ' + loli_border + ' !important;}';
 
-		document.getElementsByTagName("head")[0].appendChild(borderStyles);
+		if (hide_advertisements)
+			styles += '#content.with-ads {margin-right: 0em !important;}' +
+			'img[alt="Advertisement"] {display: none !important;}' +
+			'img[alt="Your Ad Here"] {display: none !important;}' +
+			'iframe {display: none !important;}';
+
+		if (hide_tos_notice)
+			styles += '#tos-notice {display: none !important;}';
+
+		if (hide_sign_up_notice)
+			styles += '#sign-up-notice {display: none !important;}';
+
+		if (hide_upgrade_notice)
+			styles += '#upgrade-account-notice {display: none !important;}';
+
+		if (hide_ban_notice)
+			styles += '#ban-notice {display: none !important;}';
+
+		customStyles.innerHTML = styles;
+		document.getElementsByTagName("head")[0].appendChild(customStyles);
 	}
 
 	function removeTagHeaders() {
@@ -1235,6 +1661,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			tagList.innerHTML = newList;
 		}
+	}
+
+	function postTagTitles() {
+		if (gLoc == "post")
+			document.title = fetchMeta("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
 	}
 
 	function getCookie() {
@@ -1282,55 +1713,55 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			})(node);
 	}
 
+	function danbNotice(txt, isError) {
+		// Display the notice or append information to it if it already exists. If a second true argument is provided, the notice is displayed as an error.
+		var noticeFunc = (isError ? Danbooru.error : Danbooru.notice);
+		var msg = txt;
+		var notice = document.getElementById("notice");
+
+		if (/\w/.test(notice.innerHTML))
+			msg = notice.innerHTML + "<hr/>" + msg;
+
+		noticeFunc(msg);
+	}
+
+	function scrollbarWidth() {
+		var scroller = document.createElement("div");
+		scroller.style.width = "150px";
+		scroller.style.height = "150px";
+		scroller.style.visibility = "hidden";
+		scroller.style.overflow = "scroll";
+		scroller.style.position = "absolute";
+		scroller.style.top = "0px";
+		scroller.style.left = "0px";
+		document.body.appendChild(scroller);
+		var scrollDiff = scroller.offsetWidth - scroller.clientWidth;
+		document.body.removeChild(scroller);
+
+		return scrollDiff;
+	}
+
+	function getPadding(el) {
+		var clone = el.cloneNode(false);
+		clone.style.width = "0px";
+		clone.style.height = "0px";
+		clone.style.visibility = "hidden";
+		clone.style.position = "absolute";
+		clone.style.top = "0px";
+		clone.style.left = "0px";
+		document.body.appendChild(clone);
+		var widthPadding = clone.clientWidth;
+		var heightPadding = clone.clientHeight;
+		document.body.removeChild(clone);
+		return {width: widthPadding, height: heightPadding};
+	}
+
 	function delayMe(func) {
 		var timer = setTimeout(func, 0);
 	}
 
 	function escapeRegEx(regEx) {
 		return regEx.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-	}
-
-	// Does anyone use these options? Adblock should pretty much cover the ads.
-	function hideAdvertisements() {
-		var img = document.evaluate('//img[@alt="Advertisement"]', document, null, 6, null);
-
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
-			img.snapshotItem(i).style.display = "none";
-	}
-
-	function hideYourAdHere() {
-		var img = document.evaluate('//img[@alt="Your Ad Here"]', document, null, 6, null);
-
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
-			img.snapshotItem(i).style.display = "none";
-	}
-
-	function hideIframes() {
-		var img = document.evaluate('//iframe[contains(@src, "jlist")]', document, null, 6, null);
-
-		for (var i = 0, isl = img.snapshotLength; i < isl; i++)
-			img.snapshotItem(i).style.display = "none";
-	}
-
-	function hideUpgradeNotice() {
-		var x = document.getElementById("upgrade-account-notice");
-
-		if (x)
-			x.style.display = "none";
-	}
-
-	function hideSignUpNotice() {
-		var x = document.getElementById("sign-up-notice");
-
-		if (x)
-			x.style.display = "none";
-	}
-
-	function hideTOSNotice() {
-		var x = document.getElementById("tos-notice");
-
-		if (x)
-			x.style.display = "none";
 	}
 
 
