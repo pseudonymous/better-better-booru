@@ -40,15 +40,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 *
 	 * Checkbox, text, and number do not require any extra properties.
 	 *
-	 * Dropdown requires either txtOptions or numOptions.
-	 * txtOptions = Object containing a list of options and their values
-	 * numOptions = Array containing the starting and ending numbers of the number range.
-	 * If txtOptions and numOptions are both provided, txtOptions are added first and numOptions are added after.
+	 * Dropdown requires either txtOptions, numRange, or numList.
+	 * txtOptions = Object containing a list of options and their values.
+	 * numRange = Array containing the starting and ending numbers of the number range.
+	 * numList = Array containing a list of the desired numbers.
+	 * If more than one of these is provided, they are added to the list in this order: txtOptions, numList, numRange
 	*/
 
 	settings.options = {
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
+		autohide_sidebar: new Option("checkbox", false, "Auto-hide Sidebar", "Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br>Tips:<br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings."),
 		child_border: new Option("text", "#CCCC00", "Child Border Color", "Set the thumbnail border color for child images."),
 		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links."),
 		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
@@ -69,13 +71,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		pending_border: new Option("text", "#0000FF", "Pending Border Color", "Set the thumbnail border color for pending images."),
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
 		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
-		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br>Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br>Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death"),
+		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br>Guidelines:<br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br>Example:<br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death"),
 		search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
 		shota_border: new Option("text", "#66CCFF", "Shota Border Color", "Set the thumbnail border color for shota images."),
 		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
 		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
 		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
-		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:{Disabled:0}, numOptions:[1,200]})
+		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:{Disabled:0}, numRange:[1,200]})
 	};
 	settings.user = {};
 	settings.inputs = {};
@@ -85,7 +87,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	settings.sections = {
 		image: ["show_loli", "show_shota", "show_deleted", "direct_downloads", "thumbnail_count"],
 		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"],
-		sidebar: ["search_add", "remove_tag_headers"],
+		sidebar: ["search_add", "remove_tag_headers", "autohide_sidebar"],
 		borderTypes: ["loli_shota_borders", "custom_status_borders"],
 		borderStyles: ["loli_border", "shota_border", "deleted_border", "flagged_border", "pending_border", "parent_border", "child_border"],
 		loggedOut: ["image_resize", "load_sample_first", "script_blacklisted_tags"],
@@ -289,7 +291,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		{
 			case "dropdown":
 				var txtOptions = optionObject.txtOptions;
-				var numOptions = optionObject.numOptions;
+				var numRange = optionObject.numRange;
+				var numList = optionObject.numList;
 				var selectOption;
 
 				item = document.createElement("select");
@@ -308,9 +311,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 				}
 
-				if (numOptions) {
-					var i = numOptions[0];
-					var end = numOptions[1];
+				if (numList) {
+					for (var i = 0, nll = numList.length; i < nll; i++) {
+						selectOption = document.createElement("option");
+						selectOption.innerHTML = numList[i];
+						selectOption.value = numList[i];
+
+						if (selectOption.value == userSetting)
+							selectOption.selected = true;
+
+						item.appendChild(selectOption);
+					}
+				}
+
+				if (numRange) {
+					var i = numRange[0];
+					var end = numRange[1];
 
 					while (i <= end) {
 						selectOption = document.createElement("option");
@@ -325,7 +341,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 				}
 
-				item.onchange = function() { var selected = this.value; settings.user[settingName] = (/^-?\d+(\.\d+)?$/.test(selected) ? Number(selected) : selected); };
+				item.onchange = function() {
+					var selected = this.value;
+					settings.user[settingName] = (/^-?\d+(\.\d+)?$/.test(selected) ? Number(selected) : selected);
+				};
 				break;
 			case "checkbox":
 				item = document.createElement("input");
@@ -408,7 +427,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (tab == activeTab)
 			return;
 
-		activeTab.className = activeTab.className.replace("bbb-active-tab", "");
+		activeTab.className = activeTab.className.replace(/bbb-active-tab/g, "");
 		settings.el[activeTab.name + "Page"].style.display = "none";
 		tab.className += " bbb-active-tab";
 		settings.el[tab.name + "Page"].style.display = "block";
@@ -420,6 +439,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		menu.parentNode.removeChild(menu);
 		settings.el = {};
+		settings.inputs = {};
 	}
 
 	function loadSettings() {
@@ -479,7 +499,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					case "dropdown":
 						if (input.value != userSetting) {
 							var selectOptions = input.getElementsByTagName("option");
-
 
 							for (var i = 0, sol = selectOptions.length; i < sol; i++) {
 								var selectOption = selectOptions[i];
@@ -584,6 +603,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var loli_shota_borders = settings.user["loli_shota_borders"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
 	var custom_status_borders = settings.user["custom_status_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
 	var clean_links = settings.user["clean_links"]; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
+	var autohide_sidebar = settings.user["autohide_sidebar"]; // Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus (ex: By pressing "Q" to focus on the search box).
 
 	var hide_sign_up_notice = settings.user["hide_sign_up_notice"];
 	var hide_upgrade_notice = settings.user["hide_upgrade_notice"];
@@ -640,6 +660,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* "INIT" */
 	customCSS(); // Contains the portions related to ads and notices.
+
+	if (autohide_sidebar)
+		autohideSidebar();
 
 	if (!isLoggedIn()) // Immediately apply script blacklist for logged out users.
 		delayMe(blacklistInit);
@@ -1497,6 +1520,37 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
+	function autohideSidebar() {
+		if (gLoc == "post" || gLoc == "search") {
+			var sidebar = document.getElementById("sidebar");
+			var search = document.getElementById("search-box");
+
+			var unhide = document.createElement("div");
+			unhide.innerHTML = "&nbsp;";
+			unhide.className = "bbb-unhide";
+			document.body.appendChild(unhide);
+
+			unhide.addEventListener("mouseover", function() {
+				sidebar.className += " bbb-sidebar-show";
+			}, true);
+			unhide.addEventListener("mouseout", function() {
+				sidebar.className = sidebar.className.replace(/bbb-sidebar-show/g, "");
+			}, true);
+			sidebar.addEventListener("mouseover", function() {
+				sidebar.className += " bbb-sidebar-show";
+			}, true);
+			sidebar.addEventListener("mouseout", function() {
+				sidebar.className = sidebar.className.replace(/bbb-sidebar-show/g, "");
+			}, true);
+			sidebar.addEventListener("focus", function() {
+				sidebar.className += " bbb-sidebar-show";
+			}, true);
+			sidebar.addEventListener("blur", function() {
+				sidebar.className = sidebar.className.replace(/bbb-sidebar-show/g, "");
+			}, true);
+		}
+	}
+
 	function allowUserLimit() {
 		if (thumbnail_count > 0 && !/(?:page|limit)=\d/.test(gUrlQuery))
 			return true;
@@ -1619,6 +1673,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		".bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}" +
 		".bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}" +
 		".bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}";
+
+		// Hide sidebar.
+		if (autohide_sidebar)
+			styles += 'div#page {margin: 0px 15px !important;}' +
+			'aside#sidebar {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -1000px !important; overflow-y: auto !important; padding: 0px 15px !important; top: 0px !important; z-index: 101 !important;}' +
+			'aside#sidebar.bbb-sidebar-show {left: 0px !important;}' +
+			'section#content {margin-left: 0px !important;}' +
+			'.bbb-unhide {height: 100%; width: 15px; position: fixed; left: 0px; top: 0px; z-index: 100;}';
 
 		// Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
 		if (custom_status_borders)
@@ -1750,10 +1812,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		clone.style.top = "0px";
 		clone.style.left = "0px";
 		document.body.appendChild(clone);
-		var widthPadding = clone.clientWidth;
-		var heightPadding = clone.clientHeight;
+		var paddingWidth = clone.clientWidth;
+		var paddingHeight = clone.clientHeight;
 		document.body.removeChild(clone);
-		return {width: widthPadding, height: heightPadding};
+		return {width: paddingWidth, height: paddingHeight};
 	}
 
 	function delayMe(func) {
