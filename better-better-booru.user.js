@@ -1533,12 +1533,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		unhide.addEventListener("mouseover", function() {
 			sidebar.className += " bbb-sidebar-show";
 		}, true);
-		unhide.addEventListener("mouseout", function() {
-			sidebar.className = sidebar.className.replace(/bbb-sidebar-show/g, "");
-		}, true);
-		sidebar.addEventListener("mouseover", function() {
-			sidebar.className += " bbb-sidebar-show";
-		}, true);
 		sidebar.addEventListener("mouseout", function() {
 			sidebar.className = sidebar.className.replace(/bbb-sidebar-show/g, "");
 		}, true);
