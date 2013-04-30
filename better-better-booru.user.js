@@ -50,7 +50,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	settings.options = {
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
-		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br>Tips:<br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Posts & Searches:post search"]}),
+		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br>Tips:<br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
 		child_border: new Option("text", "#CCCC00", "Child Border Color", "Set the thumbnail border color for child images."),
 		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links."),
 		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
@@ -1525,17 +1525,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function autohideSidebar() {
 		var sidebar = document.getElementById("sidebar");
 
-		var unhide = document.createElement("div");
-		unhide.innerHTML = "&nbsp;";
-		unhide.className = "bbb-unhide";
-		document.body.appendChild(unhide);
-
-		unhide.addEventListener("mouseover", function() {
-			sidebar.className += " bbb-sidebar-show";
-		}, false);
-		unhide.addEventListener("mouseout", function() {
-			sidebar.className = sidebar.className.replace(/\sbbb-sidebar-show/g, "");
-		}, false);
 		sidebar.addEventListener("focus", function() {
 			sidebar.className += " bbb-sidebar-show";
 		}, true);
@@ -1670,8 +1659,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Hide sidebar.
 		if (autohide_sidebar.indexOf(gLoc) > -1)
 			styles += 'div#page {margin: 0px 15px !important;}' +
-			'aside#sidebar {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -1000px !important; overflow-y: auto !important; padding: 0px 15px !important; top: 0px !important; z-index: 2001 !important;}' +
-			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {left: 0px !important;}' +
+			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -280px !important; overflow-y: hidden !important; padding: 0px 20px !important; top: 0px !important; z-index: 2001 !important;}' +
+			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; left: 0px !important; overflow-y: auto !important; padding: 0px 15px !important;}' +
 			'section#content {margin-left: 0px !important;}' +
 			'.bbb-unhide {height: 100%; width: 15px; position: fixed; left: 0px; top: 0px; z-index: 2000;}';
 
