@@ -41,7 +41,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * Checkbox, text, and number do not require any extra properties.
 	 *
 	 * Dropdown requires either txtOptions, numRange, or numList.
-	 * txtOptions = String containing a semicolon delimited list of options and their values separated by a colon: "option1:value1; option2:value2;"
+	 * txtOptions = Array containing a list of options and their values separated by a colon: ["option1:value1", "option2:value2"]
 	 * numRange = Array containing the starting and ending numbers of the number range.
 	 * numList = Array containing a list of the desired numbers.
 	 * If more than one of these is provided, they are added to the list in this order: txtOptions, numList, numRange
@@ -50,7 +50,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	settings.options = {
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
-		autohide_sidebar: new Option("dropdown", false, "Auto-hide Sidebar", "Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br>Tips:<br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:"Disabled:false; Searches:search; Posts:post; Posts & Searches:post search"}),
+		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br>Tips:<br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Posts & Searches:post search"]}),
 		child_border: new Option("text", "#CCCC00", "Child Border Color", "Set the thumbnail border color for child images."),
 		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links."),
 		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
@@ -77,7 +77,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
 		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
 		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
-		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:"Disabled:0", numRange:[1,200]})
+		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:["Disabled:0"], numRange:[1,200]})
 	};
 	settings.user = {};
 	settings.inputs = {};
@@ -299,8 +299,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 
 				if (txtOptions) {
-				var txtOptions = txtOptions.split(";");
-
 					for (var i = 0, tol = txtOptions.length; i < tol; i++) {
 						var txtOption = txtOptions[i].split(":");
 
@@ -1679,7 +1677,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (autohide_sidebar.indexOf(gLoc) > -1)
 			styles += 'div#page {margin: 0px 15px !important;}' +
 			'aside#sidebar {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -1000px !important; overflow-y: auto !important; padding: 0px 15px !important; top: 0px !important; z-index: 101 !important;}' +
-			'aside#sidebar.bbb-sidebar-show {left: 0px !important;}' +
+			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {left: 0px !important;}' + // Using hover to prevent flickering due to focus/blur issues caused by clicking on nothing inside the sidebar when it already has focus.
 			'section#content {margin-left: 0px !important;}' +
 			'.bbb-unhide {height: 100%; width: 15px; position: fixed; left: 0px; top: 0px; z-index: 100;}';
 
