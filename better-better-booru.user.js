@@ -1532,15 +1532,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		unhide.addEventListener("mouseover", function() {
 			sidebar.className += " bbb-sidebar-show";
-		}, true);
-		sidebar.addEventListener("mouseout", function() {
-			sidebar.className = sidebar.className.replace(/bbb-sidebar-show/g, "");
-		}, true);
+		}, false);
+		unhide.addEventListener("mouseout", function() {
+			sidebar.className = sidebar.className.replace(/\sbbb-sidebar-show/g, "");
+		}, false);
 		sidebar.addEventListener("focus", function() {
 			sidebar.className += " bbb-sidebar-show";
 		}, true);
 		sidebar.addEventListener("blur", function() {
-			sidebar.className = sidebar.className.replace(/bbb-sidebar-show/g, "");
+			sidebar.className = sidebar.className.replace(/\sbbb-sidebar-show/g, "");
 		}, true);
 	}
 
@@ -1670,10 +1670,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Hide sidebar.
 		if (autohide_sidebar.indexOf(gLoc) > -1)
 			styles += 'div#page {margin: 0px 15px !important;}' +
-			'aside#sidebar {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -1000px !important; overflow-y: auto !important; padding: 0px 15px !important; top: 0px !important; z-index: 101 !important;}' +
-			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {left: 0px !important;}' + // Using hover to prevent flickering due to focus/blur issues caused by clicking on nothing inside the sidebar when it already has focus.
+			'aside#sidebar {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -1000px !important; overflow-y: auto !important; padding: 0px 15px !important; top: 0px !important; z-index: 2001 !important;}' +
+			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {left: 0px !important;}' +
 			'section#content {margin-left: 0px !important;}' +
-			'.bbb-unhide {height: 100%; width: 15px; position: fixed; left: 0px; top: 0px; z-index: 100;}';
+			'.bbb-unhide {height: 100%; width: 15px; position: fixed; left: 0px; top: 0px; z-index: 2000;}';
 
 		// Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
 		if (custom_status_borders)
