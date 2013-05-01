@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        5.2
+// @version        5.3
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @include        http://*.donmai.us/*
@@ -51,7 +51,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	settings.options = {
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
-		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br>Tips:<br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
+		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br>Tips:<br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
 		child_border: new Option("text", "#CCCC00", "Child Border Color", "Set the thumbnail border color for child images."),
 		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br>Note:</br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
 		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
@@ -86,13 +86,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	// Setting sections and ordering.
 	settings.sections = {
-		image: ["show_loli", "show_shota", "show_deleted", "direct_downloads", "thumbnail_count"],
+		image: ["show_loli", "show_shota", "show_deleted", "direct_downloads", "thumbnail_count", "alternate_image_swap"],
 		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"],
 		sidebar: ["search_add", "remove_tag_headers", "autohide_sidebar"],
 		borderTypes: ["loli_shota_borders", "custom_status_borders"],
 		borderStyles: ["loli_border", "shota_border", "deleted_border", "flagged_border", "pending_border", "parent_border", "child_border"],
 		loggedOut: ["image_resize", "load_sample_first", "script_blacklisted_tags"],
-		misc: ["alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"]
+		misc: ["clean_links", "arrow_nav", "post_tag_titles"]
 	};
 
 	function injectSettings() {
@@ -1439,8 +1439,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			bbbImage.resized = true;
 		}
 		else {
-			image.style.width = "auto";
-			image.style.height = "auto";
+			image.style.width = image.getAttribute("width") + "px"; // Was NOT expecting image.width to return the current width (css style width) and not the width attribute's value here...
+			image.style.height = image.getAttribute("height") + "px";
 			bbbImage.resized = false;
 		}
 
