@@ -19,7 +19,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * NOTE: You no longer need to edit this script to change settings!
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
-	var settings = {}; // Container for settings
+	var settings = {}; // Container for settings.
+	var bbbImage = {}; // Container for image info.
 
 	function Option(type, def, lbl, expl, optPropObject) {
 		this.type = type;
@@ -41,7 +42,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * Checkbox, text, and number do not require any extra properties.
 	 *
 	 * Dropdown requires either txtOptions, numRange, or numList.
-	 * txtOptions = Array containing a list of options and their values separated by a colon: ["option1:value1", "option2:value2"]
+	 * txtOptions = Array containing a list of options and their values separated by a colon. (ex: ["option1:value1", "option2:value2"])
 	 * numRange = Array containing the starting and ending numbers of the number range.
 	 * numList = Array containing a list of the desired numbers.
 	 * If more than one of these is provided, they are added to the list in this order: txtOptions, numList, numRange
@@ -52,7 +53,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br>Tips:<br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
 		child_border: new Option("text", "#CCCC00", "Child Border Color", "Set the thumbnail border color for child images."),
-		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links."),
+		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br>Note:</br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
 		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
 		deleted_border: new Option("text", "#000000", "Deleted Border Color", "Set the thumbnail border color for deleted images."),
 		direct_downloads: new Option("checkbox", false, "Direct Downloads", "Allow download managers to download the images displayed in the search, pool, and popular listings."),
@@ -1084,6 +1085,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function parsePost(xml) {
+		bbbImage = xml; // Create a global copy. Doesn't serve any purpose at the moment.
+
 		var post = xml;
 		var imageExists = (document.getElementById("image") === null ? false : true);
 		var container = document.getElementById("image-container");
@@ -1258,7 +1261,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + md5 + '.jpg">Find similar</a></li></ul>';
 					history.parentNode.insertBefore(options, history);
-					Danbooru.Post.initialize_post_image_resize_to_window_link();
 				}
 
 				// Make the "Add note" link work.
@@ -1304,9 +1306,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Load/reload notes.
 				Danbooru.Note.load_all();
 
-				// Resize image if desired.
+				// Resize image setup
+				var resizeLink = document.getElementById("image-resize-to-window-link");
+				var resizeLinkClone = resizeLink.cloneNode(true);
+				resizeLinkClone.addEventListener("click", function(event) {resizeImage(); event.preventDefault();}, false);
+				resizeLink.parentNode.appendChild(resizeLinkClone);
+				resizeLink.parentNode.removeChild(resizeLink);
+
 				if (checkSetting("always-resize-images", "true", image_resize))
-					document.getElementById("image-resize-to-window-link").click();
+					resizeImage();
 			}
 
 		// Blacklist
@@ -1416,6 +1424,29 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else
 				document.getElementById("blacklist-box").style.display = "none";
 		}
+	}
+
+	function resizeImage() {
+		var image = document.getElementById("image");
+		var imageContainer = document.getElementById("image-container");
+		var availableWidth = imageContainer.clientWidth;
+		var imgWidth = image.clientWidth;
+		var imgHeight = image.clientHeight;
+		var ratio = availableWidth / imgWidth;
+
+		if (!bbbImage.resized && imgWidth > availableWidth) {
+			image.style.width = imgWidth * ratio + "px";
+			image.style.height = imgHeight * ratio + "px";
+			bbbImage.resized = true;
+		}
+		else {
+			image.style.width = "auto";
+			image.style.height = "auto";
+			bbbImage.resized = false;
+		}
+
+		Danbooru.Note.Box.scale_all();
+		Danbooru.Post.place_jlist_ads();
 	}
 
 	function limitFix() {
