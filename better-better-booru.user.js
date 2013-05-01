@@ -1237,7 +1237,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 						swapInit = false;
 						Danbooru.Note.Box.scale_all();
-						Danbooru.Post.place_jlist_ads();
 					}, false);
 					closeOriginalNotice.addEventListener("click", function(event) {
 						bbbResizeNotice.style.display = "none";
@@ -1446,7 +1445,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		Danbooru.Note.Box.scale_all();
-		Danbooru.Post.place_jlist_ads();
 	}
 
 	function limitFix() {
