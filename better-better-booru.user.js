@@ -20,7 +20,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
 	var settings = {}; // Container for settings.
-	var bbbImage = {}; // Container for image info.
+	var bbbImg = {}; // Container for image info.
 
 	function Option(type, def, lbl, expl, optPropObject) {
 		this.type = type;
@@ -825,8 +825,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
 			var object = document.getElementById("image-container").getElementsByTagName("object")[0];
 
-			imgHeight = Number(object.height);
-			imgWidth = Number(object.width);
+			imgHeight = Number(object.getAttribute("height"));
+			imgWidth = Number(object.getAttribute("width"));
 			hasLarge = false;
 		}
 		else if (/The artist requested removal/.test(document.getElementById("image-container").textContent)) { // Image removed by artist request.
@@ -1085,10 +1085,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function parsePost(xml) {
-		bbbImage = xml; // Create a global copy. Doesn't serve any purpose at the moment.
+		bbbImg = xml; // Create a global copy. Doesn't serve any purpose at the moment.
 
 		var post = xml;
-		var imageExists = (document.getElementById("image") === null ? false : true);
+		var imgExists = (document.getElementById("image") === null ? false : true);
 		var container = document.getElementById("image-container");
 
 		if (post.id) {
@@ -1212,11 +1212,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 								closeOriginalNotice.style.display = "";
 							}
 
-							img.height = height;
-							img.width = width;
+							img.setAttribute("height", height);
+							img.setAttribute("width", width);
 
 							if (!swapInit) {
-								bbbImage.resized = false;
+								bbbImg.resized = false;
 								img.style.height = height + "px";
 								img.style.width = width + "px";
 							}
@@ -1225,11 +1225,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							sampleNotice.style.display = "";
 							originalNotice.style.display = "none";
 							closeOriginalNotice.style.display = "none";
-							img.height = sampHeight;
-							img.width = sampWidth;
+							img.setAttribute("height", sampHeight);
+							img.setAttribute("width", sampWidth);
 
 							if (!swapInit) {
-								bbbImage.resized = false;
+								bbbImg.resized = false;
 								img.style.height = sampHeight + "px";
 								img.style.width = sampWidth + "px";
 							}
@@ -1263,7 +1263,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				// Make the "Add note" link work.
-				if (!imageExists && document.getElementById("translate") !== null)
+				if (!imgExists && document.getElementById("translate") !== null)
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
 
 				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
@@ -1426,22 +1426,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function resizeImage() {
-		var image = document.getElementById("image");
-		var imageContainer = document.getElementById("image-container");
-		var availableWidth = imageContainer.clientWidth;
-		var imgWidth = image.clientWidth;
-		var imgHeight = image.clientHeight;
+		var img = document.getElementById("image");
+		var imgContainer = document.getElementById("image-container");
+		var availableWidth = imgContainer.clientWidth;
+		var imgWidth = img.clientWidth;
+		var imgHeight = img.clientHeight;
 		var ratio = availableWidth / imgWidth;
 
-		if (!bbbImage.resized && imgWidth > availableWidth) {
-			image.style.width = imgWidth * ratio + "px";
-			image.style.height = imgHeight * ratio + "px";
-			bbbImage.resized = true;
+		if (!bbbImg.resized && imgWidth > availableWidth) {
+			img.style.width = imgWidth * ratio + "px";
+			img.style.height = imgHeight * ratio + "px";
+			bbbImg.resized = true;
 		}
 		else {
-			image.style.width = image.getAttribute("width") + "px"; // Was NOT expecting image.width to return the current width (css style width) and not the width attribute's value here...
-			image.style.height = image.getAttribute("height") + "px";
-			bbbImage.resized = false;
+			img.style.width = img.getAttribute("width") + "px"; // Was NOT expecting img.width to return the current width (css style width) and not the width attribute's value here...
+			img.style.height = img.getAttribute("height") + "px";
+			bbbImg.resized = false;
 		}
 
 		Danbooru.Note.Box.scale_all();
