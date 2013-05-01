@@ -1216,7 +1216,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							img.width = width;
 
 							if (!swapInit) {
-								$("#image").data("scale_factor", 1);
+								bbbImage.resized = false;
 								img.style.height = height + "px";
 								img.style.width = width + "px";
 							}
@@ -1229,7 +1229,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							img.width = sampWidth;
 
 							if (!swapInit) {
-								$("#image").data("scale_factor", 1);
+								bbbImage.resized = false;
 								img.style.height = sampHeight + "px";
 								img.style.width = sampWidth + "px";
 							}
