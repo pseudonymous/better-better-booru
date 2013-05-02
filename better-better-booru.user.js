@@ -60,7 +60,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		flagged_border: new Option("text", "#FF0000", "Flagged Border Color", "Set the thumbnail border color for flagged images."),
 		hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
 		hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
-		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"view original\" notice."),
+		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"viewing original\" notice."),
 		hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
 		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Terms of Service agreement notice."),
 		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
@@ -1555,8 +1555,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var sidebar = document.getElementById("sidebar");
 
 		sidebar.addEventListener("click", function(event) {
-			if (event.target instanceof HTMLAnchorElement)
-				event.target.blur();
+			var target = event.target;
+
+			if (target instanceof HTMLAnchorElement)
+				target.blur();
 		}, false);
 		sidebar.addEventListener("focus", function() {
 			sidebar.className += " bbb-sidebar-show";
