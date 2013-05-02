@@ -86,13 +86,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	// Setting sections and ordering.
 	settings.sections = {
-		image: ["show_loli", "show_shota", "show_deleted", "direct_downloads", "thumbnail_count", "alternate_image_swap"],
+		image: ["show_loli", "show_shota", "show_deleted", "thumbnail_count"],
 		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"],
 		sidebar: ["search_add", "remove_tag_headers", "autohide_sidebar"],
 		borderTypes: ["loli_shota_borders", "custom_status_borders"],
 		borderStyles: ["loli_border", "shota_border", "deleted_border", "flagged_border", "pending_border", "parent_border", "child_border"],
 		loggedOut: ["image_resize", "load_sample_first", "script_blacklisted_tags"],
-		misc: ["clean_links", "arrow_nav", "post_tag_titles"]
+		misc: ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"]
 	};
 
 	function injectSettings() {
