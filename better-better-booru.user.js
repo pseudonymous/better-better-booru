@@ -1554,6 +1554,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function autohideSidebar() {
 		var sidebar = document.getElementById("sidebar");
 
+		sidebar.addEventListener("click", function(event) {
+			if (event.target instanceof HTMLAnchorElement)
+				event.target.blur();
+		}, false);
 		sidebar.addEventListener("focus", function() {
 			sidebar.className += " bbb-sidebar-show";
 		}, true);
