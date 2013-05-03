@@ -5,8 +5,9 @@
 // @version        5.3
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
-// @include        http://*.donmai.us/*
-// @include        http://donmai.us/*
+// @match          http://*.donmai.us/*
+// @match          https://*.donmai.us/*
+// @match          http://donmai.us/*
 // @exclude        http://trac.donmai.us/*
 // @run-at         document-end
 // @grant          none
