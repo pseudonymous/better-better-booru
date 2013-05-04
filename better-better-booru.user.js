@@ -1150,16 +1150,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Enable image swapping between the original and sample image.
 				if (hasLarge) {
 					var resizeNotice = document.getElementById("image-resize-notice");
-
-					if (resizeNotice)
-						resizeNotice.parentNode.removeChild(resizeNotice);
-
-					var bbbResizeNotice = document.createElement("div");
-					bbbResizeNotice.className = "ui-corner-all ui-state-highlight notice";
-					bbbResizeNotice.style.position = "relative";
-					bbbResizeNotice.style.display = "none";
-					bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + sampUrl + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
-					container.parentNode.insertBefore(bbbResizeNotice , container);
+					resizeNotice.style.position = "relative";
+					resizeNotice.style.display = "none";
+					resizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + sampUrl + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
 
 					var swapInit = true;
 					var sampleNotice = document.getElementById("bbb-sample-notice");
@@ -1169,12 +1162,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					if (useSample) {
 						sampleNotice.style.display = "";
-						bbbResizeNotice.style.display = "";
+						resizeNotice.style.display = "";
 					}
 					else if (!hide_original_notice) {
 						originalNotice.style.display = "";
 						closeOriginalNotice.style.display = "";
-						bbbResizeNotice.style.display = "";
+						resizeNotice.style.display = "";
 					}
 
 					document.getElementById("bbb-sample-link").addEventListener("click", function(event) {
@@ -1206,7 +1199,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					img.addEventListener("load", function(event) {
 						if (!/\/sample\//.test(img.src)) {
 							if (hide_original_notice)
-								bbbResizeNotice.style.display = "none";
+								resizeNotice.style.display = "none";
 							else {
 								sampleNotice.style.display = "none";
 								originalNotice.style.display = "";
@@ -1240,7 +1233,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						Danbooru.Note.Box.scale_all();
 					}, false);
 					closeOriginalNotice.addEventListener("click", function(event) {
-						bbbResizeNotice.style.display = "none";
+						resizeNotice.style.display = "none";
 						updateSettings("hide_original_notice", true);
 					}, false);
 				}
