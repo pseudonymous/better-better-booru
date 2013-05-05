@@ -1213,6 +1213,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 								bbbImg.resized = false;
 								img.style.height = height + "px";
 								img.style.width = width + "px";
+								Danbooru.Note.Box.scale_all();
 							}
 						}
 						else {
@@ -1226,11 +1227,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 								bbbImg.resized = false;
 								img.style.height = sampHeight + "px";
 								img.style.width = sampWidth + "px";
+								Danbooru.Note.Box.scale_all();
 							}
 						}
-
-						swapInit = false;
-						Danbooru.Note.Box.scale_all();
 					}, false);
 					closeOriginalNotice.addEventListener("click", function(event) {
 						resizeNotice.style.display = "none";
@@ -1260,9 +1259,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (!post.exists && document.getElementById("translate") !== null)
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
 
-				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
+				if (!alternate_image_swap) // Make notes toggle when clicking the image.
 					img.addEventListener("click", Danbooru.Note.Box.toggle_all, false);
-				}
 				else { // Make sample/original images swap when clicking the image.
 					// Make a "Toggle Notes" link in the options bar.
 					if (document.getElementById("listnotetoggle") === null) { // For logged in users.
@@ -1296,17 +1294,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 				}
 
-				// Load/reload notes.
-				Danbooru.Note.load_all();
-
-				// Resize image setup
+				// Alter the "resize to window" link.
 				var resizeLink = document.getElementById("image-resize-to-window-link");
 				var resizeLinkClone = resizeLink.cloneNode(true);
 				resizeLinkClone.addEventListener("click", function(event) {resizeImage(); event.preventDefault();}, false);
 				resizeLink.parentNode.replaceChild(resizeLinkClone, resizeLink);
 
+				// Resize the image if desired.
 				if (checkSetting("always-resize-images", "true", image_resize))
 					resizeImage();
+
+				// Load/reload notes.
+				Danbooru.Note.load_all();
 			}
 
 		// Blacklist
@@ -1430,14 +1429,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			img.style.width = imgWidth * ratio + "px";
 			img.style.height = imgHeight * ratio + "px";
 			bbbImg.resized = true;
+			Danbooru.Note.Box.scale_all();
 		}
-		else {
+		else if (bbbImg.resized) {
 			img.style.width = img.getAttribute("width") + "px"; // Was NOT expecting img.width to return the current width (css style width) and not the width attribute's value here...
 			img.style.height = img.getAttribute("height") + "px";
 			bbbImg.resized = false;
+			Danbooru.Note.Box.scale_all();
 		}
-
-		Danbooru.Note.Box.scale_all();
 	}
 
 	function limitFix() {
