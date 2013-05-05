@@ -860,7 +860,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			is_pending: (fetchMeta("post-is-approvable" == "false" ? false : true)),
 			image_height: imgHeight,
 			image_width: imgWidth,
-			has_large: hasLarge
+			has_large: hasLarge,
+			exists: true
 		};
 
 		delayMe(function(){parsePost(imgInfo);}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
@@ -1089,7 +1090,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		bbbImg = xml; // Create a global copy. Doesn't serve any purpose at the moment.
 
 		var post = xml;
-		var imgExists = (document.getElementById("image") === null ? false : true);
 		var container = document.getElementById("image-container");
 
 		if (post.id) {
@@ -1257,7 +1257,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				// Make the "Add note" link work.
-				if (!imgExists && document.getElementById("translate") !== null)
+				if (!post.exists && document.getElementById("translate") !== null)
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
 
 				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
@@ -1303,8 +1303,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var resizeLink = document.getElementById("image-resize-to-window-link");
 				var resizeLinkClone = resizeLink.cloneNode(true);
 				resizeLinkClone.addEventListener("click", function(event) {resizeImage(); event.preventDefault();}, false);
-				resizeLink.parentNode.appendChild(resizeLinkClone);
-				resizeLink.parentNode.removeChild(resizeLink);
+				resizeLink.parentNode.replaceChild(resizeLinkClone, resizeLink);
 
 				if (checkSetting("always-resize-images", "true", image_resize))
 					resizeImage();
