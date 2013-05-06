@@ -6,6 +6,9 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 5.3:
+ * Added an "auto-hide sidebar" option for hiding the sidebar on search listings and/or individual posts.
+ * Updated to support changes on Danbooru.
 * Version 5.2:
  * Added a "hide ban notice" option.
  * Updated the settings panel layout.
