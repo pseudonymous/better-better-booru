@@ -568,7 +568,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					altTxt = post.md5;
 				}
 
-				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-parent-id="' + post.parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '"  data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-parent-id="' + post.parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 				var img = document.getElementById("image");
 				var bbbLoader = document.getElementById("bbb-loader");
 
@@ -1145,8 +1145,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		explTip.style.width = explTip.clientWidth - padding + 2 + "px";
 
-		explTip.style.left =  x - explTip.offsetWidth - 2 + "px";
-		explTip.style.top =  y - explTip.offsetHeight - 2 + "px";
+		explTip.style.left = x - explTip.offsetWidth - 2 + "px";
+		explTip.style.top = y - explTip.offsetHeight - 2 + "px";
 		explTip.style.visibility = "visible";
 	}
 
