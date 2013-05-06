@@ -526,7 +526,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else
 			where.innerHTML = out;
 
-
 		// Thumbnail classes and titles
 		Danbooru.Post.initialize_titles();
 
