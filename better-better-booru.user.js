@@ -25,11 +25,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var bbbImg = {}; // Container for image info.
 	var settings = {}; // Container for settings.
 
-	// Initilize settings.
+	// Initialize settings.
 	settings.user = {};
+	loadSettings(); // Load user settings.
+
 	settings.inputs = {};
 	settings.el = {}; // Menu elements.
-	loadSettings();
 
 	settings.options = {
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
