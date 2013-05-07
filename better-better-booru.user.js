@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        5.3.1
+// @version        5.3.2
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @match          http://*.donmai.us/*
@@ -415,7 +415,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							document.getElementById("posts").innerHTML = childSpan.innerHTML;
 
 							// Thumbnail classes and titles
-							Danbooru.Post.initialize_titles();
+							Danbooru.Post.initialize_post_previews();
 
 							// Blacklist
 							blacklistInit();
@@ -473,7 +473,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var post = formatJSON(posts[i]);
 			var outId = "";
 			var thumb = "";
-			var thumbClass = "post-preview " + post.thumb_class;
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
 			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted)) {
@@ -486,7 +485,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			// eek, huge line.
-			thumb = '<article class="' + thumbClass + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '"><a href="/posts/' + post.id + search + '"><img src="' + post.thumb_url + '" alt="' + post.tag_string + '"></a></article>';
+			thumb = '<article class="post-preview ' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '"><a href="/posts/' + post.id + search + '"><img src="' + post.thumb_url + '" alt="' + post.tag_string + '"></a></article>';
 
 			if (direct_downloads)
 				thumb += '<a style="display: none;" href="' + post.file_url + '">Direct Download</a></span>';
@@ -527,7 +526,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where.innerHTML = out;
 
 		// Thumbnail classes and titles
-		Danbooru.Post.initialize_titles();
+		Danbooru.Post.initialize_post_previews();
 
 		// Blacklist
 		blacklistInit();
@@ -761,7 +760,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				// Prepare the post information.
-				var thumbClass = "post post-preview " + post.thumb_class;
 				var tagLinks = post.tag_string.split(" ");
 
 				for (var j = 0, tll = tagLinks.length; j < tll; j++)
@@ -772,7 +770,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Create the new post.
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div class="' + thumbClass + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.thumb_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div class="post post-preview ' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.thumb_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
@@ -791,7 +789,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			danbNotice("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.", true);
 
 		// Thumbnail classes and titles
-		Danbooru.Post.initialize_titles();
+		Danbooru.Post.initialize_post_previews();
 
 		// Blacklist
 		blacklistInit();
