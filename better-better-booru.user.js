@@ -1673,8 +1673,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			".post-preview.post-status-deleted img{border-color:" + deleted_border + " !important;}";
 
 		if (loli_shota_borders)
-			styles += '.post-preview[data-tags~="shota"] img{border: 2px solid ' + shota_border + ' !important;}' +
-			'.post-preview[data-tags~="loli"] img{border: 2px solid ' + loli_border + ' !important;}';
+			styles += 'article.post-preview {height: 160px !important; width: 160px !important; margin: 0px 4px 4px 0px !important;}' +
+			'div.preview {height: 160px !important; width: 160px !important; margin-right: 24px !important;}' +
+			'article.post-preview[data-tags~="shota"] a, div.post-preview[data-tags~="shota"] .preview a {padding: 1px !important; display:inline-block !important; border:2px solid ' + shota_border + ' !important;}' +
+			'article.post-preview[data-tags~="loli"] a, div.post-preview[data-tags~="loli"] .preview a  {padding: 1px !important; display:inline-block !important; border:2px solid ' + loli_border + ' !important;}' +
+			'article.post-preview[data-tags~="shota"][data-tags~="loli"] a, div.post-preview[data-tags~="shota"][data-tags~="loli"] .preview a {padding: 1px !important; display:inline-block !important; border:2px solid !important; border-top-color: ' + loli_border + ' !important; border-left-color: ' + loli_border + ' !important; border-right-color: ' + shota_border + ' !important; border-bottom-color: ' + shota_border + ' !important;}';
 
 		if (hide_advertisements)
 			styles += '#content.with-ads {margin-right: 0em !important;}' +
