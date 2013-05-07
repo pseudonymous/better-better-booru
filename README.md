@@ -6,6 +6,10 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 5.3.2:
+ * Updated to support changes on Danbooru (v2.9.0).
+* Version 5.3.1:
+ * Userscripts update fix.
 * Version 5.3:
  * Added an "auto-hide sidebar" option for hiding the sidebar on search listings and/or individual posts.
  * Updated to support changes on Danbooru.
