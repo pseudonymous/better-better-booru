@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        5.3.2
+// @version        5.4
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @match          http://*.donmai.us/*
@@ -573,10 +573,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				// Enable image swapping between the original and sample image.
 				if (post.has_large) {
+					// Remove the original notice (it's not always there) and replace it with our own.
 					var resizeNotice = document.getElementById("image-resize-notice");
-					resizeNotice.style.position = "relative";
-					resizeNotice.style.display = "none";
-					resizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + post.file_url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + post.samp_url + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
+
+					if (resizeNotice)
+						resizeNotice.parentNode.removeChild(resizeNotice);
+
+					var bbbResizeNotice = document.createElement("div");
+					bbbResizeNotice.className = "ui-corner-all ui-state-highlight notice notice-resized";
+					bbbResizeNotice.style.position = "relative";
+					bbbResizeNotice.style.display = "none";
+					bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + post.file_url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + post.samp_url + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
+					container.parentNode.insertBefore(bbbResizeNotice , container);
 
 					var swapInit = true;
 					var sampleNotice = document.getElementById("bbb-sample-notice");
@@ -586,12 +594,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					if (useSample) {
 						sampleNotice.style.display = "";
-						resizeNotice.style.display = "";
+						bbbResizeNotice.style.display = "";
 					}
 					else if (!hide_original_notice) {
 						originalNotice.style.display = "";
 						closeOriginalNotice.style.display = "";
-						resizeNotice.style.display = "";
+						bbbResizeNotice.style.display = "";
 					}
 
 					document.getElementById("bbb-sample-link").addEventListener("click", function(event) {
@@ -623,7 +631,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					img.addEventListener("load", function(event) {
 						if (!/\/sample\//.test(img.src)) {
 							if (hide_original_notice)
-								resizeNotice.style.display = "none";
+								bbbResizeNotice.style.display = "none";
 							else {
 								sampleNotice.style.display = "none";
 								originalNotice.style.display = "";
@@ -660,7 +668,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 					}, false);
 					closeOriginalNotice.addEventListener("click", function(event) {
-						resizeNotice.style.display = "none";
+						bbbResizeNotice.style.display = "none";
 						updateSettings("hide_original_notice", true);
 					}, false);
 				}
