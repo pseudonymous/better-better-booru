@@ -26,12 +26,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var settings = {}; // Container for settings.
 
 	// Initialize settings.
-	settings.user = {};
-	loadSettings(); // Load user settings.
-
-	settings.inputs = {};
-	settings.el = {}; // Menu elements.
-
 	settings.options = {
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
@@ -66,6 +60,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:["Disabled:0"], numRange:[1,200]})
 	};
 
+	settings.user = {};
+	loadSettings(); // Load user settings.
+
+	settings.inputs = {};
+	settings.el = {}; // Menu elements.
 	settings.sections = { // Setting sections and ordering.
 		image: ["show_loli", "show_shota", "show_deleted", "thumbnail_count"],
 		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"],
