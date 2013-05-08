@@ -1747,7 +1747,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (loli_shota_borders)
 			styles += 'article.post-preview {height: 160px !important; width: 160px !important; margin: 0px 4px 4px 0px !important;}' +
-			'div.preview {height: 160px !important; width: 160px !important; margin-right: 24px !important;}';
+			'.post-preview div.preview {height: 160px !important; width: 160px !important; margin-right: 24px !important;}';
 
 		if (hide_advertisements)
 			styles += '#content.with-ads {margin-right: 0em !important;}' +
