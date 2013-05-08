@@ -1143,10 +1143,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var x = event.clientX;
 		var y = event.clientY;
 		var explTip = settings.el[settingName + "Expl"];
+		var topOffset = 0;
 
 		explTip.style.visibility = "hidden";
 		explTip.style.display = "block";
 
+		// Resize the tip to minimize blank space.
 		var origHeight = explTip.clientHeight;
 		var padding = getPadding(explTip).width;
 
@@ -1154,9 +1156,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			explTip.style.width = explTip.clientWidth - padding - 2 + "px";
 
 		explTip.style.width = explTip.clientWidth - padding + 2 + "px";
+		
+		// Don't allow the tip to go above the top of the window.
+		if (y - explTip.offsetHeight - 2 < 5)
+			topOffset = y - explTip.offsetHeight - 7;
 
 		explTip.style.left = x - explTip.offsetWidth - 2 + "px";
-		explTip.style.top = y - explTip.offsetHeight - 2 + "px";
+		explTip.style.top = y - explTip.offsetHeight - 2 - topOffset + "px";
 		explTip.style.visibility = "visible";
 	}
 
