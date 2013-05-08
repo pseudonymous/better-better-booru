@@ -62,7 +62,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
 		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
 		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
-		single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border.<br><br><u>Note</u><br>Borders override each other in the following order.<br>Primary status border:<br> Deleted > Flagged > Pending > Child > Parent<br>Secondary custom tag borders:<br> Loli > Shota"),
+		single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border.<br><br><u>Note</u><br>When custom status borders are enabled, borders override each other in the following order.<br>Primary status border:<br> Deleted > Flagged > Pending > Child > Parent<br>Secondary custom tag borders:<br> Loli > Shota"),
 		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:["Disabled:0"], numRange:[1,200]})
 	};
 
@@ -145,7 +145,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	customCSS(); // Contains the portions related to ads and notices.
 
-	delayMe(formatThumbnails);
+	if (single_color_borders || custom_status_borders || loli_shota_borders)
+		delayMe(formatThumbnails);
 
 	if (autohide_sidebar.indexOf(gLoc) > -1)
 		autohideSidebar();
