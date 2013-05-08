@@ -62,6 +62,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
 		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
 		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
+		single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border.<br><br>Note:<br>Borders override each other with these orders:<br><br>Primary status border:<br> Deleted > Flagged > Pending > Child > Parent<br>Secondary custom tag borders:<br> Loli > Shota"),
 		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:["Disabled:0"], numRange:[1,200]})
 	};
 
@@ -69,7 +70,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		image: ["show_loli", "show_shota", "show_deleted", "thumbnail_count"],
 		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"],
 		sidebar: ["search_add", "remove_tag_headers", "autohide_sidebar"],
-		borderTypes: ["loli_shota_borders", "custom_status_borders"],
+		borderTypes: ["loli_shota_borders", "custom_status_borders", "single_color_borders"],
 		borderStyles: ["loli_border", "shota_border", "deleted_border", "flagged_border", "pending_border", "parent_border", "child_border"],
 		loggedOut: ["image_resize", "load_sample_first", "script_blacklisted_tags"],
 		misc: ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"]
@@ -89,6 +90,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	var loli_shota_borders = settings.user["loli_shota_borders"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
 	var custom_status_borders = settings.user["custom_status_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
+	var single_color_borders = settings.user["single_color_borders"]; // Use simple single color borders.
 	var clean_links = settings.user["clean_links"]; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 	var autohide_sidebar = settings.user["autohide_sidebar"]; // Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus (ex: By pressing "Q" to focus on the search box).
 
@@ -142,6 +144,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	injectSettings();
 
 	customCSS(); // Contains the portions related to ads and notices.
+
+	delayMe(formatThumbnails);
 
 	if (autohide_sidebar.indexOf(gLoc) > -1)
 		autohideSidebar();
@@ -415,7 +419,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							document.getElementById("posts").innerHTML = childSpan.innerHTML;
 
 							// Thumbnail classes and titles
-							Danbooru.Post.initialize_post_previews();
+							formatThumbnails();
 
 							// Blacklist
 							blacklistInit();
@@ -526,7 +530,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where.innerHTML = out;
 
 		// Thumbnail classes and titles
-		Danbooru.Post.initialize_post_previews();
+		formatThumbnails();
 
 		// Blacklist
 		blacklistInit();
@@ -797,7 +801,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			danbNotice("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.", true);
 
 		// Thumbnail classes and titles
-		Danbooru.Post.initialize_post_previews();
+		formatThumbnails();
 
 		// Blacklist
 		blacklistInit();
@@ -1599,6 +1603,69 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
+	function formatThumbnails() {
+		// Create thumbnail titles and borders.
+		var posts = document.getElementsByClassName("post-preview");
+
+		for (var i = 0, pl = posts.length; i < pl; i++) {
+			var post = posts[i];
+			var img = post.getElementsByTagName("img")[0];
+			var link = img.parentNode;
+			var classes = post.className;
+			var title = post.getAttribute("data-tags") + " user:" + post.getAttribute("data-uploader") + " rating:" + post.getAttribute("data-rating") + " score:" + post.getAttribute("data-score");
+
+			// Create title.
+			img.title = title;
+
+			if (!single_color_borders) {
+				if (custom_status_borders) {
+					// Primary status borders.
+					var primary = [];
+
+					if (/\bpost-status-deleted\b/.test(classes))
+						primary.push(deleted_border);
+					else if (/\bpost-status-flagged\b/.test(classes))
+						primary.push(flagged_border);
+					else if (/\bpost-status-pending\b/.test(classes))
+						primary.push(pending_border);
+
+					if (/\bpost-status-has-parent\b/.test(classes))
+						primary.push(child_border);
+					if (/\bpost-status-has-children\b/.test(classes))
+						primary.push(parent_border);
+
+					var primaryL = primary.length;
+
+					if (primaryL == 2)
+						img.setAttribute("style", "border: 2px solid !important; border-color: " + primary[1] + " " + primary[0] + " " + primary[0] + " " + primary[1] + " !important;");
+					else if (primaryL == 3)
+						img.setAttribute("style", "border: 2px solid !important; border-color: " + primary[2] + " " + primary[0] + " " + primary[0] + " " + primary[1] + " !important;");
+				}
+				else // Default Danbooru border styling.
+					Danbooru.Post.initialize_preview_borders_for(post);
+			}
+			else // Don't allow multi color borders.
+				img.removeAttribute("style");
+
+			// Secondary custom tag borders.
+			if (loli_shota_borders) {
+				var secondary = [];
+
+				if (/\bloli\b/.test(title))
+					secondary.push(loli_border);
+				if (/\bshota\b/.test(title))
+					secondary.push(shota_border);
+
+				var secondaryL = secondary.length;
+
+				if (secondaryL == 1 || (single_color_borders && secondaryL > 1))
+					link.setAttribute("style", "padding: 1px !important; display:inline-block !important; border:2px solid " + secondary[0] + " !important;");
+				if (secondaryL == 2)
+					link.setAttribute("style", "padding: 1px !important; display:inline-block !important; border:2px solid !important; border-color: " + secondary[0] + " " + secondary[1] + " " + secondary[1] + " " + secondary[0] + " !important;");
+			}
+		}
+	}
+
 	function formatJSON(post) {
 		// Add information to the JSON post object.
 		var ext = post.file_ext;
@@ -1650,7 +1717,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		".bbb-label > span {display: inline-block; line-height: 34px;}" +
 		// ".bbb-label-text {}" +
 		".bbb-label-input {float: right;}" +
-		".bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; padding: 5px; position: fixed; width: 400px;}" +
+		".bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; width: 400px;}" +
 		".bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}" +
 		".bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}" +
 		".bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}" +
@@ -1674,10 +1741,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (loli_shota_borders)
 			styles += 'article.post-preview {height: 160px !important; width: 160px !important; margin: 0px 4px 4px 0px !important;}' +
-			'div.preview {height: 160px !important; width: 160px !important; margin-right: 24px !important;}' +
-			'article.post-preview[data-tags~="shota"] a, div.post-preview[data-tags~="shota"] .preview a {padding: 1px !important; display:inline-block !important; border:2px solid ' + shota_border + ' !important;}' +
-			'article.post-preview[data-tags~="loli"] a, div.post-preview[data-tags~="loli"] .preview a  {padding: 1px !important; display:inline-block !important; border:2px solid ' + loli_border + ' !important;}' +
-			'article.post-preview[data-tags~="shota"][data-tags~="loli"] a, div.post-preview[data-tags~="shota"][data-tags~="loli"] .preview a {padding: 1px !important; display:inline-block !important; border:2px solid !important; border-top-color: ' + loli_border + ' !important; border-left-color: ' + loli_border + ' !important; border-right-color: ' + shota_border + ' !important; border-bottom-color: ' + shota_border + ' !important;}';
+			'div.preview {height: 160px !important; width: 160px !important; margin-right: 24px !important;}';
 
 		if (hide_advertisements)
 			styles += '#content.with-ads {margin-right: 0em !important;}' +
