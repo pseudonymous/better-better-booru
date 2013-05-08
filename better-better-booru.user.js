@@ -1660,7 +1660,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				if (secondaryL == 1 || (single_color_borders && secondaryL > 1))
 					link.setAttribute("style", "padding: 1px !important; display:inline-block !important; border:2px solid " + secondary[0] + " !important;");
-				if (secondaryL == 2)
+				else if (secondaryL == 2)
 					link.setAttribute("style", "padding: 1px !important; display:inline-block !important; border:2px solid !important; border-color: " + secondary[0] + " " + secondary[1] + " " + secondary[1] + " " + secondary[0] + " !important;");
 			}
 		}
