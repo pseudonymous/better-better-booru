@@ -1836,6 +1836,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var msg = txt;
 		var notice = document.getElementById("notice");
 
+		if (/\w/.test(notice.children[0].innerHTML))
+			msg = notice.children[0].innerHTML + "<hr/>" + msg;
+			
 		noticeFunc(msg);
 	}
 
