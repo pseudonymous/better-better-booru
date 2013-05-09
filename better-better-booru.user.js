@@ -69,7 +69,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		image: ["show_loli", "show_shota", "show_deleted", "thumbnail_count"],
 		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"],
 		sidebar: ["search_add", "remove_tag_headers", "autohide_sidebar"],
-		borderTypes: ["loli_shota_borders", "custom_status_borders", "single_color_borders"],
+		borderOptions: ["loli_shota_borders", "custom_status_borders", "single_color_borders"],
 		borderStyles: ["loli_border", "shota_border", "deleted_border", "flagged_border", "pending_border", "parent_border", "child_border"],
 		loggedOut: ["image_resize", "load_sample_first", "script_blacklisted_tags"],
 		misc: ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"]
@@ -892,7 +892,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(bordersPage);
 		settings.el.bordersPage = bordersPage;
 
-		createSection(settings.sections.borderTypes, bordersPage, "Options");
+		createSection(settings.sections.borderOptions, bordersPage, "Options");
 		createSection(settings.sections.borderStyles, bordersPage, "Styles");
 
 		var close = document.createElement("a");
