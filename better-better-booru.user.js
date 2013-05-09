@@ -1618,8 +1618,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var img = post.getElementsByTagName("img")[0];
 			var link = img.parentNode;
 			var classes = post.className;
-			var title = post.getAttribute("data-tags") + " user:" + post.getAttribute("data-uploader") + " rating:" + post.getAttribute("data-rating") + " score:" + post.getAttribute("data-score");
-
+			var tags = post.getAttribute("data-tags");
+			var user = post.getAttribute("data-uploader");
+			var rating = post.getAttribute("data-rating");
+			var score = post.getAttribute("data-score");
+			var title = tags + " user:" + user + " rating:" + rating + " score:" + score;
+			var postInfo = tags + " user:" + user.replace(/\s/g, "_") + " rating:" + rating + " score:" + score;
+			
 			// Create title.
 			img.title = title;
 
@@ -1657,9 +1662,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (loli_shota_borders) {
 				var secondary = [];
 
-				if (/\bloli\b/.test(title))
+				if (/\bloli\b/.test(postInfo))
 					secondary.push(loli_border);
-				if (/\bshota\b/.test(title))
+				if (/\bshota\b/.test(postInfo))
 					secondary.push(shota_border);
 
 				var secondaryL = secondary.length;
