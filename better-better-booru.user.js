@@ -892,8 +892,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(bordersPage);
 		settings.el.bordersPage = bordersPage;
 
-		createSection(settings.sections.borderTypes, bordersPage, "Border Types");
-		createSection(settings.sections.borderStyles, bordersPage, "Border Styles");
+		createSection(settings.sections.borderTypes, bordersPage, "Options");
+		createSection(settings.sections.borderStyles, bordersPage, "Styles");
 
 		var close = document.createElement("a");
 		close.innerHTML = "Save & Close";
