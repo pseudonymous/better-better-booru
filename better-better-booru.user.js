@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        5.4
+// @version        5.4.1
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @match          http://*.donmai.us/*
@@ -1632,26 +1632,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var secondary = [];
 			var secondaryLength = 0;
 
+			// Detect status borders
+			if (/\bpost-status-deleted\b/.test(classes))
+				primary.push(deleted_border);
+			else if (/\bpost-status-flagged\b/.test(classes))
+				primary.push(flagged_border);
+			else if (/\bpost-status-pending\b/.test(classes))
+				primary.push(pending_border);
+
+			if (/\bpost-status-has-parent\b/.test(classes))
+				primary.push(child_border);
+			if (/\bpost-status-has-children\b/.test(classes))
+				primary.push(parent_border);
+
+			primaryLength = primary.length;
+
 			// Create title.
 			img.title = title;
 
 			// Primary status borders.
 			if (!single_color_borders) {
 				if (custom_status_borders) {
-					if (/\bpost-status-deleted\b/.test(classes))
-						primary.push(deleted_border);
-					else if (/\bpost-status-flagged\b/.test(classes))
-						primary.push(flagged_border);
-					else if (/\bpost-status-pending\b/.test(classes))
-						primary.push(pending_border);
-
-					if (/\bpost-status-has-parent\b/.test(classes))
-						primary.push(child_border);
-					if (/\bpost-status-has-children\b/.test(classes))
-						primary.push(parent_border);
-
-					primaryLength = primary.length;
-
 					if (primaryLength == 2)
 						img.setAttribute("style", "border-style: solid !important; border-color: " + primary[1] + " " + primary[0] + " " + primary[0] + " " + primary[1] + " !important;");
 					else if (primaryLength == 3)
@@ -1671,7 +1672,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					secondary.push(shota_border);
 
 				secondaryLength = secondary.length;
-				customTagPadding = (img.offsetHeight != img.clientHeight ? 1 : 0);
+				customTagPadding = (primaryLength ? 1 : 0);
 
 				if (secondaryLength == 1 || (single_color_borders && secondaryLength > 1))
 					link.setAttribute("style", "padding: " + customTagPadding + "px !important; display:inline-block !important; border:" + border_width + "px solid " + secondary[0] + " !important;");
