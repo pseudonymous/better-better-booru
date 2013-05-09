@@ -7,7 +7,8 @@ Various tweaks to make Danbooru better.
 Changelog
 ----------
 * Version 5.4:
- * Added a "single color borders" option to revert thumbnail borders to single colors.
+ * Added a "single color borders" option to allow reverting thumbnail borders to single colors.
+ * Added a "border width" option to allow changing the thumbnail border size without using more space on the page.
  * Updated loli, shota, and custom status borders to support multicolor borders and moved loli/shota borders to a secondary border to allow simultaneous status borders.
  * Fixed the resize notice for users viewing original images first.
 * Version 5.3.2:
