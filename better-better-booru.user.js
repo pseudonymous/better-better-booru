@@ -1843,7 +1843,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (/\w/.test(notice.children[0].innerHTML))
 			msg = notice.children[0].innerHTML + "<hr/>" + msg;
-			
+
 		noticeFunc(msg);
 	}
 
