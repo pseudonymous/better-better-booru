@@ -30,7 +30,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
-		border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {numRange:[1,3]}),
+		border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
 		child_border: new Option("text", "#CCCC00", "Child Border Color", "Set the thumbnail border color for child images."),
 		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br><u>Note</u></br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
 		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
@@ -1626,15 +1626,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var score = post.getAttribute("data-score");
 			var title = tags + " user:" + user + " rating:" + rating + " score:" + score;
 			var postInfo = tags + " user:" + user.replace(/\s/g, "_") + " rating:" + rating + " score:" + score;
+			var customTagPadding = 1;
+			var primary = [];
+			var primaryLength = 0;
+			var secondary = [];
+			var secondaryLength = 0;
 
 			// Create title.
 			img.title = title;
 
+			// Primary status borders.
 			if (!single_color_borders) {
 				if (custom_status_borders) {
-					// Primary status borders.
-					var primary = [];
-
 					if (/\bpost-status-deleted\b/.test(classes))
 						primary.push(deleted_border);
 					else if (/\bpost-status-flagged\b/.test(classes))
@@ -1647,11 +1650,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					if (/\bpost-status-has-children\b/.test(classes))
 						primary.push(parent_border);
 
-					var primaryL = primary.length;
+					primaryLength = primary.length;
 
-					if (primaryL == 2)
+					if (primaryLength == 2)
 						img.setAttribute("style", "border-style: solid !important; border-color: " + primary[1] + " " + primary[0] + " " + primary[0] + " " + primary[1] + " !important;");
-					else if (primaryL == 3)
+					else if (primaryLength == 3)
 						img.setAttribute("style", "border-style: solid !important; border-color: " + primary[2] + " " + primary[0] + " " + primary[0] + " " + primary[1] + " !important;");
 				}
 				else // Default Danbooru border styling.
@@ -1662,19 +1665,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// Secondary custom tag borders.
 			if (loli_shota_borders) {
-				var secondary = [];
-
 				if (/\bloli\b/.test(postInfo))
 					secondary.push(loli_border);
 				if (/\bshota\b/.test(postInfo))
 					secondary.push(shota_border);
 
-				var secondaryL = secondary.length;
+				secondaryLength = secondary.length;
+				customTagPadding = (primaryLength ? 1 : 0);
 
-				if (secondaryL == 1 || (single_color_borders && secondaryL > 1))
-					link.setAttribute("style", "padding: 1px !important; display:inline-block !important; border:" + border_width + "px solid " + secondary[0] + " !important;");
-				else if (secondaryL == 2)
-					link.setAttribute("style", "padding: 1px !important; display:inline-block !important; border:" + border_width + "px solid !important; border-color: " + secondary[0] + " " + secondary[1] + " " + secondary[1] + " " + secondary[0] + " !important;");
+				if (secondaryLength == 1 || (single_color_borders && secondaryLength > 1))
+					link.setAttribute("style", "padding: " + customTagPadding + "px !important; display:inline-block !important; border:" + border_width + "px solid " + secondary[0] + " !important;");
+				else if (secondaryLength == 2)
+					link.setAttribute("style", "padding: " + customTagPadding + "px !important; display:inline-block !important; border:" + border_width + "px solid !important; border-color: " + secondary[0] + " " + secondary[1] + " " + secondary[1] + " " + secondary[0] + " !important;");
 			}
 		}
 	}
