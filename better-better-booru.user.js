@@ -1671,7 +1671,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					secondary.push(shota_border);
 
 				secondaryLength = secondary.length;
-				customTagPadding = (primaryLength ? 1 : 0);
+				customTagPadding = (img.offsetHeight != img.clientHeight ? 1 : 0);
 
 				if (secondaryLength == 1 || (single_color_borders && secondaryLength > 1))
 					link.setAttribute("style", "padding: " + customTagPadding + "px !important; display:inline-block !important; border:" + border_width + "px solid " + secondary[0] + " !important;");
