@@ -6,6 +6,8 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 5.4.1:
+ * Fixed secondary border blank space on loading images with no primary status border.
 * Version 5.4:
  * Added a "single color borders" option to allow reverting thumbnail borders to single colors.
  * Added a "border width" option to allow changing the thumbnail border size without using more space on the page.
