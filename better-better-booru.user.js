@@ -1624,7 +1624,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var score = post.getAttribute("data-score");
 			var title = tags + " user:" + user + " rating:" + rating + " score:" + score;
 			var postInfo = tags + " user:" + user.replace(/\s/g, "_") + " rating:" + rating + " score:" + score;
-			
+
 			// Create title.
 			img.title = title;
 
