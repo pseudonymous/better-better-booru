@@ -1727,10 +1727,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.bbb-section-options-left, .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
 		'.bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
 		'.bbb-section-header {border-bottom: 2px solid #CCCCCC; padding-top: 10px; width: 750px;}' +
-		'.bbb-label {display: block; height: 34px; padding: 0px 5px; overflow: hidden;}' + // Overflow is used here to correct bbb-label-input float problems.
+		'.bbb-label {display: block; height: 29px; padding: 0px 5px; overflow: hidden;}' + // Overflow is used here to correct bbb-label-input float problems.
 		'.bbb-label:hover {background-color: #EEEEEE;}' +
-		'.bbb-label * {vertical-align: middle;}' +
-		'.bbb-label > span {display: inline-block; line-height: 34px;}' +
+		'.bbb-label > span {display: inline-block; line-height: 29px; vertical-align: middle;}' +
+		'.bbb-label input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
 		// '.bbb-label-text {}' +
 		'.bbb-label-input {float: right;}' +
 		'.bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; width: 400px;}' +
