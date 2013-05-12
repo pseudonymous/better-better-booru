@@ -31,6 +31,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
 		border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
+		bypass_api: new Option("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
 		child_border: new Option("text", "#CCCC00", "Child Border Color", "Set the thumbnail border color for child images."),
 		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br><u>Note</u></br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
 		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
@@ -47,6 +48,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post."),
 		loli_border: new Option("text", "#FFC0CB", "Loli Border Color", "Set the thumbnail border color for loli images."),
 		loli_shota_borders: new Option("checkbox", true, "Loli & Shota Borders", "Add thumbnail borders to loli and shota images."),
+		manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
 		parent_border: new Option("text", "#00FF00", "Parent Border Color", "Set the thumbnail border color for parent images."),
 		pending_border: new Option("text", "#0000FF", "Pending Border Color", "Set the thumbnail border color for pending images."),
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
@@ -67,13 +69,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	settings.inputs = {};
 	settings.el = {}; // Menu elements.
 	settings.sections = { // Setting sections and ordering.
-		image: ["show_loli", "show_shota", "show_deleted", "thumbnail_count"],
+		browse: ["show_loli", "show_shota", "show_deleted", "thumbnail_count"],
 		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"],
 		sidebar: ["search_add", "remove_tag_headers", "autohide_sidebar"],
 		borderOptions: ["loli_shota_borders", "custom_status_borders", "single_color_borders", "border_width"],
 		borderStyles: ["loli_border", "shota_border", "deleted_border", "flagged_border", "pending_border", "parent_border", "child_border"],
 		loggedOut: ["image_resize", "load_sample_first", "script_blacklisted_tags"],
-		misc: ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"]
+		misc: ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"],
+		pref: ["bypass_api", "manage_cookies"]
 	};
 
 	// Location variables.
@@ -87,6 +90,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var show_loli = settings.user["show_loli"];
 	var show_shota = settings.user["show_shota"];
 	var show_deleted = settings.user["show_deleted"]; // Show all deleted posts.
+	var direct_downloads = settings.user["direct_downloads"]; // Allow download managers for thumbnail listings.
 
 	var loli_shota_borders = settings.user["loli_shota_borders"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
 	var custom_status_borders = settings.user["custom_status_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
@@ -94,6 +98,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var border_width = settings.user["border_width"]; // Set the thumbnail border width.
 	var clean_links = settings.user["clean_links"]; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
 	var autohide_sidebar = settings.user["autohide_sidebar"]; // Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus (ex: By pressing "Q" to focus on the search box).
+
+	var bypass_api = settings.user["bypass_api"]; // Automatically bypass API features when they can't be used.
+	var manage_cookies = settings.user["manage_cookies"]; // Create cookies to completely stop notices.
 
 	var hide_sign_up_notice = settings.user["hide_sign_up_notice"];
 	var hide_upgrade_notice = settings.user["hide_upgrade_notice"];
@@ -105,7 +112,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Search
 	var arrow_nav = settings.user["arrow_nav"]; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
 	var search_add = settings.user["search_add"]; // Add the + and - shortcuts to the tag list for including or excluding search terms.
-	var direct_downloads = settings.user["direct_downloads"]; // Allow download managers for all search listings.
 	var thumbnail_count = settings.user["thumbnail_count"]; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
@@ -155,7 +161,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (!isLoggedIn()) // Immediately apply script blacklist for logged out users.
 		delayMe(blacklistInit);
 
-	if (show_loli || show_shota || show_deleted || direct_downloads) // API only features.
+	if (useAPI()) // API only features.
 		searchJSON(gLoc);
 	else // Alternate mode for features.
 		modifyPage(gLoc);
@@ -163,12 +169,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (clean_links)
 		cleanLinks();
 
-	if (arrow_nav) {
-		var paginator = document.getElementsByClassName("paginator")[0];
-
-		if (paginator || gLoc == "popular") // If the paginator exists, arrow navigation should be applicable.
-			window.addEventListener("keydown", keyCheck, false);
-	}
+	if (arrow_nav && allowArrowNav())
+		window.addEventListener("keydown", keyCheck, false);
 
 	if (search_add)
 		searchAdd();
@@ -255,12 +257,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						else if (mode == "comments")
 							parseComments(xml);
 					}
-					else if (xmlhttp.status == 403)
-						danbNotice("Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads.", true);
+					else if (xmlhttp.status == 403 || xmlhttp.status == 401) {
+						danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', true);
+						document.getElementById("bbb-bypass-api-link").addEventListener("click", function(event) {
+							updateSettings("bypass_api", true);
+							this.parentNode.innerHTML="Settings updated. You may change this setting under preferences in the settings panel.";
+							event.preventDefault();
+						}, false);
+					}
 					else if (xmlhttp.status == 421)
 						danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", true);
-					else if (xmlhttp.status == 401)
-						danbNotice("Better Better Booru: Error retrieving information. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads.", true);
 					else if (xmlhttp.status == 500)
 						danbNotice("Better Better Booru: Error retrieving information. Internal server error.", true);
 					else if (xmlhttp.status == 503)
@@ -810,7 +816,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	/* Functions for the settings panel */
-
 	function injectSettings() {
 		var menu = document.getElementById("top");
 		menu = menu.getElementsByTagName("menu");
@@ -875,6 +880,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		};
 		tabBar.appendChild(borderTab);
 
+		var prefTab = document.createElement("a");
+		prefTab.name = "pref";
+		prefTab.href = "#";
+		prefTab.innerHTML = "Preferences";
+		prefTab.className = "bbb-tab";
+		prefTab.onclick = function() {
+			changeTab(this);
+			return false;
+		};
+		tabBar.appendChild(prefTab);
+
 		var scrollDiv = document.createElement("div");
 		scrollDiv.className = "bbb-scroll-div";
 		menu.appendChild(scrollDiv);
@@ -883,7 +899,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(generalPage);
 		settings.el.generalPage = generalPage;
 
-		createSection(settings.sections.image, generalPage, "Images & Thumbnails");
+		createSection(settings.sections.browse, generalPage, "Image Browsing");
 		createSection(settings.sections.sidebar, generalPage, "Tag Sidebar");
 		createSection(settings.sections.misc, generalPage, "Misc.");
 		createSection(settings.sections.layout, generalPage, "Layout");
@@ -896,6 +912,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		createSection(settings.sections.borderOptions, bordersPage, "Options");
 		createSection(settings.sections.borderStyles, bordersPage, "Styles");
+
+		var prefPage = document.createElement("div");
+		prefPage.style.display = "none";
+		scrollDiv.appendChild(prefPage);
+		settings.el.prefPage = prefPage;
+
+		createSection(settings.sections.pref, prefPage);
 
 		var close = document.createElement("a");
 		close.innerHTML = "Save & Close";
@@ -1518,6 +1541,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return false;
 	}
 
+	function allowArrowNav() {
+		var paginator = document.getElementsByClassName("paginator")[0];
+
+		if (paginator || gLoc == "popular") // If the paginator exists, arrow navigation should be applicable.
+			return true;
+		else
+			return false;
+	}
+
 	function needPostAPI() {
 		if (document.getElementById("image-container").getElementsByTagName("object")[0] || document.getElementById("image") || /Save this file|The artist requested removal/.test(document.getElementById("image-container").textContent))
 			return false;
@@ -1568,6 +1600,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return true;
 		else
 			return false;
+	}
+
+	function useAPI() {
+		var tryAPI = false;
+
+		if (show_loli || show_shota || show_deleted || direct_downloads) {
+			if (isLoggedIn() || !bypass_api)
+				tryAPI = true;
+		}
+
+		return tryAPI;
 	}
 
 	function checkSetting(metaName, metaData, scriptSetting) {
@@ -1771,14 +1814,26 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			'img[alt="Your Ad Here"] {display: none !important;}' +
 			'iframe {display: none !important;}';
 
-		if (hide_tos_notice)
+		if (hide_tos_notice && document.getElementById("tos-notice")) {
 			styles += '#tos-notice {display: none !important;}';
 
-		if (hide_sign_up_notice)
+			if (manage_cookies)
+				createCookie("accepted_tos", 1, 365);
+		}
+
+		if (hide_sign_up_notice && document.getElementById("sign-up-notice")) {
 			styles += '#sign-up-notice {display: none !important;}';
 
-		if (hide_upgrade_notice)
+			if (manage_cookies)
+				createCookie("hide_sign_up_notice", 1, 7);
+		}
+
+		if (hide_upgrade_notice && document.getElementById("upgrade-account-notice")) {
 			styles += '#upgrade-account-notice {display: none !important;}';
+
+			if (manage_cookies)
+				createCookie("hide_upgrade_account_notice", 1, 7);
+		}
 
 		if (hide_ban_notice)
 			styles += '#ban-notice {display: none !important;}';
@@ -1819,12 +1874,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return out;
 	}
 
-	function createCookie(cName, cValue, expYear) {
+	function createCookie(cName, cValue, expDays) {
 		var data = cName + "=" + cValue + "; path=/";
 
-		if (expYear !== null) {
+		if (expDays !== null) {
 			var expDate = new Date();
-			expDate.setFullYear(expDate.getFullYear() + expYear);
+			expDate.setTime(expDate.getTime() + expDays * 86400000);
 			expDate.toUTCString();
 			data += "; expires=" + expDate;
 		}
