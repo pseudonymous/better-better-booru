@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        5.4.1
+// @version        ?.?
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @match          http://*.donmai.us/*
@@ -22,22 +22,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 */
 
 	/* Global Variables */
-	var bbbImg = {}; // Container for image info.
+	var bbbInfo = {}; // Container for misc info.
 	var settings = {}; // Container for settings.
 
 	// Initialize settings.
 	settings.options = {
+		bbb_version: "6.0",
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
 		border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
 		bypass_api: new Option("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
-		child_border: new Option("text", "#CCCC00", "Child Border Color", "Set the thumbnail border color for child images."),
 		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br><u>Note</u></br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
 		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
-		deleted_border: new Option("text", "#000000", "Deleted Border Color", "Set the thumbnail border color for deleted images."),
+		custom_tag_borders: new Option("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to images with specific tags."),
 		direct_downloads: new Option("checkbox", false, "Direct Downloads", "Allow download managers to download the images displayed in the search, pool, and popular listings."),
-		flagged_border: new Option("text", "#FF0000", "Flagged Border Color", "Set the thumbnail border color for flagged images."),
 		hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
 		hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"viewing original\" notice."),
@@ -46,21 +45,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
 		image_resize: new Option("checkbox", true, "Resize Images", "Shrink large images to fit the browser window when initially loading an individual post."),
 		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post."),
-		loli_border: new Option("text", "#FFC0CB", "Loli Border Color", "Set the thumbnail border color for loli images."),
-		loli_shota_borders: new Option("checkbox", true, "Loli & Shota Borders", "Add thumbnail borders to loli and shota images."),
 		manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
-		parent_border: new Option("text", "#00FF00", "Parent Border Color", "Set the thumbnail border color for parent images."),
-		pending_border: new Option("text", "#0000FF", "Pending Border Color", "Set the thumbnail border color for pending images."),
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
 		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
 		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death"),
 		search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
-		shota_border: new Option("text", "#66CCFF", "Shota Border Color", "Set the thumbnail border color for shota images."),
 		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
 		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
 		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
-		single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border.<br><br><u>Note</u><br>When custom status borders are enabled, borders override each other in the following order.<br>Primary status border:<br> Deleted > Flagged > Pending > Child > Parent<br>Secondary custom tag border:<br> Loli > Shota"),
-		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:["Disabled:0"], numRange:[1,200]})
+		single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
+		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
+		status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
+		tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"])
 	};
 
 	settings.user = {};
@@ -69,14 +65,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	settings.inputs = {};
 	settings.el = {}; // Menu elements.
 	settings.sections = { // Setting sections and ordering.
-		browse: ["show_loli", "show_shota", "show_deleted", "thumbnail_count"],
-		layout: ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"],
-		sidebar: ["search_add", "remove_tag_headers", "autohide_sidebar"],
-		borderOptions: ["loli_shota_borders", "custom_status_borders", "single_color_borders", "border_width"],
-		borderStyles: ["loli_border", "shota_border", "deleted_border", "flagged_border", "pending_border", "parent_border", "child_border"],
-		loggedOut: ["image_resize", "load_sample_first", "script_blacklisted_tags"],
-		misc: ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"],
-		pref: ["bypass_api", "manage_cookies"]
+		browse: new Section("general", ["show_loli", "show_shota", "show_deleted", "thumbnail_count"], "Image Browsing"),
+		layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
+		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
+		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
+		misc: new Section("general", ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
+		pref: new Section("general", ["bypass_api", "manage_cookies"], ""),
+		border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
+		status_borders: new Section("border", "status_borders", "Custom Status Styles"),
+		tag_borders: new Section("border", "tag_borders", "Custom Tag Styles")
 	};
 
 	// Location variables.
@@ -92,7 +89,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var show_deleted = settings.user["show_deleted"]; // Show all deleted posts.
 	var direct_downloads = settings.user["direct_downloads"]; // Allow download managers for thumbnail listings.
 
-	var loli_shota_borders = settings.user["loli_shota_borders"]; // Add borders to shota and loli. You may set the colors under "Set Border Colors".
+	var custom_tag_borders = settings.user["custom_tag_borders"]; //
 	var custom_status_borders = settings.user["custom_status_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
 	var single_color_borders = settings.user["single_color_borders"]; // Use simple single color borders.
 	var border_width = settings.user["border_width"]; // Set the thumbnail border width.
@@ -121,14 +118,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var remove_tag_headers = settings.user["remove_tag_headers"]; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
 	var post_tag_titles = settings.user["post_tag_titles"]; // Revert post page titles to the more detailed full list of tags
 
-	// Set Border Colors. Use CSS hex values for colors. http://www.w3schools.com/CSS/css_colors.asp
-	var loli_border = settings.user["loli_border"];
-	var shota_border = settings.user["shota_border"];
-	var child_border = settings.user["child_border"];
-	var parent_border = settings.user["parent_border"];
-	var pending_border = settings.user["pending_border"];
-	var flagged_border = settings.user["flagged_border"];
-	var deleted_border = settings.user["deleted_border"];
+	// Borders
+	var status_borders = settings.user["status_borders"];
+	var tag_borders = settings.user["tag_borders"];
 
 	// Blacklist
 	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
@@ -148,11 +140,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	];
 
 	/* "INIT" */
-	injectSettings();
-
 	customCSS(); // Contains the portions related to ads and notices.
 
-	if (single_color_borders || custom_status_borders || loli_shota_borders)
+	if (single_color_borders || custom_status_borders || custom_tag_borders)
 		delayMe(formatThumbnails);
 
 	if (autohide_sidebar.indexOf(gLoc) > -1)
@@ -160,6 +150,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	if (!isLoggedIn()) // Immediately apply script blacklist for logged out users.
 		delayMe(blacklistInit);
+
+	injectSettings();
 
 	if (useAPI()) // API only features.
 		searchJSON(gLoc);
@@ -191,7 +183,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var numThumbs = document.getElementsByClassName("post-preview").length;
 		var limit = "";
 
-		if (mode == "search") {
+		if (mode == "search" || mode == "notes") {
 			var numExpected = getVar("limit") || 20;
 			var numDesired = 0;
 
@@ -202,8 +194,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else
 				numDesired = numExpected;
 
-			if (numThumbs != numDesired || numThumbs < numExpected || direct_downloads)
-				fetchJSON(gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit, "search");
+			if (numThumbs != numDesired || numThumbs < numExpected || direct_downloads) {
+				if (mode == "search")
+					fetchJSON(gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit, "search");
+				else
+					fetchJSON(gUrl.replace(/\/notes\/?(?:\?|$)/, "/notes.json?") + limit, "notes");
+			}
 		}
 		else if (mode == "post") {
 			if (!needPostAPI())
@@ -211,16 +207,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else
 				fetchJSON(gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json"), "post");
 		}
-		else if (mode == "notes") {
-			if (numThumbs != 20)
-				fetchJSON(gUrl.replace(/\/notes\/?/, "/notes.json"), "notes");
-		}
 		else if (mode == "popular") {
-			if (numThumbs != 20)
+			if (numThumbs != 20 || direct_downloads)
 				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
 		}
 		else if (mode == "pool") {
-			if (numThumbs != 20)
+			if (numThumbs != 20 || direct_downloads)
 				fetchJSON(gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
 		}
 		else if (mode == "poolsearch") {
@@ -258,7 +250,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							parseComments(xml);
 					}
 					else if (xmlhttp.status == 403 || xmlhttp.status == 401) {
-						danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', true);
+						danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future by using cookies.</a></span>)</span>', true);
 						document.getElementById("bbb-bypass-api-link").addEventListener("click", function(event) {
 							updateSettings("bypass_api", true);
 							this.parentNode.innerHTML="Settings updated. You may change this setting under preferences in the settings panel.";
@@ -284,15 +276,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (!needPostAPI())
 				fetchInfo();
 		}
-		else if (mode == "search" && allowUserLimit()) {
-			var url = gUrl;
+		else if (mode == "search" || mode == "notes") {
+			if (allowUserLimit()) {
+				var url = gUrl;
 
-			if (/\?/.test(url))
-				url += "&limit=" + thumbnail_count;
-			else
-				url += "?limit=" + thumbnail_count;
+				if (/\?/.test(url))
+					url += "&limit=" + thumbnail_count;
+				else
+					url += "?limit=" + thumbnail_count;
 
-			fetchPages(url, "thumbnails");
+				fetchPages(url, "thumbnails");
+			}
 		}
 	}
 
@@ -390,7 +384,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 								if (categoryList) {
 									for (var j = 0, cll = categoryList.length; j < cll; j++) {
 										var tag = categoryList[j].children[1].textContent;
-										var match = new RegExp('(<span class="category-)0("> <[^>]+>' + escapeRegEx(tag) + '<\/a> <\/span>)');
+										var match = new RegExp('(<span class="category-)0("> <[^>]+>' + escapeRegEx(tag) + '<\/a> <\/span>)', "i");
 
 										target.innerHTML = target.innerHTML.replace(match, "$1" + i + "$2");
 									}
@@ -421,10 +415,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 						else if (mode == "thumbnails") { // Fetch the thumbnails and paginator from the page of a search and replace the existing ones.
 							var childSpan = document.createElement("span");
+							var divId = (gLoc == "search" ? "posts" : "a-index");
+							var divRegEx = new RegExp('<div id="' + divId + '">([\\S\\s]+?class="paginator"[\\S\\s]+?<\\/div>[\\S\\s]+?)<\\/div>', "i");
 
-							childSpan.innerHTML = /<div id="posts">([\S\s]+?class="paginator"[\S\s]+?<\/div>[\S\s]+?)<\/div>/i.exec(xmlhttp.responseText)[1];
+							childSpan.innerHTML = divRegEx.exec(xmlhttp.responseText)[1];
 
-							document.getElementById("posts").innerHTML = childSpan.innerHTML;
+							document.getElementById(divId).innerHTML = childSpan.innerHTML;
 
 							// Thumbnail classes and titles
 							formatThumbnails();
@@ -497,7 +493,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			// eek, huge line.
-			thumb = '<article class="post-preview ' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '"><a href="/posts/' + post.id + search + '"><img src="' + post.thumb_url + '" alt="' + post.tag_string + '"></a></article>';
+			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '"><a href="/posts/' + post.id + search + '"><img src="' + post.thumb_url + '" alt="' + post.tag_string + '"></a></article>';
 
 			if (direct_downloads)
 				thumb += '<a style="display: none;" href="' + post.file_url + '">Direct Download</a></span>';
@@ -516,7 +512,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where.innerHTML = out + outerHTML(paginator);
 			paginator = document.getElementsByClassName("paginator")[0];
 
-			if (gLoc == "search" && allowUserLimit()) {
+			if ((gLoc == "search" || gLoc == "notes") && (allowUserLimit())) {
 				// Fix existing paginator with user's custom limit.
 				var pageLinks = document.evaluate('.//a', paginator, null, 6, null);
 
@@ -545,8 +541,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function parsePost(xml) {
-		bbbImg = xml; // Create a global copy. Doesn't serve any purpose at the moment.
-
 		var post = formatJSON(xml);
 		var container = document.getElementById("image-container");
 
@@ -654,7 +648,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							img.setAttribute("width", post.image_width);
 
 							if (!swapInit) {
-								bbbImg.resized = false;
+								bbbInfo.resized = false;
 								img.style.height = post.image_height + "px";
 								img.style.width = post.image_width + "px";
 								Danbooru.Note.Box.scale_all();
@@ -670,7 +664,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							img.setAttribute("width", sampWidth);
 
 							if (!swapInit) {
-								bbbImg.resized = false;
+								bbbInfo.resized = false;
 								img.style.height = sampHeight + "px";
 								img.style.width = sampWidth + "px";
 								Danbooru.Note.Box.scale_all();
@@ -790,7 +784,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Create the new post.
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div class="post post-preview ' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.thumb_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.thumb_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
@@ -824,10 +818,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var link = document.createElement("a");
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
-		link.onclick = function() {
+		link.addEventListener("click", function(event) {
 			showSettings();
-			return false;
-		};
+			event.preventDefault();
+		}, false);
 
 		var item = document.createElement("li");
 		item.appendChild(link);
@@ -837,17 +831,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function showSettings() {
-		var menu_exists = settings.el.bbbMenu;
-
-		if (menu_exists) {
-			menu_exists.style.display = "block";
+		if (settings.el.menu) {
+			settings.el.menu.style.display = "block";
+			settings.el.scrollDiv.scrollTop = 0;
 			return;
 		}
 
 		var menu = document.createElement("div");
 		menu.id = "bbb_menu";
 		menu.style.visibility = "hidden";
-		settings.el.bbbMenu = menu;
+		settings.el.menu = menu;
 
 		var header = document.createElement("h1");
 		header.innerHTML = "Better Better Booru Settings";
@@ -863,10 +856,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		generalTab.href = "#";
 		generalTab.innerHTML = "General";
 		generalTab.className = "bbb-tab bbb-active-tab";
-		generalTab.onclick = function() {
+		generalTab.addEventListener("click", function(event) {
 			changeTab(this);
-			return false;
-		};
+			event.preventDefault();
+		}, false);
 		tabBar.appendChild(generalTab);
 
 		var borderTab = document.createElement("a");
@@ -874,10 +867,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		borderTab.href = "#";
 		borderTab.innerHTML = "Borders";
 		borderTab.className = "bbb-tab";
-		borderTab.onclick = function() {
+		borderTab.addEventListener("click", function(event) {
 			changeTab(this);
-			return false;
-		};
+			event.preventDefault();
+		}, false);
 		tabBar.appendChild(borderTab);
 
 		var prefTab = document.createElement("a");
@@ -885,61 +878,64 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		prefTab.href = "#";
 		prefTab.innerHTML = "Preferences";
 		prefTab.className = "bbb-tab";
-		prefTab.onclick = function() {
+		prefTab.addEventListener("click", function(event) {
 			changeTab(this);
-			return false;
-		};
+			event.preventDefault();
+		}, false);
 		tabBar.appendChild(prefTab);
 
 		var scrollDiv = document.createElement("div");
 		scrollDiv.className = "bbb-scroll-div";
 		menu.appendChild(scrollDiv);
+		scrollDiv.scrollTop = 0;
+		settings.el.scrollDiv = scrollDiv;
 
 		var generalPage = document.createElement("div");
 		scrollDiv.appendChild(generalPage);
 		settings.el.generalPage = generalPage;
 
-		createSection(settings.sections.browse, generalPage, "Image Browsing");
-		createSection(settings.sections.sidebar, generalPage, "Tag Sidebar");
-		createSection(settings.sections.misc, generalPage, "Misc.");
-		createSection(settings.sections.layout, generalPage, "Layout");
-		createSection(settings.sections.loggedOut, generalPage, "Logged Out Settings");
+		generalPage.bbbCreateSection(settings.sections.browse);
+		generalPage.bbbCreateSection(settings.sections.sidebar);
+		generalPage.bbbCreateSection(settings.sections.misc);
+		generalPage.bbbCreateSection(settings.sections.layout);
+		generalPage.bbbCreateSection(settings.sections.logged_out);
 
 		var bordersPage = document.createElement("div");
 		bordersPage.style.display = "none";
 		scrollDiv.appendChild(bordersPage);
 		settings.el.bordersPage = bordersPage;
 
-		createSection(settings.sections.borderOptions, bordersPage, "Options");
-		createSection(settings.sections.borderStyles, bordersPage, "Styles");
+		bordersPage.bbbCreateSection(settings.sections.border_options);
+		bordersPage.bbbCreateSection(settings.sections.status_borders);
+		bordersPage.bbbCreateSection(settings.sections.tag_borders);
 
 		var prefPage = document.createElement("div");
 		prefPage.style.display = "none";
 		scrollDiv.appendChild(prefPage);
 		settings.el.prefPage = prefPage;
 
-		createSection(settings.sections.pref, prefPage);
+		prefPage.bbbCreateSection(settings.sections.pref);
 
 		var close = document.createElement("a");
 		close.innerHTML = "Save & Close";
 		close.href = "#";
 		close.className = "bbb-button";
 		close.style.marginRight = "15px";
-		close.onclick = function() {
-			settings.el.bbbMenu.style.display = "none";
+		close.addEventListener("click", function(event) {
+			settings.el.menu.style.display = "none";
 			saveSettings();
-			return false;
-		};
+			event.preventDefault();
+		}, false);
 
 		var cancel = document.createElement("a");
 		cancel.innerHTML = "Cancel";
 		cancel.href = "#";
 		cancel.className = "bbb-button";
-		cancel.onclick = function() {
+		cancel.addEventListener("click", function(event) {
 			loadSettings();
 			removeMenu();
-			return false;
-		};
+			event.preventDefault();
+		}, false);
 
 		var reset = document.createElement("a");
 		reset.innerHTML = "Reset to Defaults";
@@ -947,16 +943,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		reset.className = "bbb-button";
 		reset.style.cssFloat = "right";
 		reset.style.color = "#ff1100";
-		reset.onclick = function() {
+		reset.addEventListener("click", function(event) {
 			loadDefaults();
 			removeMenu();
 			showSettings();
-			return false;
-		};
+			event.preventDefault();
+		}, false);
 
 		menu.appendChild(close);
 		menu.appendChild(cancel);
 		menu.appendChild(reset);
+
+		var tip = document.createElement("div");
+		tip.className = "bbb-expl";
+		menu.appendChild(tip);
+		settings.el.tip = tip;
+
 
 		// Add menu to the DOM and manipulate the dimensions.
 		document.body.appendChild(menu);
@@ -964,8 +966,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var viewHeight = window.innerHeight;
 		var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
 
-		scrollDiv.style.maxHeight = viewHeight - getPadding(menu).height - scrollDivDiff - 25 + "px"; // Subtract 25 for the bottom "margin".
-		scrollDiv.style.minWidth = 900 + scrollbarWidth() + 2 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
+		scrollDiv.style.maxHeight = viewHeight - menu.bbbGetPadding().height - scrollDivDiff - 25 + "px"; // Subtract 25 for the bottom "margin".
+		scrollDiv.style.minWidth = 901 + scrollbarWidth() + 3 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
+		scrollDiv.style.paddingLeft = scrollbarWidth() + 3 + "px";
 
 		var viewWidth = window.innerWidth;
 		var menuWidth = menu.clientWidth;
@@ -974,43 +977,73 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.style.visibility = "visible";
 	}
 
-	function createSection(settingList, target, title) {
-		if (title) {
-			var header = document.createElement("h3");
-			header.innerHTML = title;
-			header.className = "bbb-section-header";
-			target.appendChild(header);
+	Element.prototype.bbbCreateSection = function(section) {
+		var target = this;
+
+		if (section.header) {
+			var sectionHeader = document.createElement("h3");
+			sectionHeader.innerHTML = section.header;
+			sectionHeader.className = "bbb-section-header";
+			target.appendChild(sectionHeader);
+		}
+
+		if (section.text) {
+			var sectionText = document.createElement("div");
+			sectionText.innerHTML = section.text;
+			target.appendChild(sectionText);
 		}
 
 		var sectionDiv = document.createElement("div");
 		sectionDiv.className = "bbb-section-options";
 
-		var sl = settingList.length;
-		var halfway = (sl > 1 ? Math.ceil(sl / 2) : 0);
+		if (section.type == "general") {
+			var settingList = section.settings;
+			var sll = settingList.length;
+			var halfway = (sll > 1 ? Math.ceil(sll / 2) : 0);
 
-		var leftSide = document.createElement("div");
-		leftSide.className = "bbb-section-options-left";
-		sectionDiv.appendChild(leftSide);
+			var leftSide = document.createElement("div");
+			leftSide.className = "bbb-section-options-left";
+			sectionDiv.appendChild(leftSide);
 
-		var rightSide = document.createElement("div");
-		rightSide.className = "bbb-section-options-right";
-		sectionDiv.appendChild(rightSide);
+			var rightSide = document.createElement("div");
+			rightSide.className = "bbb-section-options-right";
+			sectionDiv.appendChild(rightSide);
 
-		var optionTarget = leftSide;
+			var optionTarget = leftSide;
 
-		for (var i = 0; i < sl; i++) {
-			var settingName = settingList[i];
+			for (var i = 0; i < sll; i++) {
+				var settingName = settingList[i];
 
-			if (halfway && i >= halfway)
-					optionTarget = rightSide;
+				if (halfway && i >= halfway)
+						optionTarget = rightSide;
 
-			createOption(settingName, optionTarget);
+				var newOption = createOption(settingName);
+				optionTarget.appendChild(newOption);
+			}
+
+			target.appendChild(sectionDiv);
 		}
+		else if (section.type == "border") {
+			var borderSettings = settings.user[section.settings];
 
-		target.appendChild(sectionDiv);
-	}
+			for (var i = 0, bsl = borderSettings.length; i < bsl; i++) {
+				var newBorderOption = createBorderOption(borderSettings, i);
+				sectionDiv.appendChild(newBorderOption);
+			}
 
-	function createOption(settingName, target) {
+			var indexWrapper = document.createElement("div");
+			indexWrapper.setAttribute("data-bbb-index", i);
+			sectionDiv.appendChild(indexWrapper);
+
+			var borderDivider = document.createElement("div");
+			borderDivider.className = "bbb-border-divider";
+			indexWrapper.appendChild(borderDivider);
+
+			target.appendChild(sectionDiv);
+		}
+	};
+
+	function createOption(settingName) {
 		var optionObject = settings.options[settingName];
 		var userSetting = settings.user[settingName];
 
@@ -1083,31 +1116,31 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 				}
 
-				item.onchange = function() {
+				item.addEventListener("change", function() {
 					var selected = this.value;
 					settings.user[settingName] = (/^-?\d+(\.\d+)?$/.test(selected) ? Number(selected) : selected);
-				};
+				}, false);
 				break;
 			case "checkbox":
 				item = document.createElement("input");
 				item.name = settingName;
 				item.type = "checkbox";
 				item.checked = userSetting;
-				item.onclick = function() { settings.user[settingName] = this.checked; };
+				item.addEventListener("click", function() { settings.user[settingName] = this.checked; }, false);
 				break;
 			case "text":
 				item = document.createElement("input");
 				item.name = settingName;
 				item.type = "text";
 				item.value = userSetting;
-				item.onchange = function() { settings.user[settingName] = this.value; };
+				item.addEventListener("change", function() { settings.user[settingName] = this.value.bbbSpaceClean(); }, false);
 				break;
 			case "number":
 				item = document.createElement("input");
 				item.name = settingName;
 				item.type = "text";
 				item.value = userSetting;
-				item.onchange = function() { settings.user[settingName] = Number(this.value); };
+				item.addEventListener("change", function() { settings.user[settingName] = Number(this.value); }, false);
 				break;
 			default:
 				console.log("Better Better Booru Error: Unexpected object type. Type: " + optionObject.type);
@@ -1120,22 +1153,161 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		explLink.innerHTML = "?";
 		explLink.href = "#";
 		explLink.className = "bbb-expl-link";
-		explLink.onclick = function(event) {
-			showTip(event, settingName);
-			return false;
-		};
-		explLink.onmouseout = function() {
-			hideTip(settingName);
-		};
+		explLink.addEventListener("click", function(event) { event.preventDefault(); }, false);
+		explLink.bbbSetTip(settings.options[settingName].expl);
 		inputSpan.appendChild(explLink);
 
-		var explTip = document.createElement("div");
-		explTip.innerHTML = optionObject.expl;
-		explTip.className = "bbb-expl";
-		settings.el[settingName + "Expl"] = explTip;
+		return label;
+	}
 
-		target.appendChild(label);
-		target.appendChild(explTip);
+	function createBorderOption(borderSettings, i) {
+		var borderItem = borderSettings[i];
+		var isStatus = (borderItem.class_name ? true : false);
+
+		var borderSpacer = document.createElement("span");
+		borderSpacer.className = "bbb-border-spacer";
+
+		var indexWrapper = document.createElement("div");
+		indexWrapper.setAttribute("data-bbb-index", i);
+
+		var borderDivider = document.createElement("div");
+		borderDivider.className = "bbb-border-divider";
+		indexWrapper.appendChild(borderDivider);
+
+		var borderDiv = document.createElement("div");
+		borderDiv.className = "bbb-border-div";
+		indexWrapper.appendChild(borderDiv);
+
+		var borderBarDiv = document.createElement("div");
+		borderBarDiv.className = "bbb-border-bar";
+		borderDiv.appendChild(borderBarDiv);
+
+		var enableLabel = document.createElement("label");
+		enableLabel.innerHTML = "Enabled:";
+		borderBarDiv.appendChild(enableLabel);
+
+		var enableBox = document.createElement("input");
+		enableBox.type = "checkbox";
+		enableBox.checked = borderItem.is_enabled;
+		enableBox.addEventListener("click", function() { borderItem.is_enabled = this.checked; }, false);
+		enableLabel.appendChild(enableBox);
+
+		var editSpan = document.createElement("span");
+		editSpan.innerHTML = "Edit:";
+		editSpan.style.cssFloat = "right";
+		borderBarDiv.appendChild(editSpan);
+
+		var moveButton = document.createElement("a");
+		moveButton.innerHTML = "Move";
+		moveButton.className = "bbb-border-button";
+		moveButton.addEventListener("click", function() { moveBorder(borderSettings, indexWrapper); }, false);
+		moveButton.bbbSetTip("Click the blue highlighted area that indicates where you would like to move this border.");
+		editSpan.appendChild(moveButton);
+
+		if (!isStatus) {
+			var deleteButton = document.createElement("a");
+			deleteButton.innerHTML = "Delete";
+			deleteButton.className = "bbb-border-button";
+			deleteButton.addEventListener("click", function() { deleteBorder(borderSettings, indexWrapper); }, false);
+			editSpan.appendChild(deleteButton);
+
+			var newButton = document.createElement("a");
+			newButton.innerHTML = "New";
+			newButton.className = "bbb-border-button";
+			newButton.addEventListener("click", function() { newBorder(borderSettings, indexWrapper); }, false);
+			newButton.bbbSetTip("Click the blue highlighted area that indicates where you would like to create a border.");
+			editSpan.appendChild(newButton);
+		}
+
+		var borderSettingsDiv = document.createElement("div");
+		borderSettingsDiv.className = "bbb-border-settings";
+		borderDiv.appendChild(borderSettingsDiv);
+
+		var nameLabel  = document.createElement("label");
+		borderSettingsDiv.appendChild(nameLabel);
+
+		if (isStatus)
+			nameLabel.innerHTML = "Status:" + borderItem.tags;
+		else {
+			nameLabel.innerHTML = "Tags:";
+
+			var nameInput = document.createElement("input");
+			nameInput.type = "text";
+			nameInput.value = borderItem.tags;
+			nameInput.addEventListener("change", function() { borderItem.tags = this.value.bbbSpaceClean(); }, false);
+			nameInput.style.width = "400px";
+			nameLabel.appendChild(nameInput);
+		}
+
+		var otherSpan = document.createElement("span");
+		otherSpan.style.cssFloat = "right";
+		borderSettingsDiv.appendChild(otherSpan);
+
+		var colorLabel = document.createElement("label");
+		colorLabel.innerHTML = "Color:";
+		otherSpan.appendChild(colorLabel);
+
+		var colorInput = document.createElement("input");
+		colorInput.type = "text";
+		colorInput.value = borderItem.border_color;
+		colorInput.addEventListener("change", function() { borderItem.border_color = this.value.bbbSpaceClean(); }, false);
+		colorLabel.appendChild(colorInput);
+
+		otherSpan.appendChild(borderSpacer.cloneNode(false));
+
+		var styleLabel = document.createElement("label");
+		styleLabel.innerHTML = "Style:";
+		otherSpan.appendChild(styleLabel);
+
+		var styleDrop = document.createElement("select");
+		styleDrop.addEventListener("change", function() { borderItem.border_style = this.value; }, false);
+		styleLabel.appendChild(styleDrop);
+
+		var solidOption = document.createElement("option");
+		solidOption.innerHTML = "solid";
+		solidOption.value = "solid";
+		styleDrop.appendChild(solidOption);
+
+		var dashedOption = document.createElement("option");
+		dashedOption.innerHTML = "dashed";
+		dashedOption.value = "dashed";
+		styleDrop.appendChild(dashedOption);
+
+		var dottedOption = document.createElement("option");
+		dottedOption.innerHTML = "dotted";
+		dottedOption.value = "dotted";
+		styleDrop.appendChild(dottedOption);
+
+		var doubleOption = document.createElement("option");
+		doubleOption.innerHTML = "double";
+		doubleOption.value = "double";
+		styleDrop.appendChild(doubleOption);
+
+		var styleOptions = styleDrop.getElementsByTagName("option");
+
+		for (var i = 0; i < 4; i++) {
+			if (styleOptions[i].value == borderItem.border_style) {
+				styleOptions[i].selected = true;
+				break;
+			}
+		}
+
+		return indexWrapper;
+	}
+
+	function createTextSection(target, header, text) {
+		if (header) {
+			var sectionHeader = document.createElement("h3");
+			sectionHeader.innerHTML = header;
+			sectionHeader.className = "bbb-section-header";
+			target.appendChild(sectionHeader);
+		}
+
+		if (text) {
+			var desc = document.createElement("div");
+			desc.innerHTML = text;
+			target.appendChild(desc);
+		}
 	}
 
 	function Option(type, def, lbl, expl, optPropObject) {
@@ -1151,7 +1323,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		 * numRange = Array containing the starting and ending numbers of the number range.
 		 * numList = Array containing a list of the desired numbers.
 		 * If more than one of these is provided, they are added to the list in this order: txtOptions, numList, numRange
-		*/
+		 */
 
 		this.type = type;
 		this.def = def; // Default.
@@ -1164,36 +1336,167 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function showTip(event, settingName) {
+	function Section(type, settingList, header, text) {
+		/*
+		 * Section type notes
+		 * ==================
+		 * Current section types are general and border.
+		 *
+		 * The setting list for general sections are provided in the form of an array containing the settings names as string.
+		 * The setting list for border sections is the setting name as a string.
+		 */
+
+		this.type = type;
+		this.settings = settingList;
+		this.header = header;
+		this.text = text;
+	}
+
+	function Border(tags, isEnabled, color, style, className) {
+		this.tags = tags;
+		this.is_enabled = isEnabled;
+		this.border_color = color;
+		this.border_style = style;
+		this.class_name = className;
+	}
+
+	function borderSet() {
+		var formatted = [];
+
+		for (var i = 0, al = arguments.length; i < al; i++) {
+			var border = arguments[i];
+
+			formatted.push(new Border(border[0], border[1], border[2], border[3], border[4]));
+		}
+
+		return formatted;
+	}
+
+	function resetBorderElements(section) {
+		var borderElements = section.children;
+
+		for (var i = 0, bel = borderElements.length; i < bel; i ++) {
+			var borderElement = borderElements[i];
+
+			borderElement.className = borderElement.className.replace(/\s?bbb-no-highlight/, "");
+			borderElement.setAttribute("data-bbb-index", i);
+		}
+	}
+
+	function deleteBorder(borderSettings, borderElement) {
+		var section = borderElement.parentNode;
+		var index = Number(borderElement.getAttribute("data-bbb-index"));
+
+		section.removeChild(borderElement);
+		borderSettings.splice(index,1);
+
+		if (borderSettings.length == 0) {
+			// If no borders are left, add a new blank border.
+			var newBorderItem = new Border("", false, "#000000", "solid");
+			borderSettings.splice(0, 0, newBorderItem);
+
+			var newBorderElement = createBorderOption(borderSettings, 0);
+			section.insertBefore(newBorderElement, section.children[0]);
+		}
+
+		resetBorderElements(section);
+	}
+
+	function moveBorder(borderSettings, borderElement) {
+		var section = borderElement.parentNode;
+		var index = Number(borderElement.getAttribute("data-bbb-index"));
+
+		borderElement.className += " bbb-no-highlight";
+		borderElement.nextSibling.className += " bbb-no-highlight";
+		settings.borderMode = {mode:"move", settings:borderSettings, section:section, index:index, element:borderElement};
+		section.className += " bbb-insert-highlight";
+		settings.el.menu.addEventListener("click", insertBorder, true);
+	}
+
+	function newBorder(borderSettings, borderElement) {
+		var section = borderElement.parentNode;
+
+		settings.borderMode = {mode:"new", settings:borderSettings, section:section};
+		section.className += " bbb-insert-highlight";
+		settings.el.menu.addEventListener("click", insertBorder, true);
+	}
+
+	function insertBorder (event) {
+		var target = event.target;
+		var section = settings.borderMode.section;
+
+		if (target.className == "bbb-border-divider") {
+			var newIndex = Number(target.parentNode.getAttribute("data-bbb-index"));
+			var borderSettings = settings.borderMode.settings;
+
+			if (settings.borderMode.mode == "new") { // Make a new border.
+				var newBorderItem = new Border("", false, "#000000", "solid");
+				borderSettings.splice(newIndex, 0, newBorderItem);
+
+				var newBorderElement = createBorderOption(borderSettings, newIndex);
+
+				section.insertBefore(newBorderElement, section.children[newIndex]);
+
+			}
+			else if (settings.borderMode.mode == "move") { // Move the border.
+				var oldIndex = settings.borderMode.index;
+
+				if (newIndex != oldIndex) {
+					var borderItem = borderSettings.splice(oldIndex, 1)[0];
+					var borderElement = settings.borderMode.element;
+
+					if (newIndex < oldIndex)
+						borderSettings.splice(newIndex, 0, borderItem);
+					else if  (newIndex > oldIndex)
+						borderSettings.splice(newIndex - 1, 0, borderItem);
+
+					section.insertBefore(borderElement, section.children[newIndex]);
+				}
+			}
+		}
+
+		resetBorderElements(section);
+		section.className = section.className.replace(/\s?bbb-insert-highlight/gi, "");
+		settings.el.menu.removeEventListener("click", insertBorder, true);
+	}
+
+	function showTip(event, text) {
 		var x = event.clientX;
 		var y = event.clientY;
-		var explTip = settings.el[settingName + "Expl"];
+		var tip = settings.el.tip;
 		var topOffset = 0;
 
-		explTip.style.visibility = "hidden";
-		explTip.style.display = "block";
+		tip.innerHTML = text;
+		tip.style.visibility = "hidden";
+		tip.style.display = "block";
 
 		// Resize the tip to minimize blank space.
-		var origHeight = explTip.clientHeight;
-		var padding = getPadding(explTip).width;
+		var origHeight = tip.clientHeight;
+		var padding = tip.bbbGetPadding().width;
 
-		while (origHeight >= explTip.clientHeight && explTip.clientWidth > 15)
-			explTip.style.width = explTip.clientWidth - padding - 2 + "px";
+		while (origHeight >= tip.clientHeight && tip.clientWidth > 15)
+			tip.style.width = tip.clientWidth - padding - 2 + "px";
 
-		explTip.style.width = explTip.clientWidth - padding + 2 + "px";
+		tip.style.width = tip.clientWidth - padding + 2 + "px";
 
 		// Don't allow the tip to go above the top of the window.
-		if (y - explTip.offsetHeight - 2 < 5)
-			topOffset = y - explTip.offsetHeight - 7;
+		if (y - tip.offsetHeight - 2 < 5)
+			topOffset = y - tip.offsetHeight - 7;
 
-		explTip.style.left = x - explTip.offsetWidth - 2 + "px";
-		explTip.style.top = y - explTip.offsetHeight - 2 - topOffset + "px";
-		explTip.style.visibility = "visible";
+		tip.style.left = x - tip.offsetWidth - 2 + "px";
+		tip.style.top = y - tip.offsetHeight - 2 - topOffset + "px";
+		tip.style.visibility = "visible";
 	}
 
-	function hideTip(settingName) {
-		settings.el[settingName + "Expl"].style.display = "none";
+	function hideTip() {
+		var tip = settings.el.tip;
+		tip.removeAttribute("style");
 	}
+
+	Element.prototype.bbbSetTip = function(text) {
+		this.addEventListener("click", function(event) { showTip(event, text); }, false);
+		this.addEventListener("mouseout", hideTip, false);
+	};
 
 	function changeTab(tab) {
 		var activeTab = document.getElementsByClassName("bbb-active-tab")[0];
@@ -1204,12 +1507,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		activeTab.className = activeTab.className.replace(/bbb-active-tab/g, "");
 		settings.el[activeTab.name + "Page"].style.display = "none";
 		tab.className += " bbb-active-tab";
+		settings.el.scrollDiv.scrollTop = 0;
 		settings.el[tab.name + "Page"].style.display = "block";
 	}
 
 	function removeMenu() {
 		// Destroy the menu so that it gets rebuilt.
-		var menu = settings.el.bbbMenu;
+		var menu = settings.el.menu;
 
 		menu.parentNode.removeChild(menu);
 		settings.el = {};
@@ -1218,14 +1522,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function loadSettings() {
 		// Load stored settings.
-		if (typeof(localStorage["bbb_settings"]) === "undefined") {
-			if (typeof(localStorage["bbb_add_border"]) !== "undefined") {
-				convertSettings("51");
-				checkUser(settings.user, settings.options);
-			}
-			else
-				loadDefaults();
-		}
+		if (typeof(localStorage["bbb_settings"]) === "undefined")
+			loadDefaults();
 		else {
 			settings.user = JSON.parse(localStorage["bbb_settings"]);
 			checkUser(settings.user, settings.options);
@@ -1236,16 +1534,23 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		settings.user = {};
 
 		for (var i in settings.options) {
-			settings.user[i] = settings.options[i].def;
+			if (typeof(settings.options[i].def) !== "undefined")
+				settings.user[i] = settings.options[i].def;
+			else
+				settings.user[i] = settings.options[i];
 		}
 	}
 
 	function checkUser(user, options) {
 		// Verify the user has all the base settings and add them with their default values if they don't.
 		for (var i in options) {
-			if (typeof(user[i]) === "undefined")
-				user[i] = options[i].def;
-			else if (typeof(user[i]) === "object")
+			if (typeof(user[i]) === "undefined") {
+				if (typeof(options[i].def) !== "undefined")
+					user[i] = options[i].def;
+				else
+					user[i] = options[i];
+			}
+			else if (typeof(user[i]) === "object" && !(user[i] instanceof Array))
 				checkUser(user[i], options[i]);
 		}
 	}
@@ -1274,8 +1579,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						if (input.value != userSetting) {
 							var selectOptions = input.getElementsByTagName("option");
 
-							for (var i = 0, sol = selectOptions.length; i < sol; i++) {
-								var selectOption = selectOptions[i];
+							for (var j = 0, sol = selectOptions.length; j < sol; j++) {
+								var selectOption = selectOptions[j];
 
 								if (selectOption.value == userSetting) {
 									selectOption.selected = true;
@@ -1307,53 +1612,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var old = {};
 
 		switch (mode) {
-			case "51":
-				old = {
-					add_border: "loli_shota_borders",
-					alternate_image_swap: "alternate_image_swap",
-					child_border: "child_border",
-					clean_links: "clean_links",
-					deleted_border: "deleted_border",
-					enable_arrow_nav: "arrow_nav",
-					enable_custom_borders: "custom_status_borders",
-					flagged_border: "flagged_border",
-					hide_advertisements: "hide_advertisements",
-					hide_original_notice: "hide_original_notice",
-					hide_sign_up_notice: "hide_sign_up_notice",
-					hide_tos_notice: "hide_tos_notice",
-					hide_upgrade_notice: "hide_upgrade_notice",
-					image_resize: "image_resize",
-					load_sample_first: "load_sample_first",
-					loli_border: "loli_border",
-					parent_border: "parent_border",
-					pending_border: "pending_border",
-					post_tag_titles: "post_tag_titles",
-					remove_tag_headers: "remove_tag_headers",
-					script_blacklisted_tags: "script_blacklisted_tags",
-					search_add: "search_add",
-					shota_border: "shota_border",
-					show_deleted: "show_deleted",
-					show_loli: "show_loli",
-					show_shota: "show_shota",
-					thumbnail_count: "thumbnail_count"
-				};
-
-				function formatSetting(settingName) {
-					var setting = localStorage["bbb_" + settingName];
-
-					if (setting === "true")
-						return true;
-					else if (setting === "false")
-						return false;
-					else if (settingName === "thumbnail_count")
-						return Number(setting);
-					else
-						return setting;
-				}
-
-				for (var i in old) {
-					settings.user[old[i]] = formatSetting(i);
-				}
+			case "?":
 				break;
 		}
 	}
@@ -1363,7 +1622,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		Danbooru.Blacklist.entries.length = 0;
 
 		if (!isLoggedIn() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
-			var blacklistTags = script_blacklisted_tags.replace(/\s+/g, " ").replace(/(rating:[qes])\w+/, "$1").toLowerCase().split(",");
+			var blacklistTags = script_blacklisted_tags.toLowerCase().replace(/(rating:[qes])\w+/, "$1").split(",");
 
 			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
 				var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
@@ -1395,18 +1654,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var imgHeight = img.clientHeight;
 		var ratio = availableWidth / imgWidth;
 
-		if (!bbbImg.resized && imgWidth > availableWidth) {
+		if (!bbbInfo.resized && imgWidth > availableWidth) {
 			img.style.width = imgWidth * ratio + "px";
 			img.style.height = imgHeight * ratio + "px";
-			bbbImg.resized = true;
+			bbbInfo.resized = true;
 			Danbooru.Note.Box.scale_all();
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
 		}
-		else if (bbbImg.resized) {
+		else if (bbbInfo.resized) {
 			img.style.width = img.getAttribute("width") + "px"; // Was NOT expecting img.width to return the current width (css style width) and not the width attribute's value here...
 			img.style.height = img.getAttribute("height") + "px";
-			bbbImg.resized = false;
+			bbbInfo.resized = false;
 			Danbooru.Note.Box.scale_all();
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
@@ -1423,7 +1682,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				link.href += "&limit=" + thumbnail_count;
 		}
 
-		links = document.evaluate('//header//a[starts-with(@href, "/posts") or @href="/"]', document, null, 6, null);
+		links = document.evaluate('//header//a[starts-with(@href, "/posts") or @href="/" or @href="/notes?group_by=post"]', document, null, 6, null);
 
 		for (var i = 0, lsl = links.snapshotLength; i < lsl; i++) {
 			var link = links.snapshotItem(i);
@@ -1654,10 +1913,50 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
+	function statusBorderSort() {
+		// Ignore border ordering when multicolor borders are in use.
+		var statusBorderSettings = status_borders.slice(0); // Clone the array. Don't reference it.
+		var parent;
+		var child;
+
+		for (var i = 0, sbsl = statusBorderSettings.length; i < sbsl; i++) {
+			var borderItem = statusBorderSettings[i];
+
+			if (borderItem.tags == "parent") {
+				parent = statusBorderSettings.splice(i, 1)[0];
+				i--;
+				sbsl--;
+			}
+			else if (borderItem.tags == "child") {
+				child = statusBorderSettings.splice(i, 1)[0];
+				i--;
+				sbsl--;
+			}
+		}
+
+		statusBorderSettings.push(child);
+		statusBorderSettings.push(parent);
+
+		return statusBorderSettings;
+	}
+
 	function formatThumbnails() {
 		// Create thumbnail titles and borders.
 		var posts = document.getElementsByClassName("post-preview");
 
+		// Sort borders to support multi color borders.
+		if (!single_color_borders && posts)
+			var statusBorderSettings = statusBorderSort();
+
+		// Create and cache border search objects.
+		if (custom_tag_borders) {
+			var searches = [];
+
+			for (var i = 0, tbsl = tag_borders.length; i < tbsl; i++)
+				searches.push(createSearch(tag_borders[i].tags));
+		}
+
+		// Cycle through each post and apply titles and borders.
 		for (var i = 0, pl = posts.length; i < pl; i++) {
 			var post = posts[i];
 			var img = post.getElementsByTagName("img")[0];
@@ -1668,59 +1967,72 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var rating = post.getAttribute("data-rating");
 			var score = post.getAttribute("data-score");
 			var title = tags + " user:" + user + " rating:" + rating + " score:" + score;
-			var postInfo = tags + " user:" + user.replace(/\s/g, "_") + " rating:" + rating + " score:" + score;
-			var customTagPadding = 1;
+			var postInfo = tags + " user:" + user.replace(/\s/g, "_").toLowerCase() + " rating:" + rating + " score:" + score;
 			var primary = [];
 			var primaryLength = 0;
 			var secondary = [];
 			var secondaryLength = 0;
 
-			// Detect status borders
-			if (/\bpost-status-deleted\b/.test(classes))
-				primary.push(deleted_border);
-			else if (/\bpost-status-flagged\b/.test(classes))
-				primary.push(flagged_border);
-			else if (/\bpost-status-pending\b/.test(classes))
-				primary.push(pending_border);
-
-			if (/\bpost-status-has-parent\b/.test(classes))
-				primary.push(child_border);
-			if (/\bpost-status-has-children\b/.test(classes))
-				primary.push(parent_border);
-
-			primaryLength = primary.length;
-
 			// Create title.
 			img.title = title;
 
 			// Primary status borders.
-			if (!single_color_borders) {
-				if (custom_status_borders) {
-					if (primaryLength == 2)
-						img.setAttribute("style", "border-style: solid !important; border-color: " + primary[1] + " " + primary[0] + " " + primary[0] + " " + primary[1] + " !important;");
-					else if (primaryLength == 3)
-						img.setAttribute("style", "border-style: solid !important; border-color: " + primary[2] + " " + primary[0] + " " + primary[0] + " " + primary[1] + " !important;");
-				}
-				else // Default Danbooru border styling.
-					Danbooru.Post.initialize_preview_borders_for(post);
-			}
-			else // Don't allow multi color borders.
+			if (single_color_borders) // Don't allow multi color borders.
 				img.removeAttribute("style");
+			else if (custom_status_borders) {
+				var spacedPostClasses = classes.bbbSpacePad();
+
+				for (var j = 0, sbsl = statusBorderSettings.length; j < sbsl; j++) {
+					var statusBorderItem = statusBorderSettings[j];
+					var spacedStatusClass = statusBorderItem.class_name.bbbSpacePad();
+
+					if (statusBorderItem.is_enabled && spacedPostClasses.indexOf(spacedStatusClass) > -1) {
+						primary.push([statusBorderItem.border_color, statusBorderItem.border_style]);
+
+						if (j < 3)
+							j = 2;
+					}
+				}
+
+				primaryLength = primary.length;
+
+				if (primaryLength == 2)
+					img.setAttribute("style", "border-style: " + primary[1][1] + " " + primary[0][1] + " " + primary[0][1] + " " + primary[1][1] + " !important; border-color: " + primary[1][0] + " " + primary[0][0] + " " + primary[0][0] + " " + primary[1][0] + " !important;");
+				else if (primaryLength == 3)
+					img.setAttribute("style", "border-style: " + primary[2][1] + " " + primary[0][1] + " " + primary[0][1] + " " + primary[1][1] + " !important; border-color: " + primary[2][0] + " " + primary[0][0] + " " + primary[0][0] + " " + primary[1][0] + " !important;");
+			}
+			else // Default Danbooru border styling.
+				Danbooru.Post.initialize_preview_borders_for(post);
 
 			// Secondary custom tag borders.
-			if (loli_shota_borders) {
-				if (/\bloli\b/.test(postInfo))
-					secondary.push(loli_border);
-				if (/\bshota\b/.test(postInfo))
-					secondary.push(shota_border);
+			if (custom_tag_borders) {
+				var spacedPostInfo = postInfo.bbbSpacePad();
+
+				for (var j = 0, tbsl = tag_borders.length; j < tbsl; j++) {
+					var tagBorderItem = tag_borders[j];
+
+					if (tagBorderItem.is_enabled && spacedPostInfo.bbbTagMatch(searches[j])) {
+						secondary.push([tagBorderItem.border_color, tagBorderItem.border_style]);
+
+						if (secondary.length == 4)
+							break;
+					}
+				}
 
 				secondaryLength = secondary.length;
-				customTagPadding = (primaryLength ? 1 : 0);
 
-				if (secondaryLength == 1 || (single_color_borders && secondaryLength > 1))
-					link.setAttribute("style", "padding: " + customTagPadding + "px !important; display:inline-block !important; border:" + border_width + "px solid " + secondary[0] + " !important;");
-				else if (secondaryLength == 2)
-					link.setAttribute("style", "padding: " + customTagPadding + "px !important; display:inline-block !important; border:" + border_width + "px solid !important; border-color: " + secondary[0] + " " + secondary[1] + " " + secondary[1] + " " + secondary[0] + " !important;");
+				if (secondaryLength) {
+					link.className += " bbb-custom-tag";
+
+					if (secondaryLength == 1 || (single_color_borders && secondaryLength > 1))
+						link.setAttribute("style", "border: " + border_width + "px " + secondary[0][0] + " " + secondary[0][1] + " !important;");
+					else if (secondaryLength == 2)
+						link.setAttribute("style", "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[1][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[1][1] + " " + secondary[0][1] + " !important;");
+					else if (secondaryLength == 3)
+						link.setAttribute("style", "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[2][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[2][1] + " " + secondary[0][1] + " !important;");
+					else if (secondaryLength == 4)
+						link.setAttribute("style", "border-color: " + secondary[0][0] + " " + secondary[2][0] + " " + secondary[3][0] + " " + secondary[1][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[2][1] + " " + secondary[3][1] + " " + secondary[1][1] + " !important;");
+				}
 			}
 		}
 	}
@@ -1765,8 +2077,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		var styles = '#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 14px; padding: 15px; position: fixed; top: 25px; z-index: 9001;}' +
 		'#bbb_menu a:focus {outline: none;}' +
-		'.bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px; overflow-y: auto;}' +
-		'.bbb-section-options {margin: 5px 0px;}' +
+		'.bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px 0px; overflow-y: auto;}' +
+		'.bbb-section-options {margin: 5px 0px; max-width: 902px;}' +
 		'.bbb-section-options-left, .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
 		'.bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
 		'.bbb-section-header {border-bottom: 2px solid #CCCCCC; padding-top: 10px; width: 750px;}' +
@@ -1780,10 +2092,25 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
 		'.bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}' +
 		'.bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
-		'.bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}';
+		'.bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}' +
+		'a.bbb-custom-tag {padding: 0px !important; display: inline-block !important; border-width: ' + border_width + 'px !important;}' +
+		'.bbb-border-button {border: 1px solid #CCCCCC; display: inline-block; padding: 2px; margin: 0px 2px;}' +
+		'.bbb-border-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
+		'.bbb-border-divider {height: 4px;}' +
+		'.bbb-insert-highlight .bbb-border-divider {background-color: blue; cursor: pointer;}' +
+		'.bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
+		'.bbb-border-bar, .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
+		'.bbb-border-settings {background-color: #FFFFFF;}' +
+		'.bbb-border-bar input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
+		'.bbb-border-bar > *, .bbb-border-settings > * {display: inline-block; line-height: 29px; vertical-align: middle;}' +
+		'.bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}';
+
+		// Provide a little extra space for listings that allow thumbnail_count.
+		if ((gLoc == "search" || gLoc == "notes") && (thumbnail_count))
+			styles += 'div#page {margin: 0px 10px 0px 20px !important;}';
 
 		// Border setup
-		var totalBorderWidth = (loli_shota_borders ? border_width * 2 + 1 : border_width);
+		var totalBorderWidth = (custom_tag_borders ? border_width * 2 + 1 : border_width);
 		var thumbMaxDim = 150 + totalBorderWidth * 2;
 		var listingExtraSpace = 14 - totalBorderWidth * 2;
 		var commentExtraSpace = 34 - totalBorderWidth * 2;
@@ -1792,21 +2119,40 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview img {border-width: ' + border_width + 'px !important;}';
 
+
+		if (custom_status_borders) {
+			var activeStatusStyles = "";
+
+			for (var i = 0, sbsl = status_borders.length; i < sbsl; i++) {
+				var statusBorderItem = status_borders[i];
+
+				if (statusBorderItem.is_enabled) {
+					activeStatusStyles = ".post-preview." + statusBorderItem.class_name + " img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}" + activeStatusStyles;
+
+					if (custom_tag_borders)
+						activeStatusStyles = ".post-preview." + statusBorderItem.class_name + " a.bbb-custom-tag {padding: 1px !important;}" + activeStatusStyles;
+				}
+				else
+					styles += ".post-preview." + statusBorderItem.class_name + " img {border: none !important;}";
+			}
+
+			styles += activeStatusStyles;
+		}
+		else if (custom_tag_borders) {
+			for (var i = 0, sbsl = status_borders.length; i < sbsl; i++) {
+				var statusBorderItem = status_borders[i];
+
+				styles += ".post-preview." + statusBorderItem.class_name + " a.bbb-custom-tag {padding: 1px !important;}";
+			}
+		}
+
 		// Hide sidebar.
 		if (autohide_sidebar.indexOf(gLoc) > -1)
-			styles += 'div#page {margin: 0px 15px !important;}' +
+			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
 			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -280px !important; overflow-y: hidden !important; padding: 0px 20px !important; top: 0px !important; z-index: 2001 !important;}' +
 			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; left: 0px !important; overflow-y: auto !important; padding: 0px 15px !important;}' +
 			'section#content {margin-left: 0px !important;}' +
 			'.bbb-unhide {height: 100%; width: 15px; position: fixed; left: 0px; top: 0px; z-index: 2000;}';
-
-		// Borders override each other in this order: Loli > Shota > Deleted > Flagged > Pending > Child > Parent
-		if (custom_status_borders)
-			styles += '.post-preview.post-status-has-children img{border-color:' + parent_border + ' !important;}' +
-			'.post-preview.post-status-has-parent img{border-color:' + child_border + ' !important;}' +
-			'.post-preview.post-status-pending img{border-color:' + pending_border + ' !important;}' +
-			'.post-preview.post-status-flagged img{border-color:' + flagged_border + ' !important;}' +
-			'.post-preview.post-status-deleted img{border-color:' + deleted_border + ' !important;}';
 
 		if (hide_advertisements)
 			styles += '#content.with-ads {margin-right: 0em !important;}' +
@@ -1929,8 +2275,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return scrollDiff;
 	}
 
-	function getPadding(el) {
-		var clone = el.cloneNode(false);
+	Element.prototype.bbbGetPadding = function() {
+		var clone = this.cloneNode(false);
 		clone.style.width = "0px";
 		clone.style.height = "0px";
 		clone.style.visibility = "hidden";
@@ -1942,6 +2288,93 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var paddingHeight = clone.clientHeight;
 		document.body.removeChild(clone);
 		return {width: paddingWidth, height: paddingHeight};
+	};
+
+	String.prototype.bbbSpacePad = function() {
+		return (this.length ? " " + this + " " : this);
+	};
+
+	String.prototype.bbbSpaceClean = function() {
+		return this.replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
+	};
+
+	String.prototype.bbbTagMatch = function(searchObject) {
+		var tags = this;
+		var search = searchObject;
+		var match = false;
+		var includeTerm = "";
+		var excludeTerm = "";
+
+		if (search.mode == "error")
+			return false;
+		else if (search.mode == "any") { // Return true on the first positive match.
+			for (var i = 0, sil = search.include.length; i < sil; i++) {
+				includeTerm = search.include[i];
+
+				if (tags.indexOf(includeTerm) > -1)
+					return true;
+			}
+
+			for (var i = 0, sel = search.exclude.length; i < sel; i++) {
+				excludeTerm = search.exclude[i];
+
+				if (tags.indexOf(excludeTerm) < 0)
+					return true;
+			}
+
+			return false;
+		}
+		else { // Return false on the first negative match.
+			for (var i = 0, sil = search.include.length; i < sil; i++) {
+				includeTerm = search.include[i];
+
+				if (tags.indexOf(includeTerm) < 0)
+					return false;
+			}
+
+			for (var i = 0, sel = search.exclude.length; i < sel; i++) {
+				excludeTerm = search.exclude[i];
+
+				if (tags.indexOf(excludeTerm) > -1)
+					return false;
+			}
+
+			return true;
+		}
+	};
+
+	function createSearch(search) {
+		var searchString = search.toLowerCase().replace(/\s(rating:[qes])\w+/g, " $1");
+		var mode = "all";
+		var includes = [];
+		var excludes = [];
+
+		// Test for an any/or search.
+		if (searchString.charAt(0) == "~" && (searchString.match(/\s~/g) || "").length == (searchString.match(/\s/g) || "").length) {
+			searchString = searchString.slice(1);
+			mode = "any";
+		}
+
+		// Strip out any remaining tildes (even if the search doesn't register as an any/or match) and split it into an array.
+		searchString = searchString.replace(/\s~/g, " ").split(" ");
+
+		// Divide the tags into excluded and included tags.
+		for (var i = 0, ssl = searchString.length; i < ssl; i++) {
+			var searchTerm = searchString[i];
+
+			if (searchTerm.charAt(0) == "-") {
+				if (searchTerm.length > 1)
+					excludes.push(searchTerm.slice(1).bbbSpacePad());
+			}
+			else if (searchTerm.length > 0)
+				includes.push(searchTerm.bbbSpacePad());
+		}
+
+		// If there are no tags, mark this search as an error.
+		if (!includes.length && !excludes.length)
+			mode = "error";
+
+		return {include: includes , exclude: excludes, mode: mode};
 	}
 
 	function delayMe(func) {
