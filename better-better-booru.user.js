@@ -1198,23 +1198,35 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		borderBarDiv.appendChild(editSpan);
 
 		var moveButton = document.createElement("a");
+		moveButton.href = "#";
 		moveButton.innerHTML = "Move";
 		moveButton.className = "bbb-border-button";
-		moveButton.addEventListener("click", function() { moveBorder(borderSettings, indexWrapper); }, false);
+		moveButton.addEventListener("click", function(event) {
+			moveBorder(borderSettings, indexWrapper);
+			event.preventDefault();
+		}, false);
 		moveButton.bbbSetTip("Click the blue highlighted area that indicates where you would like to move this border.");
 		editSpan.appendChild(moveButton);
 
 		if (!isStatus) {
 			var deleteButton = document.createElement("a");
+			deleteButton.href = "#";
 			deleteButton.innerHTML = "Delete";
 			deleteButton.className = "bbb-border-button";
-			deleteButton.addEventListener("click", function() { deleteBorder(borderSettings, indexWrapper); }, false);
+			deleteButton.addEventListener("click", function(event) {
+				deleteBorder(borderSettings, indexWrapper);
+				event.preventDefault();
+			}, false);
 			editSpan.appendChild(deleteButton);
 
 			var newButton = document.createElement("a");
+			newButton.href = "#";
 			newButton.innerHTML = "New";
 			newButton.className = "bbb-border-button";
-			newButton.addEventListener("click", function() { newBorder(borderSettings, indexWrapper); }, false);
+			newButton.addEventListener("click", function(event) {
+				newBorder(borderSettings, indexWrapper);
+				event.preventDefault();
+			}, false);
 			newButton.bbbSetTip("Click the blue highlighted area that indicates where you would like to create a border.");
 			editSpan.appendChild(newButton);
 		}
