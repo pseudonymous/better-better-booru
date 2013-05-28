@@ -1634,7 +1634,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		Danbooru.Blacklist.entries.length = 0;
 
 		if (!isLoggedIn() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
-			var blacklistTags = script_blacklisted_tags.toLowerCase().replace(/(rating:[qes])\w+/, "$1").split(",");
+			var blacklistTags = script_blacklisted_tags.toLowerCase().replace(/\b(rating:[qes])\w+/, "$1").split(",");
 
 			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
 				var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
@@ -2312,81 +2312,93 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	String.prototype.bbbTagMatch = function(searchObject) {
 		var tags = this;
-		var search = searchObject;
-		var match = false;
-		var includeTerm = "";
-		var excludeTerm = "";
+		var all = searchObject.all;
+		var any = searchObject.any;
+		var anyLoops = 0;
+		var searchTerm = "";
 
-		if (search.mode == "error")
+		if (!any.total && !all.total) // No tags to test.
 			return false;
-		else if (search.mode == "any") { // Return true on the first positive match.
-			for (var i = 0, sil = search.include.length; i < sil; i++) {
-				includeTerm = search.include[i];
 
-				if (tags.indexOf(includeTerm) > -1)
-					return true;
+		if (any.total) {
+			// Loop until one match is found.
+			for (var i = 0, ail = any.includes.length; i < ail; i++) {
+				searchTerm = any.includes[i];
+
+				if (tags.indexOf(searchTerm) > -1)
+					break;
+				else
+					anyLoops++;
 			}
 
-			for (var i = 0, sel = search.exclude.length; i < sel; i++) {
-				excludeTerm = search.exclude[i];
+			if (anyLoops == ail) { // If the first loop finished, loop through the excludes for one match.
+				for (var i = 0, ael = any.excludes.length; i < ael; i++) {
+					searchTerm = any.excludes[i];
 
-				if (tags.indexOf(excludeTerm) < 0)
-					return true;
+					if (tags.indexOf(searchTerm) < 0)
+						break;
+					else
+						anyLoops++;
+				}
 			}
 
-			return false;
+			// Return false if one match isn't found.
+			if (anyLoops == any.total)
+				return false;
 		}
-		else { // Return false on the first negative match.
-			for (var i = 0, sil = search.include.length; i < sil; i++) {
-				includeTerm = search.include[i];
 
-				if (tags.indexOf(includeTerm) < 0)
+		if (all.total) {
+			// Return false on the first negative match.
+			for (var i = 0, ail = all.includes.length; i < ail; i++) {
+				searchTerm = all.includes[i];
+
+				if (tags.indexOf(searchTerm) < 0)
 					return false;
 			}
 
-			for (var i = 0, sel = search.exclude.length; i < sel; i++) {
-				excludeTerm = search.exclude[i];
+			for (var i = 0, ael = all.excludes.length; i < ael; i++) {
+				searchTerm = all.excludes[i];
 
-				if (tags.indexOf(excludeTerm) > -1)
+				if (tags.indexOf(searchTerm) > -1)
 					return false;
 			}
-
-			return true;
 		}
+
+		// If we haven't managed to find any indications of a negative match, return true.
+		return true;
 	};
 
 	function createSearch(search) {
-		var searchString = search.toLowerCase().replace(/\s(rating:[qes])\w+/g, " $1");
-		var mode = "all";
-		var includes = [];
-		var excludes = [];
+		var searchString = search.toLowerCase().replace(/\b(rating:[qes])\w+/g, "$1").split(" ");
+		var all = {includes: [], excludes: [], total: 0};
+		var any = {includes: [], excludes: [], total: 0};
+		var mode;
+		var searchTerm = "";
 
-		// Test for an any/or search.
-		if (searchString.charAt(0) == "~" && (searchString.match(/\s~/g) || "").length == (searchString.match(/\s/g) || "").length) {
-			searchString = searchString.slice(1);
-			mode = "any";
-		}
-
-		// Strip out any remaining tildes (even if the search doesn't register as an any/or match) and split it into an array.
-		searchString = searchString.replace(/\s~/g, " ").split(" ");
-
-		// Divide the tags into excluded and included tags.
+		// Divide the tags into any and all sets with excluded and included tags.
 		for (var i = 0, ssl = searchString.length; i < ssl; i++) {
-			var searchTerm = searchString[i];
+			searchTerm = searchString[i];
+
+			if (searchTerm.charAt(0) == "~") {
+				mode =  any;
+				searchTerm = searchTerm.slice(1);
+			}
+			else
+				mode = all;
 
 			if (searchTerm.charAt(0) == "-") {
-				if (searchTerm.length > 1)
-					excludes.push(searchTerm.slice(1).bbbSpacePad());
+				if (searchTerm.length > 1) {
+					mode.excludes.push(searchTerm.slice(1).bbbSpacePad());
+					mode.total++;
+				}
 			}
-			else if (searchTerm.length > 0)
-				includes.push(searchTerm.bbbSpacePad());
+			else if (searchTerm.length > 0) {
+				mode.includes.push(searchTerm.bbbSpacePad());
+				mode.total++;
+			}
 		}
 
-		// If there are no tags, mark this search as an error.
-		if (!includes.length && !excludes.length)
-			mode = "error";
-
-		return {include: includes , exclude: excludes, mode: mode};
+		return {all: all, any: any};
 	}
 
 	function delayMe(func) {
