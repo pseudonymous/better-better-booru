@@ -1522,8 +1522,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		tip.style.width = tip.clientWidth - paddingWidth + 2 + "px";
 
-		if (tip.scrollWidth > tip.clientWidth)
-			tip.style.width = tip.scrollWidth - padding.right + "px";
+		if (tip.scrollWidth > tip.clientWidth) {
+			tip.style.width = "auto";
+			tip.style.maxWidth = "400px";
+		}
 
 		// Don't allow the tip to go above the top of the window.
 		if (y - tip.offsetHeight - 2 < 5)
@@ -2139,7 +2141,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// '.bbb-label-text {}' +
 		'.bbb-label-input {float: right;}' +
 		'.bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; width: 400px; overflow: hidden;}' +
-		'.bbb-expl ul {list-style: none outside disc; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
+		'.bbb-expl ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
 		'.bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
 		'.bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}' +
 		'.bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
