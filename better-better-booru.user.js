@@ -72,8 +72,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		misc: new Section("general", ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
 		pref: new Section("general", ["bypass_api", "manage_cookies"], ""),
 		border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
-		status_borders: new Section("border", "status_borders", "Custom Status Styles"),
-		tag_borders: new Section("border", "tag_borders", "Custom Tag Styles")
+		status_borders: new Section("border", "status_borders", "Custom Status Border Styles", "When using custom status borders, you can edit your borders here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
+		tag_borders: new Section("border", "tag_borders", "Custom Tag Border Styles", "When using custom tag borders, you can edit your borders here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\"  href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 	};
 
 	// Location variables.
@@ -990,6 +990,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (section.text) {
 			var sectionText = document.createElement("div");
 			sectionText.innerHTML = section.text;
+			sectionText.className = "bbb-section-text";
 			target.appendChild(sectionText);
 		}
 
@@ -1208,6 +1209,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		moveButton.bbbSetTip("Click the blue highlighted area that indicates where you would like to move this border.");
 		editSpan.appendChild(moveButton);
 
+		var previewButton = document.createElement("a");
+		previewButton.href = "#";
+		previewButton.innerHTML = "Preview";
+		previewButton.className = "bbb-border-button";
+		previewButton.addEventListener("click", function(event) { event.preventDefault(); }, false);
+		previewButton.bbbBorderPreview(borderItem);
+		editSpan.appendChild(previewButton);
+
 		if (!isStatus) {
 			var deleteButton = document.createElement("a");
 			deleteButton.href = "#";
@@ -1231,6 +1240,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			editSpan.appendChild(newButton);
 		}
 
+		editSpan.appendChild(borderSpacer.cloneNode(false));
+
+		var helpButton = document.createElement("a");
+		helpButton.href = "#";
+		helpButton.innerHTML = "Help";
+		helpButton.className = "bbb-border-button";
+		helpButton.addEventListener("click", function(event) { event.preventDefault(); }, false);
+		helpButton.bbbSetTip("<u><b>Border Options</b></u><br><b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<br><br><b>Status/Tags:</b> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied.<br><br><b>Color:</b> Set the color of the border. Hex RGB color codes (#00000, #FFFFFF, etc.) are the recommended values.<br><br><b>Style:</b> Set how the border looks. Please note that double only works with a border width of 3.<br><br><b>Move:</b> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<br><br><b>Preview:</b> Display a preview of the border's current settings.<br><br><b>Delete:</b> Remove the border and its settings.<br><br><b>New:</b> Create a new border.");
+		editSpan.appendChild(helpButton);
+
 		var borderSettingsDiv = document.createElement("div");
 		borderSettingsDiv.className = "bbb-border-settings";
 		borderDiv.appendChild(borderSettingsDiv);
@@ -1249,6 +1268,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			nameInput.addEventListener("change", function() { borderItem.tags = this.value.bbbSpaceClean(); }, false);
 			nameInput.style.width = "400px";
 			nameLabel.appendChild(nameInput);
+
+			var nameTip = document.createElement("a");
+			nameTip.href = "#";
+			nameTip.innerHTML = "?";
+			nameTip.className = "bbb-expl-link";
+			nameTip.addEventListener("click", function(event) { event.preventDefault(); }, false);
+			nameTip.bbbSetTip("For creating border match rules, please consult the following examples:<ul><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li><li><b>rating:safe</b> - Match posts rated safe.</li><li><b>user:albert</b> - Match posts made by Albert.</li></ul>");
+			nameLabel.appendChild(nameTip);
 		}
 
 		var otherSpan = document.createElement("span");
@@ -1472,11 +1499,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		settings.el.menu.removeEventListener("click", insertBorder, true);
 	}
 
-	function showTip(event, text) {
+	function showTip(event, text, backgroundColor) {
 		var x = event.clientX;
 		var y = event.clientY;
 		var tip = settings.el.tip;
 		var topOffset = 0;
+
+		if (backgroundColor)
+			tip.style.backgroundColor = backgroundColor;
 
 		tip.innerHTML = text;
 		tip.style.visibility = "hidden";
@@ -1484,12 +1514,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Resize the tip to minimize blank space.
 		var origHeight = tip.clientHeight;
-		var padding = tip.bbbGetPadding().width;
+		var padding = tip.bbbGetPadding();
+		var paddingWidth = padding.width;
 
 		while (origHeight >= tip.clientHeight && tip.clientWidth > 15)
-			tip.style.width = tip.clientWidth - padding - 2 + "px";
+			tip.style.width = tip.clientWidth - paddingWidth - 2 + "px";
 
-		tip.style.width = tip.clientWidth - padding + 2 + "px";
+		tip.style.width = tip.clientWidth - paddingWidth + 2 + "px";
+
+		if (tip.scrollWidth > tip.clientWidth)
+			tip.style.width = tip.scrollWidth - padding.right + "px";
 
 		// Don't allow the tip to go above the top of the window.
 		if (y - tip.offsetHeight - 2 < 5)
@@ -1501,12 +1535,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function hideTip() {
-		var tip = settings.el.tip;
-		tip.removeAttribute("style");
+		settings.el.tip.removeAttribute("style");
 	}
 
+	Element.prototype.bbbBorderPreview = function(borderItem) {
+		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/ssd/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"background-color: #FFFFFF; display: inline-block; width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + settings.user["border_width"] + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "#FFFFFF"); }, false);
+		this.addEventListener("mouseout", hideTip, false);
+	};
+
 	Element.prototype.bbbSetTip = function(text) {
-		this.addEventListener("click", function(event) { showTip(event, text); }, false);
+		this.addEventListener("click", function(event) { showTip(event, text, false); }, false);
 		this.addEventListener("mouseout", hideTip, false);
 	};
 
@@ -2090,10 +2128,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var styles = '#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 14px; padding: 15px; position: fixed; top: 25px; z-index: 9001;}' +
 		'#bbb_menu a:focus {outline: none;}' +
 		'.bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px 0px; overflow-y: auto;}' +
-		'.bbb-section-options {margin: 5px 0px; max-width: 902px;}' +
+		'.bbb-section-header {border-bottom: 2px solid #CCCCCC; padding-top: 10px; width: 750px;}' +
+		'.bbb-section-options, .bbb-section-text {margin: 5px 0px; max-width: 902px;}' +
 		'.bbb-section-options-left, .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
 		'.bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
-		'.bbb-section-header {border-bottom: 2px solid #CCCCCC; padding-top: 10px; width: 750px;}' +
 		'.bbb-label {display: block; height: 29px; padding: 0px 5px; overflow: hidden;}' + // Overflow is used here to correct bbb-label-input float problems.
 		'.bbb-label:hover {background-color: #EEEEEE;}' +
 		'.bbb-label > span {display: inline-block; line-height: 29px; vertical-align: middle;}' +
@@ -2101,6 +2139,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// '.bbb-label-text {}' +
 		'.bbb-label-input {float: right;}' +
 		'.bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; width: 400px;}' +
+		'.bbb-expl ul {list-style: none outside disc; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
 		'.bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
 		'.bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}' +
 		'.bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
@@ -2288,18 +2327,46 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	Element.prototype.bbbGetPadding = function() {
-		var clone = this.cloneNode(false);
-		clone.style.width = "0px";
-		clone.style.height = "0px";
-		clone.style.visibility = "hidden";
-		clone.style.position = "absolute";
-		clone.style.top = "0px";
-		clone.style.left = "0px";
-		document.body.appendChild(clone);
-		var paddingWidth = clone.clientWidth;
-		var paddingHeight = clone.clientHeight;
-		document.body.removeChild(clone);
-		return {width: paddingWidth, height: paddingHeight};
+		// Get all the padding measurements of an element including the total width and height.
+		var paddingLeft;
+		var paddingRight;
+		var paddingTop;
+		var paddingBottom;
+		var paddingWidth;
+		var paddingHeight;
+
+		if (window.getComputedStyle) {
+			var computed = window.getComputedStyle(this, null);
+
+			paddingLeft = Number(computed.paddingLeft.slice(0,-2));
+			paddingRight = Number(computed.paddingRight.slice(0,-2));
+			paddingTop = Number(computed.paddingTop.slice(0,-2));
+			paddingBottom = Number(computed.paddingBottom.slice(0,-2));
+			paddingHeight = paddingTop + paddingBottom;
+			paddingWidth = paddingLeft + paddingRight;
+		}
+		else {
+			var clone = this.cloneNode(false);
+
+			clone.style.width = "0px";
+			clone.style.height = "0px";
+			clone.style.visibility = "hidden";
+			clone.style.position = "absolute";
+			clone.style.top = "0px";
+			clone.style.left = "0px";
+			document.body.appendChild(clone);
+			paddingWidth = clone.clientWidth;
+			paddingHeight = clone.clientHeight;
+			clone.style.paddingLeft = "0px";
+			clone.style.paddingTop = "0px";
+			paddingRight = clone.clientWidth;
+			paddingLeft = paddingWidth - paddingRight;
+			paddingBottom = clone.clientHeight;
+			paddingTop = paddingHeight - paddingBottom;
+			document.body.removeChild(clone);
+		}
+
+		return {width: paddingWidth, height: paddingHeight, top: paddingTop, bottom: paddingBottom, left: paddingLeft, right: paddingRight};
 	};
 
 	String.prototype.bbbSpacePad = function() {
