@@ -1539,7 +1539,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	Element.prototype.bbbBorderPreview = function(borderItem) {
-		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/ssd/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"background-color: #FFFFFF; display: inline-block; width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + settings.user["border_width"] + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "#FFFFFF"); }, false);
+		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/ssd/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + settings.user["border_width"] + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "#FFFFFF"); }, false);
 		this.addEventListener("mouseout", hideTip, false);
 	};
 
@@ -2138,7 +2138,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.bbb-label input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
 		// '.bbb-label-text {}' +
 		'.bbb-label-input {float: right;}' +
-		'.bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; width: 400px;}' +
+		'.bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; width: 400px; overflow: hidden;}' +
 		'.bbb-expl ul {list-style: none outside disc; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
 		'.bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
 		'.bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}' +
