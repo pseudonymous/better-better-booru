@@ -250,7 +250,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							parseComments(xml);
 					}
 					else if (xmlhttp.status == 403 || xmlhttp.status == 401) {
-						danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future by using cookies.</a></span>)</span>', true);
+						danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', true);
 						document.getElementById("bbb-bypass-api-link").addEventListener("click", function(event) {
 							updateSettings("bypass_api", true);
 							this.parentNode.innerHTML="Settings updated. You may change this setting under preferences in the settings panel.";
@@ -1334,7 +1334,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return indexWrapper;
 	}
 
-	function createTextSection(target, header, text) {
+	Element.prototype.bbbCreateTextSection = function(header, text) {
+		var target = this;
+
 		if (header) {
 			var sectionHeader = document.createElement("h3");
 			sectionHeader.innerHTML = header;
@@ -1347,7 +1349,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			desc.innerHTML = text;
 			target.appendChild(desc);
 		}
-	}
+	};
 
 	function Option(type, def, lbl, expl, optPropObject) {
 		/*
