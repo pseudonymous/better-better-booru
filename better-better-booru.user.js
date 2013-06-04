@@ -894,27 +894,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(generalPage);
 		settings.el.generalPage = generalPage;
 
-		generalPage.bbbCreateSection(settings.sections.browse);
-		generalPage.bbbCreateSection(settings.sections.sidebar);
-		generalPage.bbbCreateSection(settings.sections.misc);
-		generalPage.bbbCreateSection(settings.sections.layout);
-		generalPage.bbbCreateSection(settings.sections.logged_out);
+		generalPage.bbbSection(settings.sections.browse);
+		generalPage.bbbSection(settings.sections.sidebar);
+		generalPage.bbbSection(settings.sections.misc);
+		generalPage.bbbSection(settings.sections.layout);
+		generalPage.bbbSection(settings.sections.logged_out);
 
 		var bordersPage = document.createElement("div");
 		bordersPage.style.display = "none";
 		scrollDiv.appendChild(bordersPage);
 		settings.el.bordersPage = bordersPage;
 
-		bordersPage.bbbCreateSection(settings.sections.border_options);
-		bordersPage.bbbCreateSection(settings.sections.status_borders);
-		bordersPage.bbbCreateSection(settings.sections.tag_borders);
+		bordersPage.bbbSection(settings.sections.border_options);
+		bordersPage.bbbSection(settings.sections.status_borders);
+		bordersPage.bbbSection(settings.sections.tag_borders);
 
 		var prefPage = document.createElement("div");
 		prefPage.style.display = "none";
 		scrollDiv.appendChild(prefPage);
 		settings.el.prefPage = prefPage;
 
-		prefPage.bbbCreateSection(settings.sections.pref);
+		prefPage.bbbSection(settings.sections.pref);
 
 		var close = document.createElement("a");
 		close.innerHTML = "Save & Close";
@@ -977,21 +977,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.style.visibility = "visible";
 	}
 
-	Element.prototype.bbbCreateSection = function(section) {
-		var target = this;
+	createSection = function(section) {
+		var sectionFrag = document.createDocumentFragment();
 
 		if (section.header) {
 			var sectionHeader = document.createElement("h3");
 			sectionHeader.innerHTML = section.header;
 			sectionHeader.className = "bbb-section-header";
-			target.appendChild(sectionHeader);
+			sectionFrag.appendChild(sectionHeader);
 		}
 
 		if (section.text) {
 			var sectionText = document.createElement("div");
 			sectionText.innerHTML = section.text;
 			sectionText.className = "bbb-section-text";
-			target.appendChild(sectionText);
+			sectionFrag.appendChild(sectionText);
 		}
 
 		var sectionDiv = document.createElement("div");
@@ -1022,7 +1022,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				optionTarget.appendChild(newOption);
 			}
 
-			target.appendChild(sectionDiv);
+			sectionFrag.appendChild(sectionDiv);
 		}
 		else if (section.type == "border") {
 			var borderSettings = settings.user[section.settings];
@@ -1040,8 +1040,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			borderDivider.className = "bbb-border-divider";
 			indexWrapper.appendChild(borderDivider);
 
-			target.appendChild(sectionDiv);
+			sectionFrag.appendChild(sectionDiv);
 		}
+
+		return sectionFrag;
+	}
+
+	Element.prototype.bbbSection = function(section) {
+		this.appendChild(createSection(section));
 	};
 
 	function createOption(settingName) {
@@ -1334,21 +1340,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return indexWrapper;
 	}
 
-	Element.prototype.bbbCreateTextSection = function(header, text) {
-		var target = this;
+	createTextSection = function(header, text) {
+		var sectionFrag = document.createDocumentFragment();
 
 		if (header) {
 			var sectionHeader = document.createElement("h3");
 			sectionHeader.innerHTML = header;
 			sectionHeader.className = "bbb-section-header";
-			target.appendChild(sectionHeader);
+			sectionFrag.appendChild(sectionHeader);
 		}
 
 		if (text) {
 			var desc = document.createElement("div");
 			desc.innerHTML = text;
-			target.appendChild(desc);
+			sectionFrag.appendChild(desc);
 		}
+
+		return sectionFrag;
+	}
+
+	Element.prototype.bbbTextSection = function(header, text) {
+		this.appendChild(createTextSection(header, text));
 	};
 
 	function Option(type, def, lbl, expl, optPropObject) {
