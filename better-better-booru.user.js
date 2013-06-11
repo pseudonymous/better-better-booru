@@ -23,6 +23,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Global Variables */
 	var bbbInfo = {}; // Container for misc info.
+	bbbInfo.el = {}; // Script elements.
+
 	var settings = {}; // Container for settings.
 
 	// Initialize settings.
@@ -37,6 +39,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
 		custom_tag_borders: new Option("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to images with specific tags."),
 		direct_downloads: new Option("checkbox", false, "Direct Downloads", "Allow download managers to download the images displayed in the search, pool, and popular listings."),
+		disable_status_message: new Option("checkbox", false, "Disable Status Message", "Do not display Better Better Booru's status in the lower right corner"),
 		hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
 		hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"viewing original\" notice."),
@@ -70,10 +73,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
 		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
 		misc: new Section("general", ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
-		pref: new Section("general", ["bypass_api", "manage_cookies"], ""),
+		pref: new Section("general", ["bypass_api", "manage_cookies", "disable_status_message"], "Script Settings"),
 		border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
-		status_borders: new Section("border", "status_borders", "Custom Status Border Styles", "When using custom status borders, you can edit your borders here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
-		tag_borders: new Section("border", "tag_borders", "Custom Tag Border Styles", "When using custom tag borders, you can edit your borders here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\"  href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
+		status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
+		tag_borders: new Section("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 	};
 
 	// Location variables.
@@ -98,6 +101,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	var bypass_api = settings.user["bypass_api"]; // Automatically bypass API features when they can't be used.
 	var manage_cookies = settings.user["manage_cookies"]; // Create cookies to completely stop notices.
+	var disable_status_message = settings.user["disable_status_message"];
 
 	var hide_sign_up_notice = settings.user["hide_sign_up_notice"];
 	var hide_upgrade_notice = settings.user["hide_upgrade_notice"];
@@ -151,7 +155,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (!isLoggedIn()) // Immediately apply script blacklist for logged out users.
 		delayMe(blacklistInit);
 
+	if (search_add)
+		searchAdd();
+
+	if (remove_tag_headers)
+		removeTagHeaders();
+
+	if (post_tag_titles)
+		postTagTitles();
+
 	injectSettings();
+
+	if (!disable_status_message)
+		bbbStatusInit();
 
 	if (useAPI()) // API only features.
 		searchJSON(gLoc);
@@ -163,15 +179,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	if (arrow_nav && allowArrowNav())
 		window.addEventListener("keydown", keyCheck, false);
-
-	if (search_add)
-		searchAdd();
-
-	if (remove_tag_headers)
-		removeTagHeaders();
-
-	if (post_tag_titles)
-		postTagTitles();
 
 	if (thumbnail_count)
 		limitFix();
@@ -249,24 +256,33 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						else if (mode == "comments")
 							parseComments(xml);
 					}
-					else if (xmlhttp.status == 403 || xmlhttp.status == 401) {
-						danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', true);
-						document.getElementById("bbb-bypass-api-link").addEventListener("click", function(event) {
-							updateSettings("bypass_api", true);
-							this.parentNode.innerHTML="Settings updated. You may change this setting under preferences in the settings panel.";
-							event.preventDefault();
-						}, false);
+					else {
+						if (xmlhttp.status == 403 || xmlhttp.status == 401) {
+							danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', true);
+							document.getElementById("bbb-bypass-api-link").addEventListener("click", function(event) {
+								updateSettings("bypass_api", true);
+								this.parentNode.innerHTML="Settings updated. You may change this setting under preferences in the settings panel.";
+								event.preventDefault();
+							}, false);
+						}
+						else if (xmlhttp.status == 421)
+							danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", true);
+						else if (xmlhttp.statusText)
+							danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.statusText + ")", true);
+
+						// Update status message.
+						bbbStatus("error");
 					}
-					else if (xmlhttp.status == 421)
-						danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", true);
-					else if (xmlhttp.status == 500)
-						danbNotice("Better Better Booru: Error retrieving information. Internal server error.", true);
-					else if (xmlhttp.status == 503)
-						danbNotice("Better Better Booru: Error retrieving information. Service unavailable.", true);
 				}
 			};
 			xmlhttp.open("GET", url, true);
 			xmlhttp.send(null);
+
+			// Loading status message.
+			if (mode == "search" || mode == "popular" || mode == "notes" || mode == "post" || mode == "pool")
+				bbbStatus("image");
+			else if (mode == "comments")
+				bbbStatus("comment");
 		}
 	}
 
@@ -412,6 +428,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 								target.appendChild(childSpan.children[0]);
 
 							Danbooru.Comment.initialize_all();
+
+							// Update status message.
+							bbbStatus("loaded");
 						}
 						else if (mode == "thumbnails") { // Fetch the thumbnails and paginator from the page of a search and replace the existing ones.
 							var childSpan = document.createElement("span");
@@ -431,16 +450,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							// Clean links
 							if (clean_links)
 								cleanLinks();
+
+							// Update status message.
+							bbbStatus("loaded");
 						}
 					}
-					else if (xmlhttp.status == 500)
-						danbNotice("Better Better Booru: Error retrieving information. Internal server error.", true);
-					else if (xmlhttp.status == 503)
-						danbNotice("Better Better Booru: Error retrieving information. Service unavailable.", true);
+					else if (xmlhttp.statusText) {
+						danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.statusText + ")", true);
+
+						// Update status message.
+						bbbStatus("error");
+					}
 				}
 			};
 			xmlhttp.open("GET", url, true);
 			xmlhttp.send(null);
+
+			// Loading status message.
+			if (mode == "thumbnails")
+				bbbStatus("image");
+			else if (mode == "comments")
+				bbbStatus("comment");
 		}
 	}
 
@@ -533,11 +563,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else
 			where.innerHTML = out;
 
-		// Thumbnail classes and titles
+		// Thumbnail classes and titles.
 		formatThumbnails();
 
-		// Blacklist
+		// Blacklist.
 		blacklistInit();
+
+		// Update status message.
+		bbbStatus("loaded");
 	}
 
 	function parsePost(xml) {
@@ -750,8 +783,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				Danbooru.Note.load_all();
 			}
 
-		// Blacklist
+		// Blacklist.
 		blacklistInit();
+
+		// Update status message.
+		bbbStatus("loaded");
 		}
 	}
 
@@ -799,8 +835,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		// If we don't have the expected number of posts, the API info and page are too out of sync.
-		if (existingPosts.length != endTotal)
+		if (existingPosts.length != endTotal) {
 			danbNotice("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.", true);
+			bbbStatus("error");
+		}
+		else
+			bbbStatus("loaded");
 
 		// Thumbnail classes and titles
 		formatThumbnails();
@@ -915,6 +955,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		settings.el.prefPage = prefPage;
 
 		prefPage.bbbSection(settings.sections.pref);
+		prefPage.bbbBackupSection();
 
 		var close = document.createElement("a");
 		close.innerHTML = "Save & Close";
@@ -922,7 +963,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		close.className = "bbb-button";
 		close.style.marginRight = "15px";
 		close.addEventListener("click", function(event) {
-			settings.el.menu.style.display = "none";
+			menu.style.display = "none";
 			saveSettings();
 			event.preventDefault();
 		}, false);
@@ -959,7 +1000,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.appendChild(tip);
 		settings.el.tip = tip;
 
-
 		// Add menu to the DOM and manipulate the dimensions.
 		document.body.appendChild(menu);
 
@@ -977,7 +1017,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		menu.style.visibility = "visible";
 	}
 
-	createSection = function(section) {
+	function createSection(section) {
 		var sectionFrag = document.createDocumentFragment();
 
 		if (section.header) {
@@ -996,6 +1036,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		var sectionDiv = document.createElement("div");
 		sectionDiv.className = "bbb-section-options";
+		sectionFrag.appendChild(sectionDiv);
 
 		if (section.type == "general") {
 			var settingList = section.settings;
@@ -1021,8 +1062,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var newOption = createOption(settingName);
 				optionTarget.appendChild(newOption);
 			}
-
-			sectionFrag.appendChild(sectionDiv);
 		}
 		else if (section.type == "border") {
 			var borderSettings = settings.user[section.settings];
@@ -1039,8 +1078,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var borderDivider = document.createElement("div");
 			borderDivider.className = "bbb-border-divider";
 			indexWrapper.appendChild(borderDivider);
-
-			sectionFrag.appendChild(sectionDiv);
 		}
 
 		return sectionFrag;
@@ -1125,7 +1162,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				item.addEventListener("change", function() {
 					var selected = this.value;
-					settings.user[settingName] = (/^-?\d+(\.\d+)?$/.test(selected) ? Number(selected) : selected);
+					settings.user[settingName] = (bbbIsNum(selected) ? Number(selected) : selected);
 				}, false);
 				break;
 			case "checkbox":
@@ -1260,7 +1297,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		borderSettingsDiv.className = "bbb-border-settings";
 		borderDiv.appendChild(borderSettingsDiv);
 
-		var nameLabel  = document.createElement("label");
+		var nameLabel = document.createElement("label");
 		borderSettingsDiv.appendChild(nameLabel);
 
 		if (isStatus)
@@ -1280,7 +1317,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			nameTip.innerHTML = "?";
 			nameTip.className = "bbb-expl-link";
 			nameTip.addEventListener("click", function(event) { event.preventDefault(); }, false);
-			nameTip.bbbSetTip("For creating border match rules, please consult the following examples:<ul><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li><li><b>rating:safe</b> - Match posts rated safe.</li><li><b>user:albert</b> - Match posts made by Albert.</li></ul>");
+			nameTip.bbbSetTip("For creating border match rules, please consult the following examples:<ul><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Multiple match rules can also be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are also supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li></ul>");
 			nameLabel.appendChild(nameTip);
 		}
 
@@ -1340,7 +1377,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return indexWrapper;
 	}
 
-	createTextSection = function(header, text) {
+	function createTextSection(header, text) {
 		var sectionFrag = document.createDocumentFragment();
 
 		if (header) {
@@ -1361,6 +1398,68 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	Element.prototype.bbbTextSection = function(header, text) {
 		this.appendChild(createTextSection(header, text));
+	};
+
+	function createBackupSection() {
+		var sectionFrag = document.createDocumentFragment();
+
+		var sectionHeader = document.createElement("h3");
+		sectionHeader.innerHTML = "Backup/Restore Settings";
+		sectionHeader.className = "bbb-section-header";
+		sectionFrag.appendChild(sectionHeader);
+
+		var sectionText = document.createElement("div");
+		sectionText.innerHTML = "For creating a backup, there are two options. Creating a text backup will provide a plain text format backup in the area provided that can be copied and saved where desired. Creating a backup page will open a new page that can be saved with the browser's \"save page\" option. For restoring a backup, copy and paste the desired backup into the provided area and click \"Restore Backup\".";
+		sectionText.className = "bbb-section-text";
+		sectionFrag.appendChild(sectionText);
+
+		var sectionDiv = document.createElement("div");
+		sectionDiv.className = "bbb-section-options";
+		sectionDiv.innerHTML = "<b>Backup Text:</b><br>";
+		sectionFrag.appendChild(sectionDiv);
+
+		var backupTextarea = document.createElement("textarea");
+		backupTextarea.className = "bbb-backup-text";
+		sectionDiv.appendChild(backupTextarea);
+		settings.el.backupTextarea = backupTextarea;
+
+		var textBackup = document.createElement("a");
+		textBackup.innerHTML = "Create Backup Text";
+		textBackup.href = "#";
+		textBackup.className = "bbb-button";
+		textBackup.style.marginRight = "15px";
+		textBackup.addEventListener("click", function(event) {
+			createBackupText();
+			event.preventDefault();
+		}, false);
+		sectionFrag.appendChild(textBackup);
+
+		var pageBackup = document.createElement("a");
+		pageBackup.innerHTML = "Create Backup Page";
+		pageBackup.href = "#";
+		pageBackup.className = "bbb-button";
+		pageBackup.style.marginRight = "15px";
+		pageBackup.addEventListener("click", function(event) {
+			createBackupPage();
+			event.preventDefault();
+		}, false);
+		sectionFrag.appendChild(pageBackup);
+
+		var restoreBackup = document.createElement("a");
+		restoreBackup.innerHTML = "Restore Backup";
+		restoreBackup.href = "#";
+		restoreBackup.className = "bbb-button";
+		restoreBackup.addEventListener("click", function(event) {
+			restoreBackupText();
+			event.preventDefault();
+		}, false);
+		sectionFrag.appendChild(restoreBackup);
+
+		return sectionFrag;
+	}
+
+	Element.prototype.bbbBackupSection = function(header, text) {
+		this.appendChild(createBackupSection());
 	};
 
 	function Option(type, def, lbl, expl, optPropObject) {
@@ -1396,7 +1495,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		 * Current section types are general and border.
 		 *
 		 * The setting list for general sections are provided in the form of an array containing the settings names as string.
-		 * The setting list for border sections is the setting name as a string.
+		 * The setting list for border sections is the setting name containing the borders as a string.
 		 */
 
 		this.type = type;
@@ -1446,7 +1545,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (borderSettings.length == 0) {
 			// If no borders are left, add a new blank border.
 			var newBorderItem = new Border("", false, "#000000", "solid");
-			borderSettings.splice(0, 0, newBorderItem);
+			borderSettings.push(newBorderItem);
 
 			var newBorderElement = createBorderOption(borderSettings, 0);
 			section.insertBefore(newBorderElement, section.children[0]);
@@ -1500,7 +1599,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					if (newIndex < oldIndex)
 						borderSettings.splice(newIndex, 0, borderItem);
-					else if  (newIndex > oldIndex)
+					else if (newIndex > oldIndex)
 						borderSettings.splice(newIndex - 1, 0, borderItem);
 
 					section.insertBefore(borderElement, section.children[newIndex]);
@@ -1513,14 +1612,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		settings.el.menu.removeEventListener("click", insertBorder, true);
 	}
 
-	function showTip(event, text, backgroundColor) {
+	function showTip(event, text, styleString) {
 		var x = event.clientX;
 		var y = event.clientY;
 		var tip = settings.el.tip;
 		var topOffset = 0;
 
-		if (backgroundColor)
-			tip.style.backgroundColor = backgroundColor;
+		if (styleString)
+			tip.setAttribute("style", styleString);
 
 		tip.innerHTML = text;
 		tip.style.visibility = "hidden";
@@ -1536,10 +1635,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		tip.style.width = tip.clientWidth - paddingWidth + 2 + "px";
 
-		if (tip.scrollWidth > tip.clientWidth) {
+		if (tip.scrollWidth > tip.clientWidth)
 			tip.style.width = "auto";
-			tip.style.maxWidth = "400px";
-		}
 
 		// Don't allow the tip to go above the top of the window.
 		if (y - tip.offsetHeight - 2 < 5)
@@ -1555,7 +1652,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	Element.prototype.bbbBorderPreview = function(borderItem) {
-		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/ssd/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + settings.user["border_width"] + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "#FFFFFF"); }, false);
+		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/ssd/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + settings.user["border_width"] + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
 		this.addEventListener("mouseout", hideTip, false);
 	};
 
@@ -1593,6 +1690,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else {
 			settings.user = JSON.parse(localStorage["bbb_settings"]);
 			checkUser(settings.user, settings.options);
+			convertSettings();
 		}
 	}
 
@@ -1674,17 +1772,62 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		saveSettings();
 	}
 
-	function convertSettings(mode) {
-		var old = {};
+	function convertSettings() {
+		// If the user settings are from an old version, attempt to convert some settings and update the version number. Settings will start conversion at the appropriate case and be allowed to run through every case after it until the end/default.
+		var mode = settings.user["bbb_version"];
 
-		switch (mode) {
-			case "?":
-				break;
+		if (isOldVersion(mode)) {
+			switch (mode) {
+				case "6.0":
+				default:
+					settings.user["bbb_version"] = settings.options["bbb_version"];
+					break;
+			}
 		}
+	}
+
+	function createBackupText() {
+		// Create a plain text version of the settings.
+		var textarea = settings.el.backupTextarea;
+		textarea.value = "Better Better Booru v" + settings.user["bbb_version"] + " Backup (" + bbbTimestamp("y-m-d hh:mm:ss") + "):\r\n\r\n" + JSON.stringify(settings.user) + "\r\n";
+		textarea.focus();
+		textarea.setSelectionRange(0,0);
+	}
+
+	function createBackupPage() {
+		// Open a new tab/window and place the setting text in it.
+		var backupWindow = window.open();
+
+		backupWindow.document.writeln('<html><head><meta charset="UTF-8"><title>Better Better Booru v' + settings.user["bbb_version"] + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="padding: 20px; word-wrap: break-word;">' + JSON.stringify(settings.user) + '</body></html>');
+		backupWindow.document.close();
+	}
+
+	function restoreBackupText() {
+		// Load the backup text provided into the script.
+		var textarea = settings.el.backupTextarea;
+		var backupString = textarea.value.replace(/\r?\n/g,"").match(/{.+}/);
+
+		if (backupString) {
+			try {
+				settings.user = JSON.parse(backupString);
+				checkUser(settings.user, settings.options);
+				convertSettings();
+				removeMenu();
+				showSettings();
+				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"Save & Close\" to finalize the restore.");
+			}
+			catch (error) {
+				 if (error instanceof SyntaxError)
+					alert("The backup does not appear to be formatted correctly. Please make sure everything was pasted correctly and that only one backup is provided.");
+			}
+		}
+		else
+			alert("A backup could not be detected in the text provided. Please make sure everything was pasted correctly.");
 	}
 
 	/* Functions for support, extra features, and content manipulation */
 	function blacklistInit() {
+		// Reset the blacklist with the account settings when logged in or script settings when logged out.
 		Danbooru.Blacklist.entries.length = 0;
 
 		if (!isLoggedIn() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
@@ -1713,6 +1856,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function resizeImage() {
+		// Custom resize post image script.
 		var img = document.getElementById("image");
 		var imgContainer = document.getElementById("image-container");
 		var availableWidth = imgContainer.clientWidth;
@@ -1739,6 +1883,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function limitFix() {
+		// Add the limit variable to link URLs that are not thumbnails.
 		var links = document.evaluate('//div[@id="page"]//a[starts-with(@href, "/posts?")]', document, null, 6, null);
 
 		for (var i = 0, lsl = links.snapshotLength; i < lsl; i++) {
@@ -1777,6 +1922,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function getVar(getVar, url) {
+		// Retrieve a variable value from a specified URL or the current URL.
 		if (!url)
 			url = gUrl;
 
@@ -1788,7 +1934,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else {
 			result = result[0].split("=")[1];
 
-			if (/^-?\d+(\.\d+)?$/.test(result))
+			if (bbbIsNum(result))
 				return Number(result);
 			else
 				return result;
@@ -1796,12 +1942,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function keyCheck(e) {
-		if (document.activeElement.type == "text" || document.activeElement.type == "textarea")
-			return;
-		else if (e.keyCode == 37)
-			danbooruNav("left");
-		else if (e.keyCode == 39)
-			danbooruNav("right");
+		// Bind the arrow keys to page navigation.
+		if (document.activeElement.type != "text" || document.activeElement.type != "textarea") {
+			if (e.keyCode == 37)
+				danbooruNav("left");
+			else if (e.keyCode == 39)
+				danbooruNav("right");
+		}
 	}
 
 	function danbooruNav(dir) {
@@ -1820,6 +1967,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function cleanLinks() {
+		// Remove the query portion of thumbnail links.
 		var target;
 
 		if (gLoc == "post") {
@@ -1843,6 +1991,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function autohideSidebar() {
+		// Show the sidebar when it gets focus, hide it when it loses focus, and don't allow its links to retain focus.
 		var sidebar = document.getElementById("sidebar");
 
 		sidebar.addEventListener("click", function(event) {
@@ -1860,6 +2009,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function allowUserLimit() {
+		// Allow use of the limit variable if it isn't currently set and we're on the first page.
 		if (thumbnail_count > 0 && !/(?:page|limit)=\d/.test(gUrlQuery))
 			return true;
 		else
@@ -1876,6 +2026,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function needPostAPI() {
+		// Test for hidden post images.
 		if (document.getElementById("image-container").getElementsByTagName("object")[0] || document.getElementById("image") || /Save this file|The artist requested removal/.test(document.getElementById("image-container").textContent))
 			return false;
 		else
@@ -1883,6 +2034,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function currentLoc() {
+		// Test the page URL to find which section of Danbooru the script is running on.
 		if (/\/posts\/\d+/.test(gUrlPath))
 			return "post";
 		else if (/^\/(?:posts|$)/.test(gUrlPath))
@@ -1939,6 +2091,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function checkSetting(metaName, metaData, scriptSetting) {
+		// Check for the user's account settings and use the script setting if they're logged out.
 		if (isLoggedIn()) {
 			if (fetchMeta(metaName) === metaData)
 				return true;
@@ -2032,8 +2185,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var user = post.getAttribute("data-uploader");
 			var rating = post.getAttribute("data-rating");
 			var score = post.getAttribute("data-score");
+			var flags = post.getAttribute("data-flags") || "active";
 			var title = tags + " user:" + user + " rating:" + rating + " score:" + score;
-			var postInfo = tags + " user:" + user.replace(/\s/g, "_").toLowerCase() + " rating:" + rating + " score:" + score;
+			var postInfo = tags + " user:" + user.replace(/\s/g, "_").toLowerCase() + " rating:" + rating + " score:" + score + (flags == "flagged" ? " status:flagged status:active" : " status:" + flags);
 			var primary = [];
 			var primaryLength = 0;
 			var secondary = [];
@@ -2072,12 +2226,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// Secondary custom tag borders.
 			if (custom_tag_borders) {
-				var spacedPostInfo = postInfo.bbbSpacePad();
-
 				for (var j = 0, tbsl = tag_borders.length; j < tbsl; j++) {
 					var tagBorderItem = tag_borders[j];
 
-					if (tagBorderItem.is_enabled && spacedPostInfo.bbbTagMatch(searches[j])) {
+					if (tagBorderItem.is_enabled && postInfo.bbbTagMatch(searches[j])) {
 						secondary.push([tagBorderItem.border_color, tagBorderItem.border_style]);
 
 						if (secondary.length == 4)
@@ -2141,7 +2293,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var customStyles = document.createElement("style");
 		customStyles.type = "text/css";
 
-		var styles = '#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 14px; padding: 15px; position: fixed; top: 25px; z-index: 9001;}' +
+		var styles = '.bbb-status {background-color: #FFFFFF; border: 1px solid #CCCCCC; font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
+		'#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 14px; padding: 15px; position: fixed; top: 25px; z-index: 9001;}' +
 		'#bbb_menu a:focus {outline: none;}' +
 		'.bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px 0px; overflow-y: auto;}' +
 		'.bbb-section-header {border-bottom: 2px solid #CCCCCC; padding-top: 10px; width: 750px;}' +
@@ -2154,7 +2307,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.bbb-label input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
 		// '.bbb-label-text {}' +
 		'.bbb-label-input {float: right;}' +
-		'.bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; width: 400px; overflow: hidden;}' +
+		'.bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 420px; width: 420px; overflow: hidden;}' +
 		'.bbb-expl ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
 		'.bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
 		'.bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}' +
@@ -2170,10 +2323,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.bbb-border-settings {background-color: #FFFFFF;}' +
 		'.bbb-border-bar input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
 		'.bbb-border-bar > *, .bbb-border-settings > * {display: inline-block; line-height: 29px; vertical-align: middle;}' +
-		'.bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}';
+		'.bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}' +
+		'.bbb-backup-text {height: 200px; width: 894px; resize: none;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
-		if ((gLoc == "search" || gLoc == "notes") && (thumbnail_count))
+		if (thumbnail_count && (gLoc == "search" || gLoc == "notes"))
 			styles += 'div#page {margin: 0px 10px 0px 20px !important;}';
 
 		// Border setup
@@ -2185,7 +2339,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		styles += 'article.post-preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin: 0px ' + listingExtraSpace + 'px ' + listingExtraSpace + 'px 0px !important;}' +
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview img {border-width: ' + border_width + 'px !important;}';
-
 
 		if (custom_status_borders) {
 			var activeStatusStyles = "";
@@ -2256,6 +2409,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function removeTagHeaders() {
+		// Remove the "copyright", "characters", and "artist" headers in the post sidebar.
 		if (gLoc == "post") {
 			var tagList = document.getElementById("tag-list");
 			var newList = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
@@ -2265,6 +2419,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function postTagTitles() {
+		// Replace the post title with the full set of tags.
 		if (gLoc == "post")
 			document.title = fetchMeta("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
 	}
@@ -2386,110 +2541,241 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	};
 
 	String.prototype.bbbSpacePad = function() {
+		// Add a leading and trailing space.
 		return (this.length ? " " + this + " " : this);
 	};
 
 	String.prototype.bbbSpaceClean = function() {
+		// Remove leading, trailing, and multiple spaces.
 		return this.replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
 	};
 
-	String.prototype.bbbTagMatch = function(searchObject) {
-		var tags = this;
-		var all = searchObject.all;
-		var any = searchObject.any;
-		var anyLoops = 0;
+	function bbbIsNum(value) {
+		return /^-?\d+(\.\d+)?$/.test(value);
+	}
+
+	String.prototype.bbbTagMatch = function(searchArray) {
+		var tags = this.bbbSpacePad();
+		var searchObject;
+		var all;
+		var any;
+		var anyResult;
+		var allResult;
 		var searchTerm = "";
 
-		if (!any.total && !all.total) // No tags to test.
-			return false;
+		for (var i = 0, sal = searchArray.length; i < sal; i++) {
+			searchObject = searchArray[i];
+			all = searchObject.all;
+			any = searchObject.any;
 
-		if (any.total) {
-			// Loop until one match is found.
-			for (var i = 0, ail = any.includes.length; i < ail; i++) {
-				searchTerm = any.includes[i];
+			// Continue to the next matching rule if there are no tags to test.
+			if (!any.total && !all.total)
+				continue;
 
-				if (tags.indexOf(searchTerm) > -1)
-					break;
-				else
-					anyLoops++;
-			}
+			if (any.total) {
+				anyResult = false;
 
-			if (anyLoops == ail) { // If the first loop finished, loop through the excludes for one match.
-				for (var i = 0, ael = any.excludes.length; i < ael; i++) {
-					searchTerm = any.excludes[i];
+				// Loop until one match is found.
+				for (var j = 0, ail = any.includes.length; j < ail; j++) {
+					searchTerm = any.includes[j];
 
-					if (tags.indexOf(searchTerm) < 0)
+					if (tags.indexOf(searchTerm) > -1) {
+						anyResult = true;
 						break;
-					else
-						anyLoops++;
+					}
 				}
+
+				if (!anyResult) { // If we don't have a match yet, loop through the excludes for one match.
+					for (var j = 0, ael = any.excludes.length; j < ael; j++) {
+						searchTerm = any.excludes[j];
+
+						if (tags.indexOf(searchTerm) < 0) {
+							anyResult = true;
+							break;
+						}
+					}
+				}
+
+				// Continue to the next matching rule if none of the "any" tags matched.
+				if (!anyResult)
+					continue;
 			}
 
-			// Return false if one match isn't found.
-			if (anyLoops == any.total)
-				return false;
+			if (all.total) {
+				allResult = true;
+
+				// Return false on the first negative match.
+				for (var j = 0, ail = all.includes.length; j < ail; j++) {
+					searchTerm = all.includes[j];
+
+					if (tags.indexOf(searchTerm) < 0) {
+						allResult = false;
+						break;
+					}
+				}
+
+				for (var j = 0, ael = all.excludes.length; j < ael; j++) {
+					searchTerm = all.excludes[j];
+
+					if (tags.indexOf(searchTerm) > -1) {
+						allResult = false;
+						break;
+					}
+				}
+
+				// Continue to the next matching rule if one of the "all" tags didn't match.
+				if (!allResult)
+					continue;
+
+			}
+
+			// Loop completed without a false result so return true.
+			return true;
 		}
 
-		if (all.total) {
-			// Return false on the first negative match.
-			for (var i = 0, ail = all.includes.length; i < ail; i++) {
-				searchTerm = all.includes[i];
-
-				if (tags.indexOf(searchTerm) < 0)
-					return false;
-			}
-
-			for (var i = 0, ael = all.excludes.length; i < ael; i++) {
-				searchTerm = all.excludes[i];
-
-				if (tags.indexOf(searchTerm) > -1)
-					return false;
-			}
-		}
-
-		// If we haven't managed to find any indications of a negative match, return true.
-		return true;
+		// If we haven't managed a positive match for any rules, return false.
+		return false;
 	};
 
 	function createSearch(search) {
-		var searchString = search.toLowerCase().replace(/\b(rating:[qes])\w+/g, "$1").split(" ");
-		var all = {includes: [], excludes: [], total: 0};
-		var any = {includes: [], excludes: [], total: 0};
-		var mode;
+		var searchStrings = search.toLowerCase().replace(/\b(rating:[qes])\w+/g, "$1").split(",");
+		var searchString;
 		var searchTerm = "";
+		var searches = [];
+		var all;
+		var any;
+		var mode;
 
-		// Divide the tags into any and all sets with excluded and included tags.
-		for (var i = 0, ssl = searchString.length; i < ssl; i++) {
-			searchTerm = searchString[i];
+		// Sort through each matching rule.
+		for (var i = 0, sssl = searchStrings.length; i < sssl; i++) {
+			searchString = searchStrings[i].split(" ");
+			all = {includes: [], excludes: [], total: 0};
+			any = {includes: [], excludes: [], total: 0};
 
-			if (searchTerm.charAt(0) == "~") {
-				mode =  any;
-				searchTerm = searchTerm.slice(1);
-			}
-			else
-				mode = all;
+			// Divide the tags into any and all sets with excluded and included tags.
+			for (var j = 0, ssl = searchString.length; j < ssl; j++) {
+				searchTerm = searchString[j];
 
-			if (searchTerm.charAt(0) == "-") {
-				if (searchTerm.length > 1) {
-					mode.excludes.push(searchTerm.slice(1).bbbSpacePad());
+				if (searchTerm.charAt(0) == "~") {
+					mode = any;
+					searchTerm = searchTerm.slice(1);
+				}
+				else
+					mode = all;
+
+				if (searchTerm.charAt(0) == "-") {
+					if (searchTerm.length > 1) {
+						mode.excludes.push(searchTerm.slice(1).bbbSpacePad());
+						mode.total++;
+					}
+				}
+				else if (searchTerm.length > 0) {
+					mode.includes.push(searchTerm.bbbSpacePad());
 					mode.total++;
 				}
 			}
-			else if (searchTerm.length > 0) {
-				mode.includes.push(searchTerm.bbbSpacePad());
-				mode.total++;
-			}
+
+			searches.push({all: all, any: any});
 		}
 
-		return {all: all, any: any};
+		return searches;
 	}
 
 	function delayMe(func) {
+		// Run the function after the browser has finished its current stack of tasks.
 		var timer = setTimeout(func, 0);
 	}
 
 	function escapeRegEx(regEx) {
 		return regEx.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+	}
+
+	function bbbStatusInit() {
+		// Insert the status message container and prep the request tracking.
+		var statusDiv = document.createElement("div");
+		statusDiv.className = "bbb-status";
+		document.body.appendChild(statusDiv);
+		bbbInfo.el.status = statusDiv;
+		bbbInfo.statusCount = 0;
+	}
+
+	function bbbStatus(mode) {
+		// Updates the BBB status message.
+		if (!disable_status_message) {
+			var status = bbbInfo.el.status;
+
+			if (mode == "image") { // Status mode for loading thumbnails and hidden images.
+				status.style.display = "block";
+				status.innerHTML = "Loading image info...";
+				bbbInfo.statusCount++;
+			}
+			else if (mode == "comment") { // Status mode for loading hidden comments.
+				status.style.display = "block";
+				status.innerHTML = "Loading comment info...";
+				bbbInfo.statusCount++;
+			}
+			else if (mode == "loaded") { // Status mode for successful requests. Hides itself automatically.
+				bbbInfo.statusCount--;
+
+				if (bbbInfo.statusCount == 0) {
+					status.style.display = "block";
+					status.innerHTML = "Loaded!";
+
+					var removeStatus = window.setTimeout( function() { bbbStatus("clear"); }, 1500);
+				}
+			}
+			else if (mode == "error") { // Status mode for unsuccessful requests. Hides itself automatically.
+				bbbInfo.statusCount = -1;
+				status.style.display = "block";
+				status.innerHTML = "Error.";
+
+				var removeStatus = window.setTimeout( function() { bbbStatus("clear"); }, 1500);
+			}
+			else if (mode == "clear") // Status mode for hiding the status message.
+				status.style.display = "none";
+		}
+	}
+
+	Number.prototype.bbbPadDate = function() {
+		// Adds a leading "0" to single digit date/time values.
+		var numString = this.toString(10);
+
+		if (numString.length == 1)
+			numString = "0" + numString;
+
+		return numString;
+	};
+
+	function bbbTimestamp(format) {
+		// Returns a simple timestamp based on the format string provided. String placeholders: y = year, m = month, d = day, hh = hours, mm = minutes, ss = seconds
+		var time = new Date();
+		var year = time.getFullYear();
+		var month = (time.getMonth() + 1).bbbPadDate();
+		var day = time.getDate().bbbPadDate();
+		var hours = time.getHours().bbbPadDate();
+		var minutes = time.getMinutes().bbbPadDate();
+		var seconds = time.getSeconds().bbbPadDate();
+		var stamp = format.replace("hh", hours).replace("mm", minutes).replace("ss", seconds).replace("y", year).replace("m", month).replace("d", day);
+
+		return stamp;
+	}
+
+	function isOldVersion(ver) {
+		// Takes the provided version and compares it to the script version. Returns true if the provided version is older than the script version.
+		var userNums = ver.split(".");
+		var scriptNums = settings.options["bbb_version"].split(".");
+		var userNum;
+		var scriptNum;
+
+		for (var i = 0, unl = userNums.length; i < unl; i++) {
+			userNum = (userNums[i] !== undefined ? Number(userNums[i]) : 0);
+			scriptNum = (scriptNums[i] !== undefined ? Number(scriptNums[i]) : 0);
+
+			if (userNum < scriptNum)
+				return true;
+		}
+
+		return false;
 	}
 
 
@@ -2499,4 +2785,4 @@ function injectMe() { // This is needed to make this script work in Chrome.
 var script = document.createElement('script');
 script.type = "text/javascript";
 script.appendChild(document.createTextNode('(' + injectMe + ')();'));
-(document.body || document.head || document.documentElement).appendChild(script);
+document.body.appendChild(script);
