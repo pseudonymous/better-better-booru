@@ -2509,10 +2509,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (window.getComputedStyle) {
 			var computed = window.getComputedStyle(this, null);
 
-			paddingLeft = Number(computed.paddingLeft.slice(0,-2));
-			paddingRight = Number(computed.paddingRight.slice(0,-2));
-			paddingTop = Number(computed.paddingTop.slice(0,-2));
-			paddingBottom = Number(computed.paddingBottom.slice(0,-2));
+			paddingLeft = parseFloat(computed.paddingLeft);
+			paddingRight = parseFloat(computed.paddingRight);
+			paddingTop = parseFloat(computed.paddingTop);
+			paddingBottom = parseFloat(computed.paddingBottom);
 			paddingHeight = paddingTop + paddingBottom;
 			paddingWidth = paddingLeft + paddingRight;
 		}
@@ -2575,7 +2575,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (any.total) {
 				anyResult = false;
 
-				// Loop until one match is found.
+				// Loop until one positive match is found.
 				for (var j = 0, ail = any.includes.length; j < ail; j++) {
 					searchTerm = any.includes[j];
 
@@ -2585,7 +2585,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 				}
 
-				if (!anyResult) { // If we don't have a match yet, loop through the excludes for one match.
+				// If we don't have a positive match yet, loop through the excludes.
+				if (!anyResult) {
 					for (var j = 0, ael = any.excludes.length; j < ael; j++) {
 						searchTerm = any.excludes[j];
 
@@ -2604,7 +2605,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (all.total) {
 				allResult = true;
 
-				// Return false on the first negative match.
+				// Loop until a negative match is found.
 				for (var j = 0, ail = all.includes.length; j < ail; j++) {
 					searchTerm = all.includes[j];
 
@@ -2614,12 +2615,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 				}
 
-				for (var j = 0, ael = all.excludes.length; j < ael; j++) {
-					searchTerm = all.excludes[j];
+				// If we still have a positive match, loop through the excludes.
+				if (allResult) {
+					for (var j = 0, ael = all.excludes.length; j < ael; j++) {
+						searchTerm = all.excludes[j];
 
-					if (tags.indexOf(searchTerm) > -1) {
-						allResult = false;
-						break;
+						if (tags.indexOf(searchTerm) > -1) {
+							allResult = false;
+							break;
+						}
 					}
 				}
 
@@ -2629,7 +2633,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			}
 
-			// Loop completed without a false result so return true.
+			// Loop completed without a negative match so return true.
 			return true;
 		}
 
