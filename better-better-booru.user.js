@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name           better_better_booru
+// @name           better_better_booru_mod
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
 // @version        ?.?
@@ -29,7 +29,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	// Initialize settings.
 	settings.options = {
-		bbb_version: "6.0",
+		bbb_version: "0",
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
@@ -47,6 +47,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Terms of Service agreement notice."),
 		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
 		image_resize: new Option("checkbox", true, "Resize Images", "Shrink large images to fit the browser window when initially loading an individual post."),
+		image_resize_mode: new Option("dropdown", "width", "Resize Images Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["width (default):width", "width & height:all"]}),
 		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post."),
 		manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
@@ -72,7 +73,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
 		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
-		misc: new Section("general", ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
+		misc: new Section("general", ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles", "image_resize_mode"], "Misc."),
 		pref: new Section("general", ["bypass_api", "manage_cookies", "disable_status_message"], "Script Settings"),
 		border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
 		status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
@@ -118,6 +119,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Post
 	var alternate_image_swap = settings.user["alternate_image_swap"]; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
 	var image_resize = settings.user["image_resize"]; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
+	var image_resize_mode = settings.user["image_resize_mode"];
 	var load_sample_first = settings.user["load_sample_first"]; // Use sample images when available. When logged in, your account settings will override this setting.
 	var remove_tag_headers = settings.user["remove_tag_headers"]; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
 	var post_tag_titles = settings.user["post_tag_titles"]; // Revert post page titles to the more detailed full list of tags
@@ -680,14 +682,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							img.setAttribute("height", post.image_height);
 							img.setAttribute("width", post.image_width);
 
-							if (!swapInit) {
-								bbbInfo.resized = false;
-								img.style.height = post.image_height + "px";
-								img.style.width = post.image_width + "px";
-								Danbooru.Note.Box.scale_all();
-								if (Danbooru.Post.place_jlist_ads)
-									Danbooru.Post.place_jlist_ads();
-							}
+							if (!swapInit)
+								resizeImage("none");
 						}
 						else {
 							sampleNotice.style.display = "";
@@ -696,14 +692,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							img.setAttribute("height", sampHeight);
 							img.setAttribute("width", sampWidth);
 
-							if (!swapInit) {
-								bbbInfo.resized = false;
-								img.style.height = sampHeight + "px";
-								img.style.width = sampWidth + "px";
-								Danbooru.Note.Box.scale_all();
-								if (Danbooru.Post.place_jlist_ads)
-									Danbooru.Post.place_jlist_ads();
-							}
+							if (!swapInit)
+								resizeImage("none");
 						}
 					}, false);
 					closeOriginalNotice.addEventListener("click", function(event) {
@@ -771,13 +761,33 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				// Alter the "resize to window" link.
 				var resizeLink = document.getElementById("image-resize-to-window-link");
-				var resizeLinkClone = resizeLink.cloneNode(true);
-				resizeLinkClone.addEventListener("click", function(event) {resizeImage(); event.preventDefault();}, false);
-				resizeLink.parentNode.replaceChild(resizeLinkClone, resizeLink);
+				var resizeFrag = document.createDocumentFragment();
+
+				var resizeListWidth = document.createElement("li");
+				resizeFrag.appendChild(resizeListWidth);
+
+				var resizeLinkWidth = document.createElement("a");
+				resizeLinkWidth.href = "#";
+				resizeLinkWidth.innerHTML = "Resize to window width";
+				resizeLinkWidth.addEventListener("click", function(event) {resizeImage("width"); event.preventDefault();}, false);
+				resizeListWidth.appendChild(resizeLinkWidth);
+				bbbInfo.el.resizeLinkWidth = resizeLinkWidth;
+
+				var resizeListAll = document.createElement("li");
+				resizeFrag.appendChild(resizeListAll);
+
+				var resizeLinkAll = document.createElement("a");
+				resizeLinkAll.href = "#";
+				resizeLinkAll.innerHTML = "Resize to window";
+				resizeLinkAll.addEventListener("click", function(event) {resizeImage("all"); event.preventDefault();}, false);
+				resizeListAll.appendChild(resizeLinkAll);
+				bbbInfo.el.resizeLinkAll = resizeLinkAll;
+
+				resizeLink.parentNode.replaceChild(resizeFrag, resizeLink);
 
 				// Resize the image if desired.
 				if (checkSetting("always-resize-images", "true", image_resize))
-					resizeImage();
+					resizeImage(image_resize_mode);
 
 				// Load/reload notes.
 				Danbooru.Note.load_all();
@@ -1855,27 +1865,53 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function resizeImage() {
+	function resizeImage(mode) {
 		// Custom resize post image script.
+		var currentMode = bbbInfo.resized;
 		var img = document.getElementById("image");
 		var imgContainer = document.getElementById("image-container");
+		var resizeLinkWidth = bbbInfo.el.resizeLinkWidth;
+		var resizeLinkAll = bbbInfo.el.resizeLinkAll;
 		var availableWidth = imgContainer.clientWidth;
-		var imgWidth = img.clientWidth;
-		var imgHeight = img.clientHeight;
-		var ratio = availableWidth / imgWidth;
+		var availableHeight = window.innerHeight - 50;
+		var imgStyleWidth = img.clientWidth;
+		var imgStyleHeight = img.clientHeight;
+		var imgWidth = img.getAttribute("width"); // Was NOT expecting img.width to return the current width (css style width) and not the width attribute's value here...
+		var imgHeight = img.getAttribute("height");
+		var tooWide = imgStyleWidth > availableWidth;
+		var tooTall = imgStyleHeight > availableHeight;
+		var widthRatio = availableWidth / imgWidth;
+		var heightRatio = availableHeight / imgHeight;
+		var ratio;
 
-		if (!bbbInfo.resized && imgWidth > availableWidth) {
-			img.style.width = imgWidth * ratio + "px";
-			img.style.height = imgHeight * ratio + "px";
-			bbbInfo.resized = true;
+		if (mode == "none" || currentMode == mode || (mode == "width" && widthRatio >= 1) || (mode == "all" && widthRatio >= 1 && heightRatio >= 1)) {
+			img.style.width = imgWidth + "px";
+			img.style.height = imgHeight + "px";
+			bbbInfo.resized = "none";
+			resizeLinkWidth.style.fontWeight = "normal";
+			resizeLinkAll.style.fontWeight = "normal";
 			Danbooru.Note.Box.scale_all();
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
 		}
-		else if (bbbInfo.resized) {
-			img.style.width = img.getAttribute("width") + "px"; // Was NOT expecting img.width to return the current width (css style width) and not the width attribute's value here...
-			img.style.height = img.getAttribute("height") + "px";
-			bbbInfo.resized = false;
+		else if (mode == "width" && (tooWide || currentMode == "all")) {
+			ratio = widthRatio;
+			img.style.width = imgWidth * ratio + "px";
+			img.style.height = imgHeight * ratio + "px";
+			bbbInfo.resized = "width";
+			resizeLinkWidth.style.fontWeight = "bold";
+			resizeLinkAll.style.fontWeight = "normal";
+			Danbooru.Note.Box.scale_all();
+			if (Danbooru.Post.place_jlist_ads)
+				Danbooru.Post.place_jlist_ads();
+		}
+		else if (mode == "all" && (tooWide || tooTall || currentMode == "width")) {
+			ratio = (widthRatio < heightRatio ? widthRatio : heightRatio);
+			img.style.width = imgWidth * ratio + "px";
+			img.style.height = imgHeight * ratio + "px";
+			bbbInfo.resized = "all";
+			resizeLinkWidth.style.fontWeight = "normal";
+			resizeLinkAll.style.fontWeight = "bold";
 			Danbooru.Note.Box.scale_all();
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
@@ -2293,7 +2329,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var customStyles = document.createElement("style");
 		customStyles.type = "text/css";
 
-		var styles = '.bbb-status {background-color: #FFFFFF; border: 1px solid #CCCCCC; font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
+		var styles = '.bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
 		'#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 14px; padding: 15px; position: fixed; top: 25px; z-index: 9001;}' +
 		'#bbb_menu a:focus {outline: none;}' +
 		'.bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px 0px; overflow-y: auto;}' +
