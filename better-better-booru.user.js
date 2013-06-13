@@ -1979,7 +1979,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function keyCheck(e) {
 		// Bind the arrow keys to page navigation.
-		if (document.activeElement.type != "text" || document.activeElement.type != "textarea") {
+		if (document.activeElement.type != "text" && document.activeElement.type != "textarea") {
 			if (e.keyCode == 37)
 				danbooruNav("left");
 			else if (e.keyCode == 39)
