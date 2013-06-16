@@ -39,15 +39,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
 		custom_tag_borders: new Option("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to images with specific tags."),
 		direct_downloads: new Option("checkbox", false, "Direct Downloads", "Allow download managers to download the images displayed in the search, pool, and popular listings."),
-		disable_status_message: new Option("checkbox", false, "Disable Status Message", "Do not display Better Better Booru's status in the lower right corner"),
+		disable_status_message: new Option("checkbox", false, "Disable Status Message", "When requesting information from Danbooru, do not display the request status in the lower right corner."),
 		hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
 		hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"viewing original\" notice."),
 		hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
 		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Terms of Service agreement notice."),
 		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
-		image_resize: new Option("checkbox", true, "Resize Images", "Shrink large images to fit the browser window when initially loading an individual post."),
-		image_resize_mode: new Option("dropdown", "width", "Resize Images Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["width (default):width", "width & height:all"]}),
+		image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image."),
+		image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post."),
+		image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["width (default):width", "width & height:all"]}),
 		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post."),
 		manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
@@ -72,9 +73,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		browse: new Section("general", ["show_loli", "show_shota", "show_deleted", "thumbnail_count"], "Image Browsing"),
 		layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
+		image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll"], "Image Control"),
 		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
-		misc: new Section("general", ["direct_downloads", "alternate_image_swap", "clean_links", "arrow_nav", "post_tag_titles", "image_resize_mode"], "Misc."),
-		pref: new Section("general", ["bypass_api", "manage_cookies", "disable_status_message"], "Script Settings"),
+		misc: new Section("general", ["direct_downloads", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
+		script_settings: new Section("general", ["bypass_api", "manage_cookies", "disable_status_message"], "Script Settings"),
 		border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
 		status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 		tag_borders: new Section("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
@@ -120,6 +122,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var alternate_image_swap = settings.user["alternate_image_swap"]; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
 	var image_resize = settings.user["image_resize"]; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
 	var image_resize_mode = settings.user["image_resize_mode"];
+	var image_drag_scroll = settings.user["image_drag_scroll"];
 	var load_sample_first = settings.user["load_sample_first"]; // Use sample images when available. When logged in, your account settings will override this setting.
 	var remove_tag_headers = settings.user["remove_tag_headers"]; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
 	var post_tag_titles = settings.user["post_tag_titles"]; // Revert post page titles to the more detailed full list of tags
@@ -724,8 +727,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (!post.exists && document.getElementById("translate") !== null)
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
 
-				if (!alternate_image_swap) // Make notes toggle when clicking the image.
-					img.addEventListener("click", Danbooru.Note.Box.toggle_all, false);
+				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
+					img.addEventListener("click", function() {
+						if (!bbbInfo.dragScroll.moved)
+							Danbooru.Note.Box.toggle_all();
+					}, false);
+				}
 				else { // Make sample/original images swap when clicking the image.
 					// Make a "Toggle Notes" link in the options bar.
 					if (document.getElementById("listnotetoggle") === null) { // For logged in users.
@@ -741,19 +748,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					// Make clicking the image swap between the original and sample image when available.
 					if (post.has_large) {
 						img.addEventListener("click", function(event) {
-							if (/\/sample\//.test(img.src)) {
-								if (swapInit)
-									swapInit = false;
+							if (!bbbInfo.dragScroll.moved) {
+								if (/\/sample\//.test(img.src)) {
+									if (swapInit)
+										swapInit = false;
 
-								bbbLoader.src = post.file_url;
-								imgStatus.innerHTML = "Loading original image...";
-							}
-							else {
-								if (swapInit)
-									swapInit = false;
+									bbbLoader.src = post.file_url;
+									imgStatus.innerHTML = "Loading original image...";
+								}
+								else {
+									if (swapInit)
+										swapInit = false;
 
-								bbbLoader.src = post.samp_url;
-								imgStatus.innerHTML = "Loading sample image...";
+									bbbLoader.src = post.samp_url;
+									imgStatus.innerHTML = "Loading sample image...";
+								}
 							}
 						}, false);
 					}
@@ -791,6 +800,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				// Load/reload notes.
 				Danbooru.Note.load_all();
+
+				// Allow drag scrolling
+				if (image_drag_scroll)
+					dragScroll();
 			}
 
 		// Blacklist.
@@ -945,6 +958,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		settings.el.generalPage = generalPage;
 
 		generalPage.bbbSection(settings.sections.browse);
+		generalPage.bbbSection(settings.sections.image_control);
 		generalPage.bbbSection(settings.sections.sidebar);
 		generalPage.bbbSection(settings.sections.misc);
 		generalPage.bbbSection(settings.sections.layout);
@@ -964,7 +978,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(prefPage);
 		settings.el.prefPage = prefPage;
 
-		prefPage.bbbSection(settings.sections.pref);
+		prefPage.bbbSection(settings.sections.script_settings);
 		prefPage.bbbBackupSection();
 
 		var close = document.createElement("a");
@@ -1433,6 +1447,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		sectionDiv.appendChild(backupTextarea);
 		settings.el.backupTextarea = backupTextarea;
 
+		var buttonDiv = document.createElement("div");
+		buttonDiv.className = "bbb-section-options";
+		sectionFrag.appendChild(buttonDiv);
+
 		var textBackup = document.createElement("a");
 		textBackup.innerHTML = "Create Backup Text";
 		textBackup.href = "#";
@@ -1442,7 +1460,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			createBackupText();
 			event.preventDefault();
 		}, false);
-		sectionFrag.appendChild(textBackup);
+		buttonDiv.appendChild(textBackup);
 
 		var pageBackup = document.createElement("a");
 		pageBackup.innerHTML = "Create Backup Page";
@@ -1453,17 +1471,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			createBackupPage();
 			event.preventDefault();
 		}, false);
-		sectionFrag.appendChild(pageBackup);
+		buttonDiv.appendChild(pageBackup);
 
 		var restoreBackup = document.createElement("a");
 		restoreBackup.innerHTML = "Restore Backup";
+		restoreBackup.style.cssFloat = "right";
 		restoreBackup.href = "#";
 		restoreBackup.className = "bbb-button";
 		restoreBackup.addEventListener("click", function(event) {
 			restoreBackupText();
 			event.preventDefault();
 		}, false);
-		sectionFrag.appendChild(restoreBackup);
+		buttonDiv.appendChild(restoreBackup);
 
 		return sectionFrag;
 	}
@@ -2332,6 +2351,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var styles = '.bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
 		'#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 14px; padding: 15px; position: fixed; top: 25px; z-index: 9001;}' +
 		'#bbb_menu a:focus {outline: none;}' +
+		'#bbb_menu input, #bbb_menu select, #bbb_menu textarea {border: #CCCCCC 2px solid;}' +
+		'#bbb_menu input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
 		'.bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px 0px; overflow-y: auto;}' +
 		'.bbb-section-header {border-bottom: 2px solid #CCCCCC; padding-top: 10px; width: 750px;}' +
 		'.bbb-section-options, .bbb-section-text {margin: 5px 0px; max-width: 902px;}' +
@@ -2340,7 +2361,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.bbb-label {display: block; height: 29px; padding: 0px 5px; overflow: hidden;}' + // Overflow is used here to correct bbb-label-input float problems.
 		'.bbb-label:hover {background-color: #EEEEEE;}' +
 		'.bbb-label > span {display: inline-block; line-height: 29px; vertical-align: middle;}' +
-		'.bbb-label input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
 		// '.bbb-label-text {}' +
 		'.bbb-label-input {float: right;}' +
 		'.bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 420px; width: 420px; overflow: hidden;}' +
@@ -2357,10 +2377,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
 		'.bbb-border-bar, .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
 		'.bbb-border-settings {background-color: #FFFFFF;}' +
-		'.bbb-border-bar input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
 		'.bbb-border-bar > *, .bbb-border-settings > * {display: inline-block; line-height: 29px; vertical-align: middle;}' +
 		'.bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}' +
-		'.bbb-backup-text {height: 200px; width: 894px; resize: none;}';
+		'.bbb-backup-text {height: 200px; width: 898px; resize: none;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
 		if (thumbnail_count && (gLoc == "search" || gLoc == "notes"))
@@ -2816,6 +2835,50 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		return false;
+	}
+
+	function dragScroll() {
+		var img = document.getElementById("image");
+
+		img.addEventListener("mousedown", dragScrollOn, false);
+		img.addEventListener("dragstart", disableEvent, false);
+		img.addEventListener("selectstart", disableEvent, false);
+	}
+
+	function dragScrollOn(event) {
+		var img = document.getElementById("image");
+		bbbInfo.dragScroll = {
+			moved: false,
+			lastX: event.clientX,
+			lastY: event.clientY
+		};
+
+		document.addEventListener("mousemove", dragScrollMove, false);
+		document.addEventListener("mouseup", dragScrollOff, false);
+	}
+
+	function dragScrollMove(event) {
+		var img = document.getElementById("image");
+		var newX = event.clientX;
+		var newY = event.clientY;
+
+		window.scrollBy(bbbInfo.dragScroll.lastX - newX, bbbInfo.dragScroll.lastY - newY);
+
+		bbbInfo.dragScroll.lastX = newX;
+		bbbInfo.dragScroll.lastY = newY;
+		bbbInfo.dragScroll.moved = true;
+	}
+
+	function dragScrollOff(event) {
+		var img = document.getElementById("image");
+
+		document.removeEventListener("mousemove", dragScrollMove, false);
+		document.removeEventListener("mouseup", dragScrollOff, false);
+	}
+
+	function disableEvent(event) {
+		event.preventDefault();
+		event.stopPropagation();
 	}
 
 
