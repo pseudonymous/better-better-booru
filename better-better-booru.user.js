@@ -48,7 +48,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
 		image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image."),
 		image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post."),
-		image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (default):width", "Width & Height:all"]}),
+		image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (Default):width", "Width & Height:all"]}),
 		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post."),
 		manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
@@ -2882,6 +2882,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		bbbInfo.dragScroll.lastX = event.clientX;
 		bbbInfo.dragScroll.lastY = event.clientY;
+		bbbInfo.dragScroll.moved = false;
 
 		document.addEventListener("mousemove", dragScrollMove, false);
 		document.addEventListener("mouseup", dragScrollOff, false);
