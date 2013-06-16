@@ -48,7 +48,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
 		image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image."),
 		image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post."),
-		image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["width (default):width", "width & height:all"]}),
+		image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (default):width", "Width & Height:all"]}),
 		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post."),
 		manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
@@ -183,7 +183,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		cleanLinks();
 
 	if (arrow_nav && allowArrowNav())
-		window.addEventListener("keydown", keyCheck, false);
+		window.addEventListener("keydown", arrowNav, false);
 
 	if (thumbnail_count)
 		limitFix();
@@ -803,7 +803,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				// Allow drag scrolling
 				if (image_drag_scroll)
-					dragScroll();
+					dragScrollInit();
 			}
 
 		// Blacklist.
@@ -1996,8 +1996,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function keyCheck(e) {
-		// Bind the arrow keys to page navigation.
+	function arrowNav(e) {
+		// Bind the arrow keys to Danbooru's page navigation.
 		if (document.activeElement.type != "text" && document.activeElement.type != "textarea") {
 			if (e.keyCode == 37)
 				danbooruNav("left");
@@ -2007,6 +2007,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function danbooruNav(dir) {
+		// Determine the correct Danbooru page function and use it.
 		if (gLoc == "popular") {
 			if (dir == "left")
 				Danbooru.PostPopular.nav_prev();
@@ -2837,7 +2838,29 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return false;
 	}
 
-	function dragScroll() {
+	function dragScrollInit() {
+		bbbInfo.dragScroll = {
+			moved: false,
+			lastX: undefined,
+			lastY: undefined
+		};
+
+		if (!Danbooru.Note.TranslationMode.active)
+			dragScrollEnable();
+		else
+			dragScrollDisable();
+
+		window.addEventListener("keydown", function(event) {
+			if (event.keyCode == 78) {
+				if (Danbooru.Note.TranslationMode.active)
+					dragScrollDisable();
+				else
+					dragScrollEnable();
+			}
+		}, false);
+	}
+
+	function dragScrollEnable() {
 		var img = document.getElementById("image");
 
 		img.addEventListener("mousedown", dragScrollOn, false);
@@ -2845,13 +2868,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		img.addEventListener("selectstart", disableEvent, false);
 	}
 
+	function dragScrollDisable() {
+		var img = document.getElementById("image");
+
+		img.removeEventListener("mousedown", dragScrollOn, false);
+		img.removeEventListener("dragstart", disableEvent, false);
+		img.removeEventListener("selectstart", disableEvent, false);
+	}
+
+
 	function dragScrollOn(event) {
 		var img = document.getElementById("image");
-		bbbInfo.dragScroll = {
-			moved: false,
-			lastX: event.clientX,
-			lastY: event.clientY
-		};
+
+		bbbInfo.dragScroll.lastX = event.clientX;
+		bbbInfo.dragScroll.lastY = event.clientY;
 
 		document.addEventListener("mousemove", dragScrollMove, false);
 		document.addEventListener("mouseup", dragScrollOff, false);
