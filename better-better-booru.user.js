@@ -769,7 +769,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				// Alter the "resize to window" link.
-				var resizeLink = document.getElementById("image-resize-to-window-link");
+				var resizeListItem = document.getElementById("image-resize-to-window-link").parentNode;
 				var resizeFrag = document.createDocumentFragment();
 
 				var resizeListWidth = document.createElement("li");
@@ -792,7 +792,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				resizeListAll.appendChild(resizeLinkAll);
 				bbbInfo.el.resizeLinkAll = resizeLinkAll;
 
-				resizeLink.parentNode.replaceChild(resizeFrag, resizeLink);
+				resizeListItem.parentNode.replaceChild(resizeFrag, resizeListItem);
 
 				// Resize the image if desired.
 				if (checkSetting("always-resize-images", "true", image_resize))
