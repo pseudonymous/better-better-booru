@@ -2285,7 +2285,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				for (var j = 0, tbsl = tag_borders.length; j < tbsl; j++) {
 					var tagBorderItem = tag_borders[j];
 
-					if (tagBorderItem.is_enabled && postInfo.bbbTagMatch(searches[j])) {
+					if (tagBorderItem.is_enabled && postInfo.bbbSearchMatch(searches[j])) {
 						secondary.push([tagBorderItem.border_color, tagBorderItem.border_style]);
 
 						if (secondary.length == 4)
@@ -2610,7 +2610,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return /^-?\d+(\.\d+)?$/.test(value);
 	}
 
-	String.prototype.bbbTagMatch = function(searchArray) {
+	String.prototype.bbbSearchMatch = function(searchArray) {
 		var tags = this.bbbSpacePad();
 		var searchObject;
 		var all;
@@ -2635,7 +2635,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				for (var j = 0, ail = any.includes.length; j < ail; j++) {
 					searchTerm = any.includes[j];
 
-					if (tags.indexOf(searchTerm) > -1) {
+					if (tags.bbbTagMatch(searchTerm)) {
 						anyResult = true;
 						break;
 					}
@@ -2646,7 +2646,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					for (var j = 0, ael = any.excludes.length; j < ael; j++) {
 						searchTerm = any.excludes[j];
 
-						if (tags.indexOf(searchTerm) < 0) {
+						if (!tags.bbbTagMatch(searchTerm)) {
 							anyResult = true;
 							break;
 						}
@@ -2665,7 +2665,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				for (var j = 0, ail = all.includes.length; j < ail; j++) {
 					searchTerm = all.includes[j];
 
-					if (tags.indexOf(searchTerm) < 0) {
+					if (!tags.bbbTagMatch(searchTerm)) {
 						allResult = false;
 						break;
 					}
@@ -2676,7 +2676,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					for (var j = 0, ael = all.excludes.length; j < ael; j++) {
 						searchTerm = all.excludes[j];
 
-						if (tags.indexOf(searchTerm) > -1) {
+						if (tags.bbbTagMatch(searchTerm)) {
 							allResult = false;
 							break;
 						}
@@ -2695,6 +2695,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// If we haven't managed a positive match for any rules, return false.
 		return false;
+	};
+
+	String.prototype.bbbTagMatch = function(tag) {
+		var tags = this;
+
+		if (typeof(tag) == "string") {
+			if (tags.indexOf(tag) > -1)
+				return true;
+			else
+				return false;
+		}
+		else if (tag instanceof RegExp) {
+			return tag.test(tags);
+		}
 	};
 
 	function createSearch(search) {
@@ -2725,14 +2739,24 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				if (searchTerm.charAt(0) == "-") {
 					if (searchTerm.length > 1) {
-						mode.excludes.push(searchTerm.slice(1).bbbSpacePad());
 						mode.total++;
+						mode = mode.excludes;
+						searchTerm = searchTerm.slice(1);
 					}
+					else
+					 continue;
 				}
 				else if (searchTerm.length > 0) {
-					mode.includes.push(searchTerm.bbbSpacePad());
 					mode.total++;
+					mode = mode.includes;
 				}
+				else
+					continue;
+
+				if (searchTerm.indexOf("*") > -1)
+					mode.push(new RegExp(escapeRegEx(searchTerm).replace(/\*/g, "\S*")));
+				else if (typeof(searchTerm) == "string")
+					mode.push(searchTerm.bbbSpacePad());
 			}
 
 			searches.push({all: all, any: any});
