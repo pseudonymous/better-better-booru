@@ -1341,7 +1341,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			nameTip.innerHTML = "?";
 			nameTip.className = "bbb-expl-link";
 			nameTip.addEventListener("click", function(event) { event.preventDefault(); }, false);
-			nameTip.bbbSetTip("For creating border match rules, please consult the following examples:<ul><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can also be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are also supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li></ul>");
+			nameTip.bbbSetTip("For creating border match rules, please consult the following examples:<ul><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li></ul>");
 			nameLabel.appendChild(nameTip);
 		}
 
@@ -1827,7 +1827,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Open a new tab/window and place the setting text in it.
 		var backupWindow = window.open();
 
-		backupWindow.document.writeln('<html><head><meta charset="UTF-8"><title>Better Better Booru v' + settings.user["bbb_version"] + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="padding: 20px; word-wrap: break-word;">' + JSON.stringify(settings.user) + '</body></html>');
+		backupWindow.document.writeln('<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + settings.user["bbb_version"] + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(settings.user) + '</body></html>');
 		backupWindow.document.close();
 	}
 
@@ -2355,7 +2355,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu input, #bbb_menu select, #bbb_menu textarea {border: #CCCCCC 2px solid;}' +
 		'#bbb_menu input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
 		'.bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px 0px; overflow-y: auto;}' +
-		'.bbb-section-header {border-bottom: 2px solid #CCCCCC; padding-top: 10px; width: 750px;}' +
+		'.bbb-section-header {border-bottom: 2px solid #CCCCCC; width: 750px;}' +
 		'.bbb-section-options, .bbb-section-text {margin: 5px 0px; max-width: 902px;}' +
 		'.bbb-section-options-left, .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
 		'.bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
