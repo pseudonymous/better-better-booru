@@ -528,7 +528,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			// eek, huge line.
-			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '"><a href="/posts/' + post.id + search + '"><img src="' + post.thumb_url + '" alt="' + post.tag_string + '"></a></article>';
+			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.thumb_url + '" alt="' + post.tag_string + '"></a></article>';
 
 			if (direct_downloads)
 				thumb += '<a style="display: none;" href="' + post.file_url + '">Direct Download</a></span>';
@@ -1341,7 +1341,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			nameTip.innerHTML = "?";
 			nameTip.className = "bbb-expl-link";
 			nameTip.addEventListener("click", function(event) { event.preventDefault(); }, false);
-			nameTip.bbbSetTip("For creating border match rules, please consult the following examples:<ul><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li></ul>");
+			nameTip.bbbSetTip("For creating border match rules, please consult the following examples:<ul><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>");
 			nameLabel.appendChild(nameTip);
 		}
 
@@ -2239,11 +2239,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var classes = post.className;
 			var tags = post.getAttribute("data-tags");
 			var user = post.getAttribute("data-uploader");
-			var rating = post.getAttribute("data-rating");
-			var score = post.getAttribute("data-score");
 			var flags = post.getAttribute("data-flags") || "active";
-			var title = tags + " user:" + user + " rating:" + rating + " score:" + score;
-			var postInfo = tags + " user:" + user.replace(/\s/g, "_").toLowerCase() + " rating:" + rating + " score:" + score + (flags == "flagged" ? " status:flagged status:active" : " status:" + flags);
+			var status = (flags == "flagged" ? " status:flagged status:active" : " status:" + flags);
+			var rating = " rating:" + post.getAttribute("data-rating");
+			var score = " score:" + post.getAttribute("data-score");
+			var favcount = " favcount:" + post.getAttribute("data-fav-count");
+			var id = " id:" + post.getAttribute("data-id");
+			var width = " width:" + post.getAttribute("data-width");
+			var height = " height:" + post.getAttribute("data-height");
+			var title = tags + " user:" + user + rating + score;
+			var postInfo = tags + rating + score + favcount + id + width + height + status + " user:" + user.replace(/\s/g, "_").toLowerCase();
 			var primary = [];
 			var primaryLength = 0;
 			var secondary = [];
@@ -2687,7 +2692,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Continue to the next matching rule if one of the "all" tags didn't match.
 				if (!allResult)
 					continue;
-
 			}
 
 			// Loop completed without a negative match so return true.
@@ -2709,6 +2713,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 		else if (tag instanceof RegExp) {
 			return tag.test(tags);
+		}
+		else if (typeof(tag) == "object") {
+			var tagsMeta = parseInt(tags.split(tag.tagName + ":")[1].split(" ")[0], 10);
+
+			if (tag.greater !== null && tagsMeta <= tag.greater)
+				return false;
+
+			if (tag.less !== null && tagsMeta >= tag.less)
+				return false;
+
+			return true;
 		}
 	};
 
@@ -2740,35 +2755,119 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				if (searchTerm.charAt(0) == "-") {
 					if (searchTerm.length > 1) {
-						mode.total++;
 						mode = mode.excludes;
 						searchTerm = searchTerm.slice(1);
 					}
 					else
 					 continue;
 				}
-				else if (searchTerm.length > 0) {
-					mode.total++;
+				else if (searchTerm.length > 0)
 					mode = mode.includes;
-				}
 				else
 					continue;
 
-				if (searchTerm.indexOf("*") > -1)
+				if (isNumMetatag(searchTerm)) {
+					var tagArray = searchTerm.split(":");
+					var metaObject = {tagName:tagArray[0]};
+					var numSearch = tagArray[1];
+					var numArray;
+					var numOne;
+					var numTwo;
+
+					if (bbbIsNum(numSearch))
+						mode.push(searchTerm.bbbSpacePad());
+					else if (numSearch.indexOf("<=") == 0 || numSearch.indexOf("..") == 0) {
+						numOne = null;
+						numTwo = parseInt(numSearch.slice(2), 10);
+
+						if (!isNaN(numTwo)) {
+							metaObject.greater = numOne;
+							metaObject.less = numTwo + 1;
+							mode.push(metaObject);
+						}
+					}
+					else if (numSearch.indexOf(">=") == 0) {
+						numOne = parseInt(numSearch.slice(2), 10);
+						numTwo = null;
+
+						if (!isNaN(numOne)) {
+							metaObject.greater = numOne - 1;
+							metaObject.less = numTwo;
+							mode.push(metaObject);
+						}
+					}
+					else if (numSearch.indexOf("..") == numSearch.length - 2) {
+						numOne = parseInt(numSearch.slice(0, -2), 10);
+						numTwo = null;
+
+						if (!isNaN(numOne)) {
+							metaObject.greater = numOne - 1;
+							metaObject.less = numTwo;
+							mode.push(metaObject);
+						}
+					}
+					else if (numSearch.charAt(0) == "<") {
+						numOne = null;
+						numTwo = parseInt(numSearch.slice(1), 10);
+
+						if (!isNaN(numTwo)) {
+							metaObject.greater = numOne;
+							metaObject.less = numTwo;
+							mode.push(metaObject);
+						}
+					}
+					else if (numSearch.charAt(0) == ">") {
+						numOne = parseInt(numSearch.slice(1), 10);
+						numTwo = null;
+
+						if (!isNaN(numOne)) {
+							metaObject.greater = numOne;
+							metaObject.less = numTwo;
+							mode.push(metaObject);
+						}
+					}
+					else if (numSearch.indexOf("..") > -1) {
+						numArray = numSearch.split("..");
+						numOne = parseInt(numArray[0], 10);
+						numTwo = parseInt(numArray[1], 10);
+
+						if (!isNaN(numOne) && !isNaN(numTwo)) {
+							metaObject.greater = numOne - 1;
+							metaObject.less = numTwo + 1;
+							mode.push(metaObject);
+						}
+					}
+				}
+				else if (searchTerm.indexOf("*") > -1)
 					mode.push(new RegExp(escapeRegEx(searchTerm).replace(/\*/g, "\S*").bbbSpacePad()));
 				else if (typeof(searchTerm) == "string")
 					mode.push(searchTerm.bbbSpacePad());
 			}
 
+			all.total = all.includes.length + all.excludes.length;
+			any.total = any.includes.length + any.excludes.length;
 			searches.push({all: all, any: any});
 		}
 
 		return searches;
 	}
 
+	function isNumMetatag(tag) {
+		if (tag.indexOf(":") < 0)
+			return false;
+		else {
+			var tagName = tag.split(":")[0].bbbSpacePad();
+
+			if (" score favcount id width height ".indexOf(tagName) < 0)
+				return false;
+			else
+				return true;
+		}
+	}
+
 	function delayMe(func) {
 		// Run the function after the browser has finished its current stack of tasks.
-		var timer = setTimeout(func, 0);
+		var timer = window.setTimeout(func, 0);
 	}
 
 	function escapeRegEx(regEx) {
