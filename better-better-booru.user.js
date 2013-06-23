@@ -32,6 +32,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		bbb_version: "0",
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
+		autoscroll_image: new Option("checkbox", false, "Auto-scroll Image", "Position the image as close as possible to the left and top edge of the window viewport when initially loading an individiual post."),
 		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
 		border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
 		bypass_api: new Option("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
@@ -73,7 +74,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		browse: new Section("general", ["show_loli", "show_shota", "show_deleted", "thumbnail_count"], "Image Browsing"),
 		layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
-		image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll"], "Image Control"),
+		image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
 		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
 		misc: new Section("general", ["direct_downloads", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
 		script_settings: new Section("general", ["bypass_api", "manage_cookies", "disable_status_message"], "Script Settings"),
@@ -126,6 +127,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var load_sample_first = settings.user["load_sample_first"]; // Use sample images when available. When logged in, your account settings will override this setting.
 	var remove_tag_headers = settings.user["remove_tag_headers"]; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
 	var post_tag_titles = settings.user["post_tag_titles"]; // Revert post page titles to the more detailed full list of tags
+	var autoscroll_image = settings.user["autoscroll_image"];
 
 	// Borders
 	var status_borders = settings.user["status_borders"];
@@ -301,7 +303,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (allowUserLimit()) {
 				var url = gUrl;
 
-				if (/\?/.test(url))
+				if (url.indexOf("?") > -1)
 					url += "&limit=" + thumbnail_count;
 				else
 					url += "?limit=" + thumbnail_count;
@@ -335,7 +337,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			imgWidth = Number(object.getAttribute("width"));
 			hasLarge = false;
 		}
-		else if (/The artist requested removal/.test(document.getElementById("image-container").textContent)) { // Image removed by artist request.
+		else if (document.getElementById("image-container").textContent.indexOf("The artist requested removal") > -1) { // Image removed by artist request.
 			var infoText = infoLink.parentNode.textContent;
 
 			imgHeight = Number(/\(\d+x(\d+)\)/.exec(infoText)[1]);
@@ -494,7 +496,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Use JSON results for searches and pool collections.
 		if (gLoc == "search") {
 			where = document.getElementById("posts");
-			search = (/tags=/.test(gUrlQuery) && !clean_links ? "?tags=" + getVar("tags") : "");
+			search = (gUrlQuery.indexOf("tags=") > -1 && !clean_links ? "?tags=" + getVar("tags") : "");
 		}
 		else if (gLoc == "popular") {
 			where = document.getElementById("a-index");
@@ -557,7 +559,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
 				var pageUrl = gUrl;
 
-				if (/\?/.test(pageUrl))
+				if (pageUrl.indexOf("?") > -1)
 					pageUrl += "&limit=" + thumbnail_count;
 				else
 					pageUrl += "?limit=" + thumbnail_count;
@@ -673,7 +675,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						event.preventDefault();
 					}, false);
 					img.addEventListener("load", function(event) {
-						if (!/\/sample\//.test(img.src)) {
+						if (img.src.indexOf("/sample/") < 0) {
 							if (hide_original_notice)
 								bbbResizeNotice.style.display = "none";
 							else {
@@ -749,7 +751,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					if (post.has_large) {
 						img.addEventListener("click", function(event) {
 							if (!bbbInfo.dragScroll.moved) {
-								if (/\/sample\//.test(img.src)) {
+								if (img.src.indexOf("/sample/") > -1) {
 									if (swapInit)
 										swapInit = false;
 
@@ -805,6 +807,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (image_drag_scroll)
 					dragScrollInit();
 			}
+
+		// Auto position the content if desired.
+		if (autoscroll_image)
+			autoscrollImage();
 
 		// Blacklist.
 		blacklistInit();
@@ -897,148 +903,148 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (settings.el.menu) {
 			settings.el.menu.style.display = "block";
 			settings.el.scrollDiv.scrollTop = 0;
-			return;
 		}
+		else {
+			var menu = document.createElement("div");
+			menu.id = "bbb_menu";
+			menu.style.visibility = "hidden";
+			settings.el.menu = menu;
 
-		var menu = document.createElement("div");
-		menu.id = "bbb_menu";
-		menu.style.visibility = "hidden";
-		settings.el.menu = menu;
+			var header = document.createElement("h1");
+			header.innerHTML = "Better Better Booru Settings";
+			header.style.textAlign = "center";
+			menu.appendChild(header);
 
-		var header = document.createElement("h1");
-		header.innerHTML = "Better Better Booru Settings";
-		header.style.textAlign = "center";
-		menu.appendChild(header);
+			var tabBar = document.createElement("div");
+			tabBar.style.padding = "0px 15px";
+			menu.appendChild(tabBar);
 
-		var tabBar = document.createElement("div");
-		tabBar.style.padding = "0px 15px";
-		menu.appendChild(tabBar);
+			var generalTab = document.createElement("a");
+			generalTab.name = "general";
+			generalTab.href = "#";
+			generalTab.innerHTML = "General";
+			generalTab.className = "bbb-tab bbb-active-tab";
+			generalTab.addEventListener("click", function(event) {
+				changeTab(this);
+				event.preventDefault();
+			}, false);
+			tabBar.appendChild(generalTab);
 
-		var generalTab = document.createElement("a");
-		generalTab.name = "general";
-		generalTab.href = "#";
-		generalTab.innerHTML = "General";
-		generalTab.className = "bbb-tab bbb-active-tab";
-		generalTab.addEventListener("click", function(event) {
-			changeTab(this);
-			event.preventDefault();
-		}, false);
-		tabBar.appendChild(generalTab);
+			var borderTab = document.createElement("a");
+			borderTab.name = "borders";
+			borderTab.href = "#";
+			borderTab.innerHTML = "Borders";
+			borderTab.className = "bbb-tab";
+			borderTab.addEventListener("click", function(event) {
+				changeTab(this);
+				event.preventDefault();
+			}, false);
+			tabBar.appendChild(borderTab);
 
-		var borderTab = document.createElement("a");
-		borderTab.name = "borders";
-		borderTab.href = "#";
-		borderTab.innerHTML = "Borders";
-		borderTab.className = "bbb-tab";
-		borderTab.addEventListener("click", function(event) {
-			changeTab(this);
-			event.preventDefault();
-		}, false);
-		tabBar.appendChild(borderTab);
+			var prefTab = document.createElement("a");
+			prefTab.name = "pref";
+			prefTab.href = "#";
+			prefTab.innerHTML = "Preferences";
+			prefTab.className = "bbb-tab";
+			prefTab.addEventListener("click", function(event) {
+				changeTab(this);
+				event.preventDefault();
+			}, false);
+			tabBar.appendChild(prefTab);
 
-		var prefTab = document.createElement("a");
-		prefTab.name = "pref";
-		prefTab.href = "#";
-		prefTab.innerHTML = "Preferences";
-		prefTab.className = "bbb-tab";
-		prefTab.addEventListener("click", function(event) {
-			changeTab(this);
-			event.preventDefault();
-		}, false);
-		tabBar.appendChild(prefTab);
+			var scrollDiv = document.createElement("div");
+			scrollDiv.className = "bbb-scroll-div";
+			menu.appendChild(scrollDiv);
+			scrollDiv.scrollTop = 0;
+			settings.el.scrollDiv = scrollDiv;
 
-		var scrollDiv = document.createElement("div");
-		scrollDiv.className = "bbb-scroll-div";
-		menu.appendChild(scrollDiv);
-		scrollDiv.scrollTop = 0;
-		settings.el.scrollDiv = scrollDiv;
+			var generalPage = document.createElement("div");
+			scrollDiv.appendChild(generalPage);
+			settings.el.generalPage = generalPage;
 
-		var generalPage = document.createElement("div");
-		scrollDiv.appendChild(generalPage);
-		settings.el.generalPage = generalPage;
+			generalPage.bbbSection(settings.sections.browse);
+			generalPage.bbbSection(settings.sections.image_control);
+			generalPage.bbbSection(settings.sections.sidebar);
+			generalPage.bbbSection(settings.sections.misc);
+			generalPage.bbbSection(settings.sections.layout);
+			generalPage.bbbSection(settings.sections.logged_out);
 
-		generalPage.bbbSection(settings.sections.browse);
-		generalPage.bbbSection(settings.sections.image_control);
-		generalPage.bbbSection(settings.sections.sidebar);
-		generalPage.bbbSection(settings.sections.misc);
-		generalPage.bbbSection(settings.sections.layout);
-		generalPage.bbbSection(settings.sections.logged_out);
+			var bordersPage = document.createElement("div");
+			bordersPage.style.display = "none";
+			scrollDiv.appendChild(bordersPage);
+			settings.el.bordersPage = bordersPage;
 
-		var bordersPage = document.createElement("div");
-		bordersPage.style.display = "none";
-		scrollDiv.appendChild(bordersPage);
-		settings.el.bordersPage = bordersPage;
+			bordersPage.bbbSection(settings.sections.border_options);
+			bordersPage.bbbSection(settings.sections.status_borders);
+			bordersPage.bbbSection(settings.sections.tag_borders);
 
-		bordersPage.bbbSection(settings.sections.border_options);
-		bordersPage.bbbSection(settings.sections.status_borders);
-		bordersPage.bbbSection(settings.sections.tag_borders);
+			var prefPage = document.createElement("div");
+			prefPage.style.display = "none";
+			scrollDiv.appendChild(prefPage);
+			settings.el.prefPage = prefPage;
 
-		var prefPage = document.createElement("div");
-		prefPage.style.display = "none";
-		scrollDiv.appendChild(prefPage);
-		settings.el.prefPage = prefPage;
+			prefPage.bbbSection(settings.sections.script_settings);
+			prefPage.bbbBackupSection();
 
-		prefPage.bbbSection(settings.sections.script_settings);
-		prefPage.bbbBackupSection();
+			var close = document.createElement("a");
+			close.innerHTML = "Save & Close";
+			close.href = "#";
+			close.className = "bbb-button";
+			close.style.marginRight = "15px";
+			close.addEventListener("click", function(event) {
+				menu.style.display = "none";
+				saveSettings();
+				event.preventDefault();
+			}, false);
 
-		var close = document.createElement("a");
-		close.innerHTML = "Save & Close";
-		close.href = "#";
-		close.className = "bbb-button";
-		close.style.marginRight = "15px";
-		close.addEventListener("click", function(event) {
-			menu.style.display = "none";
-			saveSettings();
-			event.preventDefault();
-		}, false);
+			var cancel = document.createElement("a");
+			cancel.innerHTML = "Cancel";
+			cancel.href = "#";
+			cancel.className = "bbb-button";
+			cancel.addEventListener("click", function(event) {
+				loadSettings();
+				removeMenu();
+				event.preventDefault();
+			}, false);
 
-		var cancel = document.createElement("a");
-		cancel.innerHTML = "Cancel";
-		cancel.href = "#";
-		cancel.className = "bbb-button";
-		cancel.addEventListener("click", function(event) {
-			loadSettings();
-			removeMenu();
-			event.preventDefault();
-		}, false);
+			var reset = document.createElement("a");
+			reset.innerHTML = "Reset to Defaults";
+			reset.href = "#";
+			reset.className = "bbb-button";
+			reset.style.cssFloat = "right";
+			reset.style.color = "#ff1100";
+			reset.addEventListener("click", function(event) {
+				loadDefaults();
+				removeMenu();
+				showSettings();
+				event.preventDefault();
+			}, false);
 
-		var reset = document.createElement("a");
-		reset.innerHTML = "Reset to Defaults";
-		reset.href = "#";
-		reset.className = "bbb-button";
-		reset.style.cssFloat = "right";
-		reset.style.color = "#ff1100";
-		reset.addEventListener("click", function(event) {
-			loadDefaults();
-			removeMenu();
-			showSettings();
-			event.preventDefault();
-		}, false);
+			menu.appendChild(close);
+			menu.appendChild(cancel);
+			menu.appendChild(reset);
 
-		menu.appendChild(close);
-		menu.appendChild(cancel);
-		menu.appendChild(reset);
+			var tip = document.createElement("div");
+			tip.className = "bbb-expl";
+			menu.appendChild(tip);
+			settings.el.tip = tip;
 
-		var tip = document.createElement("div");
-		tip.className = "bbb-expl";
-		menu.appendChild(tip);
-		settings.el.tip = tip;
+			// Add menu to the DOM and manipulate the dimensions.
+			document.body.appendChild(menu);
 
-		// Add menu to the DOM and manipulate the dimensions.
-		document.body.appendChild(menu);
+			var viewHeight = window.innerHeight;
+			var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
 
-		var viewHeight = window.innerHeight;
-		var scrollDivDiff = menu.clientHeight - scrollDiv.clientHeight;
+			scrollDiv.style.maxHeight = viewHeight - menu.bbbGetPadding().height - scrollDivDiff - 25 + "px"; // Subtract 25 for the bottom "margin".
+			scrollDiv.style.minWidth = 901 + scrollbarWidth() + 3 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
+			scrollDiv.style.paddingLeft = scrollbarWidth() + 3 + "px";
 
-		scrollDiv.style.maxHeight = viewHeight - menu.bbbGetPadding().height - scrollDivDiff - 25 + "px"; // Subtract 25 for the bottom "margin".
-		scrollDiv.style.minWidth = 901 + scrollbarWidth() + 3 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
-		scrollDiv.style.paddingLeft = scrollbarWidth() + 3 + "px";
+			var viewWidth = window.innerWidth;
+			var menuWidth = menu.clientWidth;
 
-		var viewWidth = window.innerWidth;
-		var menuWidth = menu.clientWidth;
-
-		menu.style.left = (viewWidth - menuWidth) / 2 + "px";
-		menu.style.visibility = "visible";
+			menu.style.left = (viewWidth - menuWidth) / 2 + "px";
+			menu.style.visibility = "visible";
+		}
 	}
 
 	function createSection(section) {
@@ -1834,7 +1840,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function restoreBackupText() {
 		// Load the backup text provided into the script.
 		var textarea = settings.el.backupTextarea;
-		var backupString = textarea.value.replace(/\r?\n/g,"").match(/{.+}/);
+		var backupString = textarea.value.replace(/\r?\n/g, "").match(/{.+}/);
 
 		if (backupString) {
 			try {
@@ -1847,11 +1853,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 			catch (error) {
 				 if (error instanceof SyntaxError)
-					alert("The backup does not appear to be formatted correctly. Please make sure everything was pasted correctly and that only one backup is provided.");
+					alert("The backup does not appear to be formatted correctly. Please make sure everything was pasted correctly/completely and that only one backup is provided.");
 			}
 		}
 		else
-			alert("A backup could not be detected in the text provided. Please make sure everything was pasted correctly.");
+			alert("A backup could not be detected in the text provided. Please make sure everything was pasted correctly/completely.");
 	}
 
 	/* Functions for support, extra features, and content manipulation */
@@ -1953,10 +1959,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		for (var i = 0, lsl = links.snapshotLength; i < lsl; i++) {
 			var link = links.snapshotItem(i);
 
-			if (!/\?/.test(link.href))
-				link.href += "?limit=" + thumbnail_count;
-			else
+			if (link.href.indexOf("?") > -1)
 				link.href += "&limit=" + thumbnail_count;
+			else
+				link.href += "?limit=" + thumbnail_count;
 		}
 
 		if (gLoc == "search" || gLoc == "post")
@@ -2064,6 +2070,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}, true);
 	}
 
+	function autoscrollImage() {
+		var target = document.getElementById("image") || document.getElementById("image-container").getElementsByTagName("object")[0];
+
+		if (target)
+			target.scrollIntoView();
+	}
+
 	function allowUserLimit() {
 		// Allow use of the limit variable if it isn't currently set and we're on the first page.
 		if (thumbnail_count > 0 && !/(?:page|limit)=\d/.test(gUrlQuery))
@@ -2161,15 +2174,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function searchAdd() {
 		if (gLoc == "search" || gLoc == "post") {
 			// Where = array of <li> in tag-sidebar.
-			var where = document.getElementById("tag-box");
-
-			if (!where)
-				where = document.getElementById("tag-list");
+			var where = document.getElementById("tag-box") || document.getElementById("tag-list");
 
 			if (!where)
 				return;
-			else
-				where = where.getElementsByTagName("li");
+
+			where = where.getElementsByTagName("li");
 
 			var tag = getVar("tags");
 
@@ -2617,6 +2627,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	String.prototype.bbbSearchMatch = function(searchArray) {
+		// Take search objects and test them against a post tag string.
 		var tags = this.bbbSpacePad();
 		var searchObject;
 		var all;
@@ -2703,24 +2714,25 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	};
 
 	String.prototype.bbbTagMatch = function(tag) {
+		// Test a post tag string for a tag match.
 		var tags = this;
 
-		if (typeof(tag) == "string") {
+		if (typeof(tag) == "string") { // Check regular tags and metatags with one possible value.
 			if (tags.indexOf(tag) > -1)
 				return true;
 			else
 				return false;
 		}
-		else if (tag instanceof RegExp) {
+		else if (tag instanceof RegExp) { // Check wildcard tags.
 			return tag.test(tags);
 		}
-		else if (typeof(tag) == "object") {
-			var tagsMeta = parseInt(tags.split(tag.tagName + ":")[1].split(" ")[0], 10);
+		else if (typeof(tag) == "object") { // Check numeric metatags with more than one value.
+			var tagsMetaValue = parseInt(tags.split(tag.tagName + ":")[1].split(" ")[0], 10);
 
-			if (tag.greater !== null && tagsMeta <= tag.greater)
+			if (tag.greater !== null && tagsMetaValue <= tag.greater)
 				return false;
 
-			if (tag.less !== null && tagsMeta >= tag.less)
+			if (tag.less !== null && tagsMetaValue >= tag.less)
 				return false;
 
 			return true;
@@ -2728,6 +2740,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	};
 
 	function createSearch(search) {
+		// Take search strings and turn them into search objects.
 		var searchStrings = search.toLowerCase().replace(/\b(rating:[qes])\w+/g, "$1").split(",");
 		var searchString;
 		var searchTerm = "";
@@ -2766,7 +2779,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				else
 					continue;
 
-				if (isNumMetatag(searchTerm)) {
+				if (isNumMetatag(searchTerm)) { // Parse numeric metatags and turn them into objects.
 					var tagArray = searchTerm.split(":");
 					var metaObject = {tagName:tagArray[0]};
 					var numSearch = tagArray[1];
@@ -2774,9 +2787,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					var numOne;
 					var numTwo;
 
-					if (bbbIsNum(numSearch))
+					if (bbbIsNum(numSearch)) // Exact number. (tag:#)
 						mode.push(searchTerm.bbbSpacePad());
-					else if (numSearch.indexOf("<=") == 0 || numSearch.indexOf("..") == 0) {
+					else if (numSearch.indexOf("<=") == 0 || numSearch.indexOf("..") == 0) { // Less than or equal to. (tag:<=# & tag:..#)
 						numOne = null;
 						numTwo = parseInt(numSearch.slice(2), 10);
 
@@ -2786,7 +2799,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.indexOf(">=") == 0) {
+					else if (numSearch.indexOf(">=") == 0) { // Greater than or equal to. (tag:>=#)
 						numOne = parseInt(numSearch.slice(2), 10);
 						numTwo = null;
 
@@ -2796,7 +2809,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.indexOf("..") == numSearch.length - 2) {
+					else if (numSearch.indexOf("..") == numSearch.length - 2) { // Greater than or equal to. (tag:#..)
 						numOne = parseInt(numSearch.slice(0, -2), 10);
 						numTwo = null;
 
@@ -2806,7 +2819,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.charAt(0) == "<") {
+					else if (numSearch.charAt(0) == "<") { // Less than. (tag:<#)
 						numOne = null;
 						numTwo = parseInt(numSearch.slice(1), 10);
 
@@ -2816,7 +2829,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.charAt(0) == ">") {
+					else if (numSearch.charAt(0) == ">") { // Greater than. (tag:>#)
 						numOne = parseInt(numSearch.slice(1), 10);
 						numTwo = null;
 
@@ -2826,7 +2839,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.indexOf("..") > -1) {
+					else if (numSearch.indexOf("..") > -1) { // Greater than or equal to and less than or equal to range. tag:#..#
 						numArray = numSearch.split("..");
 						numOne = parseInt(numArray[0], 10);
 						numTwo = parseInt(numArray[1], 10);
@@ -2838,9 +2851,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 					}
 				}
-				else if (searchTerm.indexOf("*") > -1)
+				else if (searchTerm.indexOf("*") > -1) // Prepare wildcard tags as regular expressions.
 					mode.push(new RegExp(escapeRegEx(searchTerm).replace(/\*/g, "\S*").bbbSpacePad()));
-				else if (typeof(searchTerm) == "string")
+				else if (typeof(searchTerm) == "string") // Add regular tags.
 					mode.push(searchTerm.bbbSpacePad());
 			}
 
@@ -2853,12 +2866,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function isNumMetatag(tag) {
+		// Check if the tag from a search string is numeric metatag.
 		if (tag.indexOf(":") < 0)
 			return false;
 		else {
-			var tagName = tag.split(":")[0].bbbSpacePad();
+			var tagName = tag.split(":")[0];
 
-			if (" score favcount id width height ".indexOf(tagName) < 0)
+			if (" score favcount id width height ".indexOf(tagName.bbbSpacePad()) < 0)
 				return false;
 			else
 				return true;
