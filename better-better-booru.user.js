@@ -32,8 +32,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		bbb_version: "0",
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
-		autoscroll_image: new Option("checkbox", false, "Auto-scroll Image", "Position the image as close as possible to the left and top edge of the window viewport when initially loading an individiual post."),
 		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
+		autoscroll_image: new Option("checkbox", false, "Auto-scroll Image", "Position the image as close as possible to the left and top edge of the window viewport when initially loading an individiual post."),
 		border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
 		bypass_api: new Option("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
 		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br><u>Note</u></br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
@@ -84,7 +84,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	};
 
 	// Location variables.
-	var gUrl = location.href.split("#")[0]; // URL without the anchor
+	var gUrl = location.href.split("#", 1)[0]; // URL without the anchor
 	var gUrlPath = location.pathname; // URL path only
 	var gUrlQuery = location.search; // URL query string only
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
@@ -328,7 +328,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			imgHeight = Number(img.getAttribute("data-original-height"));
 			imgWidth = Number(img.getAttribute("data-original-width"));
-			hasLarge = (Number(img.getAttribute("data-original-width")) > 850 ? true : false);
+			hasLarge = (imgWidth > 850 ? true : false);
 		}
 		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
 			var object = document.getElementById("image-container").getElementsByTagName("object")[0];
@@ -338,11 +338,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			hasLarge = false;
 		}
 		else if (document.getElementById("image-container").textContent.indexOf("The artist requested removal") > -1) { // Image removed by artist request.
-			var infoText = infoLink.parentNode.textContent;
+			var infoTextDim = /\((\d+)x(\d+)\)/.exec(infoLink.parentNode.textContent);
 
-			imgHeight = Number(/\(\d+x(\d+)\)/.exec(infoText)[1]);
-			imgWidth = Number(/\((\d+)x\d+\)/.exec(infoText)[1]);
-			hasLarge = (Number(/\((\d+)x\d+\)/.exec(infoText)[1]) > 850 ? true : false);
+			imgHeight = Number(infoTextDim[2]);
+			imgWidth = Number(infoTextDim[1]);
+			hasLarge = (imgWidth > 850 ? true : false);
 		}
 		else { // Manual download.
 			imgHeight = null;
@@ -500,7 +500,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 		else if (gLoc == "popular") {
 			where = document.getElementById("a-index");
-			out = document.getElementById("a-index").innerHTML.split("<article")[0];
+			out = document.getElementById("a-index").innerHTML.split("<article", 1)[0];
 		}
 		else if (gLoc == "pool") {
 			var orderedPostIds = optArg;
@@ -1985,21 +1985,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function getVar(getVar, url) {
 		// Retrieve a variable value from a specified URL or the current URL.
 		if (!url)
-			url = gUrl;
+			url = gUrlQuery;
 
-		var search = new RegExp(getVar + "=.*?(?=[#&]|$)");
-		var result = search.exec(url);
+		var result = url.split(getVar + "=")[1];
 
-		if (result === null)
-			return null;
-		else {
-			result = result[0].split("=")[1];
+		if (!result)
+			return undefined;
+		else
+			result = result.split(/[#&]/, 1)[0];
 
-			if (bbbIsNum(result))
-				return Number(result);
-			else
-				return result;
-		}
+		if (!result)
+			return "";
+		else if (bbbIsNum(result))
+			return Number(result);
+		else
+			return result;
 	}
 
 	function arrowNav(e) {
@@ -2036,19 +2036,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			target = document.evaluate('//div[@id="pool-nav"]//a', document, null, 6, null);
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
-				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];
+				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?", 1)[0];
 		}
 		else if (gLoc == "pool") {
 			target = document.evaluate('//section[@id="content"]/article/a', document, null, 6, null);
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
-				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];
+				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?", 1)[0];
 		}
 		else if (gLoc == "search") {
 			target = document.evaluate('//div[@id="posts"]/article/a', document, null, 6, null);
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
-				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?")[0];
+				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?", 1)[0];
 		}
 	}
 
@@ -2096,7 +2096,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function needPostAPI() {
 		// Test for hidden post images.
-		if (document.getElementById("image-container").getElementsByTagName("object")[0] || document.getElementById("image") || /Save this file|The artist requested removal/.test(document.getElementById("image-container").textContent))
+		var objectExists = document.getElementById("image-container").getElementsByTagName("object")[0];
+		var imgExists = document.getElementById("image");
+		var infoExists = (/Save this file|The artist requested removal/.test(document.getElementById("image-container").textContent)  && !/\b(?:loli|shota)\b/.test(fetchMeta("tags")));
+
+		if (objectExists || imgExists || infoExists)
 			return false;
 		else
 			return true;
@@ -2727,7 +2731,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return tag.test(tags);
 		}
 		else if (typeof(tag) == "object") { // Check numeric metatags with more than one value.
-			var tagsMetaValue = parseInt(tags.split(tag.tagName + ":")[1].split(" ")[0], 10);
+			var tagsMetaValue = parseInt(tags.split(" " + tag.tagName + ":")[1].split(" ", 1)[0], 10);
 
 			if (tag.greater !== null && tagsMetaValue <= tag.greater)
 				return false;
@@ -2870,7 +2874,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (tag.indexOf(":") < 0)
 			return false;
 		else {
-			var tagName = tag.split(":")[0];
+			var tagName = tag.split(":", 1)[0];
 
 			if (" score favcount id width height ".indexOf(tagName.bbbSpacePad()) < 0)
 				return false;
