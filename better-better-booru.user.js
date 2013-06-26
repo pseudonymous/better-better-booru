@@ -2882,9 +2882,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var tagName = tag.split(":", 1)[0];
 
 			if (tagName == "score" || tagName == "favcount" || tagName == "id" || tagName == "width" || tagName == "height")
-				return false;
-			else
 				return true;
+			else
+				return false;
 		}
 	}
 
