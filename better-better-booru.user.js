@@ -274,8 +274,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 						else if (xmlhttp.status == 421)
 							danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", true);
-						else if (xmlhttp.statusText)
-							danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.statusText + ")", true);
+						else if (xmlhttp.status != 0)
+							danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.status + " " + xmlhttp.statusText + ")", true);
 
 						// Update status message.
 						bbbStatus("error");
@@ -317,6 +317,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Retrieve info in the page. (Alternative to fetchJSON)
 		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
 		var infoHref = infoLink.href;
+		var infoHrefValues = /data\/(.+?)\.(.+?)$/.exec(infoHref);
+		var md5 = infoHrefValues[1];
+		var ext = infoHrefValues[2];
 		var infoSection = infoLink.parentNode.parentNode;
 		var imgHeight = 0;
 		var imgWidth = 0;
@@ -352,8 +355,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		var imgInfo = {
 			id: Number(fetchMeta("post-id")),
-			file_ext: /data\/.+?\.(.+?)$/.exec(infoHref)[1],
-			md5: /data\/(.+?)\..+?$/.exec(infoHref)[1],
+			file_ext: ext,
+			md5: md5,
 			url: infoHref,
 			fav_count: Number(document.getElementById("favcount-for-post-" + fetchMeta("post-id")).textContent),
 			has_children: (document.getElementsByClassName("notice-parent").length ? true : false),
@@ -368,6 +371,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			image_height: imgHeight,
 			image_width: imgWidth,
 			has_large: hasLarge,
+			file_url: "/data/" + md5 + "." + ext,
+			large_file_url: "/data/sample/sample-" + md5 + ".jpg",
+			preview_file_url: (!imgHeight || ext == "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg"),
 			exists: true
 		};
 
@@ -394,25 +400,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							var childSpan = document.createElement("span");
 							var post = optArg[0];
 							var postId = optArg[1];
-
-							// Fix the tag colors.
-							childSpan.innerHTML = /<section id="tag-list">[\S\s]+?<\/section>/i.exec(xmlhttp.responseText)[0];
-
-							var target = post.getElementsByClassName("row list-of-tags")[0];
-
-							for (var i = 1; i < 5; i++) {
-								var category = "category-" + i;
-								var categoryList = childSpan.getElementsByClassName(category);
-
-								if (categoryList) {
-									for (var j = 0, cll = categoryList.length; j < cll; j++) {
-										var tag = categoryList[j].children[1].textContent;
-										var match = new RegExp('(<span class="category-)0("> <[^>]+>' + escapeRegEx(tag) + '<\/a> <\/span>)', "i");
-
-										target.innerHTML = target.innerHTML.replace(match, "$1" + i + "$2");
-									}
-								}
-							}
 
 							// Fix the comments.
 							childSpan.innerHTML = /<div class="row notices">[\S\s]+?<\/form>[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
@@ -462,8 +449,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							bbbStatus("loaded");
 						}
 					}
-					else if (xmlhttp.statusText) {
-						danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.statusText + ")", true);
+					else if (xmlhttp.status != 0) {
+						danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.status + " " + xmlhttp.statusText + ")", true);
 
 						// Update status message.
 						bbbStatus("error");
@@ -530,7 +517,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			// eek, huge line.
-			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.thumb_url + '" alt="' + post.tag_string + '"></a></article>';
+			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '"></a></article>';
 
 			if (direct_downloads)
 				thumb += '<a style="display: none;" href="' + post.file_url + '">Direct Download</a></span>';
@@ -603,7 +590,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (useSample) {
 					newWidth = sampWidth;
 					newHeight = sampHeight;
-					newUrl = post.samp_url;
+					newUrl = post.large_file_url;
 					altTxt = "sample";
 				}
 				else {
@@ -629,7 +616,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					bbbResizeNotice.className = "ui-corner-all ui-state-highlight notice notice-resized";
 					bbbResizeNotice.style.position = "relative";
 					bbbResizeNotice.style.display = "none";
-					bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + post.file_url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + post.samp_url + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
+					bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + post.file_url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + post.large_file_url + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
 					container.parentNode.insertBefore(bbbResizeNotice , container);
 
 					var swapInit = true;
@@ -762,7 +749,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 									if (swapInit)
 										swapInit = false;
 
-									bbbLoader.src = post.samp_url;
+									bbbLoader.src = post.large_file_url;
 									imgStatus.innerHTML = "Loading sample image...";
 								}
 							}
@@ -839,24 +826,45 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				// Prepare the post information.
-				var tagLinks = post.tag_string.split(" ");
+				var tagLinks = post.tag_string.bbbSpacePad();
+				var generalTags = post.tag_string_general.split(" ");
+				var artistTags = post.tag_string_artist.split(" ");
+				var copyrightTags = post.tag_string_copyright.split(" ");
+				var characterTags = post.tag_string_character.split(" ");
+				var limit = (thumbnail_count > 0 ? "&limit=" + thumbnail_count : "");
+				var tag;
 
-				for (var j = 0, tll = tagLinks.length; j < tll; j++)
-					tagLinks[j] = '<span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tagLinks[j]) + '">' + tagLinks[j].replace(/_/g, " ") + '</a> </span> ';
+				for (var j = 0, gtl = generalTags.length; j < gtl; j++) {
+					tag = generalTags[j];
+					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
+				}
 
-				tagsLinks = tagLinks.join(" ");
+				for (var j = 0, atl = artistTags.length; j < atl; j++) {
+					tag = artistTags[j];
+					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-1"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
+				}
+
+				for (var j = 0, ctl = copyrightTags.length; j < ctl; j++) {
+					tag = copyrightTags[j];
+					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-3"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
+				}
+
+				for (var j = 0, ctl = characterTags.length; j < ctl; j++) {
+					tag = characterTags[j];
+					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-4"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
+				}
 
 				// Create the new post.
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.thumb_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagsLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.preview_file_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
 				else // Insert new post before the post that should follow it.
 					existingPost.parentNode.insertBefore(childSpan.firstChild, existingPost);
 
-				// Get the tag colors and comments.
+				// Get the comments.
 				fetchPages("/posts/" + post.id, "comments", [existingPosts[eci], post.id]);
 			}
 
@@ -1577,7 +1585,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		section.removeChild(borderElement);
 		borderSettings.splice(index,1);
 
-		if (borderSettings.length == 0) {
+		if (borderSettings.length === 0) {
 			// If no borders are left, add a new blank border.
 			var newBorderItem = new Border("", false, "#000000", "solid");
 			borderSettings.push(newBorderItem);
@@ -2098,7 +2106,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Test for hidden post images.
 		var objectExists = document.getElementById("image-container").getElementsByTagName("object")[0];
 		var imgExists = document.getElementById("image");
-		var infoExists = (/Save this file|The artist requested removal/.test(document.getElementById("image-container").textContent)  && !/\b(?:loli|shota)\b/.test(fetchMeta("tags")));
+		var infoExists = (/Save this file|The artist requested removal/.test(document.getElementById("image-container").textContent) && !/\b(?:loli|shota)\b/.test(fetchMeta("tags")));
 
 		if (objectExists || imgExists || infoExists)
 			return false;
@@ -2355,9 +2363,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			thumbClass += " post-status-has-parent";
 
 		post.parent = (post.parent_id !== null ? post.parent_id : ""); // Format to return a blank string if there is no parent.
-		post.file_url = "/data/" + md5 + "." + ext;
-		post.samp_url = "/data/sample/sample-" + md5 + ".jpg";
-		post.thumb_url = (!post.image_height || ext == "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg");
 		post.flags = flags;
 		post.thumb_class = thumbClass;
 
@@ -2793,7 +2798,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					if (bbbIsNum(numSearch)) // Exact number. (tag:#)
 						mode.push(searchTerm.bbbSpacePad());
-					else if (numSearch.indexOf("<=") == 0 || numSearch.indexOf("..") == 0) { // Less than or equal to. (tag:<=# & tag:..#)
+					else if (numSearch.indexOf("<=") === 0 || numSearch.indexOf("..") === 0) { // Less than or equal to. (tag:<=# & tag:..#)
 						numOne = null;
 						numTwo = parseInt(numSearch.slice(2), 10);
 
@@ -2803,7 +2808,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.indexOf(">=") == 0) { // Greater than or equal to. (tag:>=#)
+					else if (numSearch.indexOf(">=") === 0) { // Greater than or equal to. (tag:>=#)
 						numOne = parseInt(numSearch.slice(2), 10);
 						numTwo = null;
 
@@ -2876,7 +2881,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else {
 			var tagName = tag.split(":", 1)[0];
 
-			if (" score favcount id width height ".indexOf(tagName.bbbSpacePad()) < 0)
+			if (tagName == "score" || tagName == "favcount" || tagName == "id" || tagName == "width" || tagName == "height")
 				return false;
 			else
 				return true;
@@ -2919,7 +2924,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else if (mode == "loaded") { // Status mode for successful requests. Hides itself automatically.
 				bbbInfo.statusCount--;
 
-				if (bbbInfo.statusCount == 0) {
+				if (bbbInfo.statusCount === 0) {
 					status.style.display = "block";
 					status.innerHTML = "Loaded!";
 
