@@ -197,7 +197,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var numThumbs = document.getElementsByClassName("post-preview").length;
 		var limit = "";
 
-		if (mode == "search" || mode == "notes") {
+		if (mode === "search" || mode === "notes") {
 			var numExpected = getVar("limit") || 20;
 			var numDesired = 0;
 
@@ -208,36 +208,36 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else
 				numDesired = numExpected;
 
-			if (numThumbs != numDesired || numThumbs < numExpected || direct_downloads) {
-				if (mode == "search")
+			if (numThumbs !== numDesired || numThumbs < numExpected || direct_downloads) {
+				if (mode === "search")
 					fetchJSON(gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit, "search");
 				else
 					fetchJSON(gUrl.replace(/\/notes\/?(?:\?|$)/, "/notes.json?") + limit, "notes");
 			}
 		}
-		else if (mode == "post") {
+		else if (mode === "post") {
 			if (!needPostAPI())
 				fetchInfo();
 			else
 				fetchJSON(gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json"), "post");
 		}
-		else if (mode == "popular") {
-			if (numThumbs != 20 || direct_downloads)
+		else if (mode === "popular") {
+			if (numThumbs !== 20 || direct_downloads)
 				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
 		}
-		else if (mode == "pool") {
-			if (numThumbs != 20 || direct_downloads)
+		else if (mode === "pool") {
+			if (numThumbs !== 20 || direct_downloads)
 				fetchJSON(gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
 		}
-		else if (mode == "poolsearch") {
+		else if (mode === "poolsearch") {
 			var poolIds = xml.post_ids.split(" ");
 			var page = getVar("page") || 1;
 			var postIds = poolIds.slice((page - 1) * 20, page * 20);
 
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
 		}
-		else if (mode == "comments") {
-			if (numThumbs != 5)
+		else if (mode === "comments") {
+			if (numThumbs !== 5)
 				fetchJSON(gUrl.replace(/\/comments\/?/, "/comments.json"), "comments");
 		}
 	}
@@ -248,23 +248,23 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (xmlhttp !== null) {
 			xmlhttp.onreadystatechange = function() {
-				if (xmlhttp.readyState == 4) { // 4 = "loaded"
-					if (xmlhttp.status == 200) { // 200 = "OK"
+				if (xmlhttp.readyState === 4) { // 4 = "loaded"
+					if (xmlhttp.status === 200) { // 200 = "OK"
 						var xml = JSON.parse(xmlhttp.responseText);
 
-						if (mode == "search" || mode == "popular" || mode == "notes")
+						if (mode === "search" || mode === "popular" || mode === "notes")
 							parseListing(xml);
-						else if (mode == "post")
+						else if (mode === "post")
 							parsePost(xml);
-						else if (mode == "pool")
+						else if (mode === "pool")
 							searchJSON("poolsearch", xml);
-						else if (mode == "poolsearch")
+						else if (mode === "poolsearch")
 							parseListing(xml, optArg);
-						else if (mode == "comments")
+						else if (mode === "comments")
 							parseComments(xml);
 					}
 					else {
-						if (xmlhttp.status == 403 || xmlhttp.status == 401) {
+						if (xmlhttp.status === 403 || xmlhttp.status === 401) {
 							danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', true);
 							document.getElementById("bbb-bypass-api-link").addEventListener("click", function(event) {
 								updateSettings("bypass_api", true);
@@ -272,9 +272,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 								event.preventDefault();
 							}, false);
 						}
-						else if (xmlhttp.status == 421)
+						else if (xmlhttp.status === 421)
 							danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", true);
-						else if (xmlhttp.status != 0)
+						else if (xmlhttp.status !== 0)
 							danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.status + " " + xmlhttp.statusText + ")", true);
 
 						// Update status message.
@@ -286,20 +286,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			xmlhttp.send(null);
 
 			// Loading status message.
-			if (mode == "search" || mode == "popular" || mode == "notes" || mode == "post" || mode == "pool")
+			if (mode === "search" || mode === "popular" || mode === "notes" || mode === "post" || mode === "pool")
 				bbbStatus("image");
-			else if (mode == "comments")
+			else if (mode === "comments")
 				bbbStatus("comment");
 		}
 	}
 
 	function modifyPage(mode) {
 		// Let other functions that don't require the API run. (Alternative to searchJSON)
-		if (mode == "post") {
+		if (mode === "post") {
 			if (!needPostAPI())
 				fetchInfo();
 		}
-		else if (mode == "search" || mode == "notes") {
+		else if (mode === "search" || mode === "notes") {
 			if (allowUserLimit()) {
 				var url = gUrl;
 
@@ -365,15 +365,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			score: Number(document.getElementById("score-for-post-" + fetchMeta("post-id")).textContent),
 			tag_string: fetchMeta("tags"),
 			uploader_name: /Uploader:\s*(.+?)\s*»/.exec(infoSection.textContent)[1],
-			is_deleted: (fetchMeta("post-is-deleted") == "false" ? false : true),
-			is_flagged: (fetchMeta("post-is-flagged") == "false" ? false : true),
-			is_pending: (fetchMeta("post-is-approvable" == "false" ? false : true)),
+			is_deleted: (fetchMeta("post-is-deleted") === "false" ? false : true),
+			is_flagged: (fetchMeta("post-is-flagged") === "false" ? false : true),
+			is_pending: (fetchMeta("post-is-approvable" === "false" ? false : true)),
 			image_height: imgHeight,
 			image_width: imgWidth,
 			has_large: hasLarge,
 			file_url: "/data/" + md5 + "." + ext,
 			large_file_url: "/data/sample/sample-" + md5 + ".jpg",
-			preview_file_url: (!imgHeight || ext == "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg"),
+			preview_file_url: (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg"),
 			exists: true
 		};
 
@@ -386,17 +386,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (xmlhttp !== null) {
 			xmlhttp.onreadystatechange = function() {
-				if (xmlhttp.readyState == 4) { // 4 = "loaded"
-					if (xmlhttp.status == 200) { // 200 = "OK"
+				if (xmlhttp.readyState === 4) { // 4 = "loaded"
+					if (xmlhttp.status === 200) { // 200 = "OK"
 
-						if (mode == "paginator") { // Fetch updated paginator for first page of searches.
+						if (mode === "paginator") { // Fetch updated paginator for first page of searches.
 							var paginator = optArg;
 							var newPaginator = /<div class="paginator">(.+?)<\/div>/i.exec(xmlhttp.responseText)[1];
 
 							if (newPaginator)
 								paginator.innerHTML = newPaginator;
 						}
-						else if (mode == "comments") { // Fetch post to get comments and tag colors.
+						else if (mode === "comments") { // Fetch post to get comments
 							var childSpan = document.createElement("span");
 							var post = optArg[0];
 							var postId = optArg[1];
@@ -426,9 +426,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							// Update status message.
 							bbbStatus("loaded");
 						}
-						else if (mode == "thumbnails") { // Fetch the thumbnails and paginator from the page of a search and replace the existing ones.
+						else if (mode === "thumbnails") { // Fetch the thumbnails and paginator from the page of a search and replace the existing ones.
 							var childSpan = document.createElement("span");
-							var divId = (gLoc == "search" ? "posts" : "a-index");
+							var divId = (gLoc === "search" ? "posts" : "a-index");
 							var divRegEx = new RegExp('<div id="' + divId + '">([\\S\\s]+?class="paginator"[\\S\\s]+?<\\/div>[\\S\\s]+?)<\\/div>', "i");
 
 							childSpan.innerHTML = divRegEx.exec(xmlhttp.responseText)[1];
@@ -449,7 +449,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							bbbStatus("loaded");
 						}
 					}
-					else if (xmlhttp.status != 0) {
+					else if (xmlhttp.status !== 0) {
 						danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.status + " " + xmlhttp.statusText + ")", true);
 
 						// Update status message.
@@ -461,9 +461,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			xmlhttp.send(null);
 
 			// Loading status message.
-			if (mode == "thumbnails")
+			if (mode === "thumbnails")
 				bbbStatus("image");
-			else if (mode == "comments")
+			else if (mode === "comments")
 				bbbStatus("comment");
 		}
 	}
@@ -481,21 +481,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return;
 
 		// Use JSON results for searches and pool collections.
-		if (gLoc == "search") {
+		if (gLoc === "search") {
 			where = document.getElementById("posts");
 			search = (gUrlQuery.indexOf("tags=") > -1 && !clean_links ? "?tags=" + getVar("tags") : "");
 		}
-		else if (gLoc == "popular") {
+		else if (gLoc === "popular") {
 			where = document.getElementById("a-index");
 			out = document.getElementById("a-index").innerHTML.split("<article", 1)[0];
 		}
-		else if (gLoc == "pool") {
+		else if (gLoc === "pool") {
 			var orderedPostIds = optArg;
 			where = document.getElementById("a-show").getElementsByTagName("section")[0];
 			search = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(gUrlPath)[1] : "");
 			out = "\f,;" + orderedPostIds.join("\f,;");
 		}
-		else if (gLoc == "notes") {
+		else if (gLoc === "notes") {
 			where = document.getElementById("a-index");
 			out = "<h1>Notes</h1>";
 		}
@@ -508,7 +508,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// Don't display loli/shota if the user has opted so and skip to the next image.
 			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted)) {
-				if (gLoc == "pool") {
+				if (gLoc === "pool") {
 					outId = new RegExp("\f,;" + post.id + "(?=<|\f|$)");
 					out = out.replace(outId, "");
 				}
@@ -523,9 +523,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				thumb += '<a style="display: none;" href="' + post.file_url + '">Direct Download</a></span>';
 
 			// Generate output
-			if (gLoc == "search" || gLoc == "notes" || gLoc == "popular")
+			if (gLoc === "search" || gLoc === "notes" || gLoc === "popular")
 				out += thumb;
-			else if (gLoc == "pool") {
+			else if (gLoc === "pool") {
 				outId = new RegExp("\f,;" + post.id + "(?=<|\f|$)");
 				out = out.replace(outId, thumb);
 			}
@@ -536,7 +536,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where.innerHTML = out + outerHTML(paginator);
 			paginator = document.getElementsByClassName("paginator")[0];
 
-			if ((gLoc == "search" || gLoc == "notes") && (allowUserLimit())) {
+			if ((gLoc === "search" || gLoc === "notes") && (allowUserLimit())) {
 				// Fix existing paginator with user's custom limit.
 				var pageLinks = document.evaluate('.//a', paginator, null, 6, null);
 
@@ -580,7 +580,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var newUrl = "";
 			var altTxt = "";
 
-			if (post.file_ext == "swf") // Create flash object.
+			if (post.file_ext === "swf") // Create flash object.
 				container.innerHTML = '<div id="note-container"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
 			else if (!post.image_height) // Create manual download.
 				container.innerHTML = '<p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
@@ -657,7 +657,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						imgStatus.innerHTML = "";
 					}, false);
 					bbbLoader.addEventListener("error", function(event) {
-						if (this.src != "about:blank")
+						if (this.src !== "about:blank")
 							imgStatus.innerHTML = "Loading failed!";
 						event.preventDefault();
 					}, false);
@@ -713,7 +713,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				// Make the "Add note" link work.
-				if (!post.exists && document.getElementById("translate") !== null)
+				if (!post.exists && document.getElementById("translate"))
 					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
 
 				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
@@ -724,7 +724,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 				else { // Make sample/original images swap when clicking the image.
 					// Make a "Toggle Notes" link in the options bar.
-					if (document.getElementById("listnotetoggle") === null) { // For logged in users.
+					if (document.getElementById("listnotetoggle")) { // For logged in users.
 						var translateOption = document.getElementById("translate").parentNode;
 						var listNoteToggle = document.createElement("li");
 
@@ -817,7 +817,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var post = formatJSON(posts[i]);
 			var existingPost = existingPosts[eci];
 
-			if (!existingPost || post.id != existingPost.getAttribute("data-id")) {
+			if (!existingPost || post.id !== existingPost.getAttribute("data-id")) {
 				if (!/\b(?:loli|shota)\b/.test(post.tag_string)) // API post isn't loli/shota and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
 					continue;
 				else if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string))) { // Skip loli/shota if the user has selected to do so.
@@ -872,7 +872,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		// If we don't have the expected number of posts, the API info and page are too out of sync.
-		if (existingPosts.length != endTotal) {
+		if (existingPosts.length !== endTotal) {
 			danbNotice("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.", true);
 			bbbStatus("error");
 		}
@@ -1076,7 +1076,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		sectionDiv.className = "bbb-section-options";
 		sectionFrag.appendChild(sectionDiv);
 
-		if (section.type == "general") {
+		if (section.type === "general") {
 			var settingList = section.settings;
 			var sll = settingList.length;
 			var halfway = (sll > 1 ? Math.ceil(sll / 2) : 0);
@@ -1101,7 +1101,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				optionTarget.appendChild(newOption);
 			}
 		}
-		else if (section.type == "border") {
+		else if (section.type === "border") {
 			var borderSettings = settings.user[section.settings];
 
 			for (var i = 0, bsl = borderSettings.length; i < bsl; i++) {
@@ -1161,7 +1161,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						selectOption.innerHTML = txtOption[0];
 						selectOption.value = txtOption[1];
 
-						if (selectOption.value == userSetting)
+						if (selectOption.value === userSetting)
 							selectOption.selected = true;
 
 						item.appendChild(selectOption);
@@ -1174,7 +1174,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						selectOption.innerHTML = numList[i];
 						selectOption.value = numList[i];
 
-						if (selectOption.value == userSetting)
+						if (selectOption.value === userSetting)
 							selectOption.selected = true;
 
 						item.appendChild(selectOption);
@@ -1190,7 +1190,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						selectOption.innerHTML = i;
 						selectOption.value = i;
 
-						if (selectOption.value == userSetting)
+						if (selectOption.value === userSetting)
 							selectOption.selected = true;
 
 						item.appendChild(selectOption);
@@ -1406,7 +1406,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var styleOptions = styleDrop.getElementsByTagName("option");
 
 		for (var i = 0; i < 4; i++) {
-			if (styleOptions[i].value == borderItem.border_style) {
+			if (styleOptions[i].value === borderItem.border_style) {
 				styleOptions[i].selected = true;
 				break;
 			}
@@ -1620,11 +1620,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var target = event.target;
 		var section = settings.borderMode.section;
 
-		if (target.className == "bbb-border-divider") {
+		if (target.className === "bbb-border-divider") {
 			var newIndex = Number(target.parentNode.getAttribute("data-bbb-index"));
 			var borderSettings = settings.borderMode.settings;
 
-			if (settings.borderMode.mode == "new") { // Make a new border.
+			if (settings.borderMode.mode === "new") { // Make a new border.
 				var newBorderItem = new Border("", false, "#000000", "solid");
 				borderSettings.splice(newIndex, 0, newBorderItem);
 
@@ -1633,10 +1633,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				section.insertBefore(newBorderElement, section.children[newIndex]);
 
 			}
-			else if (settings.borderMode.mode == "move") { // Move the border.
+			else if (settings.borderMode.mode === "move") { // Move the border.
 				var oldIndex = settings.borderMode.index;
 
-				if (newIndex != oldIndex) {
+				if (newIndex !== oldIndex) {
 					var borderItem = borderSettings.splice(oldIndex, 1)[0];
 					var borderElement = settings.borderMode.element;
 
@@ -1707,7 +1707,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function changeTab(tab) {
 		var activeTab = document.getElementsByClassName("bbb-active-tab")[0];
 
-		if (tab == activeTab)
+		if (tab === activeTab)
 			return;
 
 		activeTab.className = activeTab.className.replace(/bbb-active-tab/g, "");
@@ -1783,13 +1783,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				switch (optionObject.type)
 				{
 					case "dropdown":
-						if (input.value != userSetting) {
+						if (input.value !== userSetting) {
 							var selectOptions = input.getElementsByTagName("option");
 
 							for (var j = 0, sol = selectOptions.length; j < sol; j++) {
 								var selectOption = selectOptions[j];
 
-								if (selectOption.value == userSetting) {
+								if (selectOption.value === userSetting) {
 									selectOption.selected = true;
 									break;
 								}
@@ -1917,7 +1917,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var heightRatio = availableHeight / imgHeight;
 		var ratio;
 
-		if (mode == "none" || currentMode == mode || (mode == "width" && widthRatio >= 1) || (mode == "all" && widthRatio >= 1 && heightRatio >= 1)) {
+		if (mode === "none" || currentMode === mode || (mode === "width" && widthRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) {
 			img.style.width = imgWidth + "px";
 			img.style.height = imgHeight + "px";
 			bbbInfo.resized = "none";
@@ -1927,7 +1927,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
 		}
-		else if (mode == "width" && (tooWide || currentMode == "all")) {
+		else if (mode === "width" && (tooWide || currentMode === "all")) {
 			ratio = widthRatio;
 			img.style.width = imgWidth * ratio + "px";
 			img.style.height = imgHeight * ratio + "px";
@@ -1938,7 +1938,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
 		}
-		else if (mode == "all" && (tooWide || tooTall || currentMode == "width")) {
+		else if (mode === "all" && (tooWide || tooTall || currentMode === "width")) {
 			ratio = (widthRatio < heightRatio ? widthRatio : heightRatio);
 			img.style.width = imgWidth * ratio + "px";
 			img.style.height = imgHeight * ratio + "px";
@@ -1973,7 +1973,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				link.href += "?limit=" + thumbnail_count;
 		}
 
-		if (gLoc == "search" || gLoc == "post")
+		if (gLoc === "search" || gLoc === "post")
 			document.getElementById("search-box").getElementsByTagName("form")[0].innerHTML += '<input name="limit" value="' + thumbnail_count + '" type="hidden">';
 
 	}
@@ -1984,7 +1984,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		try {
 			req.open("HEAD", url, false);
 			req.send(null);
-			return (req.status == 200 ? true : false);
+			return (req.status === 200 ? true : false);
 		} catch(er) {
 			return false;
 		}
@@ -2012,26 +2012,26 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function arrowNav(e) {
 		// Bind the arrow keys to Danbooru's page navigation.
-		if (document.activeElement.type != "text" && document.activeElement.type != "textarea") {
-			if (e.keyCode == 37)
+		if (document.activeElement.type !== "text" && document.activeElement.type !== "textarea") {
+			if (e.keyCode === 37)
 				danbooruNav("left");
-			else if (e.keyCode == 39)
+			else if (e.keyCode === 39)
 				danbooruNav("right");
 		}
 	}
 
 	function danbooruNav(dir) {
 		// Determine the correct Danbooru page function and use it.
-		if (gLoc == "popular") {
-			if (dir == "left")
+		if (gLoc === "popular") {
+			if (dir === "left")
 				Danbooru.PostPopular.nav_prev();
-			else if (dir == "right")
+			else if (dir === "right")
 				Danbooru.PostPopular.nav_next();
 		}
 		else {
-			if (dir == "left")
+			if (dir === "left")
 				Danbooru.Paginator.prev_page();
-			else if (dir == "right")
+			else if (dir === "right")
 				Danbooru.Paginator.next_page();
 		}
 	}
@@ -2040,19 +2040,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Remove the query portion of thumbnail links.
 		var target;
 
-		if (gLoc == "post") {
+		if (gLoc === "post") {
 			target = document.evaluate('//div[@id="pool-nav"]//a', document, null, 6, null);
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
 				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?", 1)[0];
 		}
-		else if (gLoc == "pool") {
+		else if (gLoc === "pool") {
 			target = document.evaluate('//section[@id="content"]/article/a', document, null, 6, null);
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
 				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?", 1)[0];
 		}
-		else if (gLoc == "search") {
+		else if (gLoc === "search") {
 			target = document.evaluate('//div[@id="posts"]/article/a', document, null, 6, null);
 
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
@@ -2096,7 +2096,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function allowArrowNav() {
 		var paginator = document.getElementsByClassName("paginator")[0];
 
-		if (paginator || gLoc == "popular") // If the paginator exists, arrow navigation should be applicable.
+		if (paginator || gLoc === "popular") // If the paginator exists, arrow navigation should be applicable.
 			return true;
 		else
 			return false;
@@ -2134,7 +2134,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function checkUrls() {
 		for (var i = 0, vul = valid_urls.length; i < vul; i++) {
-			if (valid_urls[i] == gUrl.substring(0, gUrl.lastIndexOf("post")))
+			if (valid_urls[i] === gUrl.substring(0, gUrl.lastIndexOf("post")))
 				return true;
 		}
 		return false;
@@ -2184,7 +2184,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function searchAdd() {
-		if (gLoc == "search" || gLoc == "post") {
+		if (gLoc === "search" || gLoc === "post") {
 			// Where = array of <li> in tag-sidebar.
 			var where = document.getElementById("tag-box") || document.getElementById("tag-list");
 
@@ -2219,12 +2219,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		for (var i = 0, sbsl = statusBorderSettings.length; i < sbsl; i++) {
 			var borderItem = statusBorderSettings[i];
 
-			if (borderItem.tags == "parent") {
+			if (borderItem.tags === "parent") {
 				parent = statusBorderSettings.splice(i, 1)[0];
 				i--;
 				sbsl--;
 			}
-			else if (borderItem.tags == "child") {
+			else if (borderItem.tags === "child") {
 				child = statusBorderSettings.splice(i, 1)[0];
 				i--;
 				sbsl--;
@@ -2262,7 +2262,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var tags = post.getAttribute("data-tags");
 			var user = post.getAttribute("data-uploader");
 			var flags = post.getAttribute("data-flags") || "active";
-			var status = (flags == "flagged" ? " status:flagged status:active" : " status:" + flags);
+			var status = (flags === "flagged" ? " status:flagged status:active" : " status:" + flags);
 			var rating = " rating:" + post.getAttribute("data-rating");
 			var score = " score:" + post.getAttribute("data-score");
 			var favcount = " favcount:" + post.getAttribute("data-fav-count");
@@ -2299,9 +2299,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				primaryLength = primary.length;
 
-				if (primaryLength == 2)
+				if (primaryLength === 2)
 					img.setAttribute("style", "border-style: " + primary[1][1] + " " + primary[0][1] + " " + primary[0][1] + " " + primary[1][1] + " !important; border-color: " + primary[1][0] + " " + primary[0][0] + " " + primary[0][0] + " " + primary[1][0] + " !important;");
-				else if (primaryLength == 3)
+				else if (primaryLength === 3)
 					img.setAttribute("style", "border-style: " + primary[2][1] + " " + primary[0][1] + " " + primary[0][1] + " " + primary[1][1] + " !important; border-color: " + primary[2][0] + " " + primary[0][0] + " " + primary[0][0] + " " + primary[1][0] + " !important;");
 			}
 			else // Default Danbooru border styling.
@@ -2315,7 +2315,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					if (tagBorderItem.is_enabled && postInfo.bbbSearchMatch(searches[j])) {
 						secondary.push([tagBorderItem.border_color, tagBorderItem.border_style]);
 
-						if (secondary.length == 4)
+						if (secondary.length === 4)
 							break;
 					}
 				}
@@ -2325,13 +2325,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (secondaryLength) {
 					link.className += " bbb-custom-tag";
 
-					if (secondaryLength == 1 || (single_color_borders && secondaryLength > 1))
+					if (secondaryLength === 1 || (single_color_borders && secondaryLength > 1))
 						link.setAttribute("style", "border: " + border_width + "px " + secondary[0][0] + " " + secondary[0][1] + " !important;");
-					else if (secondaryLength == 2)
+					else if (secondaryLength === 2)
 						link.setAttribute("style", "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[1][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[1][1] + " " + secondary[0][1] + " !important;");
-					else if (secondaryLength == 3)
+					else if (secondaryLength === 3)
 						link.setAttribute("style", "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[2][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[2][1] + " " + secondary[0][1] + " !important;");
-					else if (secondaryLength == 4)
+					else if (secondaryLength === 4)
 						link.setAttribute("style", "border-color: " + secondary[0][0] + " " + secondary[2][0] + " " + secondary[3][0] + " " + secondary[1][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[2][1] + " " + secondary[3][1] + " " + secondary[1][1] + " !important;");
 				}
 			}
@@ -2362,7 +2362,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (post.parent_id)
 			thumbClass += " post-status-has-parent";
 
-		post.parent = (post.parent_id !== null ? post.parent_id : ""); // Format to return a blank string if there is no parent.
+		post.parent = (post.parent_id !== null ? post.parent_id : ""); // Format to return a blank string if there is no parent. Note that the API returns null and not undefined for parent_id when there is not a parent.
 		post.flags = flags;
 		post.thumb_class = thumbClass;
 
@@ -2407,7 +2407,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.bbb-backup-text {height: 200px; width: 898px; resize: none;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
-		if (thumbnail_count && (gLoc == "search" || gLoc == "notes"))
+		if (thumbnail_count && (gLoc === "search" || gLoc === "notes"))
 			styles += 'div#page {margin: 0px 10px 0px 20px !important;}';
 
 		// Border setup
@@ -2491,7 +2491,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function removeTagHeaders() {
 		// Remove the "copyright", "characters", and "artist" headers in the post sidebar.
-		if (gLoc == "post") {
+		if (gLoc === "post") {
 			var tagList = document.getElementById("tag-list");
 			var newList = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
 
@@ -2501,7 +2501,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function postTagTitles() {
 		// Replace the post title with the full set of tags.
-		if (gLoc == "post")
+		if (gLoc === "post")
 			document.title = fetchMeta("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
 	}
 
@@ -2526,7 +2526,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function createCookie(cName, cValue, expDays) {
 		var data = cName + "=" + cValue + "; path=/";
 
-		if (expDays !== null) {
+		if (expDays !== undefined) {
 			var expDate = new Date();
 			expDate.setTime(expDate.getTime() + expDays * 86400000);
 			expDate.toUTCString();
@@ -2726,7 +2726,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Test a post tag string for a tag match.
 		var tags = this;
 
-		if (typeof(tag) == "string") { // Check regular tags and metatags with one possible value.
+		if (typeof(tag) === "string") { // Check regular tags and metatags with one possible value.
 			if (tags.indexOf(tag) > -1)
 				return true;
 			else
@@ -2735,13 +2735,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (tag instanceof RegExp) { // Check wildcard tags.
 			return tag.test(tags);
 		}
-		else if (typeof(tag) == "object") { // Check numeric metatags with more than one value.
+		else if (typeof(tag) === "object") { // Check numeric metatags with more than one value.
 			var tagsMetaValue = parseInt(tags.split(" " + tag.tagName + ":")[1].split(" ", 1)[0], 10);
 
-			if (tag.greater !== null && tagsMetaValue <= tag.greater)
+			if (tag.greater !== undefined && tagsMetaValue <= tag.greater)
 				return false;
 
-			if (tag.less !== null && tagsMetaValue >= tag.less)
+			if (tag.less !== undefined && tagsMetaValue >= tag.less)
 				return false;
 
 			return true;
@@ -2768,14 +2768,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			for (var j = 0, ssl = searchString.length; j < ssl; j++) {
 				searchTerm = searchString[j];
 
-				if (searchTerm.charAt(0) == "~") {
+				if (searchTerm.charAt(0) === "~") {
 					mode = any;
 					searchTerm = searchTerm.slice(1);
 				}
 				else
 					mode = all;
 
-				if (searchTerm.charAt(0) == "-") {
+				if (searchTerm.charAt(0) === "-") {
 					if (searchTerm.length > 1) {
 						mode = mode.excludes;
 						searchTerm = searchTerm.slice(1);
@@ -2799,7 +2799,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					if (bbbIsNum(numSearch)) // Exact number. (tag:#)
 						mode.push(searchTerm.bbbSpacePad());
 					else if (numSearch.indexOf("<=") === 0 || numSearch.indexOf("..") === 0) { // Less than or equal to. (tag:<=# & tag:..#)
-						numOne = null;
 						numTwo = parseInt(numSearch.slice(2), 10);
 
 						if (!isNaN(numTwo)) {
@@ -2810,7 +2809,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 					else if (numSearch.indexOf(">=") === 0) { // Greater than or equal to. (tag:>=#)
 						numOne = parseInt(numSearch.slice(2), 10);
-						numTwo = null;
 
 						if (!isNaN(numOne)) {
 							metaObject.greater = numOne - 1;
@@ -2818,9 +2816,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.indexOf("..") == numSearch.length - 2) { // Greater than or equal to. (tag:#..)
+					else if (numSearch.indexOf("..") === numSearch.length - 2) { // Greater than or equal to. (tag:#..)
 						numOne = parseInt(numSearch.slice(0, -2), 10);
-						numTwo = null;
 
 						if (!isNaN(numOne)) {
 							metaObject.greater = numOne - 1;
@@ -2828,8 +2825,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.charAt(0) == "<") { // Less than. (tag:<#)
-						numOne = null;
+					else if (numSearch.charAt(0) === "<") { // Less than. (tag:<#)
 						numTwo = parseInt(numSearch.slice(1), 10);
 
 						if (!isNaN(numTwo)) {
@@ -2838,9 +2834,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.charAt(0) == ">") { // Greater than. (tag:>#)
+					else if (numSearch.charAt(0) === ">") { // Greater than. (tag:>#)
 						numOne = parseInt(numSearch.slice(1), 10);
-						numTwo = null;
 
 						if (!isNaN(numOne)) {
 							metaObject.greater = numOne;
@@ -2862,7 +2857,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 				else if (searchTerm.indexOf("*") > -1) // Prepare wildcard tags as regular expressions.
 					mode.push(new RegExp(escapeRegEx(searchTerm).replace(/\*/g, "\S*").bbbSpacePad()));
-				else if (typeof(searchTerm) == "string") // Add regular tags.
+				else if (typeof(searchTerm) === "string") // Add regular tags.
 					mode.push(searchTerm.bbbSpacePad());
 			}
 
@@ -2881,7 +2876,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else {
 			var tagName = tag.split(":", 1)[0];
 
-			if (tagName == "score" || tagName == "favcount" || tagName == "id" || tagName == "width" || tagName == "height")
+			if (tagName === "score" || tagName === "favcount" || tagName === "id" || tagName === "width" || tagName === "height")
 				return true;
 			else
 				return false;
@@ -2911,17 +2906,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (!disable_status_message) {
 			var status = bbbInfo.el.status;
 
-			if (mode == "image") { // Status mode for loading thumbnails and hidden images.
+			if (mode === "image") { // Status mode for loading thumbnails and hidden images.
 				status.style.display = "block";
 				status.innerHTML = "Loading image info...";
 				bbbInfo.statusCount++;
 			}
-			else if (mode == "comment") { // Status mode for loading hidden comments.
+			else if (mode === "comment") { // Status mode for loading hidden comments.
 				status.style.display = "block";
 				status.innerHTML = "Loading comment info...";
 				bbbInfo.statusCount++;
 			}
-			else if (mode == "loaded") { // Status mode for successful requests. Hides itself automatically.
+			else if (mode === "loaded") { // Status mode for successful requests. Hides itself automatically.
 				bbbInfo.statusCount--;
 
 				if (bbbInfo.statusCount === 0) {
@@ -2931,14 +2926,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					var removeStatus = window.setTimeout( function() { bbbStatus("clear"); }, 1500);
 				}
 			}
-			else if (mode == "error") { // Status mode for unsuccessful requests. Hides itself automatically.
+			else if (mode === "error") { // Status mode for unsuccessful requests. Hides itself automatically.
 				bbbInfo.statusCount = -1;
 				status.style.display = "block";
 				status.innerHTML = "Error.";
 
 				var removeStatus = window.setTimeout( function() { bbbStatus("clear"); }, 1500);
 			}
-			else if (mode == "clear") // Status mode for hiding the status message.
+			else if (mode === "clear") // Status mode for hiding the status message.
 				status.style.display = "none";
 		}
 	}
@@ -2947,7 +2942,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Adds a leading "0" to single digit date/time values.
 		var numString = this.toString(10);
 
-		if (numString.length == 1)
+		if (numString.length === 1)
 			numString = "0" + numString;
 
 		return numString;
@@ -2998,7 +2993,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			dragScrollDisable();
 
 		window.addEventListener("keydown", function(event) {
-			if (event.keyCode == 78) {
+			if (event.keyCode === 78) {
 				if (Danbooru.Note.TranslationMode.active)
 					dragScrollDisable();
 				else
@@ -3063,7 +3058,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 } // End of injectMe.
 
 // Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
-var script = document.createElement('script');
-script.type = "text/javascript";
-script.appendChild(document.createTextNode('(' + injectMe + ')();'));
-document.body.appendChild(script);
+if (document.body) {
+	var script = document.createElement('script');
+	script.type = "text/javascript";
+	script.appendChild(document.createTextNode('(' + injectMe + ')();'));
+	document.body.appendChild(script);
+}
