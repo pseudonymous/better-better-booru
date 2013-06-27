@@ -817,7 +817,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var post = formatJSON(posts[i]);
 			var existingPost = existingPosts[eci];
 
-			if (!existingPost || post.id != Number(existingPost.getAttribute("data-id"))) {
+			if (!existingPost || post.id !== Number(existingPost.getAttribute("data-id"))) {
 				if (!/\b(?:loli|shota)\b/.test(post.tag_string)) // API post isn't loli/shota and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
 					continue;
 				else if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string))) { // Skip loli/shota if the user has selected to do so.
@@ -1161,7 +1161,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						selectOption.innerHTML = txtOption[0];
 						selectOption.value = txtOption[1];
 
-						if (selectOption.value == String(userSetting))
+						if (selectOption.value === String(userSetting))
 							selectOption.selected = true;
 
 						item.appendChild(selectOption);
@@ -1174,7 +1174,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						selectOption.innerHTML = numList[i];
 						selectOption.value = numList[i];
 
-						if (selectOption.value == String(userSetting))
+						if (selectOption.value === String(userSetting))
 							selectOption.selected = true;
 
 						item.appendChild(selectOption);
@@ -1190,7 +1190,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						selectOption.innerHTML = i;
 						selectOption.value = i;
 
-						if (selectOption.value == String(userSetting))
+						if (selectOption.value === String(userSetting))
 							selectOption.selected = true;
 
 						item.appendChild(selectOption);
