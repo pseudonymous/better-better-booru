@@ -724,7 +724,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 				else { // Make sample/original images swap when clicking the image.
 					// Make a "Toggle Notes" link in the options bar.
-					if (document.getElementById("listnotetoggle")) { // For logged in users.
+					if (!document.getElementById("listnotetoggle")) { // For logged in users.
 						var translateOption = document.getElementById("translate").parentNode;
 						var listNoteToggle = document.createElement("li");
 
