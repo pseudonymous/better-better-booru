@@ -91,47 +91,47 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	// Script variables.
 	// Global
-	var show_loli = settings.user["show_loli"];
-	var show_shota = settings.user["show_shota"];
-	var show_deleted = settings.user["show_deleted"]; // Show all deleted posts.
-	var direct_downloads = settings.user["direct_downloads"]; // Allow download managers for thumbnail listings.
+	var show_loli = settings.user.show_loli;
+	var show_shota = settings.user.show_shota;
+	var show_deleted = settings.user.show_deleted; // Show all deleted posts.
+	var direct_downloads = settings.user.direct_downloads; // Allow download managers for thumbnail listings.
 
-	var custom_tag_borders = settings.user["custom_tag_borders"]; //
-	var custom_status_borders = settings.user["custom_status_borders"]; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
-	var single_color_borders = settings.user["single_color_borders"]; // Use simple single color borders.
-	var border_width = settings.user["border_width"]; // Set the thumbnail border width.
-	var clean_links = settings.user["clean_links"]; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
-	var autohide_sidebar = settings.user["autohide_sidebar"]; // Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus (ex: By pressing "Q" to focus on the search box).
+	var custom_tag_borders = settings.user.custom_tag_borders; //
+	var custom_status_borders = settings.user.custom_status_borders; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
+	var single_color_borders = settings.user.single_color_borders; // Use simple single color borders.
+	var border_width = settings.user.border_width; // Set the thumbnail border width.
+	var clean_links = settings.user.clean_links; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
+	var autohide_sidebar = settings.user.autohide_sidebar; // Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus (ex: By pressing "Q" to focus on the search box).
 
-	var bypass_api = settings.user["bypass_api"]; // Automatically bypass API features when they can't be used.
-	var manage_cookies = settings.user["manage_cookies"]; // Create cookies to completely stop notices.
-	var disable_status_message = settings.user["disable_status_message"];
+	var bypass_api = settings.user.bypass_api; // Automatically bypass API features when they can't be used.
+	var manage_cookies = settings.user.manage_cookies; // Create cookies to completely stop notices.
+	var disable_status_message = settings.user.disable_status_message;
 
-	var hide_sign_up_notice = settings.user["hide_sign_up_notice"];
-	var hide_upgrade_notice = settings.user["hide_upgrade_notice"];
-	var hide_tos_notice = settings.user["hide_tos_notice"];
-	var hide_original_notice = settings.user["hide_original_notice"]; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
-	var hide_advertisements = settings.user["hide_advertisements"];
-	var hide_ban_notice = settings.user["hide_ban_notice"];
+	var hide_sign_up_notice = settings.user.hide_sign_up_notice;
+	var hide_upgrade_notice = settings.user.hide_upgrade_notice;
+	var hide_tos_notice = settings.user.hide_tos_notice;
+	var hide_original_notice = settings.user.hide_original_notice; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
+	var hide_advertisements = settings.user.hide_advertisements;
+	var hide_ban_notice = settings.user.hide_ban_notice;
 
 	// Search
-	var arrow_nav = settings.user["arrow_nav"]; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
-	var search_add = settings.user["search_add"]; // Add the + and - shortcuts to the tag list for including or excluding search terms.
-	var thumbnail_count = settings.user["thumbnail_count"]; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
+	var arrow_nav = settings.user.arrow_nav; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
+	var search_add = settings.user.search_add; // Add the + and - shortcuts to the tag list for including or excluding search terms.
+	var thumbnail_count = settings.user.thumbnail_count; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
-	var alternate_image_swap = settings.user["alternate_image_swap"]; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
-	var image_resize = settings.user["image_resize"]; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
-	var image_resize_mode = settings.user["image_resize_mode"];
-	var image_drag_scroll = settings.user["image_drag_scroll"];
-	var load_sample_first = settings.user["load_sample_first"]; // Use sample images when available. When logged in, your account settings will override this setting.
-	var remove_tag_headers = settings.user["remove_tag_headers"]; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
-	var post_tag_titles = settings.user["post_tag_titles"]; // Revert post page titles to the more detailed full list of tags
-	var autoscroll_image = settings.user["autoscroll_image"];
+	var alternate_image_swap = settings.user.alternate_image_swap; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
+	var image_resize = settings.user.image_resize; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
+	var image_resize_mode = settings.user.image_resize_mode;
+	var image_drag_scroll = settings.user.image_drag_scroll;
+	var load_sample_first = settings.user.load_sample_first; // Use sample images when available. When logged in, your account settings will override this setting.
+	var remove_tag_headers = settings.user.remove_tag_headers; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
+	var post_tag_titles = settings.user.post_tag_titles; // Revert post page titles to the more detailed full list of tags
+	var autoscroll_image = settings.user.autoscroll_image;
 
 	// Borders
-	var status_borders = settings.user["status_borders"];
-	var tag_borders = settings.user["tag_borders"];
+	var status_borders = settings.user.status_borders;
+	var tag_borders = settings.user.tag_borders;
 
 	// Blacklist
 	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
@@ -139,7 +139,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// disable the script blacklist. When logged in, your account blacklist will override this blacklist.
 	// Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the
 	// following case: "spoilers, blood death"
-	var script_blacklisted_tags = settings.user["script_blacklisted_tags"];
+	var script_blacklisted_tags = settings.user.script_blacklisted_tags;
 
 	// List of valid URL's to parse for. Feel free to suggest more!
 	var valid_urls = [
@@ -581,7 +581,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var altTxt = "";
 
 			if (post.file_ext === "swf") // Create flash object.
-				container.innerHTML = '<div id="note-container"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
+				container.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
 			else if (!post.image_height) // Create manual download.
 				container.innerHTML = '<p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
 			else { // Create image
@@ -600,7 +600,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					altTxt = post.md5;
 				}
 
-				container.innerHTML = '<div id="note-container"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-parent-id="' + post.parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+				container.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-parent-id="' + post.parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 				var img = document.getElementById("image");
 				var bbbLoader = document.getElementById("bbb-loader");
 
@@ -712,9 +712,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					history.parentNode.insertBefore(options, history);
 				}
 
-				// Make the "Add note" link work.
-				if (!post.exists && document.getElementById("translate"))
-					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.start, false);
+				// Make translation mode work.
+				if (!post.exists && document.getElementById("translate")) {
+					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
+
+					window.addEventListener("keydown", function(event) {
+						if (event.keyCode === 78)
+							Danbooru.Note.TranslationMode.toggle(event);
+					}, false);
+				}
 
 				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
 					img.addEventListener("click", function() {
@@ -1695,7 +1701,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	Element.prototype.bbbBorderPreview = function(borderItem) {
-		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/ssd/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + settings.user["border_width"] + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
+		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/ssd/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + settings.user.border_width + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
 		this.addEventListener("mouseout", hideTip, false);
 	};
 
@@ -1728,10 +1734,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function loadSettings() {
 		// Load stored settings.
-		if (typeof(localStorage["bbb_settings"]) === "undefined")
+		if (typeof(localStorage.bbb_settings) === "undefined")
 			loadDefaults();
 		else {
-			settings.user = JSON.parse(localStorage["bbb_settings"]);
+			settings.user = JSON.parse(localStorage.bbb_settings);
 			checkUser(settings.user, settings.options);
 			convertSettings();
 		}
@@ -1763,7 +1769,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function saveSettings() {
-		localStorage["bbb_settings"] = JSON.stringify(settings.user);
+		localStorage.bbb_settings = JSON.stringify(settings.user);
 	}
 
 	function updateSettings() {
@@ -1817,13 +1823,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function convertSettings() {
 		// If the user settings are from an old version, attempt to convert some settings and update the version number. Settings will start conversion at the appropriate case and be allowed to run through every case after it until the end/default.
-		var mode = settings.user["bbb_version"];
+		var mode = settings.user.bbb_version;
 
 		if (isOldVersion(mode)) {
 			switch (mode) {
 				case "6.0":
 				default:
-					settings.user["bbb_version"] = settings.options["bbb_version"];
+					settings.user.bbb_version = settings.options.bbb_version;
 					break;
 			}
 		}
@@ -1832,7 +1838,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function createBackupText() {
 		// Create a plain text version of the settings.
 		var textarea = settings.el.backupTextarea;
-		textarea.value = "Better Better Booru v" + settings.user["bbb_version"] + " Backup (" + bbbTimestamp("y-m-d hh:mm:ss") + "):\r\n\r\n" + JSON.stringify(settings.user) + "\r\n";
+		textarea.value = "Better Better Booru v" + settings.user.bbb_version + " Backup (" + bbbTimestamp("y-m-d hh:mm:ss") + "):\r\n\r\n" + JSON.stringify(settings.user) + "\r\n";
 		textarea.focus();
 		textarea.setSelectionRange(0,0);
 	}
@@ -1841,7 +1847,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Open a new tab/window and place the setting text in it.
 		var backupWindow = window.open();
 
-		backupWindow.document.writeln('<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + settings.user["bbb_version"] + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(settings.user) + '</body></html>');
+		backupWindow.document.writeln('<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + settings.user.bbb_version + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(settings.user) + '</body></html>');
 		backupWindow.document.close();
 	}
 
@@ -1860,7 +1866,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"Save & Close\" to finalize the restore.");
 			}
 			catch (error) {
-				 if (error instanceof SyntaxError)
+				if (error instanceof SyntaxError)
 					alert("The backup does not appear to be formatted correctly. Please make sure everything was pasted correctly/completely and that only one backup is provided.");
 			}
 		}
@@ -2240,15 +2246,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function formatThumbnails() {
 		// Create thumbnail titles and borders.
 		var posts = document.getElementsByClassName("post-preview");
+		var statusBorderSettings;
+		var searches = [];
 
 		// Sort borders to support multi color borders.
 		if (!single_color_borders && posts)
-			var statusBorderSettings = statusBorderSort();
+			statusBorderSettings = statusBorderSort();
 
 		// Create and cache border search objects.
 		if (custom_tag_borders) {
-			var searches = [];
-
 			for (var i = 0, tbsl = tag_borders.length; i < tbsl; i++)
 				searches.push(createSearch(tag_borders[i].tags));
 		}
@@ -2781,7 +2787,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						searchTerm = searchTerm.slice(1);
 					}
 					else
-					 continue;
+						continue;
 				}
 				else if (searchTerm.length > 0)
 					mode = mode.includes;
@@ -2940,7 +2946,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	Number.prototype.bbbPadDate = function() {
 		// Adds a leading "0" to single digit date/time values.
-		var numString = this.toString(10);
+		var numString = String(this);
 
 		if (numString.length === 1)
 			numString = "0" + numString;
@@ -2965,7 +2971,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function isOldVersion(ver) {
 		// Takes the provided version and compares it to the script version. Returns true if the provided version is older than the script version.
 		var userNums = ver.split(".");
-		var scriptNums = settings.options["bbb_version"].split(".");
+		var scriptNums = settings.options.bbb_version.split(".");
 		var userNum;
 		var scriptNum;
 
@@ -2983,23 +2989,33 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function dragScrollInit() {
 		bbbInfo.dragScroll = {
 			moved: false,
+			translate: Danbooru.Note.TranslationMode.active,
 			lastX: undefined,
 			lastY: undefined
 		};
 
-		if (!Danbooru.Note.TranslationMode.active)
+		if (!bbbInfo.dragScroll.translate)
 			dragScrollEnable();
 		else
 			dragScrollDisable();
 
+		document.getElementById("translate").addEventListener("click", dragScrollToggle, false);
+
 		window.addEventListener("keydown", function(event) {
-			if (event.keyCode === 78) {
-				if (Danbooru.Note.TranslationMode.active)
-					dragScrollDisable();
-				else
-					dragScrollEnable();
-			}
+			if (event.keyCode === 78)
+				dragScrollToggle();
 		}, false);
+	}
+
+	function dragScrollToggle() {
+		if (!bbbInfo.dragScroll.translate) {
+			dragScrollDisable();
+			bbbInfo.dragScroll.translate = true;
+		}
+		else {
+			dragScrollEnable();
+			bbbInfo.dragScroll.translate = false;
+		}
 	}
 
 	function dragScrollEnable() {
