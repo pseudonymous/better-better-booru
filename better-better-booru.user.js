@@ -801,15 +801,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					dragScrollInit();
 			}
 
-		// Auto position the content if desired.
-		if (autoscroll_image)
-			autoscrollImage();
+			// Auto position the content if desired.
+			if (autoscroll_image)
+				autoscrollImage();
 
-		// Blacklist.
-		blacklistInit();
+			// Blacklist.
+			blacklistInit();
 
-		// Update status message.
-		bbbStatus("loaded");
+			// Update status message.
+			bbbStatus("loaded");
 		}
 	}
 
@@ -943,6 +943,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				event.preventDefault();
 			}, false);
 			tabBar.appendChild(generalTab);
+			settings.el.generalTab = generalTab;
 
 			var borderTab = document.createElement("a");
 			borderTab.name = "borders";
@@ -954,6 +955,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				event.preventDefault();
 			}, false);
 			tabBar.appendChild(borderTab);
+			settings.el.borderTab = borderTab;
 
 			var prefTab = document.createElement("a");
 			prefTab.name = "pref";
@@ -965,6 +967,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				event.preventDefault();
 			}, false);
 			tabBar.appendChild(prefTab);
+			settings.el.prefTab = prefTab;
+
+			var helpTab = document.createElement("a");
+			helpTab.name = "help";
+			helpTab.href = "#";
+			helpTab.innerHTML = "Help";
+			helpTab.className = "bbb-tab";
+			helpTab.addEventListener("click", function(event) {
+				changeTab(this);
+				event.preventDefault();
+			}, false);
+			tabBar.appendChild(helpTab);
+			settings.el.helpTab = helpTab;
 
 			var scrollDiv = document.createElement("div");
 			scrollDiv.className = "bbb-scroll-div";
@@ -999,6 +1014,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			prefPage.bbbSection(settings.sections.script_settings);
 			prefPage.bbbBackupSection();
+
+			var helpPage = document.createElement("div");
+			helpPage.style.display = "none";
+			scrollDiv.appendChild(helpPage);
+			settings.el.helpPage = helpPage;
+
+			helpPage.bbbTextSection("Border Matching Rules", "For creating border match rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values (id, score, favcount, width, and height) can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>");
 
 			var close = document.createElement("a");
 			close.innerHTML = "Save & Close";
@@ -1281,7 +1303,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		enableLabel.appendChild(enableBox);
 
 		var editSpan = document.createElement("span");
-		editSpan.innerHTML = "Edit:";
+		// editSpan.innerHTML = "Edit:";
 		editSpan.style.cssFloat = "right";
 		borderBarDiv.appendChild(editSpan);
 
@@ -1334,7 +1356,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		helpButton.innerHTML = "Help";
 		helpButton.className = "bbb-border-button";
 		helpButton.addEventListener("click", function(event) { event.preventDefault(); }, false);
-		helpButton.bbbSetTip("<u><b>Border Options</b></u><br><b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<br><br><b>Status/Tags:</b> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied.<br><br><b>Color:</b> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<br><br><b>Style:</b> Set how the border looks. Please note that double only works with a border width of 3.<br><br><b>Move:</b> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<br><br><b>Preview:</b> Display a preview of the border's current settings.<br><br><b>Delete:</b> Remove the border and its settings.<br><br><b>New:</b> Create a new border.");
+		helpButton.bbbSetTip("<u><b>Border Options</b></u><br><b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<br><br><b>Status/Tags:</b> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"Border Matching Rules\" section under the Help tab for information about creating rules.<br><br><b>Color:</b> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<br><br><b>Style:</b> Set how the border looks. Please note that double only works with a border width of 3.<br><br><b>Move:</b> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<br><br><b>Preview:</b> Display a preview of the border's current settings.<br><br><b>Delete:</b> Remove the border and its settings.<br><br><b>New:</b> Create a new border.");
 		editSpan.appendChild(helpButton);
 
 		var borderSettingsDiv = document.createElement("div");
@@ -1355,14 +1377,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			nameInput.addEventListener("change", function() { borderItem.tags = this.value.bbbSpaceClean(); }, false);
 			nameInput.style.width = "400px";
 			nameLabel.appendChild(nameInput);
-
-			var nameTip = document.createElement("a");
-			nameTip.href = "#";
-			nameTip.innerHTML = "?";
-			nameTip.className = "bbb-expl-link";
-			nameTip.addEventListener("click", function(event) { event.preventDefault(); }, false);
-			nameTip.bbbSetTip("For creating border match rules, please consult the following examples:<ul><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>");
-			nameLabel.appendChild(nameTip);
 		}
 
 		var otherSpan = document.createElement("span");
@@ -1434,6 +1448,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (text) {
 			var desc = document.createElement("div");
 			desc.innerHTML = text;
+			desc.className = "bbb-section-text";
 			sectionFrag.appendChild(desc);
 		}
 
@@ -1912,7 +1927,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var resizeLinkWidth = bbbInfo.el.resizeLinkWidth;
 		var resizeLinkAll = bbbInfo.el.resizeLinkAll;
 		var availableWidth = imgContainer.clientWidth;
-		var availableHeight = window.innerHeight - 50;
+		var availableHeight = window.innerHeight - 40;
 		var imgStyleWidth = img.clientWidth;
 		var imgStyleHeight = img.clientHeight;
 		var imgWidth = img.getAttribute("width"); // Was NOT expecting img.width to return the current width (css style width) and not the width attribute's value here...
@@ -1979,8 +1994,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				link.href += "?limit=" + thumbnail_count;
 		}
 
-		if (gLoc === "search" || gLoc === "post")
-			document.getElementById("search-box").getElementsByTagName("form")[0].innerHTML += '<input name="limit" value="' + thumbnail_count + '" type="hidden">';
+		if (gLoc === "search" || gLoc === "post") {
+			var limitInput = document.createElement("input");
+			limitInput.name = "limit";
+			limitInput.value = thumbnail_count;
+			limitInput.type = "hidden";
+			document.getElementById("search-box").getElementsByTagName("form")[0].appendChild(limitInput);
+		}
 
 	}
 
@@ -2384,6 +2404,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu a:focus {outline: none;}' +
 		'#bbb_menu input, #bbb_menu select, #bbb_menu textarea {border: #CCCCCC 2px solid;}' +
 		'#bbb_menu input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
+		'#bbb_menu ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
 		'.bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px 0px; overflow-y: auto;}' +
 		'.bbb-section-header {border-bottom: 2px solid #CCCCCC; width: 750px;}' +
 		'.bbb-section-options, .bbb-section-text {margin: 5px 0px; max-width: 902px;}' +
@@ -2395,7 +2416,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// '.bbb-label-text {}' +
 		'.bbb-label-input {float: right;}' +
 		'.bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 420px; width: 420px; overflow: hidden;}' +
-		'.bbb-expl ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
 		'.bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
 		'.bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}' +
 		'.bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
