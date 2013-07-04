@@ -54,7 +54,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
 		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
-		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death"),
+		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death", {tagEditMode: true}),
 		search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
 		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
 		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
@@ -919,6 +919,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (settings.el.menu) {
 			settings.el.menu.style.display = "block";
 			settings.el.scrollDiv.scrollTop = 0;
+			adjustMenuHeight();
 		}
 		else {
 			var menu = document.createElement("div");
@@ -990,6 +991,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			settings.el.scrollDiv = scrollDiv;
 
 			var generalPage = document.createElement("div");
+			generalPage.className = "bbb-page";
+			generalPage.style.display = "block";
 			scrollDiv.appendChild(generalPage);
 			settings.el.generalPage = generalPage;
 
@@ -1001,7 +1004,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			generalPage.bbbSection(settings.sections.logged_out);
 
 			var bordersPage = document.createElement("div");
-			bordersPage.style.display = "none";
+			bordersPage.className = "bbb-page";
 			scrollDiv.appendChild(bordersPage);
 			settings.el.bordersPage = bordersPage;
 
@@ -1010,7 +1013,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			bordersPage.bbbSection(settings.sections.tag_borders);
 
 			var prefPage = document.createElement("div");
-			prefPage.style.display = "none";
+			prefPage.className = "bbb-page";
 			scrollDiv.appendChild(prefPage);
 			settings.el.prefPage = prefPage;
 
@@ -1018,7 +1021,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			prefPage.bbbBackupSection();
 
 			var helpPage = document.createElement("div");
-			helpPage.style.display = "none";
+			helpPage.className = "bbb-page";
 			scrollDiv.appendChild(helpPage);
 			settings.el.helpPage = helpPage;
 
@@ -1069,6 +1072,56 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			menu.appendChild(tip);
 			settings.el.tip = tip;
 
+			var tagEditBlocker = document.createElement("div");
+			tagEditBlocker.className = "bbb-edit-blocker";
+			menu.appendChild(tagEditBlocker);
+			settings.el.tagEditBlocker = tagEditBlocker;
+
+			var tagEditBox = document.createElement("div");
+			tagEditBox.className = "bbb-edit-box";
+			tagEditBlocker.appendChild(tagEditBox);
+
+			var tagEditHeader = document.createElement("h2");
+			tagEditHeader.innerHTML = "Tag Editor";
+			tagEditHeader.className = "bbb-header";
+			tagEditBox.appendChild(tagEditHeader);
+
+			var tagEditText = document.createElement("div");
+			tagEditText.className = "bbb-edit-text";
+			tagEditText.innerHTML = "<b>Note:</b> Unlike Danbooru, separate matching rules/tag combinations have to be separated by commas and not by separate lines. Separate lines are only used here to improve readability.";
+			tagEditBox.appendChild(tagEditText);
+
+			var tagEditArea = document.createElement("textarea");
+			tagEditArea.className = "bbb-edit-area";
+			tagEditBox.appendChild(tagEditArea);
+			settings.el.tagEditArea = tagEditArea;
+
+			var tagEditOk = document.createElement("a");
+			tagEditOk.innerHTML = "OK";
+			tagEditOk.href = "#";
+			tagEditOk.className = "bbb-button";
+			tagEditOk.addEventListener("click", function(event) {
+				var tags = tagEditArea.value.replace(/\r?\n/g, "").replace(/,(\S)/g, ", $1").bbbSpaceClean();
+				var args = bbbInfo.tagEdit;
+
+				tagEditBlocker.style.display = "none";
+				args.input.value = tags;
+				args.object[args.prop] = tags;
+				event.preventDefault();
+			}, false);
+			tagEditBox.appendChild(tagEditOk);
+
+			var tagEditCancel = document.createElement("a");
+			tagEditCancel.innerHTML = "Cancel";
+			tagEditCancel.href = "#";
+			tagEditCancel.className = "bbb-button";
+			tagEditCancel.style.cssFloat = "right";
+			tagEditCancel.addEventListener("click", function(event) {
+				tagEditBlocker.style.display = "none";
+				event.preventDefault();
+			}, false);
+			tagEditBox.appendChild(tagEditCancel);
+
 			// Add menu to the DOM and manipulate the dimensions.
 			document.body.appendChild(menu);
 
@@ -1094,9 +1147,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var sectionFrag = document.createDocumentFragment();
 
 		if (section.header) {
-			var sectionHeader = document.createElement("h3");
+			var sectionHeader = document.createElement("h2");
 			sectionHeader.innerHTML = section.header;
-			sectionHeader.className = "bbb-section-header";
+			sectionHeader.className = "bbb-header";
 			sectionFrag.appendChild(sectionHeader);
 		}
 
@@ -1165,18 +1218,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var userSetting = settings.user[settingName];
 
 		var label = document.createElement("label");
-		label.className = "bbb-label";
+		label.className = "bbb-general-label";
 
 		var textSpan = document.createElement("span");
-		textSpan.className = "bbb-label-text";
+		textSpan.className = "bbb-general-text";
 		textSpan.innerHTML = optionObject.label;
 		label.appendChild(textSpan);
 
 		var inputSpan = document.createElement("span");
-		inputSpan.className = "bbb-label-input";
+		inputSpan.className = "bbb-general-input";
 		label.appendChild(inputSpan);
 
 		var item;
+		var itemFrag = document.createDocumentFragment();
+
 		switch (optionObject.type)
 		{
 			case "dropdown":
@@ -1217,10 +1272,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				if (numRange) {
-					var i = numRange[0];
-					var end = numRange[1];
-
-					while (i <= end) {
+					for (var i = numRange[0], end = numRange[1]; i <= end; i++) {
 						selectOption = document.createElement("option");
 						selectOption.innerHTML = i;
 						selectOption.value = i;
@@ -1229,7 +1281,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							selectOption.selected = true;
 
 						item.appendChild(selectOption);
-						i++;
 					}
 				}
 
@@ -1237,6 +1288,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					var selected = this.value;
 					settings.user[settingName] = (bbbIsNum(selected) ? Number(selected) : selected);
 				}, false);
+				itemFrag.appendChild(item);
 				break;
 			case "checkbox":
 				item = document.createElement("input");
@@ -1244,6 +1296,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				item.type = "checkbox";
 				item.checked = userSetting;
 				item.addEventListener("click", function() { settings.user[settingName] = this.checked; }, false);
+				itemFrag.appendChild(item);
 				break;
 			case "text":
 				item = document.createElement("input");
@@ -1251,6 +1304,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				item.type = "text";
 				item.value = userSetting;
 				item.addEventListener("change", function() { settings.user[settingName] = this.value.bbbSpaceClean(); }, false);
+				itemFrag.appendChild(item);
+
+				if (optionObject.tagEditMode) {
+					var tagExpand = document.createElement("a");
+					tagExpand.href = "#";
+					tagExpand.className = "bbb-edit-link";
+					tagExpand.innerHTML = "&raquo;";
+					tagExpand.addEventListener("click", function(event) {
+						tagEditWindow(item, settings.user, settingName);
+						event.preventDefault();
+					}, false);
+					itemFrag.appendChild(tagExpand);
+				}
 				break;
 			case "number":
 				item = document.createElement("input");
@@ -1258,13 +1324,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				item.type = "text";
 				item.value = userSetting;
 				item.addEventListener("change", function() { settings.user[settingName] = Number(this.value); }, false);
+				itemFrag.appendChild(item);
 				break;
 			default:
 				console.log("Better Better Booru Error: Unexpected object type. Type: " + optionObject.type);
 				break;
 		}
 		settings.inputs[settingName] = item;
-		inputSpan.appendChild(item);
+		inputSpan.appendChild(itemFrag);
 
 		var explLink = document.createElement("a");
 		explLink.innerHTML = "?";
@@ -1384,6 +1451,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			nameInput.addEventListener("change", function() { borderItem.tags = this.value.bbbSpaceClean(); }, false);
 			nameInput.style.width = "400px";
 			nameLabel.appendChild(nameInput);
+
+			var nameExpand = document.createElement("a");
+			nameExpand.href = "#";
+			nameExpand.className = "bbb-edit-link";
+			nameExpand.innerHTML = "&raquo;";
+			nameExpand.addEventListener("click", function(event) {
+				tagEditWindow(nameInput, borderItem, "tags");
+				event.preventDefault();
+			}, false);
+			nameLabel.appendChild(nameExpand);
 		}
 
 		var otherSpan = document.createElement("span");
@@ -1446,9 +1523,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var sectionFrag = document.createDocumentFragment();
 
 		if (header) {
-			var sectionHeader = document.createElement("h3");
+			var sectionHeader = document.createElement("h2");
 			sectionHeader.innerHTML = header;
-			sectionHeader.className = "bbb-section-header";
+			sectionHeader.className = "bbb-header";
 			sectionFrag.appendChild(sectionHeader);
 		}
 
@@ -1469,9 +1546,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function createBackupSection() {
 		var sectionFrag = document.createDocumentFragment();
 
-		var sectionHeader = document.createElement("h3");
+		var sectionHeader = document.createElement("h2");
 		sectionHeader.innerHTML = "Backup/Restore Settings";
-		sectionHeader.className = "bbb-section-header";
+		sectionHeader.className = "bbb-header";
 		sectionFrag.appendChild(sectionHeader);
 
 		var sectionText = document.createElement("div");
@@ -1485,7 +1562,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		sectionFrag.appendChild(sectionDiv);
 
 		var backupTextarea = document.createElement("textarea");
-		backupTextarea.className = "bbb-backup-text";
+		backupTextarea.className = "bbb-backup-area";
 		sectionDiv.appendChild(backupTextarea);
 		settings.el.backupTextarea = backupTextarea;
 
@@ -1602,9 +1679,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		toc.addEventListener("click", function (event) {
 			var target = event.target;
 			var targetValue = target.href;
+			var sectionTop;
 
-			if (targetValue)
-				document.getElementById(targetValue.split("#")[1]).scrollIntoView();
+			if (targetValue) {
+				sectionTop = document.getElementById(targetValue.split("#")[1]).parentNode.offsetTop;
+				settings.el.scrollDiv.scrollTop = sectionTop;
+			}
 
 			event.preventDefault();
 		}, false);
@@ -1765,6 +1845,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		settings.el[tab.name + "Page"].style.display = "block";
 	}
 
+	function tagEditWindow(input, object, prop) {
+			settings.el.tagEditBlocker.style.display = "block";
+			settings.el.tagEditArea.value = input.value.replace(/(,\s*)/g, "$1\r\n\r\n");
+			bbbInfo.tagEdit = {input: input, object: object, prop: prop};
+	}
+
 	function adjustMenuHeight() {
 		var menu = settings.el.menu;
 		var scrollDiv = settings.el.scrollDiv;
@@ -1776,7 +1862,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function adjustMenuTimer() {
 		if (!adjustMenuTimeout && settings.el.scrollDiv)
-			var adjustMenuTimeout = window.setTimeout(function() { adjustMenuHeight();	}, 90);
+			var adjustMenuTimeout = window.setTimeout(function() { adjustMenuHeight(); }, 50);
 	}
 
 	function removeMenu() {
@@ -1979,7 +2065,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var heightRatio = availableHeight / imgHeight;
 		var ratio;
 
-		if (mode === "none" || currentMode === mode || (mode === "width" && widthRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) {
+		if (mode === "none" || mode === currentMode || (mode === "width" && widthRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) {
 			img.style.width = imgWidth + "px";
 			img.style.height = imgHeight + "px";
 			bbbInfo.resized = "none";
@@ -2440,43 +2526,56 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var customStyles = document.createElement("style");
 		customStyles.type = "text/css";
 
-		var styles = '.bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
-		'#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); font-size: 14px; padding: 15px; position: fixed; top: 25px; left: 50%; z-index: 9001;}' +
-		'#bbb_menu a:focus {outline: none;}' +
-		'#bbb_menu input, #bbb_menu select, #bbb_menu textarea {border: #CCCCCC 2px solid;}' +
-		'#bbb_menu input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 1px;}' +
+		var styles = '#bbb_menu {font-size: 14px; font-weight: normal; line-height: 16px; background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); padding: 15px; position: fixed; top: 25px; left: 50%; z-index: 9001;}' +
+		'#bbb_menu a {font-size: 14px; line-height: 16px; outline: 0px none;}' +
+		'#bbb_menu label {display: inline-block; font-size: 14px; line-height: 29px;}' +
+		'#bbb_menu h1 {font-size: 24px; line-height: 42px;}' +
+		'#bbb_menu h2 {font-size: 16px; line-height: 25px;}' +
+		'#bbb_menu input, #bbb_menu select, #bbb_menu textarea {border: #CCCCCC 1px solid; font-size: 14px; line-height: 16px; margin: 0px;}' +
+		'#bbb_menu input {height: 17px; padding: 1px 0px; margin-top: 4px; vertical-align: top;}' +
+		'#bbb_menu select {height: 21px; padding: 0px; margin-top: 4px; vertical-align: top;}' +
+		'#bbb_menu textarea {padding: 2px; resize: none;}' +
+		'#bbb_menu input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 2px;}' +
 		'#bbb_menu ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
-		'ul#bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
-		'.bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 15px 0px; padding: 5px 0px; overflow-y: auto;}' +
-		'.bbb-section-header {border-bottom: 2px solid #CCCCCC; width: 750px;}' +
-		'.bbb-section-options, .bbb-section-text {margin: 5px 0px; max-width: 902px;}' +
-		'.bbb-section-options-left, .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
-		'.bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
-		'.bbb-label {display: block; height: 29px; padding: 0px 5px; overflow: hidden;}' + // Overflow is used here to correct bbb-label-input float problems.
-		'.bbb-label:hover {background-color: #EEEEEE;}' +
-		'.bbb-label > span {display: inline-block; line-height: 29px; vertical-align: middle;}' +
-		// '.bbb-label-text {}' +
-		'.bbb-label-input {float: right;}' +
-		'.bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 420px; width: 420px; overflow: hidden;}' +
-		'.bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
-		'.bbb-button {border: 1px solid #CCCCCC; display: inline-block; padding: 5px;}' +
-		'.bbb-tab {display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
-		'.bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}' +
-		'a.bbb-custom-tag {padding: 0px !important; display: inline-block !important; border-width: ' + border_width + 'px !important;}' +
-		'.bbb-border-button {border: 1px solid #CCCCCC; display: inline-block; padding: 2px; margin: 0px 2px;}' +
-		'.bbb-border-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
-		'.bbb-border-divider {height: 4px;}' +
-		'.bbb-insert-highlight .bbb-border-divider {background-color: blue; cursor: pointer;}' +
-		'.bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
-		'.bbb-border-bar, .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
-		'.bbb-border-settings {background-color: #FFFFFF;}' +
-		'.bbb-border-bar > *, .bbb-border-settings > * {display: inline-block; line-height: 29px; vertical-align: middle;}' +
-		'.bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}' +
-		'.bbb-backup-text {height: 200px; width: 898px; resize: none;}';
+		'#bbb_menu #bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
+		'#bbb_menu .bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 5px 0px; padding: 5px 0px; overflow-y: auto;}' +
+		'#bbb_menu .bbb-page {position: relative; display: none;}' +
+		'#bbb_menu .bbb-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px;}' +
+		'#bbb_menu .bbb-tab {border-top-left-radius: 5px; border-top-right-radius: 5px; display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
+		'#bbb_menu .bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}' +
+		'#bbb_menu .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; width: 83%;}' +
+		'#bbb_menu .bbb-section-options, #bbb_menu .bbb-section-text {margin-bottom: 5px; max-width: 902px;}' +
+		'#bbb_menu .bbb-section-options-left, #bbb_menu .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
+		'#bbb_menu .bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
+		'#bbb_menu .bbb-general-label {border: 0px none; display: block; height: 29px; padding: 0px 5px; overflow: hidden;}' + // Overflow is used here to correct bbb-general-input float problems.
+		'#bbb_menu .bbb-general-label:hover {background-color: #EEEEEE;}' +
+		// '#bbb_menu .bbb-general-text {}' +
+		'#bbb_menu .bbb-general-input {float: right;}' +
+		'#bbb_menu .bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 420px; width: 420px; overflow: hidden;}' +
+		'#bbb_menu .bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
+		'#bbb_menu .bbb-border-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
+		'#bbb_menu .bbb-border-bar, #bbb_menu .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
+		'#bbb_menu .bbb-border-settings {background-color: #FFFFFF;}' +
+		'#bbb_menu .bbb-border-bar > *, #bbb_menu .bbb-border-settings > * {display: inline-block; line-height: 29px; vertical-align: middle;}' +
+		'#bbb_menu .bbb-border-divider {height: 4px;}' +
+		'#bbb_menu .bbb-insert-highlight .bbb-border-divider {background-color: blue; cursor: pointer;}' +
+		'#bbb_menu .bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
+		'#bbb_menu .bbb-border-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 2px; margin: 0px 2px;}' +
+		'#bbb_menu .bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}' +
+		'#bbb_menu .bbb-backup-area {height: 200px; width: 896px; margin-top: 2px;}' +
+		'#bbb_menu .bbb-edit-blocker {display: none; height: 100%; width: 100%; background-color: rgba(0, 0, 0, 0.33); position: fixed; top: 0px; left: 0px;}'+
+		'#bbb_menu .bbb-edit-box {height: 500px; width: 800px; margin-left: -412px; margin-top: -262px; position: fixed; left: 50%; top: 50%; background-color: #FFFFFF; border: 2px solid #CCCCCC; padding: 10px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);}' +
+		'#bbb_menu .bbb-edit-text {margin-bottom: 5px;}' +
+		'#bbb_menu .bbb-edit-area {height: 392px; width: 794px; margin-bottom: 5px;}' +
+		'#bbb_menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; vertical-align: top;}' +
+		'.bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
+		'.bbb-custom-tag {padding: 0px !important; display: inline-block !important; border-width: ' + border_width + 'px !important;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
-		if (thumbnail_count && (gLoc === "search" || gLoc === "notes"))
-			styles += 'div#page {margin: 0px 10px 0px 20px !important;}';
+		if (thumbnail_count && (gLoc === "search" || gLoc === "notes")) {
+			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
+			'section#content {padding: 0px !important;}';
+		}
 
 		// Border setup
 		var totalBorderWidth = (custom_tag_borders ? border_width * 2 + 1 : border_width);
@@ -2515,19 +2614,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		// Hide sidebar.
-		if (autohide_sidebar.indexOf(gLoc) > -1)
+		if (autohide_sidebar.indexOf(gLoc) > -1) {
 			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
 			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -280px !important; overflow-y: hidden !important; padding: 0px 20px !important; top: 0px !important; z-index: 2001 !important;}' +
 			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; left: 0px !important; overflow-y: auto !important; padding: 0px 15px !important;}' +
 			'section#content {margin-left: 0px !important;}' +
-			'.ui-autocomplete {z-index: 2001 !important;}' +
+			'.ui-autocomplete {z-index: 2002 !important;}' +
 			'.bbb-unhide {height: 100%; width: 15px; position: fixed; left: 0px; top: 0px; z-index: 2000;}';
+		}
 
-		if (hide_advertisements)
+		if (hide_advertisements) {
 			styles += '#content.with-ads {margin-right: 0em !important;}' +
 			'img[alt="Advertisement"] {display: none !important;}' +
 			'img[alt="Your Ad Here"] {display: none !important;}' +
 			'iframe {display: none !important;}';
+		}
 
 		if (hide_tos_notice && document.getElementById("tos-notice")) {
 			styles += '#tos-notice {display: none !important;}';
@@ -3077,14 +3178,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function dragScrollOn(event) {
-		var img = document.getElementById("image");
+		if (event.button === 0) {
+			var img = document.getElementById("image");
 
-		bbbInfo.dragScroll.lastX = event.clientX;
-		bbbInfo.dragScroll.lastY = event.clientY;
-		bbbInfo.dragScroll.moved = false;
+			bbbInfo.dragScroll.lastX = event.clientX;
+			bbbInfo.dragScroll.lastY = event.clientY;
+			bbbInfo.dragScroll.moved = false;
 
-		document.addEventListener("mousemove", dragScrollMove, false);
-		document.addEventListener("mouseup", dragScrollOff, false);
+			document.addEventListener("mousemove", dragScrollMove, false);
+			document.addEventListener("mouseup", dragScrollOff, false);
+		}
 	}
 
 	function dragScrollMove(event) {
