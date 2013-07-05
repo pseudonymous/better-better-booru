@@ -2568,7 +2568,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu .bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
 		'#bbb_menu .bbb-general-label {display: block; height: 29px; padding: 0px 5px;}' +
 		'#bbb_menu .bbb-general-label:hover {background-color: #EEEEEE;}' +
-		// '#bbb_menu .bbb-general-text {}' +
+		'#bbb_menu .bbb-general-text {line-height: 29px;}' +
 		'#bbb_menu .bbb-general-input {float: right; line-height: 29px;}' +
 		'#bbb_menu .bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 420px; width: 420px; overflow: hidden;}' +
 		'#bbb_menu .bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
