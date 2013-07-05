@@ -477,8 +477,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var paginator = document.getElementsByClassName("paginator")[0];
 
 		// If no posts, do nothing.
-		if (!posts.length)
+		if (!posts.length) {
+			bbbStatus("loaded");
 			return;
+		}
 
 		// Use JSON results for searches and pool collections.
 		if (gLoc === "search") {
@@ -498,6 +500,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (gLoc === "notes") {
 			where = document.getElementById("a-index");
 			out = "<h1>Notes</h1>";
+		}
+
+		if (!where) {
+			bbbStatus("error");
+			return;
 		}
 
 		// Result preparation.
@@ -571,246 +578,247 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var post = formatJSON(xml);
 		var container = document.getElementById("image-container");
 
-		if (post.id) {
-			var ratio = (post.image_width > 850 ? 850 / post.image_width : 1);
-			var sampHeight = Math.round(post.image_height * ratio);
-			var sampWidth = Math.round(post.image_width * ratio);
-			var newWidth = 0;
-			var newHeight = 0;
-			var newUrl = "";
-			var altTxt = "";
+		if (!post.id)
+			return;
 
-			if (post.file_ext === "swf") // Create flash object.
-				container.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
-			else if (!post.image_height) // Create manual download.
-				container.innerHTML = '<p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
-			else { // Create image
-				var useSample = (checkSetting("default-image-size", "large", load_sample_first) && post.has_large);
+		var ratio = (post.image_width > 850 ? 850 / post.image_width : 1);
+		var sampHeight = Math.round(post.image_height * ratio);
+		var sampWidth = Math.round(post.image_width * ratio);
+		var newWidth = 0;
+		var newHeight = 0;
+		var newUrl = "";
+		var altTxt = "";
 
-				if (useSample) {
-					newWidth = sampWidth;
-					newHeight = sampHeight;
-					newUrl = post.large_file_url;
-					altTxt = "sample";
-				}
-				else {
-					newWidth = post.image_width;
-					newHeight = post.image_height;
-					newUrl = post.file_url;
-					altTxt = post.md5;
-				}
+		if (post.file_ext === "swf") // Create flash object.
+			container.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
+		else if (!post.image_height) // Create manual download.
+			container.innerHTML = '<p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
+		else { // Create image
+			var useSample = (checkSetting("default-image-size", "large", load_sample_first) && post.has_large);
 
-				container.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-parent-id="' + post.parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
-				var img = document.getElementById("image");
-				var bbbLoader = document.getElementById("bbb-loader");
-
-				// Enable image swapping between the original and sample image.
-				if (post.has_large) {
-					// Remove the original notice (it's not always there) and replace it with our own.
-					var resizeNotice = document.getElementById("image-resize-notice");
-
-					if (resizeNotice)
-						resizeNotice.parentNode.removeChild(resizeNotice);
-
-					var bbbResizeNotice = document.createElement("div");
-					bbbResizeNotice.className = "ui-corner-all ui-state-highlight notice notice-resized";
-					bbbResizeNotice.style.position = "relative";
-					bbbResizeNotice.style.display = "none";
-					bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + post.file_url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + post.large_file_url + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
-					container.parentNode.insertBefore(bbbResizeNotice , container);
-
-					var swapInit = true;
-					var sampleNotice = document.getElementById("bbb-sample-notice");
-					var originalNotice = document.getElementById("bbb-original-notice");
-					var imgStatus = document.getElementById("bbb-img-status");
-					var closeOriginalNotice = document.getElementById("close-original-notice");
-
-					if (useSample) {
-						sampleNotice.style.display = "";
-						bbbResizeNotice.style.display = "";
-					}
-					else if (!hide_original_notice) {
-						originalNotice.style.display = "";
-						closeOriginalNotice.style.display = "";
-						bbbResizeNotice.style.display = "";
-					}
-
-					document.getElementById("bbb-sample-link").addEventListener("click", function(event) {
-						if (swapInit)
-							swapInit = false;
-
-						bbbLoader.src = this.href;
-						imgStatus.innerHTML = "Loading sample image...";
-						event.preventDefault();
-					}, false);
-					document.getElementById("bbb-original-link").addEventListener("click", function(event) {
-						if (swapInit)
-							swapInit = false;
-
-						bbbLoader.src = this.href;
-						imgStatus.innerHTML = "Loading original image...";
-						event.preventDefault();
-					}, false);
-					bbbLoader.addEventListener("load", function(event) {
-						img.src = this.src;
-						this.src = "about:blank";
-						imgStatus.innerHTML = "";
-					}, false);
-					bbbLoader.addEventListener("error", function(event) {
-						if (this.src !== "about:blank")
-							imgStatus.innerHTML = "Loading failed!";
-						event.preventDefault();
-					}, false);
-					img.addEventListener("load", function(event) {
-						if (img.src.indexOf("/sample/") < 0) {
-							if (hide_original_notice)
-								bbbResizeNotice.style.display = "none";
-							else {
-								sampleNotice.style.display = "none";
-								originalNotice.style.display = "";
-								closeOriginalNotice.style.display = "";
-							}
-
-							img.setAttribute("height", post.image_height);
-							img.setAttribute("width", post.image_width);
-
-							if (!swapInit)
-								resizeImage("none");
-						}
-						else {
-							sampleNotice.style.display = "";
-							originalNotice.style.display = "none";
-							closeOriginalNotice.style.display = "none";
-							img.setAttribute("height", sampHeight);
-							img.setAttribute("width", sampWidth);
-
-							if (!swapInit)
-								resizeImage("none");
-						}
-					}, false);
-					closeOriginalNotice.addEventListener("click", function(event) {
-						bbbResizeNotice.style.display = "none";
-						updateSettings("hide_original_notice", true);
-					}, false);
-				}
-
-				// Favorites listing.
-				var postID = post.id;
-				var favItem = document.getElementById("favcount-for-post-" + postID).parentNode;
-
-				if (!favItem.children[1] && isLoggedIn()) {
-					favItem.innerHTML += '<a href="/favorites?post_id=' + postID + '" data-remote="true" id="show-favlist-link">&raquo;</a><a href="#" data-remote="true" id="hide-favlist-link">&laquo;</a><div id="favlist"></div>';
-					Danbooru.Post.initialize_favlist();
-				}
-
-				// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
-				if (!isLoggedIn()) {
-					var options = document.createElement("section");
-					var history = document.evaluate('//aside[@id="sidebar"]/section[last()]', document, null, 9, null).singleNodeValue;
-
-					options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + post.md5 + '.jpg">Find similar</a></li></ul>';
-					history.parentNode.insertBefore(options, history);
-				}
-
-				// Make translation mode work.
-				if (!post.exists && document.getElementById("translate")) {
-					document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
-
-					window.addEventListener("keydown", function(event) {
-						if (event.keyCode === 78)
-							Danbooru.Note.TranslationMode.toggle(event);
-					}, false);
-				}
-
-				if (!alternate_image_swap) { // Make notes toggle when clicking the image.
-					img.addEventListener("click", function() {
-						if (!bbbInfo.dragScroll.moved)
-							Danbooru.Note.Box.toggle_all();
-					}, false);
-				}
-				else { // Make sample/original images swap when clicking the image.
-					// Make a "Toggle Notes" link in the options bar.
-					if (!document.getElementById("listnotetoggle")) { // For logged in users.
-						var translateOption = document.getElementById("translate").parentNode;
-						var listNoteToggle = document.createElement("li");
-
-						listNoteToggle.innerHTML = '<a href="#" id="listnotetoggle">Toggle notes</a>';
-						translateOption.parentNode.insertBefore(listNoteToggle, translateOption);
-					}
-
-					document.getElementById("listnotetoggle").addEventListener("click", function(event) {Danbooru.Note.Box.toggle_all(); event.preventDefault();}, false);
-
-					// Make clicking the image swap between the original and sample image when available.
-					if (post.has_large) {
-						img.addEventListener("click", function(event) {
-							if (!bbbInfo.dragScroll.moved) {
-								if (img.src.indexOf("/sample/") > -1) {
-									if (swapInit)
-										swapInit = false;
-
-									bbbLoader.src = post.file_url;
-									imgStatus.innerHTML = "Loading original image...";
-								}
-								else {
-									if (swapInit)
-										swapInit = false;
-
-									bbbLoader.src = post.large_file_url;
-									imgStatus.innerHTML = "Loading sample image...";
-								}
-							}
-						}, false);
-					}
-				}
-
-				// Alter the "resize to window" link.
-				var resizeListItem = document.getElementById("image-resize-to-window-link").parentNode;
-				var resizeFrag = document.createDocumentFragment();
-
-				var resizeListWidth = document.createElement("li");
-				resizeFrag.appendChild(resizeListWidth);
-
-				var resizeLinkWidth = document.createElement("a");
-				resizeLinkWidth.href = "#";
-				resizeLinkWidth.innerHTML = "Resize to window width";
-				resizeLinkWidth.addEventListener("click", function(event) {resizeImage("width"); event.preventDefault();}, false);
-				resizeListWidth.appendChild(resizeLinkWidth);
-				bbbInfo.el.resizeLinkWidth = resizeLinkWidth;
-
-				var resizeListAll = document.createElement("li");
-				resizeFrag.appendChild(resizeListAll);
-
-				var resizeLinkAll = document.createElement("a");
-				resizeLinkAll.href = "#";
-				resizeLinkAll.innerHTML = "Resize to window";
-				resizeLinkAll.addEventListener("click", function(event) {resizeImage("all"); event.preventDefault();}, false);
-				resizeListAll.appendChild(resizeLinkAll);
-				bbbInfo.el.resizeLinkAll = resizeLinkAll;
-
-				resizeListItem.parentNode.replaceChild(resizeFrag, resizeListItem);
-
-				// Resize the image if desired.
-				if (checkSetting("always-resize-images", "true", image_resize))
-					resizeImage(image_resize_mode);
-
-				// Load/reload notes.
-				Danbooru.Note.load_all();
-
-				// Allow drag scrolling
-				if (image_drag_scroll)
-					dragScrollInit();
+			if (useSample) {
+				newWidth = sampWidth;
+				newHeight = sampHeight;
+				newUrl = post.large_file_url;
+				altTxt = "sample";
+			}
+			else {
+				newWidth = post.image_width;
+				newHeight = post.image_height;
+				newUrl = post.file_url;
+				altTxt = post.md5;
 			}
 
-			// Auto position the content if desired.
-			if (autoscroll_image)
-				autoscrollImage();
+			container.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-parent-id="' + post.parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+			var img = document.getElementById("image");
+			var bbbLoader = document.getElementById("bbb-loader");
 
-			// Blacklist.
-			blacklistInit();
+			// Enable image swapping between the original and sample image.
+			if (post.has_large) {
+				// Remove the original notice (it's not always there) and replace it with our own.
+				var resizeNotice = document.getElementById("image-resize-notice");
 
-			// Update status message.
-			bbbStatus("loaded");
+				if (resizeNotice)
+					resizeNotice.parentNode.removeChild(resizeNotice);
+
+				var bbbResizeNotice = document.createElement("div");
+				bbbResizeNotice.className = "ui-corner-all ui-state-highlight notice notice-resized";
+				bbbResizeNotice.style.position = "relative";
+				bbbResizeNotice.style.display = "none";
+				bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + post.file_url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + post.large_file_url + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
+				container.parentNode.insertBefore(bbbResizeNotice , container);
+
+				var swapInit = true;
+				var sampleNotice = document.getElementById("bbb-sample-notice");
+				var originalNotice = document.getElementById("bbb-original-notice");
+				var imgStatus = document.getElementById("bbb-img-status");
+				var closeOriginalNotice = document.getElementById("close-original-notice");
+
+				if (useSample) {
+					sampleNotice.style.display = "";
+					bbbResizeNotice.style.display = "";
+				}
+				else if (!hide_original_notice) {
+					originalNotice.style.display = "";
+					closeOriginalNotice.style.display = "";
+					bbbResizeNotice.style.display = "";
+				}
+
+				document.getElementById("bbb-sample-link").addEventListener("click", function(event) {
+					if (swapInit)
+						swapInit = false;
+
+					bbbLoader.src = this.href;
+					imgStatus.innerHTML = "Loading sample image...";
+					event.preventDefault();
+				}, false);
+				document.getElementById("bbb-original-link").addEventListener("click", function(event) {
+					if (swapInit)
+						swapInit = false;
+
+					bbbLoader.src = this.href;
+					imgStatus.innerHTML = "Loading original image...";
+					event.preventDefault();
+				}, false);
+				bbbLoader.addEventListener("load", function(event) {
+					img.src = this.src;
+					this.src = "about:blank";
+					imgStatus.innerHTML = "";
+				}, false);
+				bbbLoader.addEventListener("error", function(event) {
+					if (this.src !== "about:blank")
+						imgStatus.innerHTML = "Loading failed!";
+					event.preventDefault();
+				}, false);
+				img.addEventListener("load", function(event) {
+					if (img.src.indexOf("/sample/") < 0) {
+						if (hide_original_notice)
+							bbbResizeNotice.style.display = "none";
+						else {
+							sampleNotice.style.display = "none";
+							originalNotice.style.display = "";
+							closeOriginalNotice.style.display = "";
+						}
+
+						img.setAttribute("height", post.image_height);
+						img.setAttribute("width", post.image_width);
+
+						if (!swapInit)
+							resizeImage("none");
+					}
+					else {
+						sampleNotice.style.display = "";
+						originalNotice.style.display = "none";
+						closeOriginalNotice.style.display = "none";
+						img.setAttribute("height", sampHeight);
+						img.setAttribute("width", sampWidth);
+
+						if (!swapInit)
+							resizeImage("none");
+					}
+				}, false);
+				closeOriginalNotice.addEventListener("click", function(event) {
+					bbbResizeNotice.style.display = "none";
+					updateSettings("hide_original_notice", true);
+				}, false);
+			}
+
+			// Favorites listing.
+			var postID = post.id;
+			var favItem = document.getElementById("favcount-for-post-" + postID).parentNode;
+
+			if (!favItem.children[1] && isLoggedIn()) {
+				favItem.innerHTML += '<a href="/favorites?post_id=' + postID + '" data-remote="true" id="show-favlist-link">&raquo;</a><a href="#" data-remote="true" id="hide-favlist-link">&laquo;</a><div id="favlist"></div>';
+				Danbooru.Post.initialize_favlist();
+			}
+
+			// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
+			if (!isLoggedIn()) {
+				var options = document.createElement("section");
+				var history = document.evaluate('//aside[@id="sidebar"]/section[last()]', document, null, 9, null).singleNodeValue;
+
+				options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + post.md5 + '.jpg">Find similar</a></li></ul>';
+				history.parentNode.insertBefore(options, history);
+			}
+
+			// Make translation mode work.
+			if (!post.exists && document.getElementById("translate")) {
+				document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
+
+				window.addEventListener("keydown", function(event) {
+					if (event.keyCode === 78)
+						Danbooru.Note.TranslationMode.toggle(event);
+				}, false);
+			}
+
+			if (!alternate_image_swap) { // Make notes toggle when clicking the image.
+				img.addEventListener("click", function() {
+					if (!bbbInfo.dragScroll.moved)
+						Danbooru.Note.Box.toggle_all();
+				}, false);
+			}
+			else { // Make sample/original images swap when clicking the image.
+				// Make a "Toggle Notes" link in the options bar.
+				if (!document.getElementById("listnotetoggle")) { // For logged in users.
+					var translateOption = document.getElementById("translate").parentNode;
+					var listNoteToggle = document.createElement("li");
+
+					listNoteToggle.innerHTML = '<a href="#" id="listnotetoggle">Toggle notes</a>';
+					translateOption.parentNode.insertBefore(listNoteToggle, translateOption);
+				}
+
+				document.getElementById("listnotetoggle").addEventListener("click", function(event) {Danbooru.Note.Box.toggle_all(); event.preventDefault();}, false);
+
+				// Make clicking the image swap between the original and sample image when available.
+				if (post.has_large) {
+					img.addEventListener("click", function(event) {
+						if (!bbbInfo.dragScroll.moved) {
+							if (img.src.indexOf("/sample/") > -1) {
+								if (swapInit)
+									swapInit = false;
+
+								bbbLoader.src = post.file_url;
+								imgStatus.innerHTML = "Loading original image...";
+							}
+							else {
+								if (swapInit)
+									swapInit = false;
+
+								bbbLoader.src = post.large_file_url;
+								imgStatus.innerHTML = "Loading sample image...";
+							}
+						}
+					}, false);
+				}
+			}
+
+			// Alter the "resize to window" link.
+			var resizeListItem = document.getElementById("image-resize-to-window-link").parentNode;
+			var resizeFrag = document.createDocumentFragment();
+
+			var resizeListWidth = document.createElement("li");
+			resizeFrag.appendChild(resizeListWidth);
+
+			var resizeLinkWidth = document.createElement("a");
+			resizeLinkWidth.href = "#";
+			resizeLinkWidth.innerHTML = "Resize to window width";
+			resizeLinkWidth.addEventListener("click", function(event) {resizeImage("width"); event.preventDefault();}, false);
+			resizeListWidth.appendChild(resizeLinkWidth);
+			bbbInfo.el.resizeLinkWidth = resizeLinkWidth;
+
+			var resizeListAll = document.createElement("li");
+			resizeFrag.appendChild(resizeListAll);
+
+			var resizeLinkAll = document.createElement("a");
+			resizeLinkAll.href = "#";
+			resizeLinkAll.innerHTML = "Resize to window";
+			resizeLinkAll.addEventListener("click", function(event) {resizeImage("all"); event.preventDefault();}, false);
+			resizeListAll.appendChild(resizeLinkAll);
+			bbbInfo.el.resizeLinkAll = resizeLinkAll;
+
+			resizeListItem.parentNode.replaceChild(resizeFrag, resizeListItem);
+
+			// Resize the image if desired.
+			if (checkSetting("always-resize-images", "true", image_resize))
+				resizeImage(image_resize_mode);
+
+			// Load/reload notes.
+			Danbooru.Note.load_all();
+
+			// Allow drag scrolling
+			if (image_drag_scroll)
+				dragScrollInit();
 		}
+
+		// Auto position the content if desired.
+		if (autoscroll_image)
+			autoscrollImage();
+
+		// Blacklist.
+		blacklistInit();
+
+		// Update status message.
+		bbbStatus("loaded");
 	}
 
 	function parseComments(xml) {
@@ -895,6 +903,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Functions for the settings panel */
 	function injectSettings() {
 		var menu = document.getElementById("top");
+
+		if (!menu)
+			return;
+
 		menu = menu.getElementsByTagName("menu");
 		menu = menu[0];
 
@@ -1988,7 +2000,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function createBackupPage() {
 		// Open a new tab/window and place the setting text in it.
 		var backupWindow = window.open();
-
 		backupWindow.document.writeln('<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + settings.user.bbb_version + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(settings.user) + '</body></html>');
 		backupWindow.document.close();
 	}
@@ -2121,12 +2132,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				link.href += "?limit=" + thumbnail_count;
 		}
 
-		if (gLoc === "search" || gLoc === "post") {
+		if (gLoc === "search" || gLoc === "post" || gLoc === "index") {
+			var container = document.getElementById("search-box") || document.getElementById("a-intro");
+
+			if (!container)
+				return;
+
 			var limitInput = document.createElement("input");
 			limitInput.name = "limit";
 			limitInput.value = thumbnail_count;
 			limitInput.type = "hidden";
-			document.getElementById("search-box").getElementsByTagName("form")[0].appendChild(limitInput);
+			container.getElementsByTagName("form")[0].appendChild(limitInput);
 		}
 
 	}
@@ -2193,21 +2209,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Remove the query portion of thumbnail links.
 		var target;
 
-		if (gLoc === "post") {
+		if (gLoc === "post")
 			target = document.evaluate('//div[@id="pool-nav"]//a', document, null, 6, null);
-
-			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
-				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?", 1)[0];
-		}
-		else if (gLoc === "pool") {
+		else if (gLoc === "pool")
 			target = document.evaluate('//section[@id="content"]/article/a', document, null, 6, null);
-
-			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
-				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?", 1)[0];
-		}
-		else if (gLoc === "search") {
+		else if (gLoc === "search")
 			target = document.evaluate('//div[@id="posts"]/article/a', document, null, 6, null);
+		else if (gLoc === "index")
+			target = document.evaluate('//div[@id="a-intro"]//article/a', document, null, 6, null);
 
+		if (target) {
 			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
 				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?", 1)[0];
 		}
@@ -2216,6 +2227,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function autohideSidebar() {
 		// Show the sidebar when it gets focus, hide it when it loses focus, and don't allow its links to retain focus.
 		var sidebar = document.getElementById("sidebar");
+
+		if (!sidebar)
+			return;
 
 		sidebar.addEventListener("click", function(event) {
 			var target = event.target;
@@ -2269,15 +2283,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function currentLoc() {
 		// Test the page URL to find which section of Danbooru the script is running on.
-		if (/\/posts\/\d+/.test(gUrlPath))
+		if (gUrlPath === "/")
+			return "index";
+		else if (/\/posts\/\d+/.test(gUrlPath))
 			return "post";
-		else if (/^\/(?:posts|$)/.test(gUrlPath))
+		else if (gUrlPath.indexOf("/posts") === 0)
 			return "search";
-		else if (/^\/notes/.test(gUrlPath) && !/group_by=note/.test(gUrlQuery))
+		else if (gUrlPath.indexOf("/notes") === 0 && gUrlQuery.indexOf("group_by=note") < 0)
 			return "notes";
-		else if (/^\/comments\/?$/.test(gUrlPath) && !/group_by=comment/.test(gUrlQuery))
+		else if (/^\/comments\/?$/.test(gUrlPath) && gUrlQuery.indexOf("group_by=comment") < 0)
 			return "comments";
-		else if (/\/explore\/posts\/popular/.test(gUrlPath))
+		else if (gUrlPath.indexOf("/explore/posts/popular") === 0)
 			return "popular";
 		else if (/\/pools\/\d+/.test(gUrlPath))
 			return "pool";
@@ -2393,6 +2409,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function formatThumbnails() {
 		// Create thumbnail titles and borders.
 		var posts = document.getElementsByClassName("post-preview");
+
+		if (!posts.length)
+			return;
+
 		var statusBorderSettings;
 		var searches = [];
 
@@ -2526,16 +2546,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var customStyles = document.createElement("style");
 		customStyles.type = "text/css";
 
-		var styles = '#bbb_menu {font-size: 14px; font-weight: normal; line-height: 16px; background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); padding: 15px; position: fixed; top: 25px; left: 50%; z-index: 9001;}' +
-		'#bbb_menu a {font-size: 14px; line-height: 16px; outline: 0px none;}' +
-		'#bbb_menu label {display: inline-block; font-size: 14px; line-height: 29px;}' +
+		var styles = '#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); padding: 15px; position: fixed; top: 25px; left: 50%; z-index: 9001;}' +
+		'#bbb_menu * {font-size: 14px; line-height: 16px; outline: 0px none; border: 0px none; margin: 0px; padding: 0px;}' + // Reset some base settings.
 		'#bbb_menu h1 {font-size: 24px; line-height: 42px;}' +
 		'#bbb_menu h2 {font-size: 16px; line-height: 25px;}' +
-		'#bbb_menu input, #bbb_menu select, #bbb_menu textarea {border: #CCCCCC 1px solid; font-size: 14px; line-height: 16px; margin: 0px;}' +
+		'#bbb_menu input, #bbb_menu select, #bbb_menu textarea {border: #CCCCCC 1px solid;}' +
 		'#bbb_menu input {height: 17px; padding: 1px 0px; margin-top: 4px; vertical-align: top;}' +
-		'#bbb_menu select {height: 21px; padding: 0px; margin-top: 4px; vertical-align: top;}' +
+		'#bbb_menu input[type="checkbox"] {margin: 0px; vertical-align: middle; position: relative; bottom: 2px;}' +
+		'#bbb_menu select {height: 21px; margin-top: 4px; vertical-align: top;}' +
 		'#bbb_menu textarea {padding: 2px; resize: none;}' +
-		'#bbb_menu input[type="checkbox"] {vertical-align: middle; position: relative; bottom: 2px;}' +
 		'#bbb_menu ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
 		'#bbb_menu #bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
 		'#bbb_menu .bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 5px 0px; padding: 5px 0px; overflow-y: auto;}' +
@@ -2547,16 +2566,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu .bbb-section-options, #bbb_menu .bbb-section-text {margin-bottom: 5px; max-width: 902px;}' +
 		'#bbb_menu .bbb-section-options-left, #bbb_menu .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
 		'#bbb_menu .bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
-		'#bbb_menu .bbb-general-label {border: 0px none; display: block; height: 29px; padding: 0px 5px; overflow: hidden;}' + // Overflow is used here to correct bbb-general-input float problems.
+		'#bbb_menu .bbb-general-label {display: block; height: 29px; padding: 0px 5px;}' +
 		'#bbb_menu .bbb-general-label:hover {background-color: #EEEEEE;}' +
 		// '#bbb_menu .bbb-general-text {}' +
-		'#bbb_menu .bbb-general-input {float: right;}' +
+		'#bbb_menu .bbb-general-input {float: right; line-height: 29px;}' +
 		'#bbb_menu .bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 420px; width: 420px; overflow: hidden;}' +
 		'#bbb_menu .bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
 		'#bbb_menu .bbb-border-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
 		'#bbb_menu .bbb-border-bar, #bbb_menu .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
 		'#bbb_menu .bbb-border-settings {background-color: #FFFFFF;}' +
-		'#bbb_menu .bbb-border-bar > *, #bbb_menu .bbb-border-settings > * {display: inline-block; line-height: 29px; vertical-align: middle;}' +
+		'#bbb_menu .bbb-border-div label, #bbb_menu .bbb-border-div span {display: inline-block; line-height: 29px; vertical-align: middle;}' +
 		'#bbb_menu .bbb-border-divider {height: 4px;}' +
 		'#bbb_menu .bbb-insert-highlight .bbb-border-divider {background-color: blue; cursor: pointer;}' +
 		'#bbb_menu .bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
@@ -2662,6 +2681,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Remove the "copyright", "characters", and "artist" headers in the post sidebar.
 		if (gLoc === "post") {
 			var tagList = document.getElementById("tag-list");
+
+			if (!tagList)
+				return;
+
 			var newList = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
 
 			tagList.innerHTML = newList;
