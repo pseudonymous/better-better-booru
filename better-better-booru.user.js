@@ -1037,9 +1037,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			scrollDiv.appendChild(helpPage);
 			settings.el.helpPage = helpPage;
 
-			helpPage.bbbTextSection('Table of Contents', '<ul id="bbb-toc"><li><a href="#bbb-toc-matching-rules">Border Matching Rules</a></li><li><a href="#bbb-toc-contact">Questions, Suggestions, or Bugs?</a></li></ul>');
-			helpPage.bbbTextSection('<span id="bbb-toc-matching-rules">Border Matching Rules</span>', 'For creating border match rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values (id, score, favcount, width, and height) can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
-			helpPage.bbbTextSection('<span id="bbb-toc-contact">Questions, Suggestions, or Bugs?</span>', 'If you have any questions, please use the UserScripts forums located <a target="_blank" href="http://userscripts.org/scripts/discuss/100614">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
+			helpPage.bbbTextSection('Table of Contents', '<ul id="bbb-toc"><li><a>Border Matching Rules</a></li><li><a>Questions, Suggestions, or Bugs?</a></li></ul>');
+			delayMe(helpTocInit);
+
+			helpPage.bbbTextSection('Border Matching Rules', 'For creating border match rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values (id, score, favcount, width, and height) can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+			helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the UserScripts forums located <a target="_blank" href="http://userscripts.org/scripts/discuss/100614">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 
 			var close = document.createElement("a");
 			close.innerHTML = "Save & Close";
@@ -1149,9 +1151,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			menu.style.marginLeft = -menuWidth / 2 + "px";
 			menu.style.visibility = "visible";
-
-			// Enable the help tab's Table of Contents.
-			helpTocInit();
 		}
 	}
 
@@ -1687,6 +1686,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function helpTocInit() {
 		// Initialize the help tab's Table of Conents so that it doesn't use anchors in the URL.
 		var toc = document.getElementById("bbb-toc");
+		var tocLinks = toc.getElementsByTagName("a");
+
+		for (var i = 0, tll = tocLinks.length; i < tll;)
+			tocLinks[i].href = "#" + (++i);
 
 		toc.addEventListener("click", function (event) {
 			var target = event.target;
@@ -1694,11 +1697,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var sectionTop;
 
 			if (targetValue) {
-				sectionTop = document.getElementById(targetValue.split("#")[1]).parentNode.offsetTop;
+				sectionTop = settings.el.helpPage.getElementsByTagName("h2")[targetValue.split("#")[1]].offsetTop;
 				settings.el.scrollDiv.scrollTop = sectionTop;
+				event.preventDefault();
 			}
-
-			event.preventDefault();
 		}, false);
 	}
 
