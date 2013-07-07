@@ -703,15 +703,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}, false);
 			}
 
-			// Favorites listing.
-			var postID = post.id;
-			var favItem = document.getElementById("favcount-for-post-" + postID).parentNode;
-
-			if (!favItem.children[1] && isLoggedIn()) {
-				favItem.innerHTML += '<a href="/favorites?post_id=' + postID + '" data-remote="true" id="show-favlist-link">&raquo;</a><a href="#" data-remote="true" id="hide-favlist-link">&laquo;</a><div id="favlist"></div>';
-				Danbooru.Post.initialize_favlist();
-			}
-
 			// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
 			if (!isLoggedIn()) {
 				var options = document.createElement("section");
@@ -2134,7 +2125,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				link.href += "?limit=" + thumbnail_count;
 		}
 
-		if (gLoc === "search" || gLoc === "post" || gLoc === "index") {
+		if (gLoc === "search" || gLoc === "post" || gLoc === "intro") {
 			var container = document.getElementById("search-box") || document.getElementById("a-intro");
 
 			if (!container)
@@ -2217,7 +2208,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			target = document.evaluate('//section[@id="content"]/article/a', document, null, 6, null);
 		else if (gLoc === "search")
 			target = document.evaluate('//div[@id="posts"]/article/a', document, null, 6, null);
-		else if (gLoc === "index")
+		else if (gLoc === "intro")
 			target = document.evaluate('//div[@id="a-intro"]//article/a', document, null, 6, null);
 
 		if (target) {
@@ -2285,11 +2276,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function currentLoc() {
 		// Test the page URL to find which section of Danbooru the script is running on.
-		if (gUrlPath === "/")
-			return "index";
-		else if (/\/posts\/\d+/.test(gUrlPath))
+		if (/\/posts\/\d+/.test(gUrlPath))
 			return "post";
-		else if (gUrlPath.indexOf("/posts") === 0)
+		else if (/^\/(?:posts|$)/.test(gUrlPath))
 			return "search";
 		else if (gUrlPath.indexOf("/notes") === 0 && gUrlQuery.indexOf("group_by=note") < 0)
 			return "notes";
@@ -2299,6 +2288,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return "popular";
 		else if (/\/pools\/\d+/.test(gUrlPath))
 			return "pool";
+		else if (gUrlPath.indexOf("/explore/posts/intro") === 0)
+			return "intro";
 		else
 			return undefined;
 	}
