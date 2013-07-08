@@ -626,7 +626,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				bbbResizeNotice.style.position = "relative";
 				bbbResizeNotice.style.display = "none";
 				bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + post.file_url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + post.large_file_url + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
-				container.parentNode.insertBefore(bbbResizeNotice , container);
+				container.parentNode.insertBefore(bbbResizeNotice, container);
 
 				var swapInit = true;
 				var sampleNotice = document.getElementById("bbb-sample-notice");
@@ -1028,9 +1028,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			scrollDiv.appendChild(helpPage);
 			settings.el.helpPage = helpPage;
 
-			helpPage.bbbTextSection('Table of Contents', '<ul id="bbb-toc"><li><a>Border Matching Rules</a></li><li><a>Questions, Suggestions, or Bugs?</a></li></ul>');
-			delayMe(helpTocInit);
-
+			helpPage.bbbTocSection();
 			helpPage.bbbTextSection('Border Matching Rules', 'For creating border match rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values (id, score, favcount, width, and height) can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 			helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the UserScripts forums located <a target="_blank" href="http://userscripts.org/scripts/discuss/100614">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 
@@ -1612,6 +1610,57 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		this.appendChild(createBackupSection());
 	};
 
+	function createTocSection(page) {
+		// Generate a Table of Contents based on the page's current section headers.
+		var sectionFrag = document.createDocumentFragment();
+		var pageSections = page.getElementsByTagName("h2");
+
+		var sectionHeader = document.createElement("h2");
+		sectionHeader.innerHTML = "Table of Contents";
+		sectionHeader.className = "bbb-header";
+		sectionFrag.appendChild(sectionHeader);
+
+		var sectionText = document.createElement("div");
+		sectionText.className = "bbb-section-text";
+		sectionFrag.appendChild(sectionText);
+
+		var tocList = document.createElement("ul");
+		tocList.className = "bbb-toc";
+		sectionText.appendChild(tocList);
+
+		var listItem;
+		var linkItem;
+
+		for (var i = 0, psl = pageSections.length; i < psl;) {
+			listItem = document.createElement("li");
+			tocList.appendChild(listItem);
+
+			linkItem = document.createElement("a");
+			linkItem.textContent = pageSections[i].textContent;
+			linkItem.href = "#" + (++i);
+			listItem.appendChild(linkItem);
+		}
+
+		tocList.addEventListener("click", function (event) {
+			var target = event.target;
+			var targetValue = target.href;
+			var sectionTop;
+
+			if (targetValue) {
+				sectionTop = pageSections[targetValue.split("#")[1]].offsetTop;
+				settings.el.scrollDiv.scrollTop = sectionTop;
+				event.preventDefault();
+			}
+		}, false);
+
+		return sectionFrag;
+	}
+
+	Element.prototype.bbbTocSection = function() {
+		var page = this;
+		delayMe(function() { page.insertBefore(createTocSection(page), page.firstChild) });
+	};
+
 	function Option(type, def, lbl, expl, optPropObject) {
 		/*
 		 * Option type notes
@@ -1672,27 +1721,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		return formatted;
-	}
-
-	function helpTocInit() {
-		// Initialize the help tab's Table of Conents so that it doesn't use anchors in the URL.
-		var toc = document.getElementById("bbb-toc");
-		var tocLinks = toc.getElementsByTagName("a");
-
-		for (var i = 0, tll = tocLinks.length; i < tll;)
-			tocLinks[i].href = "#" + (++i);
-
-		toc.addEventListener("click", function (event) {
-			var target = event.target;
-			var targetValue = target.href;
-			var sectionTop;
-
-			if (targetValue) {
-				sectionTop = settings.el.helpPage.getElementsByTagName("h2")[targetValue.split("#")[1]].offsetTop;
-				settings.el.scrollDiv.scrollTop = sectionTop;
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	function resetBorderElements(section) {
@@ -2549,13 +2577,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu select {height: 21px; margin-top: 4px; vertical-align: top;}' +
 		'#bbb_menu textarea {padding: 2px; resize: none;}' +
 		'#bbb_menu ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
-		'#bbb_menu #bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
 		'#bbb_menu .bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 5px 0px; padding: 5px 0px; overflow-y: auto;}' +
 		'#bbb_menu .bbb-page {position: relative; display: none;}' +
 		'#bbb_menu .bbb-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px;}' +
 		'#bbb_menu .bbb-tab {border-top-left-radius: 5px; border-top-right-radius: 5px; display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
 		'#bbb_menu .bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}' +
 		'#bbb_menu .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; width: 83%;}' +
+		'#bbb_menu .bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
 		'#bbb_menu .bbb-section-options, #bbb_menu .bbb-section-text {margin-bottom: 5px; max-width: 902px;}' +
 		'#bbb_menu .bbb-section-options-left, #bbb_menu .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
 		'#bbb_menu .bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
