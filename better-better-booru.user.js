@@ -59,10 +59,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
 		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
 		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
+		show_toddlercon: new Option("checkbox", false, "Show Toddlercon", "Display toddlercon images in the search, pool, popular, comments, and notes listings."),
 		single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
 		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
 		status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
-		tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"])
+		tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"])
 	};
 
 	settings.user = {};
@@ -71,7 +72,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	settings.inputs = {};
 	settings.el = {}; // Menu elements.
 	settings.sections = { // Setting sections and ordering.
-		browse: new Section("general", ["show_loli", "show_shota", "show_deleted", "thumbnail_count"], "Image Browsing"),
+		browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count"], "Image Browsing"),
 		layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
 		image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
@@ -93,6 +94,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Global
 	var show_loli = settings.user.show_loli;
 	var show_shota = settings.user.show_shota;
+	var show_toddlercon = settings.user.show_toddlercon;
 	var show_deleted = settings.user.show_deleted; // Show all deleted posts.
 	var direct_downloads = settings.user.direct_downloads; // Allow download managers for thumbnail listings.
 
@@ -513,8 +515,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var outId = "";
 			var thumb = "";
 
-			// Don't display loli/shota if the user has opted so and skip to the next image.
-			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted)) {
+			// Don't display loli/shota/toddlercon/deleted if the user has opted so and skip to the next image.
+			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted)) {
 				if (gLoc === "pool") {
 					outId = new RegExp("\f,;" + post.id + "(?=<|\f|$)");
 					out = out.replace(outId, "");
@@ -825,7 +827,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (!existingPost || post.id !== Number(existingPost.getAttribute("data-id"))) {
 				if (!/\b(?:loli|shota)\b/.test(post.tag_string)) // API post isn't loli/shota and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
 					continue;
-				else if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string))) { // Skip loli/shota if the user has selected to do so.
+				else if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string))) { // Skip loli/shota/toddlercon if the user has selected to do so.
 					endTotal--;
 					continue;
 				}
@@ -1330,8 +1332,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				console.log("Better Better Booru Error: Unexpected object type. Type: " + optionObject.type);
 				break;
 		}
-		settings.inputs[settingName] = item;
 		inputSpan.appendChild(itemFrag);
+		settings.inputs[settingName] = item;
 
 		var explLink = document.createElement("a");
 		explLink.innerHTML = "?";
@@ -1430,7 +1432,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		helpButton.innerHTML = "Help";
 		helpButton.className = "bbb-border-button";
 		helpButton.addEventListener("click", function(event) { event.preventDefault(); }, false);
-		helpButton.bbbSetTip("<u><b>Border Options</b></u><br><b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<br><br><b>Status/Tags:</b> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"Border Matching Rules\" section under the help tab for information about creating rules.<br><br><b>Color:</b> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<br><br><b>Style:</b> Set how the border looks. Please note that double only works with a border width of 3.<br><br><b>Move:</b> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<br><br><b>Preview:</b> Display a preview of the border's current settings.<br><br><b>Delete:</b> Remove the border and its settings.<br><br><b>New:</b> Create a new border.");
+		helpButton.bbbSetTip("<b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<br><br><b>Status/Tags:</b> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"Border Matching Rules\" section under the help tab for information about creating rules.<br><br><b>Color:</b> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<br><br><b>Style:</b> Set how the border looks. Please note that double only works with a border width of 3.<br><br><b>Move:</b> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<br><br><b>Preview:</b> Display a preview of the border's current settings.<br><br><b>Delete:</b> Remove the border and its settings.<br><br><b>New:</b> Create a new border.");
 		editSpan.appendChild(helpButton);
 
 		var borderSettingsDiv = document.createElement("div");
@@ -2454,17 +2456,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var link = img.parentNode;
 			var classes = post.className;
 			var tags = post.getAttribute("data-tags");
-			var user = post.getAttribute("data-uploader");
-			var flags = post.getAttribute("data-flags") || "active";
-			var status = (flags === "flagged" ? " status:flagged status:active" : " status:" + flags);
+			var user = " user:" + post.getAttribute("data-uploader");
 			var rating = " rating:" + post.getAttribute("data-rating");
 			var score = " score:" + post.getAttribute("data-score");
-			var favcount = " favcount:" + post.getAttribute("data-fav-count");
-			var id = " id:" + post.getAttribute("data-id");
-			var width = " width:" + post.getAttribute("data-width");
-			var height = " height:" + post.getAttribute("data-height");
-			var title = tags + " user:" + user + rating + score;
-			var postInfo = tags + rating + score + favcount + id + width + height + status + " user:" + user.replace(/\s/g, "_").toLowerCase();
+			var title = tags + user + rating + score;
 			var primary = [];
 			var primaryLength = 0;
 			var secondary = [];
@@ -2506,7 +2501,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				for (var j = 0, tbsl = tag_borders.length; j < tbsl; j++) {
 					var tagBorderItem = tag_borders[j];
 
-					if (tagBorderItem.is_enabled && postInfo.bbbSearchMatch(searches[j])) {
+					if (tagBorderItem.is_enabled && thumbSearchMatch(post, searches[j])) {
 						secondary.push([tagBorderItem.border_color, tagBorderItem.border_style]);
 
 						if (secondary.length === 4)
@@ -2592,6 +2587,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu .bbb-general-text {line-height: 29px;}' +
 		'#bbb_menu .bbb-general-input {float: right; line-height: 29px;}' +
 		'#bbb_menu .bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 420px; width: 420px; overflow: hidden;}' +
+		'#bbb_menu .bbb-expl * {font-size: 12px;}' +
 		'#bbb_menu .bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
 		'#bbb_menu .bbb-border-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
 		'#bbb_menu .bbb-border-bar, #bbb_menu .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
@@ -2828,9 +2824,26 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return /^-?\d+(\.\d+)?$/.test(value);
 	}
 
-	String.prototype.bbbSearchMatch = function(searchArray) {
-		// Take search objects and test them against a post tag string.
-		var tags = this.bbbSpacePad();
+	function thumbSearchMatch(post, searchArray) {
+		// Take search objects and test them against a thumbnail's info.
+		var tags = post.getAttribute("data-tags");
+		var user = " user:" + post.getAttribute("data-uploader").replace(/\s/g, "_").toLowerCase();
+		var rating = " rating:" + post.getAttribute("data-rating");
+		var score = " score:" + post.getAttribute("data-score");
+		var favcount = post.getAttribute("data-fav-count");
+		var id = post.getAttribute("data-id");
+		var width = post.getAttribute("data-width");
+		var height = post.getAttribute("data-height");
+		var flags = post.getAttribute("data-flags") || "active";
+		var status = (flags === "flagged" ? " status:flagged status:active" : " status:" + flags);
+		var postInfo = {
+			tags:(tags + rating + status + user).bbbSpacePad(),
+			score:Number(score),
+			favcount:Number(favcount),
+			id:Number(id),
+			width:Number(width),
+			height:Number(height)
+		};
 		var searchObject;
 		var all;
 		var any;
@@ -2854,7 +2867,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				for (var j = 0, ail = any.includes.length; j < ail; j++) {
 					searchTerm = any.includes[j];
 
-					if (tags.bbbTagMatch(searchTerm)) {
+					if (thumbTagMatch(postInfo, searchTerm)) {
 						anyResult = true;
 						break;
 					}
@@ -2865,7 +2878,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					for (var j = 0, ael = any.excludes.length; j < ael; j++) {
 						searchTerm = any.excludes[j];
 
-						if (!tags.bbbTagMatch(searchTerm)) {
+						if (!thumbTagMatch(postInfo, searchTerm)) {
 							anyResult = true;
 							break;
 						}
@@ -2884,7 +2897,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				for (var j = 0, ail = all.includes.length; j < ail; j++) {
 					searchTerm = all.includes[j];
 
-					if (!tags.bbbTagMatch(searchTerm)) {
+					if (!thumbTagMatch(postInfo, searchTerm)) {
 						allResult = false;
 						break;
 					}
@@ -2895,7 +2908,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					for (var j = 0, ael = all.excludes.length; j < ael; j++) {
 						searchTerm = all.excludes[j];
 
-						if (tags.bbbTagMatch(searchTerm)) {
+						if (thumbTagMatch(postInfo, searchTerm)) {
 							allResult = false;
 							break;
 						}
@@ -2913,23 +2926,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// If we haven't managed a positive match for any rules, return false.
 		return false;
-	};
+	}
 
-	String.prototype.bbbTagMatch = function(tag) {
-		// Test a post tag string for a tag match.
-		var tags = this;
-
+	function thumbTagMatch(postInfo, tag) {
+		// Test thumbnail info for a tag match.
 		if (typeof(tag) === "string") { // Check regular tags and metatags with one possible value.
-			if (tags.indexOf(tag) > -1)
+			if (postInfo.tags.indexOf(tag) > -1)
 				return true;
 			else
 				return false;
 		}
 		else if (tag instanceof RegExp) { // Check wildcard tags.
-			return tag.test(tags);
+			return tag.test(postInfo.tags);
 		}
 		else if (typeof(tag) === "object") { // Check numeric metatags with more than one value.
-			var tagsMetaValue = parseInt(tags.split(" " + tag.tagName + ":")[1].split(" ", 1)[0], 10);
+			var tagsMetaValue = postInfo[tag.tagName];
 
 			if (tag.greater !== undefined && tagsMetaValue <= tag.greater)
 				return false;
@@ -2939,7 +2950,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			return true;
 		}
-	};
+	}
 
 	function createSearch(search) {
 		// Take search strings and turn them into search objects.
@@ -3078,7 +3089,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function delayMe(func) {
 		// Run the function after the browser has finished its current stack of tasks.
-		var timer = window.setTimeout(func, 0);
+		window.setTimeout(func, 0);
 	}
 
 	function escapeRegEx(regEx) {
