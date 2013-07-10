@@ -2570,6 +2570,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu input {height: 17px; padding: 1px 0px; margin-top: 4px; vertical-align: top;}' +
 		'#bbb_menu input[type="checkbox"] {margin: 0px; vertical-align: middle; position: relative; bottom: 2px;}' +
 		'#bbb_menu select {height: 21px; margin-top: 4px; vertical-align: top;}' +
+		'#bbb_menu option {padding: 0px 2px;}' +
 		'#bbb_menu textarea {padding: 2px; resize: none;}' +
 		'#bbb_menu ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
 		'#bbb_menu .bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 5px 0px; padding: 5px 0px; overflow-y: auto;}' +
@@ -2829,7 +2830,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var tags = post.getAttribute("data-tags");
 		var user = " user:" + post.getAttribute("data-uploader").replace(/\s/g, "_").toLowerCase();
 		var rating = " rating:" + post.getAttribute("data-rating");
-		var score = " score:" + post.getAttribute("data-score");
+		var score = post.getAttribute("data-score");
 		var favcount = post.getAttribute("data-fav-count");
 		var id = post.getAttribute("data-id");
 		var width = post.getAttribute("data-width");
