@@ -33,7 +33,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
-		autoscroll_image: new Option("checkbox", false, "Auto-scroll Image", "Position the image as close as possible to the left and top edge of the window viewport when initially loading an individiual post."),
+		autoscroll_image: new Option("checkbox", false, "Auto-scroll Image", "Position the image as close as possible to the left and top edges of the window viewport when initially loading an individiual post."),
 		border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
 		bypass_api: new Option("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
 		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br><u>Note</u></br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
@@ -47,11 +47,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
 		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Terms of Service agreement notice."),
 		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
-		image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image."),
+		image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image<br><br><u>Note</u><br>This option is automatically disabled when translation mode is active."),
 		image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post."),
 		image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (Default):width", "Width & Height:all"]}),
 		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post."),
 		manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
+		override_account: new Option("checkbox", false, "Override Account Settings", "Allow logged out settings to override account settings when logged in."),
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
 		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
 		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death", {tagEditMode: true}),
@@ -61,7 +62,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
 		show_toddlercon: new Option("checkbox", false, "Show Toddlercon", "Display toddlercon images in the search, pool, popular, comments, and notes listings."),
 		single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
-		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in a search listing.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
+		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
 		status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 		tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"])
 	};
@@ -76,7 +77,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
 		image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
-		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
+		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags", "override_account"], "Logged Out Settings"),
 		misc: new Section("general", ["direct_downloads", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
 		script_settings: new Section("general", ["bypass_api", "manage_cookies", "disable_status_message"], "Script Settings"),
 		border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
@@ -108,6 +109,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var bypass_api = settings.user.bypass_api; // Automatically bypass API features when they can't be used.
 	var manage_cookies = settings.user.manage_cookies; // Create cookies to completely stop notices.
 	var disable_status_message = settings.user.disable_status_message;
+	var override_account = settings.user.override_account;
 
 	var hide_sign_up_notice = settings.user.hide_sign_up_notice;
 	var hide_upgrade_notice = settings.user.hide_upgrade_notice;
@@ -161,7 +163,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (autohide_sidebar.indexOf(gLoc) > -1)
 		autohideSidebar();
 
-	if (!isLoggedIn()) // Immediately apply script blacklist for logged out users.
+	if (!useAccount()) // Immediately apply script blacklist for logged out users or blacklist override.
 		delayMe(blacklistInit);
 
 	if (search_add)
@@ -1440,6 +1442,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		borderDiv.appendChild(borderSettingsDiv);
 
 		var nameLabel = document.createElement("label");
+		nameLabel.className = "bbb-border-name";
 		borderSettingsDiv.appendChild(nameLabel);
 
 		if (isStatus)
@@ -1451,7 +1454,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			nameInput.type = "text";
 			nameInput.value = borderItem.tags;
 			nameInput.addEventListener("change", function() { borderItem.tags = this.value.bbbSpaceClean(); }, false);
-			nameInput.style.width = "400px";
 			nameLabel.appendChild(nameInput);
 
 			var nameExpand = document.createElement("a");
@@ -1465,13 +1467,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			nameLabel.appendChild(nameExpand);
 		}
 
-		var otherSpan = document.createElement("span");
-		otherSpan.style.cssFloat = "right";
-		borderSettingsDiv.appendChild(otherSpan);
-
 		var colorLabel = document.createElement("label");
 		colorLabel.innerHTML = "Color:";
-		otherSpan.appendChild(colorLabel);
+		colorLabel.className = "bbb-border-color";
+		borderSettingsDiv.appendChild(colorLabel);
 
 		var colorInput = document.createElement("input");
 		colorInput.type = "text";
@@ -1479,11 +1478,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		colorInput.addEventListener("change", function() { borderItem.border_color = this.value.bbbSpaceClean(); }, false);
 		colorLabel.appendChild(colorInput);
 
-		otherSpan.appendChild(borderSpacer.cloneNode(false));
-
 		var styleLabel = document.createElement("label");
 		styleLabel.innerHTML = "Style:";
-		otherSpan.appendChild(styleLabel);
+		styleLabel.className = "bbb-border-style";
+		borderSettingsDiv.appendChild(styleLabel);
 
 		var styleDrop = document.createElement("select");
 		styleDrop.addEventListener("change", function() { borderItem.border_style = this.value; }, false);
@@ -1660,7 +1658,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	Element.prototype.bbbTocSection = function() {
 		var page = this;
-		delayMe(function() { page.insertBefore(createTocSection(page), page.firstChild) });
+		delayMe(function() { page.insertBefore(createTocSection(page), page.firstChild); });
 	};
 
 	function Option(type, def, lbl, expl, optPropObject) {
@@ -1999,16 +1997,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function convertSettings() {
-		// If the user settings are from an old version, attempt to convert some settings and update the version number. Settings will start conversion at the appropriate case and be allowed to run through every case after it until the end/default.
+		// If the user settings are from an old version, attempt to convert some settings and update the version number. Settings will start conversion at the appropriate case and be allowed to run through every case after it until the end.
 		var mode = settings.user.bbb_version;
 
 		if (isOldVersion(mode)) {
 			switch (mode) {
 				case "6.0":
-				default:
-					settings.user.bbb_version = settings.options.bbb_version;
 					break;
 			}
+
+			settings.user.bbb_version = settings.options.bbb_version;
 		}
 	}
 
@@ -2055,12 +2053,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Reset the blacklist with the account settings when logged in or script settings when logged out.
 		Danbooru.Blacklist.entries.length = 0;
 
-		if (!isLoggedIn() && /\S/.test(script_blacklisted_tags)) { // Load the script blacklist if not logged in.
-			var blacklistTags = script_blacklisted_tags.toLowerCase().replace(/\b(rating:[qes])\w+/, "$1").split(",");
+		if (!useAccount()) { // Load the script blacklist if not logged in or blacklist override.
+			if (/\S/.test(script_blacklisted_tags)) {
+				var blacklistTags = script_blacklisted_tags.toLowerCase().replace(/\b(rating:[qes])\w+/, "$1").split(",");
 
-			for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
-				var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
-				Danbooru.Blacklist.entries.push(tag);
+				for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
+					var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
+					Danbooru.Blacklist.entries.push(tag);
+				}
 			}
 		}
 		else // Reload the account blacklist.
@@ -2167,7 +2167,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			limitInput.type = "hidden";
 			container.getElementsByTagName("form")[0].appendChild(limitInput);
 		}
-
 	}
 
 	function isThere(url) {
@@ -2353,19 +2352,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function useAPI() {
-		var tryAPI = false;
+		if ((show_loli || show_shota || show_deleted || direct_downloads) && (isLoggedIn() || !bypass_api))
+			return true;
+		else
+			return false;
+	}
 
-		if (show_loli || show_shota || show_deleted || direct_downloads) {
-			if (isLoggedIn() || !bypass_api)
-				tryAPI = true;
-		}
-
-		return tryAPI;
+	function useAccount() {
+		if (isLoggedIn() && !override_account)
+			return true;
+		else
+			return false;
 	}
 
 	function checkSetting(metaName, metaData, scriptSetting) {
-		// Check for the user's account settings and use the script setting if they're logged out.
-		if (isLoggedIn()) {
+		// Check for the user's account settings and use the script setting if they're logged out or want to override them.
+		if (useAccount()) {
 			if (fetchMeta(metaName) === metaData)
 				return true;
 			else
@@ -2594,6 +2596,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu .bbb-border-bar, #bbb_menu .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
 		'#bbb_menu .bbb-border-settings {background-color: #FFFFFF;}' +
 		'#bbb_menu .bbb-border-div label, #bbb_menu .bbb-border-div span {display: inline-block; line-height: 29px;}' +
+		'#bbb_menu .bbb-border-name {text-align: left; width: 540px;}' +
+		'#bbb_menu .bbb-border-name input {width:460px;}' +
+		'#bbb_menu .bbb-border-color {text-align: center; width: 210px;}' +
+		'#bbb_menu .bbb-border-color input {width: 148px;}' +
+		'#bbb_menu .bbb-border-style {float: right; text-align: right; width: 130px;}' +
 		'#bbb_menu .bbb-border-divider {height: 4px;}' +
 		'#bbb_menu .bbb-insert-highlight .bbb-border-divider {background-color: blue; cursor: pointer;}' +
 		'#bbb_menu .bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
@@ -2604,7 +2611,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu .bbb-edit-box {height: 500px; width: 800px; margin-left: -412px; margin-top: -262px; position: fixed; left: 50%; top: 50%; background-color: #FFFFFF; border: 2px solid #CCCCCC; padding: 10px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);}' +
 		'#bbb_menu .bbb-edit-text {margin-bottom: 5px;}' +
 		'#bbb_menu .bbb-edit-area {height: 392px; width: 794px; margin-bottom: 5px;}' +
-		'#bbb_menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; vertical-align: top;}' +
+		'#bbb_menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
 		'.bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
 		'.bbb-custom-tag {padding: 0px !important; display: inline-block !important; border-width: ' + border_width + 'px !important;}';
 
