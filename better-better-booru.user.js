@@ -48,14 +48,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Terms of Service agreement notice."),
 		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
 		image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image<br><br><u>Note</u><br>This option is automatically disabled when translation mode is active."),
-		image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post."),
+		image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Fit images to window\" setting will override this option."),
 		image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (Default):width", "Width & Height:all"]}),
-		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post."),
+		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Default image width\" setting will override this option."),
 		manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
 		override_account: new Option("checkbox", false, "Override Account Settings", "Allow logged out settings to override account settings when logged in."),
 		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
 		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
-		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death", {tagEditMode: true}),
+		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death<br><br><u>Note</u><br>When logged in, the account's \"Blacklisted tags\" list will override this option.", {tagEditMode: true}),
 		search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
 		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
 		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
@@ -63,14 +63,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_toddlercon: new Option("checkbox", false, "Show Toddlercon", "Display toddlercon images in the search, pool, popular, comments, and notes listings."),
 		single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
 		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
+		track_new:new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location the context menu."),
 		status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
-		tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"])
+		tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"]),
+		track_new_data: {viewed:0, viewing:1}
 	};
 
 	settings.user = {};
 	loadSettings(); // Load user settings.
 
-	settings.inputs = {};
 	settings.el = {}; // Menu elements.
 	settings.sections = { // Setting sections and ordering.
 		browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count"], "Image Browsing"),
@@ -78,7 +79,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
 		image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
 		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags", "override_account"], "Logged Out Settings"),
-		misc: new Section("general", ["direct_downloads", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
+		misc: new Section("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
 		script_settings: new Section("general", ["bypass_api", "manage_cookies", "disable_status_message"], "Script Settings"),
 		border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
 		status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
@@ -91,6 +92,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gUrlQuery = location.search; // URL query string only
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
 
+	var thumbnail_count_default = 20; // Number of thumbnails BBB should expect Danbooru to return by default.
+
 	// Script variables.
 	// Global
 	var show_loli = settings.user.show_loli;
@@ -100,7 +103,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var direct_downloads = settings.user.direct_downloads; // Allow download managers for thumbnail listings.
 
 	var custom_tag_borders = settings.user.custom_tag_borders; //
-	var custom_status_borders = settings.user.custom_status_borders; // Change the border colors of flagged, parent, child, and pending posts. You may set the colors under "Set Border Colors".
+	var custom_status_borders = settings.user.custom_status_borders; // Change the border colors of flagged, parent, child, deleted, and pending posts.
 	var single_color_borders = settings.user.single_color_borders; // Use simple single color borders.
 	var border_width = settings.user.border_width; // Set the thumbnail border width.
 	var clean_links = settings.user.clean_links; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
@@ -108,8 +111,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	var bypass_api = settings.user.bypass_api; // Automatically bypass API features when they can't be used.
 	var manage_cookies = settings.user.manage_cookies; // Create cookies to completely stop notices.
-	var disable_status_message = settings.user.disable_status_message;
-	var override_account = settings.user.override_account;
+	var disable_status_message = settings.user.disable_status_message; // Don't display the BBB status message.
+	var override_account = settings.user.override_account; // Allow logged out settings to override account settings.
+	var track_new = settings.user.track_new; // Enable the new post tracker.
 
 	var hide_sign_up_notice = settings.user.hide_sign_up_notice;
 	var hide_upgrade_notice = settings.user.hide_upgrade_notice;
@@ -126,16 +130,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// Post
 	var alternate_image_swap = settings.user.alternate_image_swap; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
 	var image_resize = settings.user.image_resize; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
-	var image_resize_mode = settings.user.image_resize_mode;
-	var image_drag_scroll = settings.user.image_drag_scroll;
+	var image_resize_mode = settings.user.image_resize_mode; // Choose how to scale down large images when initially loading them.
+	var image_drag_scroll = settings.user.image_drag_scroll; // Allow held left clicks on the image to drag the image around.
 	var load_sample_first = settings.user.load_sample_first; // Use sample images when available. When logged in, your account settings will override this setting.
 	var remove_tag_headers = settings.user.remove_tag_headers; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
 	var post_tag_titles = settings.user.post_tag_titles; // Revert post page titles to the more detailed full list of tags
-	var autoscroll_image = settings.user.autoscroll_image;
+	var autoscroll_image = settings.user.autoscroll_image; // Automatically position the image when initially loading it.
 
-	// Borders
+	// Stored data
 	var status_borders = settings.user.status_borders;
 	var tag_borders = settings.user.tag_borders;
+	var track_new_data = settings.user.track_new_data;
 
 	// Blacklist
 	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
@@ -175,15 +180,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (post_tag_titles)
 		postTagTitles();
 
+	if (track_new)
+		trackNew();
+
 	injectSettings();
 
 	if (!disable_status_message)
 		bbbStatusInit();
 
-	if (useAPI()) // API only features.
-		searchJSON(gLoc);
-	else // Alternate mode for features.
-		modifyPage(gLoc);
+	if (!noXML()) {
+		if (useAPI()) // API only features.
+			searchJSON(gLoc);
+		else // Alternate mode for features.
+			modifyPage(gLoc);
+	}
 
 	if (clean_links)
 		cleanLinks();
@@ -202,7 +212,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var limit = "";
 
 		if (mode === "search" || mode === "notes") {
-			var numExpected = getVar("limit") || 20;
+			var numExpected = getVar("limit") || thumbnail_count_default;
 			var numDesired = 0;
 
 			if (allowUserLimit()) {
@@ -226,17 +236,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				fetchJSON(gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json"), "post");
 		}
 		else if (mode === "popular") {
-			if (numThumbs !== 20 || direct_downloads)
+			if (numThumbs !== thumbnail_count_default || direct_downloads)
 				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
 		}
 		else if (mode === "pool") {
-			if (numThumbs !== 20 || direct_downloads)
+			if (numThumbs !== thumbnail_count_default || direct_downloads)
 				fetchJSON(gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
 		}
 		else if (mode === "poolsearch") {
 			var poolIds = xml.post_ids.split(" ");
 			var page = getVar("page") || 1;
-			var postIds = poolIds.slice((page - 1) * 20, page * 20);
+			var postIds = poolIds.slice((page - 1) * thumbnail_count_default, page * thumbnail_count_default);
 
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
 		}
@@ -272,7 +282,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', true);
 							document.getElementById("bbb-bypass-api-link").addEventListener("click", function(event) {
 								updateSettings("bypass_api", true);
-								this.parentNode.innerHTML="Settings updated. You may change this setting under preferences in the settings panel.";
+								this.parentNode.innerHTML = "Settings updated. You may change this setting under preferences in the settings panel.";
 								event.preventDefault();
 							}, false);
 						}
@@ -371,7 +381,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			uploader_name: /Uploader:\s*(.+?)\s*»/.exec(infoSection.textContent)[1],
 			is_deleted: (fetchMeta("post-is-deleted") === "false" ? false : true),
 			is_flagged: (fetchMeta("post-is-flagged") === "false" ? false : true),
-			is_pending: (fetchMeta("post-is-approvable" === "false" ? false : true)),
+			is_pending: (fetchMeta("post-is-approvable") === "false" ? false : true),
 			image_height: imgHeight,
 			image_width: imgWidth,
 			has_large: hasLarge,
@@ -392,16 +402,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			xmlhttp.onreadystatechange = function() {
 				if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
+						var childSpan = document.createElement("span");
 
 						if (mode === "paginator") { // Fetch updated paginator for first page of searches.
 							var paginator = optArg;
-							var newPaginator = /<div class="paginator">(.+?)<\/div>/i.exec(xmlhttp.responseText)[1];
+							var paginatorContent = /<div class="paginator">(.+?)<\/div>/i.exec(xmlhttp.responseText)[1];
 
-							if (newPaginator)
-								paginator.innerHTML = newPaginator;
+							if (paginatorContent) {
+								var newPaginator = document.createElement("div");
+								newPaginator.innerHTML = paginatorContent;
+								newPaginator.className = "paginator";
+								paginator.parentNode.replaceChild(newPaginator, paginator);
+							}
 						}
 						else if (mode === "comments") { // Fetch post to get comments
-							var childSpan = document.createElement("span");
 							var post = optArg[0];
 							var postId = optArg[1];
 
@@ -420,7 +434,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							}
 
 							// Add it all in and get it ready.
-							target = post.getElementsByClassName("comments-for-post")[0];
+							var target = post.getElementsByClassName("comments-for-post")[0];
 
 							while (childSpan.children[0])
 								target.appendChild(childSpan.children[0]);
@@ -431,7 +445,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							bbbStatus("loaded");
 						}
 						else if (mode === "thumbnails") { // Fetch the thumbnails and paginator from the page of a search and replace the existing ones.
-							var childSpan = document.createElement("span");
 							var divId = (gLoc === "search" ? "posts" : "a-index");
 							var divRegEx = new RegExp('<div id="' + divId + '">([\\S\\s]+?class="paginator"[\\S\\s]+?<\\/div>[\\S\\s]+?)<\\/div>', "i");
 
@@ -547,22 +560,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where.innerHTML = out + outerHTML(paginator);
 			paginator = document.getElementsByClassName("paginator")[0];
 
-			if ((gLoc === "search" || gLoc === "notes") && (allowUserLimit())) {
-				// Fix existing paginator with user's custom limit.
-				var pageLinks = document.evaluate('.//a', paginator, null, 6, null);
-
-				for (var i = 0, isl = pageLinks.snapshotLength; i < isl; i++)
-					pageLinks.snapshotItem(i).href = pageLinks.snapshotItem(i).href + "&limit=" + thumbnail_count;
-
-				// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
+			if (gLoc === "search" || gLoc === "notes") {
+				var noPages = paginator.textContent.indexOf("Go back") > -1;
 				var pageUrl = gUrl;
 
-				if (pageUrl.indexOf("?") > -1)
-					pageUrl += "&limit=" + thumbnail_count;
-				else
-					pageUrl += "?limit=" + thumbnail_count;
+				if (allowUserLimit()) {
+					// Fix existing paginator with user's custom limit.
+					var pageLinks = document.evaluate('.//a', paginator, null, 6, null);
 
-				fetchPages(pageUrl, "paginator", paginator);
+					for (var i = 0, isl = pageLinks.snapshotLength; i < isl; i++)
+						pageLinks.snapshotItem(i).href = pageLinks.snapshotItem(i).href + "&limit=" + thumbnail_count;
+
+					// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
+					if (pageUrl.indexOf("?") > -1)
+						pageUrl += "&limit=" + thumbnail_count;
+					else
+						pageUrl += "?limit=" + thumbnail_count;
+
+					fetchPages(pageUrl, "paginator", paginator);
+				}
+				else if (noPages) // Fix the paginator if the post xml and existing page are out of sink.
+					fetchPages(pageUrl, "paginator", paginator);
 			}
 		}
 		else
@@ -672,6 +690,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				bbbLoader.addEventListener("error", function(event) {
 					if (this.src !== "about:blank")
 						imgStatus.innerHTML = "Loading failed!";
+
 					event.preventDefault();
 				}, false);
 				img.addEventListener("load", function(event) {
@@ -742,7 +761,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					translateOption.parentNode.insertBefore(listNoteToggle, translateOption);
 				}
 
-				document.getElementById("listnotetoggle").addEventListener("click", function(event) {Danbooru.Note.Box.toggle_all(); event.preventDefault();}, false);
+				document.getElementById("listnotetoggle").addEventListener("click", function(event) {
+					Danbooru.Note.Box.toggle_all();
+					event.preventDefault();
+				}, false);
 
 				// Make clicking the image swap between the original and sample image when available.
 				if (post.has_large) {
@@ -777,7 +799,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var resizeLinkWidth = document.createElement("a");
 			resizeLinkWidth.href = "#";
 			resizeLinkWidth.innerHTML = "Resize to window width";
-			resizeLinkWidth.addEventListener("click", function(event) {resizeImage("width"); event.preventDefault();}, false);
+			resizeLinkWidth.addEventListener("click", function(event) {
+				resizeImage("width");
+				event.preventDefault();
+			}, false);
 			resizeListWidth.appendChild(resizeLinkWidth);
 			bbbInfo.el.resizeLinkWidth = resizeLinkWidth;
 
@@ -787,7 +812,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var resizeLinkAll = document.createElement("a");
 			resizeLinkAll.href = "#";
 			resizeLinkAll.innerHTML = "Resize to window";
-			resizeLinkAll.addEventListener("click", function(event) {resizeImage("all"); event.preventDefault();}, false);
+			resizeLinkAll.addEventListener("click", function(event) {
+				resizeImage("all");
+				event.preventDefault();
+			}, false);
 			resizeListAll.appendChild(resizeLinkAll);
 			bbbInfo.el.resizeLinkAll = resizeLinkAll;
 
@@ -818,19 +846,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function parseComments(xml) {
 		var posts = xml;
+		var numPosts = posts.length;
+		var expectedPosts = numPosts;
 		var existingPosts = document.getElementsByClassName("post post-preview"); // Live node list so adding/removing a "post post-preview" class item immediately changes this.
 		var eci = 0;
-		var endTotal = 5;
 
-		for (var i = 0, pl = posts.length; i < pl; i++) {
+		for (var i = 0; i < numPosts; i++) {
 			var post = formatJSON(posts[i]);
 			var existingPost = existingPosts[eci];
 
 			if (!existingPost || post.id !== Number(existingPost.getAttribute("data-id"))) {
-				if (!/\b(?:loli|shota)\b/.test(post.tag_string)) // API post isn't loli/shota and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
+				if (!/\b(?:loli|shota|toddlercon)\b/.test(post.tag_string)) // API post isn't loli/shota and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
 					continue;
 				else if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string))) { // Skip loli/shota/toddlercon if the user has selected to do so.
-					endTotal--;
+					expectedPosts--;
 					continue;
 				}
 
@@ -881,7 +910,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		// If we don't have the expected number of posts, the API info and page are too out of sync.
-		if (existingPosts.length !== endTotal) {
+		if (existingPosts.length !== expectedPosts) {
 			danbNotice("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.", true);
 			bbbStatus("error");
 		}
@@ -909,7 +938,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
 		link.addEventListener("click", function(event) {
-			showSettings();
+			loadSettings();
+			createMenu();
 			event.preventDefault();
 		}, false);
 
@@ -922,229 +952,214 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		window.addEventListener("resize", adjustMenuTimer, false);
 	}
 
-	function showSettings() {
-		if (settings.el.menu) {
-			settings.el.menu.style.display = "block";
-			settings.el.scrollDiv.scrollTop = 0;
-			adjustMenuHeight();
-		}
-		else {
-			var menu = document.createElement("div");
-			menu.id = "bbb_menu";
-			menu.style.visibility = "hidden";
-			settings.el.menu = menu;
+	function createMenu() {
+		var menu = document.createElement("div");
+		menu.id = "bbb_menu";
+		menu.style.visibility = "hidden";
+		settings.el.menu = menu;
 
-			var header = document.createElement("h1");
-			header.innerHTML = "Better Better Booru Settings";
-			header.style.textAlign = "center";
-			menu.appendChild(header);
+		var header = document.createElement("h1");
+		header.innerHTML = "Better Better Booru Settings";
+		header.style.textAlign = "center";
+		menu.appendChild(header);
 
-			var tabBar = document.createElement("div");
-			tabBar.style.padding = "0px 15px";
-			menu.appendChild(tabBar);
+		var tabBar = document.createElement("div");
+		tabBar.style.padding = "0px 15px";
+		tabBar.addEventListener("click", function(event) {
+			var target = event.target;
 
-			var generalTab = document.createElement("a");
-			generalTab.name = "general";
-			generalTab.href = "#";
-			generalTab.innerHTML = "General";
-			generalTab.className = "bbb-tab bbb-active-tab";
-			generalTab.addEventListener("click", function(event) {
-				changeTab(this);
-				event.preventDefault();
-			}, false);
-			tabBar.appendChild(generalTab);
-			settings.el.generalTab = generalTab;
+			if (target.href)
+				changeTab(target);
 
-			var borderTab = document.createElement("a");
-			borderTab.name = "borders";
-			borderTab.href = "#";
-			borderTab.innerHTML = "Borders";
-			borderTab.className = "bbb-tab";
-			borderTab.addEventListener("click", function(event) {
-				changeTab(this);
-				event.preventDefault();
-			}, false);
-			tabBar.appendChild(borderTab);
-			settings.el.borderTab = borderTab;
+			event.preventDefault();
+		}, false);
+		menu.appendChild(tabBar);
 
-			var prefTab = document.createElement("a");
-			prefTab.name = "pref";
-			prefTab.href = "#";
-			prefTab.innerHTML = "Preferences";
-			prefTab.className = "bbb-tab";
-			prefTab.addEventListener("click", function(event) {
-				changeTab(this);
-				event.preventDefault();
-			}, false);
-			tabBar.appendChild(prefTab);
-			settings.el.prefTab = prefTab;
+		var generalTab = document.createElement("a");
+		generalTab.name = "general";
+		generalTab.href = "#";
+		generalTab.innerHTML = "General";
+		generalTab.className = "bbb-tab bbb-active-tab";
+		tabBar.appendChild(generalTab);
+		settings.el.generalTab = generalTab;
 
-			var helpTab = document.createElement("a");
-			helpTab.name = "help";
-			helpTab.href = "#";
-			helpTab.innerHTML = "Help";
-			helpTab.className = "bbb-tab";
-			helpTab.addEventListener("click", function(event) {
-				changeTab(this);
-				event.preventDefault();
-			}, false);
-			tabBar.appendChild(helpTab);
-			settings.el.helpTab = helpTab;
+		var borderTab = document.createElement("a");
+		borderTab.name = "borders";
+		borderTab.href = "#";
+		borderTab.innerHTML = "Borders";
+		borderTab.className = "bbb-tab";
+		tabBar.appendChild(borderTab);
+		settings.el.borderTab = borderTab;
 
-			var scrollDiv = document.createElement("div");
-			scrollDiv.className = "bbb-scroll-div";
-			menu.appendChild(scrollDiv);
-			scrollDiv.scrollTop = 0;
-			settings.el.scrollDiv = scrollDiv;
+		var prefTab = document.createElement("a");
+		prefTab.name = "pref";
+		prefTab.href = "#";
+		prefTab.innerHTML = "Preferences";
+		prefTab.className = "bbb-tab";
+		tabBar.appendChild(prefTab);
+		settings.el.prefTab = prefTab;
 
-			var generalPage = document.createElement("div");
-			generalPage.className = "bbb-page";
-			generalPage.style.display = "block";
-			scrollDiv.appendChild(generalPage);
-			settings.el.generalPage = generalPage;
+		var helpTab = document.createElement("a");
+		helpTab.name = "help";
+		helpTab.href = "#";
+		helpTab.innerHTML = "Help";
+		helpTab.className = "bbb-tab";
+		tabBar.appendChild(helpTab);
+		settings.el.helpTab = helpTab;
 
-			generalPage.bbbSection(settings.sections.browse);
-			generalPage.bbbSection(settings.sections.image_control);
-			generalPage.bbbSection(settings.sections.sidebar);
-			generalPage.bbbSection(settings.sections.misc);
-			generalPage.bbbSection(settings.sections.layout);
-			generalPage.bbbSection(settings.sections.logged_out);
+		var scrollDiv = document.createElement("div");
+		scrollDiv.className = "bbb-scroll-div";
+		menu.appendChild(scrollDiv);
+		scrollDiv.scrollTop = 0;
+		settings.el.scrollDiv = scrollDiv;
 
-			var bordersPage = document.createElement("div");
-			bordersPage.className = "bbb-page";
-			scrollDiv.appendChild(bordersPage);
-			settings.el.bordersPage = bordersPage;
+		var generalPage = document.createElement("div");
+		generalPage.className = "bbb-page";
+		generalPage.style.display = "block";
+		scrollDiv.appendChild(generalPage);
+		settings.el.generalPage = generalPage;
 
-			bordersPage.bbbSection(settings.sections.border_options);
-			bordersPage.bbbSection(settings.sections.status_borders);
-			bordersPage.bbbSection(settings.sections.tag_borders);
+		generalPage.bbbSection(settings.sections.browse);
+		generalPage.bbbSection(settings.sections.image_control);
+		generalPage.bbbSection(settings.sections.sidebar);
+		generalPage.bbbSection(settings.sections.misc);
+		generalPage.bbbSection(settings.sections.layout);
+		generalPage.bbbSection(settings.sections.logged_out);
 
-			var prefPage = document.createElement("div");
-			prefPage.className = "bbb-page";
-			scrollDiv.appendChild(prefPage);
-			settings.el.prefPage = prefPage;
+		var bordersPage = document.createElement("div");
+		bordersPage.className = "bbb-page";
+		scrollDiv.appendChild(bordersPage);
+		settings.el.bordersPage = bordersPage;
 
-			prefPage.bbbSection(settings.sections.script_settings);
-			prefPage.bbbBackupSection();
+		bordersPage.bbbSection(settings.sections.border_options);
+		bordersPage.bbbSection(settings.sections.status_borders);
+		bordersPage.bbbSection(settings.sections.tag_borders);
 
-			var helpPage = document.createElement("div");
-			helpPage.className = "bbb-page";
-			scrollDiv.appendChild(helpPage);
-			settings.el.helpPage = helpPage;
+		var prefPage = document.createElement("div");
+		prefPage.className = "bbb-page";
+		scrollDiv.appendChild(prefPage);
+		settings.el.prefPage = prefPage;
 
-			helpPage.bbbTocSection();
-			helpPage.bbbTextSection('Border Matching Rules', 'For creating border match rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied to one border by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values (id, score, favcount, width, and height) can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
-			helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the UserScripts forums located <a target="_blank" href="http://userscripts.org/scripts/discuss/100614">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
+		prefPage.bbbSection(settings.sections.script_settings);
+		prefPage.bbbBackupSection();
 
-			var close = document.createElement("a");
-			close.innerHTML = "Save & Close";
-			close.href = "#";
-			close.className = "bbb-button";
-			close.style.marginRight = "15px";
-			close.addEventListener("click", function(event) {
-				menu.style.display = "none";
-				saveSettings();
-				event.preventDefault();
-			}, false);
+		var helpPage = document.createElement("div");
+		helpPage.className = "bbb-page";
+		scrollDiv.appendChild(helpPage);
+		settings.el.helpPage = helpPage;
 
-			var cancel = document.createElement("a");
-			cancel.innerHTML = "Cancel";
-			cancel.href = "#";
-			cancel.className = "bbb-button";
-			cancel.addEventListener("click", function(event) {
-				loadSettings();
-				removeMenu();
-				event.preventDefault();
-			}, false);
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail match rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values (id, score, favcount, width, and height) can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the UserScripts forums located <a target="_blank" href="http://userscripts.org/scripts/discuss/100614">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
+		helpPage.bbbTocSection();
 
-			var reset = document.createElement("a");
-			reset.innerHTML = "Reset to Defaults";
-			reset.href = "#";
-			reset.className = "bbb-button";
-			reset.style.cssFloat = "right";
-			reset.style.color = "#ff1100";
-			reset.addEventListener("click", function(event) {
-				loadDefaults();
-				removeMenu();
-				showSettings();
-				event.preventDefault();
-			}, false);
+		var close = document.createElement("a");
+		close.innerHTML = "Save & Close";
+		close.href = "#";
+		close.className = "bbb-button";
+		close.style.marginRight = "15px";
+		close.addEventListener("click", function(event) {
+			removeMenu();
+			saveSettings();
+			event.preventDefault();
+		}, false);
 
-			menu.appendChild(close);
-			menu.appendChild(cancel);
-			menu.appendChild(reset);
+		var cancel = document.createElement("a");
+		cancel.innerHTML = "Cancel";
+		cancel.href = "#";
+		cancel.className = "bbb-button";
+		cancel.addEventListener("click", function(event) {
+			removeMenu();
+			loadSettings();
+			event.preventDefault();
+		}, false);
 
-			var tip = document.createElement("div");
-			tip.className = "bbb-expl";
-			menu.appendChild(tip);
-			settings.el.tip = tip;
+		var reset = document.createElement("a");
+		reset.innerHTML = "Reset to Defaults";
+		reset.href = "#";
+		reset.className = "bbb-button";
+		reset.style.cssFloat = "right";
+		reset.style.color = "#ff1100";
+		reset.addEventListener("click", function(event) {
+			removeMenu();
+			loadDefaults();
+			createMenu();
+			event.preventDefault();
+		}, false);
 
-			var tagEditBlocker = document.createElement("div");
-			tagEditBlocker.className = "bbb-edit-blocker";
-			menu.appendChild(tagEditBlocker);
-			settings.el.tagEditBlocker = tagEditBlocker;
+		menu.appendChild(close);
+		menu.appendChild(cancel);
+		menu.appendChild(reset);
 
-			var tagEditBox = document.createElement("div");
-			tagEditBox.className = "bbb-edit-box";
-			tagEditBlocker.appendChild(tagEditBox);
+		var tip = document.createElement("div");
+		tip.className = "bbb-expl";
+		menu.appendChild(tip);
+		settings.el.tip = tip;
 
-			var tagEditHeader = document.createElement("h2");
-			tagEditHeader.innerHTML = "Tag Editor";
-			tagEditHeader.className = "bbb-header";
-			tagEditBox.appendChild(tagEditHeader);
+		var tagEditBlocker = document.createElement("div");
+		tagEditBlocker.className = "bbb-edit-blocker";
+		menu.appendChild(tagEditBlocker);
+		settings.el.tagEditBlocker = tagEditBlocker;
 
-			var tagEditText = document.createElement("div");
-			tagEditText.className = "bbb-edit-text";
-			tagEditText.innerHTML = "<b>Note:</b> Unlike Danbooru, separate matching rules/tag combinations have to be separated by commas and not by separate lines. Separate lines are only used here to improve readability.";
-			tagEditBox.appendChild(tagEditText);
+		var tagEditBox = document.createElement("div");
+		tagEditBox.className = "bbb-edit-box";
+		tagEditBlocker.appendChild(tagEditBox);
 
-			var tagEditArea = document.createElement("textarea");
-			tagEditArea.className = "bbb-edit-area";
-			tagEditBox.appendChild(tagEditArea);
-			settings.el.tagEditArea = tagEditArea;
+		var tagEditHeader = document.createElement("h2");
+		tagEditHeader.innerHTML = "Tag Editor";
+		tagEditHeader.className = "bbb-header";
+		tagEditBox.appendChild(tagEditHeader);
 
-			var tagEditOk = document.createElement("a");
-			tagEditOk.innerHTML = "OK";
-			tagEditOk.href = "#";
-			tagEditOk.className = "bbb-button";
-			tagEditOk.addEventListener("click", function(event) {
-				var tags = tagEditArea.value.replace(/\r?\n/g, "").replace(/,(\S)/g, ", $1").bbbSpaceClean();
-				var args = bbbInfo.tagEdit;
+		var tagEditText = document.createElement("div");
+		tagEditText.className = "bbb-edit-text";
+		tagEditText.innerHTML = "<b>Note:</b> Unlike Danbooru, separate matching rules/tag combinations have to be separated by commas and not by separate lines. Separate lines are only used here to improve readability.";
+		tagEditBox.appendChild(tagEditText);
 
-				tagEditBlocker.style.display = "none";
-				args.input.value = tags;
-				args.object[args.prop] = tags;
-				event.preventDefault();
-			}, false);
-			tagEditBox.appendChild(tagEditOk);
+		var tagEditArea = document.createElement("textarea");
+		tagEditArea.className = "bbb-edit-area";
+		tagEditBox.appendChild(tagEditArea);
+		settings.el.tagEditArea = tagEditArea;
 
-			var tagEditCancel = document.createElement("a");
-			tagEditCancel.innerHTML = "Cancel";
-			tagEditCancel.href = "#";
-			tagEditCancel.className = "bbb-button";
-			tagEditCancel.style.cssFloat = "right";
-			tagEditCancel.addEventListener("click", function(event) {
-				tagEditBlocker.style.display = "none";
-				event.preventDefault();
-			}, false);
-			tagEditBox.appendChild(tagEditCancel);
+		var tagEditOk = document.createElement("a");
+		tagEditOk.innerHTML = "OK";
+		tagEditOk.href = "#";
+		tagEditOk.className = "bbb-button";
+		tagEditOk.addEventListener("click", function(event) {
+			var tags = tagEditArea.value.replace(/\r?\n/g, "").replace(/,(\S)/g, ", $1").bbbSpaceClean();
+			var args = bbbInfo.tagEdit;
 
-			// Add menu to the DOM and manipulate the dimensions.
-			document.body.appendChild(menu);
+			tagEditBlocker.style.display = "none";
+			args.input.value = tags;
+			args.object[args.prop] = tags;
+			event.preventDefault();
+		}, false);
+		tagEditBox.appendChild(tagEditOk);
 
-			var viewHeight = window.innerHeight;
-			var barWidth = scrollbarWidth();
-			var scrollDivDiff = menu.offsetHeight - scrollDiv.clientHeight;
+		var tagEditCancel = document.createElement("a");
+		tagEditCancel.innerHTML = "Cancel";
+		tagEditCancel.href = "#";
+		tagEditCancel.className = "bbb-button";
+		tagEditCancel.style.cssFloat = "right";
+		tagEditCancel.addEventListener("click", function(event) {
+			tagEditBlocker.style.display = "none";
+			event.preventDefault();
+		}, false);
+		tagEditBox.appendChild(tagEditCancel);
 
-			scrollDiv.style.maxHeight = viewHeight - scrollDiv.bbbGetPadding().height - scrollDivDiff - 50 + "px"; // Subtract 50 for margins (25 each).
-			scrollDiv.style.minWidth = 901 + barWidth + 3 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
-			scrollDiv.style.paddingLeft = barWidth + 3 + "px";
+		// Add menu to the DOM and manipulate the dimensions.
+		document.body.appendChild(menu);
 
-			var menuWidth = menu.offsetWidth;
+		var viewHeight = window.innerHeight;
+		var barWidth = scrollbarWidth();
+		var scrollDivDiff = menu.offsetHeight - scrollDiv.clientHeight;
 
-			menu.style.marginLeft = -menuWidth / 2 + "px";
-			menu.style.visibility = "visible";
-		}
+		scrollDiv.style.maxHeight = viewHeight - scrollDiv.bbbGetPadding().height - scrollDivDiff - 50 + "px"; // Subtract 50 for margins (25 each).
+		scrollDiv.style.minWidth = 901 + barWidth + 3 + "px"; // Should keep the potential scrollbar from intruding on the original drawn layout if I'm thinking about this correctly. Seems to work in practice anyway.
+		scrollDiv.style.paddingLeft = barWidth + 3 + "px";
+
+		var menuWidth = menu.offsetWidth;
+
+		menu.style.marginLeft = -menuWidth / 2 + "px";
+		menu.style.visibility = "visible";
 	}
 
 	function createSection(section) {
@@ -1236,8 +1251,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var item;
 		var itemFrag = document.createDocumentFragment();
 
-		switch (optionObject.type)
-		{
+		switch (optionObject.type) {
 			case "dropdown":
 				var txtOptions = optionObject.txtOptions;
 				var numRange = optionObject.numRange;
@@ -1335,7 +1349,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				break;
 		}
 		inputSpan.appendChild(itemFrag);
-		settings.inputs[settingName] = item;
 
 		var explLink = document.createElement("a");
 		explLink.innerHTML = "?";
@@ -1434,7 +1447,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		helpButton.innerHTML = "Help";
 		helpButton.className = "bbb-border-button";
 		helpButton.addEventListener("click", function(event) { event.preventDefault(); }, false);
-		helpButton.bbbSetTip("<b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<br><br><b>Status/Tags:</b> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"Border Matching Rules\" section under the help tab for information about creating rules.<br><br><b>Color:</b> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<br><br><b>Style:</b> Set how the border looks. Please note that double only works with a border width of 3.<br><br><b>Move:</b> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<br><br><b>Preview:</b> Display a preview of the border's current settings.<br><br><b>Delete:</b> Remove the border and its settings.<br><br><b>New:</b> Create a new border.");
+		helpButton.bbbSetTip("<b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<br><br><b>Status/Tags:</b> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating rules.<br><br><b>Color:</b> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<br><br><b>Style:</b> Set how the border looks. Please note that double only works with a border width of 3.<br><br><b>Move:</b> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<br><br><b>Preview:</b> Display a preview of the border's current settings.<br><br><b>Delete:</b> Remove the border and its settings.<br><br><b>New:</b> Create a new border.");
 		editSpan.appendChild(helpButton);
 
 		var borderSettingsDiv = document.createElement("div");
@@ -1628,14 +1641,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		tocList.className = "bbb-toc";
 		sectionText.appendChild(tocList);
 
-		var listItem;
-		var linkItem;
-
 		for (var i = 0, psl = pageSections.length; i < psl;) {
-			listItem = document.createElement("li");
+			var listItem = document.createElement("li");
 			tocList.appendChild(listItem);
 
-			linkItem = document.createElement("a");
+			var linkItem = document.createElement("a");
 			linkItem.textContent = pageSections[i].textContent;
 			linkItem.href = "#" + (++i);
 			listItem.appendChild(linkItem);
@@ -1644,10 +1654,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		tocList.addEventListener("click", function (event) {
 			var target = event.target;
 			var targetValue = target.href;
-			var sectionTop;
 
 			if (targetValue) {
-				sectionTop = pageSections[targetValue.split("#")[1]].offsetTop;
+				var sectionTop = pageSections[targetValue.split("#")[1]].offsetTop;
 				settings.el.scrollDiv.scrollTop = sectionTop;
 				event.preventDefault();
 			}
@@ -1658,7 +1667,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	Element.prototype.bbbTocSection = function() {
 		var page = this;
-		delayMe(function() { page.insertBefore(createTocSection(page), page.firstChild); });
+		page.insertBefore(createTocSection(page), page.firstChild);
 	};
 
 	function Option(type, def, lbl, expl, optPropObject) {
@@ -1730,7 +1739,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		for (var i = 0, bel = borderElements.length; i < bel; i ++) {
 			var borderElement = borderElements[i];
 
-			borderElement.className = borderElement.className.replace(/\s?bbb-no-highlight/, "");
+			borderElement.className = borderElement.className.replace(/\s?bbb-no-highlight/gi, "");
 			borderElement.setAttribute("data-bbb-index", i);
 		}
 	}
@@ -1904,7 +1913,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		menu.parentNode.removeChild(menu);
 		settings.el = {};
-		settings.inputs = {};
 	}
 
 	function loadSettings() {
@@ -1944,52 +1952,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function saveSettings() {
+		// Save the user settings to localStorage after making any neccessary checks/adjustments.
+		if (!settings.user.track_new) // Reset new post tracking if it's disabled.
+			settings.user.track_new_data = settings.options.track_new_data.def;
+
 		localStorage.bbb_settings = JSON.stringify(settings.user);
 	}
 
 	function updateSettings() {
-		// Change & save settings without the panel. Accepts a comma delimited list of alternating settings and values: setting1, value1, setting2, value2
+		// Change & save the settings without the panel. Accepts a comma delimited list of alternating settings and values: setting1, value1, setting2, value2
+		loadSettings();
+
 		for (var i = 0, al = arguments.length; i < al; i += 2) {
-			var settingName = arguments[i];
+			var setting = arguments[i].split(".");
 			var value = arguments[i + 1];
-			var userSetting = String(value);
-			var input = settings.inputs[settingName];
+			var settingPath = settings.user;
 
-			settings.user[settingName] = value;
-
-			// Update menu if it exists.
-			if (input) {
-				var optionObject = settings.options[settingName];
-
-				switch (optionObject.type)
-				{
-					case "dropdown":
-						if (input.value !== userSetting) {
-							var selectOptions = input.getElementsByTagName("option");
-
-							for (var j = 0, sol = selectOptions.length; j < sol; j++) {
-								var selectOption = selectOptions[j];
-
-								if (selectOption.value === userSetting) {
-									selectOption.selected = true;
-									break;
-								}
-							}
-						}
-						break;
-					case "checkbox":
-						input.checked = value;
-						break;
-					case "text":
-						input.value = value;
-						break;
-					case "number":
-						input.value = value;
-						break;
-					default:
-						console.log("Better Better Booru Error: Unexpected object type. Type: " + optionObject.type);
-						break;
-				}
+			for (var j = 0, spl = setting.length; j < spl; j++) {
+				if (j < spl - 1)
+					settingPath = settingPath[setting[j]];
+				else
+					settingPath[setting[j]] = value;
 			}
 		}
 
@@ -2032,11 +2015,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (backupString) {
 			try {
+				removeMenu();
 				settings.user = JSON.parse(backupString);
 				checkUser(settings.user, settings.options);
 				convertSettings();
-				removeMenu();
-				showSettings();
+				createMenu();
 				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"Save & Close\" to finalize the restore.");
 			}
 			catch (error) {
@@ -2053,7 +2036,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Reset the blacklist with the account settings when logged in or script settings when logged out.
 		Danbooru.Blacklist.entries.length = 0;
 
-		if (!useAccount()) { // Load the script blacklist if not logged in or blacklist override.
+		if (!useAccount()) { // Clean up blacklisted entries and load the script blacklist if not logged in or blacklist override.
+			var blacklistedPosts = document.getElementsByClassName("blacklisted");
+
+			while (blacklistedPosts[0]) {
+				var blacklistedPost = blacklistedPosts[0];
+				blacklistedPost.className = blacklistedPost.className.replace(/\s?blacklisted(-active)?/ig, "");
+			}
+
 			if (/\S/.test(script_blacklisted_tags)) {
 				var blacklistTags = script_blacklisted_tags.toLowerCase().replace(/\b(rating:[qes])\w+/, "$1").split(",");
 
@@ -2106,6 +2096,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			resizeLinkWidth.style.fontWeight = "normal";
 			resizeLinkAll.style.fontWeight = "normal";
 			Danbooru.Note.Box.scale_all();
+
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
 		}
@@ -2117,6 +2108,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			resizeLinkWidth.style.fontWeight = "bold";
 			resizeLinkAll.style.fontWeight = "normal";
 			Danbooru.Note.Box.scale_all();
+
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
 		}
@@ -2128,6 +2120,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			resizeLinkWidth.style.fontWeight = "normal";
 			resizeLinkAll.style.fontWeight = "bold";
 			Danbooru.Note.Box.scale_all();
+
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
 		}
@@ -2136,9 +2129,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function limitFix() {
 		// Add the limit variable to link URLs that are not thumbnails.
 		var links = document.evaluate('//div[@id="page"]//a[starts-with(@href, "/posts?")]', document, null, 6, null);
+		var link;
 
 		for (var i = 0, lsl = links.snapshotLength; i < lsl; i++) {
-			var link = links.snapshotItem(i);
+			link = links.snapshotItem(i);
 
 			if (!/(?:page|limit)=/.test(link.href))
 				link.href += "&limit=" + thumbnail_count;
@@ -2147,7 +2141,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		links = document.evaluate('//header//a[starts-with(@href, "/posts") or @href="/" or @href="/notes?group_by=post"]', document, null, 6, null);
 
 		for (var i = 0, lsl = links.snapshotLength; i < lsl; i++) {
-			var link = links.snapshotItem(i);
+			link = links.snapshotItem(i);
 
 			if (link.href.indexOf("?") > -1)
 				link.href += "&limit=" + thumbnail_count;
@@ -2181,12 +2175,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function getVar(getVar, url) {
+	function getVar(urlVar, url) {
 		// Retrieve a variable value from a specified URL or the current URL.
 		if (!url)
 			url = gUrlQuery;
 
-		var result = url.split(getVar + "=")[1];
+		var result = url.split(urlVar + "=")[1];
 
 		if (!result)
 			return undefined;
@@ -2194,7 +2188,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			result = result.split(/[#&]/, 1)[0];
 
 		if (!result)
-			return "";
+			return undefined;
 		else if (bbbIsNum(result))
 			return Number(result);
 		else
@@ -2256,14 +2250,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		sidebar.addEventListener("click", function(event) {
 			var target = event.target;
 
-			if (target instanceof HTMLAnchorElement)
+			if (target.href)
 				target.blur();
 		}, false);
 		sidebar.addEventListener("focus", function() {
 			sidebar.className += " bbb-sidebar-show";
 		}, true);
 		sidebar.addEventListener("blur", function() {
-			sidebar.className = sidebar.className.replace(/\sbbb-sidebar-show/g, "");
+			sidebar.className = sidebar.className.replace(/\sbbb-sidebar-show/gi, "");
 		}, true);
 	}
 
@@ -2276,7 +2270,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function allowUserLimit() {
 		// Allow use of the limit variable if it isn't currently set and we're on the first page.
-		if (thumbnail_count > 0 && !/(?:page|limit)=\d/.test(gUrlQuery))
+		if (thumbnail_count && !/(?:page|limit)=\d/.test(gUrlQuery))
 			return true;
 		else
 			return false;
@@ -2295,7 +2289,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Test for hidden post images.
 		var objectExists = document.getElementById("image-container").getElementsByTagName("object")[0];
 		var imgExists = document.getElementById("image");
-		var infoExists = (/Save this file|The artist requested removal/.test(document.getElementById("image-container").textContent) && !/\b(?:loli|shota)\b/.test(fetchMeta("tags")));
+		var infoExists = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
 
 		if (objectExists || imgExists || infoExists)
 			return false;
@@ -2349,6 +2343,28 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return true;
 		else
 			return false;
+	}
+
+	function noXML() {
+		// Don't use XML requests on certain pages where it won't do any good.
+		var limit = getVar("limit");
+		var page = getVar("page");
+		var result = false;
+
+		if (gLoc === "search") {
+			if (limit === 0 || page === "b1")
+				result = true;
+		}
+		else if (gLoc === "notes") {
+			if (limit === 0)
+				result = true;
+		}
+		else if (gLoc === "comments") {
+			if (page === "b1")
+				result = true;
+		}
+
+		return result;
 	}
 
 	function useAPI() {
@@ -2438,12 +2454,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (!posts.length)
 			return;
 
-		var statusBorderSettings;
 		var searches = [];
-
-		// Sort borders to support multi color borders.
-		if (!single_color_borders && posts)
-			statusBorderSettings = statusBorderSort();
+		var statusBorderSettings = (!single_color_borders ? statusBorderSort() : null); // Sort borders to support multi color borders.
 
 		// Create and cache border search objects.
 		if (custom_tag_borders) {
@@ -2580,7 +2592,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu .bbb-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px;}' +
 		'#bbb_menu .bbb-tab {border-top-left-radius: 5px; border-top-right-radius: 5px; display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
 		'#bbb_menu .bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}' +
-		'#bbb_menu .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; width: 83%;}' +
+		'#bbb_menu .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; width: 700px;}' +
 		'#bbb_menu .bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
 		'#bbb_menu .bbb-section-options, #bbb_menu .bbb-section-text {margin-bottom: 5px; max-width: 902px;}' +
 		'#bbb_menu .bbb-section-options-left, #bbb_menu .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
@@ -2626,16 +2638,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var thumbMaxDim = 150 + totalBorderWidth * 2;
 		var listingExtraSpace = 14 - totalBorderWidth * 2;
 		var commentExtraSpace = 34 - totalBorderWidth * 2;
+		var statusBorderItem;
 
 		styles += 'article.post-preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin: 0px ' + listingExtraSpace + 'px ' + listingExtraSpace + 'px 0px !important;}' +
+		'article.post-preview a {line-height: 0px !important;}' +
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
+		'.post-preview div.preview a {line-height: 0px !important;}' +
 		'.post-preview img {border-width: ' + border_width + 'px !important;}';
 
 		if (custom_status_borders) {
 			var activeStatusStyles = "";
 
 			for (var i = 0, sbsl = status_borders.length; i < sbsl; i++) {
-				var statusBorderItem = status_borders[i];
+				statusBorderItem = status_borders[i];
 
 				if (statusBorderItem.is_enabled) {
 					activeStatusStyles = ".post-preview." + statusBorderItem.class_name + " img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}" + activeStatusStyles;
@@ -2651,8 +2666,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 		else if (custom_tag_borders) {
 			for (var i = 0, sbsl = status_borders.length; i < sbsl; i++) {
-				var statusBorderItem = status_borders[i];
-
+				statusBorderItem = status_borders[i];
 				styles += ".post-preview." + statusBorderItem.class_name + " a.bbb-custom-tag {padding: 1px !important;}";
 			}
 		}
@@ -2797,25 +2811,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	Element.prototype.bbbGetPadding = function() {
 		// Get all the padding measurements of an element including the total width and height.
-		var paddingLeft;
-		var paddingRight;
-		var paddingTop;
-		var paddingBottom;
-		var paddingWidth;
-		var paddingHeight;
-
 		if (window.getComputedStyle) {
 			var computed = window.getComputedStyle(this, null);
-
-			paddingLeft = parseFloat(computed.paddingLeft);
-			paddingRight = parseFloat(computed.paddingRight);
-			paddingTop = parseFloat(computed.paddingTop);
-			paddingBottom = parseFloat(computed.paddingBottom);
-			paddingHeight = paddingTop + paddingBottom;
-			paddingWidth = paddingLeft + paddingRight;
+			var paddingLeft = parseFloat(computed.paddingLeft);
+			var paddingRight = parseFloat(computed.paddingRight);
+			var paddingTop = parseFloat(computed.paddingTop);
+			var paddingBottom = parseFloat(computed.paddingBottom);
+			var paddingHeight = paddingTop + paddingBottom;
+			var paddingWidth = paddingLeft + paddingRight;
+			return {width: paddingWidth, height: paddingHeight, top: paddingTop, bottom: paddingBottom, left: paddingLeft, right: paddingRight};
 		}
-
-		return {width: paddingWidth, height: paddingHeight, top: paddingTop, bottom: paddingBottom, left: paddingLeft, right: paddingRight};
 	};
 
 	String.prototype.bbbSpacePad = function() {
@@ -2852,17 +2857,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			width:Number(width),
 			height:Number(height)
 		};
-		var searchObject;
-		var all;
-		var any;
 		var anyResult;
 		var allResult;
 		var searchTerm = "";
 
 		for (var i = 0, sal = searchArray.length; i < sal; i++) {
-			searchObject = searchArray[i];
-			all = searchObject.all;
-			any = searchObject.any;
+			var searchObject = searchArray[i];
+			var all = searchObject.all;
+			var any = searchObject.any;
 
 			// Continue to the next matching rule if there are no tags to test.
 			if (!any.total && !all.total)
@@ -2961,42 +2963,40 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function createSearch(search) {
-		// Take search strings and turn them into search objects.
+		// Take search strings, turn them into search objects, and pass back the objects in an array.
 		var searchStrings = search.toLowerCase().replace(/\b(rating:[qes])\w+/g, "$1").split(",");
-		var searchString;
-		var searchTerm = "";
 		var searches = [];
-		var all;
-		var any;
-		var mode;
 
 		// Sort through each matching rule.
 		for (var i = 0, sssl = searchStrings.length; i < sssl; i++) {
-			searchString = searchStrings[i].split(" ");
-			all = {includes: [], excludes: [], total: 0};
-			any = {includes: [], excludes: [], total: 0};
+			var searchString = searchStrings[i].split(" ");
+			var searchObject = {
+				all: {includes: [], excludes: [], total: 0},
+				any: {includes: [], excludes: [], total: 0}
+			}
 
 			// Divide the tags into any and all sets with excluded and included tags.
 			for (var j = 0, ssl = searchString.length; j < ssl; j++) {
-				searchTerm = searchString[j];
+				var searchTerm = searchString[j];
+				var mode;
+				var primaryMode = "all";
+				var secondaryMode = "includes";
 
-				if (searchTerm.charAt(0) === "~") {
-					mode = any;
+				while (searchTerm.charAt(0) === "~" || searchTerm.charAt(0) === "-") {
+					switch (searchTerm.charAt(0)) {
+						case "~":
+							primaryMode = "any";
+							break;
+						case "-":
+							secondaryMode = "excludes";
+							break;
+					}
+
 					searchTerm = searchTerm.slice(1);
 				}
-				else
-					mode = all;
 
-				if (searchTerm.charAt(0) === "-") {
-					if (searchTerm.length > 1) {
-						mode = mode.excludes;
-						searchTerm = searchTerm.slice(1);
-					}
-					else
-						continue;
-				}
-				else if (searchTerm.length > 0)
-					mode = mode.includes;
+				if (searchTerm.length > 0)
+					mode = searchObject[primaryMode][secondaryMode];
 				else
 					continue;
 
@@ -3073,9 +3073,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					mode.push(searchTerm.bbbSpacePad());
 			}
 
-			all.total = all.includes.length + all.excludes.length;
-			any.total = any.includes.length + any.excludes.length;
-			searches.push({all: all, any: any});
+			searchObject.all.total = searchObject.all.includes.length + searchObject.all.excludes.length;
+			searchObject.any.total = searchObject.any.includes.length + searchObject.any.excludes.length;
+			searches.push(searchObject);
 		}
 
 		return searches;
@@ -3134,16 +3134,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (bbbInfo.statusCount === 0) {
 					status.style.display = "block";
 					status.innerHTML = "Loaded!";
-
-					var removeStatus = window.setTimeout( function() { bbbStatus("clear"); }, 1500);
+					window.setTimeout( function() { bbbStatus("clear"); }, 1500);
 				}
 			}
 			else if (mode === "error") { // Status mode for unsuccessful requests. Hides itself automatically.
-				bbbInfo.statusCount = -1;
+				bbbInfo.statusCount = -9000;
 				status.style.display = "block";
 				status.innerHTML = "Error.";
-
-				var removeStatus = window.setTimeout( function() { bbbStatus("clear"); }, 1500);
+				window.setTimeout( function() { bbbStatus("clear"); }, 1500);
 			}
 			else if (mode === "clear") // Status mode for hiding the status message.
 				status.style.display = "none";
@@ -3178,12 +3176,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Takes the provided version and compares it to the script version. Returns true if the provided version is older than the script version.
 		var userNums = ver.split(".");
 		var scriptNums = settings.options.bbb_version.split(".");
-		var userNum;
-		var scriptNum;
 
 		for (var i = 0, unl = userNums.length; i < unl; i++) {
-			userNum = (userNums[i] !== undefined ? Number(userNums[i]) : 0);
-			scriptNum = (scriptNums[i] !== undefined ? Number(scriptNums[i]) : 0);
+			var userNum = (userNums[i] !== undefined ? Number(userNums[i]) : 0);
+			var scriptNum = (scriptNums[i] !== undefined ? Number(scriptNums[i]) : 0);
 
 			if (userNum < scriptNum)
 				return true;
@@ -3205,7 +3201,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else
 			dragScrollDisable();
 
-		document.getElementById("translate").addEventListener("click", dragScrollToggle, false);
+		var translateLink = document.getElementById("translate");
+
+		if (translateLink)
+			translateLink.addEventListener("click", dragScrollToggle, false);
 
 		window.addEventListener("keydown", function(event) {
 			if (event.keyCode === 78)
@@ -3275,6 +3274,150 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function disableEvent(event) {
 		event.preventDefault();
 		event.stopPropagation();
+	}
+
+	function trackNew() {
+		var activeLink = document.getElementsByClassName("current")[0];
+		var secondMenu = (document.getElementById("top") || document).getElementsByTagName("menu")[1];
+
+		// Insert new posts link.
+		if (activeLink && activeLink.textContent === "Posts" && secondMenu) {
+			var menuItems = secondMenu.getElementsByTagName("li");
+			var menuItem = document.createElement("li");
+			var trackLink = document.createElement("a");
+			trackLink.innerHTML = "New";
+			trackLink.href = "/posts?new_posts=redirect&page=b1";
+			trackLink.onclick = "return false";
+			menuItem.appendChild(trackLink);
+			secondMenu.insertBefore(menuItem, menuItems[1]);
+
+			trackLink.addEventListener("click", function(event) {
+				if (event.button === 0) {
+					trackNewLoad();
+					event.preventDefault();
+				}
+			}, false);
+		}
+
+		if (gLoc === "search") {
+			var info = track_new_data;
+			var mode = getVar("new_posts");
+			var postsDiv = document.getElementById("posts");
+			var postSections = document.getElementById("post-sections");
+			var posts = document.getElementsByClassName("post-preview");
+			var firstPost = posts[0];
+
+			if (mode === "init"  && !info.viewed && !getVar("tags") && !getVar("page")) { // Initialize.
+				if (firstPost) {
+					info.viewed = Number(firstPost.getAttribute("data-id"));
+					info.viewing = 1;
+					saveSettings();
+					danbNotice("Better Better Booru: New post tracking initialized. New post tracking will start with new posts after the current last image.");
+				}
+			}
+			else if (mode === "redirect") { // Bookmarkable redirect link. (http://danbooru.donmai.us/posts?new_posts=redirect&page=b1)
+				if (postsDiv)
+					postsDiv.innerHTML = "<b>Redirecting...</b>";
+
+				trackNewLoad();
+			}
+			else if (mode === "list") {
+				var limitNum = getVar("limit") || thumbnail_count || thumbnail_count_default;
+				var currentPage = getVar("page") || 1;
+				var savedPage = Math.ceil((info.viewing - limitNum) / limitNum) + 1;
+				var currentViewed = Number(/id:>(\d+)/.exec(decodeURIComponent(gUrlQuery))[1]);
+
+				// Replace the chickens message on the first page with a more specific message.
+				if (!firstPost && currentPage < 2) {
+					if (postsDiv && postsDiv.children[0])
+						postsDiv.children[0].innerHTML = "No new posts detected";
+				}
+
+				// Update the saved page information.
+				if (savedPage !== currentPage && info.viewed === currentViewed) {
+					info.viewing = (currentPage - 1) * limitNum + 1;
+					saveSettings();
+				}
+
+				// Modify new post searches with a mark as viewed link.
+				if (postSections) {
+					var markSection = document.createElement("li");
+					var markLink = document.createElement("a");
+					markLink.innerHTML = (currentPage > 1 ? "Mark pages 1-" + currentPage + " viewed" : "Mark page 1 viewed");
+					markLink.href = "#";
+					markSection.appendChild(markLink);
+					postSections.appendChild(markSection);
+
+					markLink.addEventListener("click", function(event) {
+						trackNewMark();
+						event.preventDefault();
+					}, false);
+
+					var resetSection = document.createElement("li");
+					var resetLink = document.createElement("a");
+					resetLink.innerHTML = "Reset (Mark all viewed)";
+					resetLink.href = "#";
+					resetLink.style.color = "#FF1100";
+					resetLink.style.cssFloat = "right";
+					resetSection.appendChild(resetLink);
+					postSections.appendChild(resetSection);
+
+					resetLink.addEventListener("click", function(event) {
+						trackNewReset();
+						event.preventDefault();
+					}, false);
+				}
+			}
+		}
+	}
+
+	function trackNewLoad() {
+		// Create the search URL and load it.
+		var info = settings.user.track_new_data;
+		var limitNum = settings.user.thumbnail_count || thumbnail_count_default;
+		var savedPage = Math.ceil((info.viewing - limitNum) / limitNum) + 1;
+
+		if (info.viewed)
+			location.href = "/posts?new_posts=list&tags=order:id_asc+id:>" + info.viewed + "&page=" + savedPage + "&limit=" + limitNum;
+		else
+			location.href = "/posts?new_posts=init&limit=" + limitNum;
+	}
+
+	function trackNewReset() {
+		// Reinitialize settings/Mark all viewed.
+		loadSettings();
+
+		var limitNum = settings.user.thumbnail_count || thumbnail_count_default;
+
+		settings.user.track_new_data = settings.options.track_new_data.def;
+		saveSettings();
+
+		danbNotice("Better Better Booru: Reinitializing new post tracking. Please wait.");
+		location.href = "/posts?new_posts=init&limit=" + limitNum;
+	}
+
+	function trackNewMark() {
+		// Mark the current images and older as viewed.
+		loadSettings();
+
+		var info = settings.user.track_new_data;
+		var limitNum = getVar("limit") || settings.user.thumbnail_count || thumbnail_count_default;
+		var posts = document.getElementsByClassName("post-preview");
+		var lastPost = posts[posts.length - 1];
+		var lastId = (lastPost ? Number(lastPost.getAttribute("data-id")) : null );
+
+		if (!lastPost)
+			danbNotice("Better Better Booru: Unable to mark as viewed. No posts detected.", true);
+		else if (info.viewed >= lastId)
+			danbNotice("Better Better Booru: Unable to mark as viewed. Posts have already been marked.", true);
+		else {
+			info.viewed = Number(lastPost.getAttribute("data-id"));
+			info.viewing = 1;
+			saveSettings();
+
+			danbNotice("Better Better Booru: Posts marked as viewed. Please wait while the pages are updated.");
+			location.href = "/posts?new_posts=list&tags=order:id_asc+id:>" + settings.user.track_new_data.viewed + "&page=1&limit=" + limitNum;
+		}
 	}
 
 
