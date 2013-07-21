@@ -868,7 +868,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var artistTags = post.tag_string_artist.split(" ");
 				var copyrightTags = post.tag_string_copyright.split(" ");
 				var characterTags = post.tag_string_character.split(" ");
-				var limit = (thumbnail_count > 0 ? "&limit=" + thumbnail_count : "");
+				var limit = (thumbnail_count ? "&limit=" + thumbnail_count : "");
 				var tag;
 
 				for (var j = 0, gtl = generalTags.length; j < gtl; j++) {
@@ -930,8 +930,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (!menu)
 			return;
 
-		menu = menu.getElementsByTagName("menu");
-		menu = menu[0];
+		menu = menu.getElementsByTagName("menu")[0];
 
 		var link = document.createElement("a");
 		link.href = "#";
@@ -1618,7 +1617,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return sectionFrag;
 	}
 
-	Element.prototype.bbbBackupSection = function(header, text) {
+	Element.prototype.bbbBackupSection = function() {
 		this.appendChild(createBackupSection());
 	};
 
@@ -1770,7 +1769,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		borderElement.className += " bbb-no-highlight";
 		borderElement.nextSibling.className += " bbb-no-highlight";
-		settings.borderMode = {mode:"move", settings:borderSettings, section:section, index:index, element:borderElement};
+		settings.borderMode = {mode: "move", settings: borderSettings, section: section, index: index, element: borderElement};
 		section.className += " bbb-insert-highlight";
 		settings.el.menu.addEventListener("click", insertBorder, true);
 	}
@@ -1779,7 +1778,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Prepare to create a border and wait for the user to click where it'll go.
 		var section = borderElement.parentNode;
 
-		settings.borderMode = {mode:"new", settings:borderSettings, section:section};
+		settings.borderMode = {mode: "new", settings: borderSettings, section: section};
 		section.className += " bbb-insert-highlight";
 		settings.el.menu.addEventListener("click", insertBorder, true);
 	}
@@ -1887,9 +1886,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function tagEditWindow(input, object, prop) {
-			settings.el.tagEditBlocker.style.display = "block";
-			settings.el.tagEditArea.value = input.value.replace(/(,\s*)/g, "$1\r\n\r\n");
-			bbbInfo.tagEdit = {input: input, object: object, prop: prop};
+		settings.el.tagEditBlocker.style.display = "block";
+		settings.el.tagEditArea.value = input.value.replace(/(,\s*)/g, "$1\r\n\r\n");
+		bbbInfo.tagEdit = {input: input, object: object, prop: prop};
 	}
 
 	function adjustMenuHeight() {
@@ -1909,6 +1908,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function removeMenu() {
 		// Destroy the menu so that it gets rebuilt.
 		var menu = settings.el.menu;
+
+		if (!menu)
+			return;
 
 		menu.parentNode.removeChild(menu);
 		settings.el = {};
@@ -1952,7 +1954,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function saveSettings() {
 		// Save the user settings to localStorage after making any neccessary checks/adjustments.
-		if (!settings.user.track_new) // Reset new post tracking if it's disabled.
+		if (!settings.user.track_new && settings.user.track_new_data.viewed) // Reset new post tracking if it's disabled.
 			settings.user.track_new_data = settings.options.track_new_data.def;
 
 		localStorage.bbb_settings = JSON.stringify(settings.user);
@@ -1967,12 +1969,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var value = arguments[i + 1];
 			var settingPath = settings.user;
 
-			for (var j = 0, spl = setting.length; j < spl; j++) {
-				if (j < spl - 1)
+			for (var j = 0, spl = setting.length - 1; j < spl; j++)
 					settingPath = settingPath[setting[j]];
-				else
-					settingPath[setting[j]] = value;
-			}
+
+			settingPath[setting[j]] = value;
 		}
 
 		saveSettings();
@@ -2024,6 +2024,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			catch (error) {
 				if (error instanceof SyntaxError)
 					alert("The backup does not appear to be formatted correctly. Please make sure everything was pasted correctly/completely and that only one backup is provided.");
+				else
+					alert("Unexpected error: " + error.message);
 			}
 		}
 		else
@@ -2454,7 +2456,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return;
 
 		var searches = [];
-		var statusBorderSettings = (!single_color_borders ? statusBorderSort() : null); // Sort borders to support multi color borders.
+		var statusBorderSettings = (!single_color_borders && custom_status_borders ? statusBorderSort() : null); // Sort borders to support multi color borders.
 
 		// Create and cache border search objects.
 		if (custom_tag_borders) {
@@ -2542,8 +2544,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function formatJSON(post) {
 		// Add information to the JSON post object.
-		var ext = post.file_ext;
-		var md5 = post.md5;
 		var flags = "";
 		var thumbClass = "";
 
@@ -2564,7 +2564,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (post.parent_id)
 			thumbClass += " post-status-has-parent";
 
-		post.parent = (post.parent_id !== null ? post.parent_id : ""); // Format to return a blank string if there is no parent. Note that the API returns null and not undefined for parent_id when there is not a parent.
+		post.parent = (post.parent_id ? post.parent_id : "");
 		post.flags = flags;
 		post.thumb_class = thumbClass;
 
@@ -2720,12 +2720,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (gLoc === "post") {
 			var tagList = document.getElementById("tag-list");
 
-			if (!tagList)
-				return;
-
-			var newList = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
-
-			tagList.innerHTML = newList;
+			if (tagList)
+				tagList.innerHTML = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
 		}
 	}
 
@@ -2786,7 +2782,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var msg = txt;
 		var notice = document.getElementById("notice");
 
-		if (/\w/.test(notice.children[0].innerHTML))
+		if (notice && /\w/.test(notice.children[0].innerHTML))
 			msg = notice.children[0].innerHTML + "<hr/>" + msg;
 
 		noticeFunc(msg);
@@ -2824,7 +2820,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	String.prototype.bbbSpacePad = function() {
 		// Add a leading and trailing space.
-		return (this.length ? " " + this + " " : this);
+		var text = this;
+		return (text.length ? " " + text + " " : text);
 	};
 
 	String.prototype.bbbSpaceClean = function() {
@@ -2849,12 +2846,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var flags = post.getAttribute("data-flags") || "active";
 		var status = (flags === "flagged" ? " status:flagged status:active" : " status:" + flags);
 		var postInfo = {
-			tags:(tags + rating + status + user).bbbSpacePad(),
-			score:Number(score),
-			favcount:Number(favcount),
-			id:Number(id),
-			width:Number(width),
-			height:Number(height)
+			tags: (tags + rating + status + user).bbbSpacePad(),
+			score: Number(score),
+			favcount: Number(favcount),
+			id: Number(id),
+			width: Number(width),
+			height: Number(height)
 		};
 		var anyResult;
 		var allResult;
@@ -2972,7 +2969,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var searchObject = {
 				all: {includes: [], excludes: [], total: 0},
 				any: {includes: [], excludes: [], total: 0}
-			}
+			};
 
 			// Divide the tags into any and all sets with excluded and included tags.
 			for (var j = 0, ssl = searchString.length; j < ssl; j++) {
@@ -3177,8 +3174,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var scriptNums = settings.options.bbb_version.split(".");
 
 		for (var i = 0, unl = userNums.length; i < unl; i++) {
-			var userNum = (userNums[i] !== undefined ? Number(userNums[i]) : 0);
-			var scriptNum = (scriptNums[i] !== undefined ? Number(scriptNums[i]) : 0);
+			var userNum = (userNums[i] ? Number(userNums[i]) : 0);
+			var scriptNum = (scriptNums[i] ? Number(scriptNums[i]) : 0);
 
 			if (userNum < scriptNum)
 				return true;
@@ -3240,8 +3237,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function dragScrollOn(event) {
 		if (event.button === 0) {
-			var img = document.getElementById("image");
-
 			bbbInfo.dragScroll.lastX = event.clientX;
 			bbbInfo.dragScroll.lastY = event.clientY;
 			bbbInfo.dragScroll.moved = false;
@@ -3252,7 +3247,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function dragScrollMove(event) {
-		var img = document.getElementById("image");
 		var newX = event.clientX;
 		var newY = event.clientY;
 
@@ -3264,8 +3258,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function dragScrollOff(event) {
-		var img = document.getElementById("image");
-
 		document.removeEventListener("mousemove", dragScrollMove, false);
 		document.removeEventListener("mouseup", dragScrollOff, false);
 	}
