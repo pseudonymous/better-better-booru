@@ -22,10 +22,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 */
 
 	/* Global Variables */
-	var bbbInfo = {}; // Container for misc info.
-	bbbInfo.el = {}; // Script elements.
-
-	var settings = {}; // Container for settings.
+	var bbbInfo = { // Container for misc info.
+		el: {} // Script elements.
+	};
+	var settings = { // Container for settings.
+		user: {},
+		el: {} // Menu elements
+	};
 
 	// Initialize settings.
 	settings.options = {
@@ -63,16 +66,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		show_toddlercon: new Option("checkbox", false, "Show Toddlercon", "Display toddlercon images in the search, pool, popular, comments, and notes listings."),
 		single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
 		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
-		track_new:new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location the context menu."),
+		track_new:new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 		status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 		tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"]),
 		track_new_data: {viewed:0, viewing:1}
 	};
 
-	settings.user = {};
-	loadSettings(); // Load user settings.
-
-	settings.el = {}; // Menu elements.
 	settings.sections = { // Setting sections and ordering.
 		browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count"], "Image Browsing"),
 		layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
@@ -85,6 +84,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 		tag_borders: new Section("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 	};
+
+	loadSettings(); // Load user settings.
 
 	// Location variables.
 	var gUrl = location.href.split("#", 1)[0]; // URL without the anchor
@@ -339,22 +340,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var imgWidth = 0;
 		var hasLarge = false;
 		var childNotice = document.getElementsByClassName("notice-child");
+		var img = document.getElementById("image");
+		var imgContainer = document.getElementById("image-container");
+		var object = imgContainer.getElementsByTagName("object")[0];
 
-		if (document.getElementById("image")) { // Regular image.
-			var img = document.getElementById("image");
-
+		if (img) { // Regular image.
 			imgHeight = Number(img.getAttribute("data-original-height"));
 			imgWidth = Number(img.getAttribute("data-original-width"));
 			hasLarge = (imgWidth > 850 ? true : false);
 		}
-		else if (document.getElementById("image-container").getElementsByTagName("object")[0]) { // Flash object.
-			var object = document.getElementById("image-container").getElementsByTagName("object")[0];
-
+		else if (object) { // Flash object.
 			imgHeight = Number(object.getAttribute("height"));
 			imgWidth = Number(object.getAttribute("width"));
 			hasLarge = false;
 		}
-		else if (document.getElementById("image-container").textContent.indexOf("The artist requested removal") > -1) { // Image removed by artist request.
+		else if (infoLink) { // Content removed but the link still exists.
 			var infoTextDim = /\((\d+)x(\d+)\)/.exec(infoLink.parentNode.textContent);
 
 			imgHeight = Number(infoTextDim[2]);
@@ -3277,11 +3277,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function trackNew() {
-		var activeLink = document.getElementsByClassName("current")[0];
-		var secondMenu = (document.getElementById("top") || document).getElementsByTagName("menu")[1];
+		var header = document.getElementById("top");
+
+		if (!header)
+			return;
+
+		var activeMenu = header.getElementsByClassName("current")[0];
+		var secondMenu = header.getElementsByTagName("menu")[1];
 
 		// Insert new posts link.
-		if (activeLink && activeLink.textContent === "Posts" && secondMenu) {
+		if (activeMenu && activeMenu.textContent === "Posts" && secondMenu) {
 			var menuItems = secondMenu.getElementsByTagName("li");
 			var menuItem = document.createElement("li");
 			var trackLink = document.createElement("a");
