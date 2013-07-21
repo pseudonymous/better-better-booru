@@ -343,6 +343,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var img = document.getElementById("image");
 		var imgContainer = document.getElementById("image-container");
 		var object = imgContainer.getElementsByTagName("object")[0];
+		var infoTextDim = /\((\d+)x(\d+)\)/.exec(infoLink.parentNode.textContent);
 
 		if (img) { // Regular image.
 			imgHeight = Number(img.getAttribute("data-original-height"));
@@ -354,9 +355,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			imgWidth = Number(object.getAttribute("width"));
 			hasLarge = false;
 		}
-		else if (infoLink) { // Content removed but the link still exists.
-			var infoTextDim = /\((\d+)x(\d+)\)/.exec(infoLink.parentNode.textContent);
-
+		else if (infoTextDim) { // Displayed content removed but the link still exists.
 			imgHeight = Number(infoTextDim[2]);
 			imgWidth = Number(infoTextDim[1]);
 			hasLarge = (imgWidth > 850 ? true : false);
