@@ -445,19 +445,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 						else if (mode === "thumbnails") { // Fetch the thumbnails and paginator from the page of a search and replace the existing ones.
 							var divId = (gLoc === "search" ? "posts" : "a-index");
-							var posts = childSpan.getElementsByClassName("post-preview");
 							var paginator = childSpan.getElementsByClassName("paginator")[0];
 							target = document.getElementById(divId);
-							newContent = document.createElement("div");
-							newContent.id = divId;
+							newContent = (paginator ? paginator.parentNode : null);
 
-							while (posts[0])
-								newContent.appendChild(posts[0]);
-
-							if (paginator)
-								newContent.appendChild(paginator);
-
-							target.parentNode.replaceChild(newContent, target);
+							if (newContent)
+								target.parentNode.replaceChild(newContent, target);
 
 							// Thumbnail classes and titles
 							formatThumbnails();
