@@ -77,9 +77,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
 		image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
-		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags", "override_account"], "Logged Out Settings"),
+		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
 		misc: new Section("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
-		script_settings: new Section("general", ["bypass_api", "manage_cookies", "disable_status_message"], "Script Settings"),
+		script_settings: new Section("general", ["bypass_api", "manage_cookies", "disable_status_message", "override_account"], "Script Settings"),
 		border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
 		status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 		tag_borders: new Section("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
@@ -402,41 +402,41 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var childSpan = document.createElement("span");
+						var newContent;
+						var target;
+
+						childSpan.innerHTML = xmlhttp.responseText;
 
 						if (mode === "paginator") { // Fetch updated paginator for first page of searches.
-							var paginator = optArg;
-							var paginatorContent = /<div class="paginator">(.+?)<\/div>/i.exec(xmlhttp.responseText)[1];
+							target = optArg;
+							newContent = childSpan.getElementsByClassName("paginator")[0];
 
-							if (paginatorContent) {
-								var newPaginator = document.createElement("div");
-								newPaginator.innerHTML = paginatorContent;
-								newPaginator.className = "paginator";
-								paginator.parentNode.replaceChild(newPaginator, paginator);
-							}
+							if (newContent)
+								target.parentNode.replaceChild(newContent, target);
 						}
 						else if (mode === "comments") { // Fetch post to get comments
 							var post = optArg[0];
 							var postId = optArg[1];
-
-							// Fix the comments.
-							childSpan.innerHTML = /<div class="row notices">[\S\s]+?<\/form>[\S\s]+?<\/div>/i.exec(xmlhttp.responseText)[0];
-
-							var comments = childSpan.getElementsByClassName("comment");
+							var commentSection = childSpan.getElementsByClassName("comments-for-post")[0];
+							var comments = commentSection.getElementsByClassName("comment");
 							var numComments = comments.length;
 							var toShow = 6; // Number of comments to display.
+							target = post.getElementsByClassName("comments-for-post")[0];
+							newContent = document.createDocumentFragment();
 
+							// Fix the comments.
 							if (numComments > toShow) {
 								for (var i = 0, toHide = numComments - toShow; i < toHide; i++)
 									comments[i].style.display = "none";
 
-								childSpan.getElementsByClassName("row notices")[0].innerHTML = '<span class="info" id="threshold-comments-notice-for-' + postId + '"> <a href="/comments?include_below_threshold=true&amp;post_id=' + postId + '" data-remote="true">Show all comments</a> </span>';
+								commentSection.getElementsByClassName("row notices")[0].innerHTML = '<span class="info" id="threshold-comments-notice-for-' + postId + '"> <a href="/comments?include_below_threshold=true&amp;post_id=' + postId + '" data-remote="true">Show all comments</a> </span>';
 							}
 
 							// Add it all in and get it ready.
-							var target = post.getElementsByClassName("comments-for-post")[0];
+							while (commentSection.children[0])
+								newContent.appendChild(commentSection.children[0]);
 
-							while (childSpan.children[0])
-								target.appendChild(childSpan.children[0]);
+							target.appendChild(newContent);
 
 							Danbooru.Comment.initialize_all();
 
@@ -445,11 +445,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 						else if (mode === "thumbnails") { // Fetch the thumbnails and paginator from the page of a search and replace the existing ones.
 							var divId = (gLoc === "search" ? "posts" : "a-index");
-							var divRegEx = new RegExp('<div id="' + divId + '">([\\S\\s]+?class="paginator"[\\S\\s]+?<\\/div>[\\S\\s]+?)<\\/div>', "i");
+							var posts = childSpan.getElementsByClassName("post-preview");
+							var paginator = childSpan.getElementsByClassName("paginator")[0];
+							target = document.getElementById(divId);
+							newContent = document.createElement("div");
+							newContent.id = divId;
 
-							childSpan.innerHTML = divRegEx.exec(xmlhttp.responseText)[1];
+							while (posts[0])
+								newContent.appendChild(posts[0]);
 
-							document.getElementById(divId).innerHTML = childSpan.innerHTML;
+							if (paginator)
+								newContent.appendChild(paginator);
+
+							target.parentNode.replaceChild(newContent, target);
 
 							// Thumbnail classes and titles
 							formatThumbnails();
@@ -578,7 +586,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					fetchPages(pageUrl, "paginator", paginator);
 				}
-				else if (noPages) // Fix the paginator if the post xml and existing page are out of sink.
+				else if (noPages) // Fix the paginator if the post xml and existing page are out of sync.
 					fetchPages(pageUrl, "paginator", paginator);
 			}
 		}
@@ -1970,7 +1978,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var settingPath = settings.user;
 
 			for (var j = 0, spl = setting.length - 1; j < spl; j++)
-					settingPath = settingPath[setting[j]];
+				settingPath = settingPath[setting[j]];
 
 			settingPath[setting[j]] = value;
 		}
@@ -2998,67 +3006,66 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				if (isNumMetatag(searchTerm)) { // Parse numeric metatags and turn them into objects.
 					var tagArray = searchTerm.split(":");
-					var metaObject = {tagName:tagArray[0]};
+					var metaObject = {
+						tagName: tagArray[0],
+						greater: undefined,
+						less: undefined
+					};
 					var numSearch = tagArray[1];
 					var numArray;
-					var numOne;
-					var numTwo;
+					var greater;
+					var less;
 
 					if (bbbIsNum(numSearch)) // Exact number. (tag:#)
 						mode.push(searchTerm.bbbSpacePad());
 					else if (numSearch.indexOf("<=") === 0 || numSearch.indexOf("..") === 0) { // Less than or equal to. (tag:<=# & tag:..#)
-						numTwo = parseInt(numSearch.slice(2), 10);
+						less = parseInt(numSearch.slice(2), 10);
 
-						if (!isNaN(numTwo)) {
-							metaObject.greater = numOne;
-							metaObject.less = numTwo + 1;
+						if (!isNaN(less)) {
+							metaObject.less = less + 1;
 							mode.push(metaObject);
 						}
 					}
 					else if (numSearch.indexOf(">=") === 0) { // Greater than or equal to. (tag:>=#)
-						numOne = parseInt(numSearch.slice(2), 10);
+						greater = parseInt(numSearch.slice(2), 10);
 
-						if (!isNaN(numOne)) {
-							metaObject.greater = numOne - 1;
-							metaObject.less = numTwo;
+						if (!isNaN(greater)) {
+							metaObject.greater = greater - 1;
 							mode.push(metaObject);
 						}
 					}
 					else if (numSearch.indexOf("..") === numSearch.length - 2) { // Greater than or equal to. (tag:#..)
-						numOne = parseInt(numSearch.slice(0, -2), 10);
+						greater = parseInt(numSearch.slice(0, -2), 10);
 
-						if (!isNaN(numOne)) {
-							metaObject.greater = numOne - 1;
-							metaObject.less = numTwo;
+						if (!isNaN(greater)) {
+							metaObject.greater = greater - 1;
 							mode.push(metaObject);
 						}
 					}
 					else if (numSearch.charAt(0) === "<") { // Less than. (tag:<#)
-						numTwo = parseInt(numSearch.slice(1), 10);
+						less = parseInt(numSearch.slice(1), 10);
 
-						if (!isNaN(numTwo)) {
-							metaObject.greater = numOne;
-							metaObject.less = numTwo;
+						if (!isNaN(less)) {
+							metaObject.less = less;
 							mode.push(metaObject);
 						}
 					}
 					else if (numSearch.charAt(0) === ">") { // Greater than. (tag:>#)
-						numOne = parseInt(numSearch.slice(1), 10);
+						greater = parseInt(numSearch.slice(1), 10);
 
-						if (!isNaN(numOne)) {
-							metaObject.greater = numOne;
-							metaObject.less = numTwo;
+						if (!isNaN(greater)) {
+							metaObject.greater = greater;
 							mode.push(metaObject);
 						}
 					}
 					else if (numSearch.indexOf("..") > -1) { // Greater than or equal to and less than or equal to range. tag:#..#
 						numArray = numSearch.split("..");
-						numOne = parseInt(numArray[0], 10);
-						numTwo = parseInt(numArray[1], 10);
+						greater = parseInt(numArray[0], 10);
+						less = parseInt(numArray[1], 10);
 
-						if (!isNaN(numOne) && !isNaN(numTwo)) {
-							metaObject.greater = numOne - 1;
-							metaObject.less = numTwo + 1;
+						if (!isNaN(greater) && !isNaN(less)) {
+							metaObject.greater = greater - 1;
+							metaObject.less = less + 1;
 							mode.push(metaObject);
 						}
 					}
