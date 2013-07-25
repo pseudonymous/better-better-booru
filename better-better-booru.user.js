@@ -22,16 +22,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 */
 
 	/* Global Variables */
-	var bbbInfo = { // Container for misc info.
-		el: {} // Script elements.
-	};
-	var settings = { // Container for settings.
-		user: {},
-		el: {} // Menu elements
+	var bbb = { // Container for script info.
+		el: {}, // Script elements.
+		img: {}, // Post content info.
+		user: {}
 	};
 
 	// Initialize settings.
-	settings.options = {
+	bbb.options = {
 		bbb_version: "0",
 		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
@@ -72,7 +70,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		track_new_data: {viewed:0, viewing:1}
 	};
 
-	settings.sections = { // Setting sections and ordering.
+	bbb.sections = { // Setting sections and ordering.
 		browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count"], "Image Browsing"),
 		layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
@@ -97,51 +95,51 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	// Script variables.
 	// Global
-	var show_loli = settings.user.show_loli;
-	var show_shota = settings.user.show_shota;
-	var show_toddlercon = settings.user.show_toddlercon;
-	var show_deleted = settings.user.show_deleted; // Show all deleted posts.
-	var direct_downloads = settings.user.direct_downloads; // Allow download managers for thumbnail listings.
+	var show_loli = bbb.user.show_loli;
+	var show_shota = bbb.user.show_shota;
+	var show_toddlercon = bbb.user.show_toddlercon;
+	var show_deleted = bbb.user.show_deleted; // Show all deleted posts.
+	var direct_downloads = bbb.user.direct_downloads; // Allow download managers for thumbnail listings.
 
-	var custom_tag_borders = settings.user.custom_tag_borders; //
-	var custom_status_borders = settings.user.custom_status_borders; // Change the border colors of flagged, parent, child, deleted, and pending posts.
-	var single_color_borders = settings.user.single_color_borders; // Use simple single color borders.
-	var border_width = settings.user.border_width; // Set the thumbnail border width.
-	var clean_links = settings.user.clean_links; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
-	var autohide_sidebar = settings.user.autohide_sidebar; // Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus (ex: By pressing "Q" to focus on the search box).
+	var custom_tag_borders = bbb.user.custom_tag_borders; //
+	var custom_status_borders = bbb.user.custom_status_borders; // Change the border colors of flagged, parent, child, deleted, and pending posts.
+	var single_color_borders = bbb.user.single_color_borders; // Use simple single color borders.
+	var border_width = bbb.user.border_width; // Set the thumbnail border width.
+	var clean_links = bbb.user.clean_links; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
+	var autohide_sidebar = bbb.user.autohide_sidebar; // Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus (ex: By pressing "Q" to focus on the search box).
 
-	var bypass_api = settings.user.bypass_api; // Automatically bypass API features when they can't be used.
-	var manage_cookies = settings.user.manage_cookies; // Create cookies to completely stop notices.
-	var disable_status_message = settings.user.disable_status_message; // Don't display the BBB status message.
-	var override_account = settings.user.override_account; // Allow logged out settings to override account settings.
-	var track_new = settings.user.track_new; // Enable the new post tracker.
+	var bypass_api = bbb.user.bypass_api; // Automatically bypass API features when they can't be used.
+	var manage_cookies = bbb.user.manage_cookies; // Create cookies to completely stop notices.
+	var disable_status_message = bbb.user.disable_status_message; // Don't display the BBB status message.
+	var override_account = bbb.user.override_account; // Allow logged out settings to override account settings.
+	var track_new = bbb.user.track_new; // Enable the new post tracker.
 
-	var hide_sign_up_notice = settings.user.hide_sign_up_notice;
-	var hide_upgrade_notice = settings.user.hide_upgrade_notice;
-	var hide_tos_notice = settings.user.hide_tos_notice;
-	var hide_original_notice = settings.user.hide_original_notice; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
-	var hide_advertisements = settings.user.hide_advertisements;
-	var hide_ban_notice = settings.user.hide_ban_notice;
+	var hide_sign_up_notice = bbb.user.hide_sign_up_notice;
+	var hide_upgrade_notice = bbb.user.hide_upgrade_notice;
+	var hide_tos_notice = bbb.user.hide_tos_notice;
+	var hide_original_notice = bbb.user.hide_original_notice; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
+	var hide_advertisements = bbb.user.hide_advertisements;
+	var hide_ban_notice = bbb.user.hide_ban_notice;
 
 	// Search
-	var arrow_nav = settings.user.arrow_nav; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
-	var search_add = settings.user.search_add; // Add the + and - shortcuts to the tag list for including or excluding search terms.
-	var thumbnail_count = settings.user.thumbnail_count; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
+	var arrow_nav = bbb.user.arrow_nav; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
+	var search_add = bbb.user.search_add; // Add the + and - shortcuts to the tag list for including or excluding search terms.
+	var thumbnail_count = bbb.user.thumbnail_count; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
 
 	// Post
-	var alternate_image_swap = settings.user.alternate_image_swap; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
-	var image_resize = settings.user.image_resize; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
-	var image_resize_mode = settings.user.image_resize_mode; // Choose how to scale down large images when initially loading them.
-	var image_drag_scroll = settings.user.image_drag_scroll; // Allow held left clicks on the image to drag the image around.
-	var load_sample_first = settings.user.load_sample_first; // Use sample images when available. When logged in, your account settings will override this setting.
-	var remove_tag_headers = settings.user.remove_tag_headers; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
-	var post_tag_titles = settings.user.post_tag_titles; // Revert post page titles to the more detailed full list of tags
-	var autoscroll_image = settings.user.autoscroll_image; // Automatically position the image when initially loading it.
+	var alternate_image_swap = bbb.user.alternate_image_swap; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
+	var image_resize = bbb.user.image_resize; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
+	var image_resize_mode = bbb.user.image_resize_mode; // Choose how to scale down large images when initially loading them.
+	var image_drag_scroll = bbb.user.image_drag_scroll; // Allow held left clicks on the image to drag the image around.
+	var load_sample_first = bbb.user.load_sample_first; // Use sample images when available. When logged in, your account settings will override this setting.
+	var remove_tag_headers = bbb.user.remove_tag_headers; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
+	var post_tag_titles = bbb.user.post_tag_titles; // Revert post page titles to the more detailed full list of tags
+	var autoscroll_image = bbb.user.autoscroll_image; // Automatically position the image when initially loading it.
 
 	// Stored data
-	var status_borders = settings.user.status_borders;
-	var tag_borders = settings.user.tag_borders;
-	var track_new_data = settings.user.track_new_data;
+	var status_borders = bbb.user.status_borders;
+	var tag_borders = bbb.user.tag_borders;
+	var track_new_data = bbb.user.track_new_data;
 
 	// Blacklist
 	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
@@ -149,7 +147,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	// disable the script blacklist. When logged in, your account blacklist will override this blacklist.
 	// Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the
 	// following case: "spoilers, blood death"
-	var script_blacklisted_tags = settings.user.script_blacklisted_tags;
+	var script_blacklisted_tags = bbb.user.script_blacklisted_tags;
 
 	// List of valid URL's to parse for. Feel free to suggest more!
 	var valid_urls = [
@@ -344,6 +342,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var imgContainer = document.getElementById("image-container");
 		var object = imgContainer.getElementsByTagName("object")[0];
 		var infoTextDim = /\((\d+)x(\d+)\)/.exec(infoLink.parentNode.textContent);
+		var postId = fetchMeta("post-id");
 
 		if (img) { // Regular image.
 			imgHeight = Number(img.getAttribute("data-original-height"));
@@ -367,15 +366,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		var imgInfo = {
-			id: Number(fetchMeta("post-id")),
+			id: Number(postId),
 			file_ext: ext,
 			md5: md5,
 			url: infoHref,
-			fav_count: Number(document.getElementById("favcount-for-post-" + fetchMeta("post-id")).textContent),
+			fav_count: Number(document.getElementById("favcount-for-post-" + postId).textContent),
 			has_children: (document.getElementsByClassName("notice-parent").length ? true : false),
 			parent_id: (childNotice.length ? Number(/\d+/.exec(childNotice[0].children[0].href)[0]) : null),
 			rating: /Rating:\s*(\w)/.exec(infoSection.textContent)[1].toLowerCase(),
-			score: Number(document.getElementById("score-for-post-" + fetchMeta("post-id")).textContent),
+			score: Number(document.getElementById("score-for-post-" + postId).textContent),
 			tag_string: fetchMeta("tags"),
 			uploader_name: /Uploader:\s*(.+?)\s*»/.exec(infoSection.textContent)[1],
 			is_deleted: (fetchMeta("post-is-deleted") === "false" ? false : true),
@@ -408,15 +407,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						childSpan.innerHTML = xmlhttp.responseText;
 
 						if (mode === "paginator") { // Fetch updated paginator for first page of searches.
-							target = optArg;
+							target = document.getElementsByClassName("paginator")[0];
 							newContent = childSpan.getElementsByClassName("paginator")[0];
 
 							if (newContent)
 								target.parentNode.replaceChild(newContent, target);
 						}
 						else if (mode === "comments") { // Fetch post to get comments
-							var post = optArg[0];
-							var postId = optArg[1];
+							var post = optArg.post;
+							var postId = optArg.post_id;
 							var commentSection = childSpan.getElementsByClassName("comments-for-post")[0];
 							var comments = commentSection.getElementsByClassName("comment");
 							var numComments = comments.length;
@@ -577,10 +576,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					else
 						pageUrl += "?limit=" + thumbnail_count;
 
-					fetchPages(pageUrl, "paginator", paginator);
+					fetchPages(pageUrl, "paginator");
 				}
 				else if (noPages) // Fix the paginator if the post xml and existing page are out of sync.
-					fetchPages(pageUrl, "paginator", paginator);
+					fetchPages(pageUrl, "paginator");
 			}
 		}
 		else
@@ -747,7 +746,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			if (!alternate_image_swap) { // Make notes toggle when clicking the image.
 				img.addEventListener("click", function() {
-					if (!bbbInfo.dragScroll.moved)
+					if (!bbb.dragScroll.moved)
 						Danbooru.Note.Box.toggle_all();
 				}, false);
 			}
@@ -769,7 +768,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Make clicking the image swap between the original and sample image when available.
 				if (post.has_large) {
 					img.addEventListener("click", function(event) {
-						if (!bbbInfo.dragScroll.moved) {
+						if (!bbb.dragScroll.moved) {
 							if (img.src.indexOf("/sample/") > -1) {
 								if (swapInit)
 									swapInit = false;
@@ -804,7 +803,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				event.preventDefault();
 			}, false);
 			resizeListWidth.appendChild(resizeLinkWidth);
-			bbbInfo.el.resizeLinkWidth = resizeLinkWidth;
+			bbb.el.resizeLinkWidth = resizeLinkWidth;
 
 			var resizeListAll = document.createElement("li");
 			resizeFrag.appendChild(resizeListAll);
@@ -817,7 +816,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				event.preventDefault();
 			}, false);
 			resizeListAll.appendChild(resizeLinkAll);
-			bbbInfo.el.resizeLinkAll = resizeLinkAll;
+			bbb.el.resizeLinkAll = resizeLinkAll;
 
 			resizeListItem.parentNode.replaceChild(resizeFrag, resizeListItem);
 
@@ -903,7 +902,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					existingPost.parentNode.insertBefore(childSpan.firstChild, existingPost);
 
 				// Get the comments.
-				fetchPages("/posts/" + post.id, "comments", [existingPosts[eci], post.id]);
+				fetchPages("/posts/" + post.id, "comments", {post: existingPosts[eci], post_id: post.id});
 			}
 
 			eci++;
@@ -955,7 +954,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var menu = document.createElement("div");
 		menu.id = "bbb_menu";
 		menu.style.visibility = "hidden";
-		settings.el.menu = menu;
+		bbb.el.menu = menu;
 
 		var header = document.createElement("h1");
 		header.innerHTML = "Better Better Booru Settings";
@@ -980,7 +979,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		generalTab.innerHTML = "General";
 		generalTab.className = "bbb-tab bbb-active-tab";
 		tabBar.appendChild(generalTab);
-		settings.el.generalTab = generalTab;
+		bbb.el.generalTab = generalTab;
 
 		var borderTab = document.createElement("a");
 		borderTab.name = "borders";
@@ -988,7 +987,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		borderTab.innerHTML = "Borders";
 		borderTab.className = "bbb-tab";
 		tabBar.appendChild(borderTab);
-		settings.el.borderTab = borderTab;
+		bbb.el.borderTab = borderTab;
 
 		var prefTab = document.createElement("a");
 		prefTab.name = "pref";
@@ -996,7 +995,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		prefTab.innerHTML = "Preferences";
 		prefTab.className = "bbb-tab";
 		tabBar.appendChild(prefTab);
-		settings.el.prefTab = prefTab;
+		bbb.el.prefTab = prefTab;
 
 		var helpTab = document.createElement("a");
 		helpTab.name = "help";
@@ -1004,48 +1003,48 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		helpTab.innerHTML = "Help";
 		helpTab.className = "bbb-tab";
 		tabBar.appendChild(helpTab);
-		settings.el.helpTab = helpTab;
+		bbb.el.helpTab = helpTab;
 
 		var scrollDiv = document.createElement("div");
 		scrollDiv.className = "bbb-scroll-div";
 		menu.appendChild(scrollDiv);
 		scrollDiv.scrollTop = 0;
-		settings.el.scrollDiv = scrollDiv;
+		bbb.el.scrollDiv = scrollDiv;
 
 		var generalPage = document.createElement("div");
 		generalPage.className = "bbb-page";
 		generalPage.style.display = "block";
 		scrollDiv.appendChild(generalPage);
-		settings.el.generalPage = generalPage;
+		bbb.el.generalPage = generalPage;
 
-		generalPage.bbbSection(settings.sections.browse);
-		generalPage.bbbSection(settings.sections.image_control);
-		generalPage.bbbSection(settings.sections.sidebar);
-		generalPage.bbbSection(settings.sections.misc);
-		generalPage.bbbSection(settings.sections.layout);
-		generalPage.bbbSection(settings.sections.logged_out);
+		generalPage.bbbSection(bbb.sections.browse);
+		generalPage.bbbSection(bbb.sections.image_control);
+		generalPage.bbbSection(bbb.sections.sidebar);
+		generalPage.bbbSection(bbb.sections.misc);
+		generalPage.bbbSection(bbb.sections.layout);
+		generalPage.bbbSection(bbb.sections.logged_out);
 
 		var bordersPage = document.createElement("div");
 		bordersPage.className = "bbb-page";
 		scrollDiv.appendChild(bordersPage);
-		settings.el.bordersPage = bordersPage;
+		bbb.el.bordersPage = bordersPage;
 
-		bordersPage.bbbSection(settings.sections.border_options);
-		bordersPage.bbbSection(settings.sections.status_borders);
-		bordersPage.bbbSection(settings.sections.tag_borders);
+		bordersPage.bbbSection(bbb.sections.border_options);
+		bordersPage.bbbSection(bbb.sections.status_borders);
+		bordersPage.bbbSection(bbb.sections.tag_borders);
 
 		var prefPage = document.createElement("div");
 		prefPage.className = "bbb-page";
 		scrollDiv.appendChild(prefPage);
-		settings.el.prefPage = prefPage;
+		bbb.el.prefPage = prefPage;
 
-		prefPage.bbbSection(settings.sections.script_settings);
+		prefPage.bbbSection(bbb.sections.script_settings);
 		prefPage.bbbBackupSection();
 
 		var helpPage = document.createElement("div");
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
-		settings.el.helpPage = helpPage;
+		bbb.el.helpPage = helpPage;
 
 		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail match rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values (id, score, favcount, width, and height) can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the UserScripts forums located <a target="_blank" href="http://userscripts.org/scripts/discuss/100614">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
@@ -1092,12 +1091,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var tip = document.createElement("div");
 		tip.className = "bbb-expl";
 		menu.appendChild(tip);
-		settings.el.tip = tip;
+		bbb.el.tip = tip;
 
 		var tagEditBlocker = document.createElement("div");
 		tagEditBlocker.className = "bbb-edit-blocker";
 		menu.appendChild(tagEditBlocker);
-		settings.el.tagEditBlocker = tagEditBlocker;
+		bbb.el.tagEditBlocker = tagEditBlocker;
 
 		var tagEditBox = document.createElement("div");
 		tagEditBox.className = "bbb-edit-box";
@@ -1116,7 +1115,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var tagEditArea = document.createElement("textarea");
 		tagEditArea.className = "bbb-edit-area";
 		tagEditBox.appendChild(tagEditArea);
-		settings.el.tagEditArea = tagEditArea;
+		bbb.el.tagEditArea = tagEditArea;
 
 		var tagEditOk = document.createElement("a");
 		tagEditOk.innerHTML = "OK";
@@ -1124,7 +1123,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		tagEditOk.className = "bbb-button";
 		tagEditOk.addEventListener("click", function(event) {
 			var tags = tagEditArea.value.replace(/\r?\n/g, "").replace(/,(\S)/g, ", $1").bbbSpaceClean();
-			var args = bbbInfo.tagEdit;
+			var args = bbb.tagEdit;
 
 			tagEditBlocker.style.display = "none";
 			args.input.value = tags;
@@ -1208,7 +1207,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 		}
 		else if (section.type === "border") {
-			var borderSettings = settings.user[section.settings];
+			var borderSettings = bbb.user[section.settings];
 
 			for (var i = 0, bsl = borderSettings.length; i < bsl; i++) {
 				var newBorderOption = createBorderOption(borderSettings, i);
@@ -1232,8 +1231,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	};
 
 	function createOption(settingName) {
-		var optionObject = settings.options[settingName];
-		var userSetting = settings.user[settingName];
+		var optionObject = bbb.options[settingName];
+		var userSetting = bbb.user[settingName];
 
 		var label = document.createElement("label");
 		label.className = "bbb-general-label";
@@ -1303,7 +1302,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				item.addEventListener("change", function() {
 					var selected = this.value;
-					settings.user[settingName] = (bbbIsNum(selected) ? Number(selected) : selected);
+					bbb.user[settingName] = (bbbIsNum(selected) ? Number(selected) : selected);
 				}, false);
 				itemFrag.appendChild(item);
 				break;
@@ -1312,7 +1311,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 				item.type = "checkbox";
 				item.checked = userSetting;
-				item.addEventListener("click", function() { settings.user[settingName] = this.checked; }, false);
+				item.addEventListener("click", function() { bbb.user[settingName] = this.checked; }, false);
 				itemFrag.appendChild(item);
 				break;
 			case "text":
@@ -1320,7 +1319,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 				item.type = "text";
 				item.value = userSetting;
-				item.addEventListener("change", function() { settings.user[settingName] = this.value.bbbSpaceClean(); }, false);
+				item.addEventListener("change", function() { bbb.user[settingName] = this.value.bbbSpaceClean(); }, false);
 				itemFrag.appendChild(item);
 
 				if (optionObject.tagEditMode) {
@@ -1329,7 +1328,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					tagExpand.className = "bbb-edit-link";
 					tagExpand.innerHTML = "&raquo;";
 					tagExpand.addEventListener("click", function(event) {
-						tagEditWindow(item, settings.user, settingName);
+						tagEditWindow(item, bbb.user, settingName);
 						event.preventDefault();
 					}, false);
 					itemFrag.appendChild(tagExpand);
@@ -1340,7 +1339,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 				item.type = "text";
 				item.value = userSetting;
-				item.addEventListener("change", function() { settings.user[settingName] = Number(this.value); }, false);
+				item.addEventListener("change", function() { bbb.user[settingName] = Number(this.value); }, false);
 				itemFrag.appendChild(item);
 				break;
 			default:
@@ -1354,7 +1353,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		explLink.href = "#";
 		explLink.className = "bbb-expl-link";
 		explLink.addEventListener("click", function(event) { event.preventDefault(); }, false);
-		explLink.bbbSetTip(settings.options[settingName].expl);
+		explLink.bbbSetTip(bbb.options[settingName].expl);
 		inputSpan.appendChild(explLink);
 
 		return label;
@@ -1576,7 +1575,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var backupTextarea = document.createElement("textarea");
 		backupTextarea.className = "bbb-backup-area";
 		sectionDiv.appendChild(backupTextarea);
-		settings.el.backupTextarea = backupTextarea;
+		bbb.el.backupTextarea = backupTextarea;
 
 		var buttonDiv = document.createElement("div");
 		buttonDiv.className = "bbb-section-options";
@@ -1656,7 +1655,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			if (targetValue) {
 				var sectionTop = pageSections[targetValue.split("#")[1]].offsetTop;
-				settings.el.scrollDiv.scrollTop = sectionTop;
+				bbb.el.scrollDiv.scrollTop = sectionTop;
 				event.preventDefault();
 			}
 		}, false);
@@ -1770,30 +1769,30 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		borderElement.className += " bbb-no-highlight";
 		borderElement.nextSibling.className += " bbb-no-highlight";
-		settings.borderMode = {mode: "move", settings: borderSettings, section: section, index: index, element: borderElement};
+		bbb.borderEdit = {mode: "move", settings: borderSettings, section: section, index: index, element: borderElement};
 		section.className += " bbb-insert-highlight";
-		settings.el.menu.addEventListener("click", insertBorder, true);
+		bbb.el.menu.addEventListener("click", insertBorder, true);
 	}
 
 	function newBorder(borderSettings, borderElement) {
 		// Prepare to create a border and wait for the user to click where it'll go.
 		var section = borderElement.parentNode;
 
-		settings.borderMode = {mode: "new", settings: borderSettings, section: section};
+		bbb.borderEdit = {mode: "new", settings: borderSettings, section: section};
 		section.className += " bbb-insert-highlight";
-		settings.el.menu.addEventListener("click", insertBorder, true);
+		bbb.el.menu.addEventListener("click", insertBorder, true);
 	}
 
 	function insertBorder (event) {
 		// Place either a new or moved border where indicated.
 		var target = event.target;
-		var section = settings.borderMode.section;
+		var section = bbb.borderEdit.section;
 
 		if (target.className === "bbb-border-divider") {
 			var newIndex = Number(target.parentNode.getAttribute("data-bbb-index"));
-			var borderSettings = settings.borderMode.settings;
+			var borderSettings = bbb.borderEdit.settings;
 
-			if (settings.borderMode.mode === "new") { // Make a new border.
+			if (bbb.borderEdit.mode === "new") { // Make a new border.
 				var newBorderItem = new Border("", false, "#000000", "solid");
 				borderSettings.splice(newIndex, 0, newBorderItem);
 
@@ -1802,12 +1801,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				section.insertBefore(newBorderElement, section.children[newIndex]);
 
 			}
-			else if (settings.borderMode.mode === "move") { // Move the border.
-				var oldIndex = settings.borderMode.index;
+			else if (bbb.borderEdit.mode === "move") { // Move the border.
+				var oldIndex = bbb.borderEdit.index;
 
 				if (newIndex !== oldIndex) {
 					var borderItem = borderSettings.splice(oldIndex, 1)[0];
-					var borderElement = settings.borderMode.element;
+					var borderElement = bbb.borderEdit.element;
 
 					if (newIndex < oldIndex)
 						borderSettings.splice(newIndex, 0, borderItem);
@@ -1821,13 +1820,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		resetBorderElements(section);
 		section.className = section.className.replace(/\s?bbb-insert-highlight/gi, "");
-		settings.el.menu.removeEventListener("click", insertBorder, true);
+		bbb.el.menu.removeEventListener("click", insertBorder, true);
 	}
 
 	function showTip(event, text, styleString) {
 		var x = event.clientX;
 		var y = event.clientY;
-		var tip = settings.el.tip;
+		var tip = bbb.el.tip;
 		var topOffset = 0;
 
 		if (styleString)
@@ -1860,11 +1859,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function hideTip() {
-		settings.el.tip.removeAttribute("style");
+		bbb.el.tip.removeAttribute("style");
 	}
 
 	Element.prototype.bbbBorderPreview = function(borderItem) {
-		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/ssd/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + settings.user.border_width + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
+		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/ssd/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + bbb.user.border_width + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
 		this.addEventListener("mouseout", hideTip, false);
 	};
 
@@ -1879,22 +1878,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (tab === activeTab)
 			return;
 
-		activeTab.className = activeTab.className.replace(/bbb-active-tab/g, "");
-		settings.el[activeTab.name + "Page"].style.display = "none";
+		activeTab.className = activeTab.className.replace(/\s?bbb-active-tab/g, "");
+		bbb.el[activeTab.name + "Page"].style.display = "none";
+		bbb.el.scrollDiv.scrollTop = 0;
 		tab.className += " bbb-active-tab";
-		settings.el.scrollDiv.scrollTop = 0;
-		settings.el[tab.name + "Page"].style.display = "block";
+		bbb.el[tab.name + "Page"].style.display = "block";
 	}
 
 	function tagEditWindow(input, object, prop) {
-		settings.el.tagEditBlocker.style.display = "block";
-		settings.el.tagEditArea.value = input.value.replace(/(,\s*)/g, "$1\r\n\r\n");
-		bbbInfo.tagEdit = {input: input, object: object, prop: prop};
+		bbb.el.tagEditBlocker.style.display = "block";
+		bbb.el.tagEditArea.value = input.value.replace(/(,\s*)/g, "$1\r\n\r\n");
+		bbb.tagEdit = {input: input, object: object, prop: prop};
 	}
 
 	function adjustMenuHeight() {
-		var menu = settings.el.menu;
-		var scrollDiv = settings.el.scrollDiv;
+		var menu = bbb.el.menu;
+		var scrollDiv = bbb.el.scrollDiv;
 		var viewHeight = window.innerHeight;
 		var scrollDivDiff = menu.offsetHeight - scrollDiv.clientHeight;
 
@@ -1902,19 +1901,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function adjustMenuTimer() {
-		if (!adjustMenuTimeout && settings.el.scrollDiv)
+		if (!adjustMenuTimeout && bbb.el.scrollDiv)
 			var adjustMenuTimeout = window.setTimeout(function() { adjustMenuHeight(); }, 50);
 	}
 
 	function removeMenu() {
 		// Destroy the menu so that it gets rebuilt.
-		var menu = settings.el.menu;
+		var menu = bbb.el.menu;
 
 		if (!menu)
 			return;
 
 		menu.parentNode.removeChild(menu);
-		settings.el = {};
 	}
 
 	function loadSettings() {
@@ -1922,20 +1920,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (typeof(localStorage.bbb_settings) === "undefined")
 			loadDefaults();
 		else {
-			settings.user = JSON.parse(localStorage.bbb_settings);
-			checkUser(settings.user, settings.options);
+			bbb.user = JSON.parse(localStorage.bbb_settings);
+			checkUser(bbb.user, bbb.options);
 			convertSettings();
 		}
 	}
 
 	function loadDefaults() {
-		settings.user = {};
+		bbb.user = {};
 
-		for (var i in settings.options) {
-			if (typeof(settings.options[i].def) !== "undefined")
-				settings.user[i] = settings.options[i].def;
+		for (var i in bbb.options) {
+			if (typeof(bbb.options[i].def) !== "undefined")
+				bbb.user[i] = bbb.options[i].def;
 			else
-				settings.user[i] = settings.options[i];
+				bbb.user[i] = bbb.options[i];
 		}
 	}
 
@@ -1955,10 +1953,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function saveSettings() {
 		// Save the user settings to localStorage after making any neccessary checks/adjustments.
-		if (!settings.user.track_new && settings.user.track_new_data.viewed) // Reset new post tracking if it's disabled.
-			settings.user.track_new_data = settings.options.track_new_data.def;
+		if (!bbb.user.track_new && bbb.user.track_new_data.viewed) // Reset new post tracking if it's disabled.
+			bbb.user.track_new_data = bbb.options.track_new_data.def;
 
-		localStorage.bbb_settings = JSON.stringify(settings.user);
+		localStorage.bbb_settings = JSON.stringify(bbb.user);
 	}
 
 	function updateSettings() {
@@ -1968,7 +1966,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		for (var i = 0, al = arguments.length; i < al; i += 2) {
 			var setting = arguments[i].split(".");
 			var value = arguments[i + 1];
-			var settingPath = settings.user;
+			var settingPath = bbb.user;
 
 			for (var j = 0, spl = setting.length - 1; j < spl; j++)
 				settingPath = settingPath[setting[j]];
@@ -1981,7 +1979,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function convertSettings() {
 		// If the user settings are from an old version, attempt to convert some settings and update the version number. Settings will start conversion at the appropriate case and be allowed to run through every case after it until the end.
-		var mode = settings.user.bbb_version;
+		var mode = bbb.user.bbb_version;
 
 		if (isOldVersion(mode)) {
 			switch (mode) {
@@ -1989,14 +1987,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					break;
 			}
 
-			settings.user.bbb_version = settings.options.bbb_version;
+			bbb.user.bbb_version = bbb.options.bbb_version;
 		}
 	}
 
 	function createBackupText() {
 		// Create a plain text version of the settings.
-		var textarea = settings.el.backupTextarea;
-		textarea.value = "Better Better Booru v" + settings.user.bbb_version + " Backup (" + bbbTimestamp("y-m-d hh:mm:ss") + "):\r\n\r\n" + JSON.stringify(settings.user) + "\r\n";
+		var textarea = bbb.el.backupTextarea;
+		textarea.value = "Better Better Booru v" + bbb.user.bbb_version + " Backup (" + bbbTimestamp("y-m-d hh:mm:ss") + "):\r\n\r\n" + JSON.stringify(bbb.user) + "\r\n";
 		textarea.focus();
 		textarea.setSelectionRange(0,0);
 	}
@@ -2004,20 +2002,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function createBackupPage() {
 		// Open a new tab/window and place the setting text in it.
 		var backupWindow = window.open();
-		backupWindow.document.writeln('<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + settings.user.bbb_version + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(settings.user) + '</body></html>');
+		backupWindow.document.writeln('<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(bbb.user) + '</body></html>');
 		backupWindow.document.close();
 	}
 
 	function restoreBackupText() {
 		// Load the backup text provided into the script.
-		var textarea = settings.el.backupTextarea;
+		var textarea = bbb.el.backupTextarea;
 		var backupString = textarea.value.replace(/\r?\n/g, "").match(/{.+}/);
 
 		if (backupString) {
 			try {
 				removeMenu();
-				settings.user = JSON.parse(backupString);
-				checkUser(settings.user, settings.options);
+				bbb.user = JSON.parse(backupString);
+				checkUser(bbb.user, bbb.options);
 				convertSettings();
 				createMenu();
 				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"Save & Close\" to finalize the restore.");
@@ -2074,11 +2072,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function resizeImage(mode) {
 		// Custom resize post image script.
-		var currentMode = bbbInfo.resized;
+		var currentMode = bbb.img.resized;
 		var img = document.getElementById("image");
 		var imgContainer = document.getElementById("image-container");
-		var resizeLinkWidth = bbbInfo.el.resizeLinkWidth;
-		var resizeLinkAll = bbbInfo.el.resizeLinkAll;
+		var resizeLinkWidth = bbb.el.resizeLinkWidth;
+		var resizeLinkAll = bbb.el.resizeLinkAll;
 		var availableWidth = imgContainer.clientWidth;
 		var availableHeight = window.innerHeight - 40;
 		var imgStyleWidth = img.clientWidth;
@@ -2094,7 +2092,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (mode === "none" || mode === currentMode || (mode === "width" && widthRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) {
 			img.style.width = imgWidth + "px";
 			img.style.height = imgHeight + "px";
-			bbbInfo.resized = "none";
+			bbb.img.resized = "none";
 			resizeLinkWidth.style.fontWeight = "normal";
 			resizeLinkAll.style.fontWeight = "normal";
 			Danbooru.Note.Box.scale_all();
@@ -2106,7 +2104,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			ratio = widthRatio;
 			img.style.width = imgWidth * ratio + "px";
 			img.style.height = imgHeight * ratio + "px";
-			bbbInfo.resized = "width";
+			bbb.img.resized = "width";
 			resizeLinkWidth.style.fontWeight = "bold";
 			resizeLinkAll.style.fontWeight = "normal";
 			Danbooru.Note.Box.scale_all();
@@ -2118,7 +2116,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			ratio = (widthRatio < heightRatio ? widthRatio : heightRatio);
 			img.style.width = imgWidth * ratio + "px";
 			img.style.height = imgHeight * ratio + "px";
-			bbbInfo.resized = "all";
+			bbb.img.resized = "all";
 			resizeLinkWidth.style.fontWeight = "normal";
 			resizeLinkAll.style.fontWeight = "bold";
 			Danbooru.Note.Box.scale_all();
@@ -2937,7 +2935,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function thumbTagMatch(postInfo, tag) {
 		// Test thumbnail info for a tag match.
-		if (typeof(tag) === "string") { // Check regular tags and metatags with one possible value.
+		if (typeof(tag) === "string") { // Check regular tags and metatags with string values.
 			if (postInfo.tags.indexOf(tag) > -1)
 				return true;
 			else
@@ -2946,14 +2944,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (tag instanceof RegExp) { // Check wildcard tags.
 			return tag.test(postInfo.tags);
 		}
-		else if (typeof(tag) === "object") { // Check numeric metatags with more than one value.
+		else if (typeof(tag) === "object") { // Check numeric metatags.
 			var tagsMetaValue = postInfo[tag.tagName];
 
-			if (tag.greater !== undefined && tagsMetaValue <= tag.greater)
-				return false;
+			if (tag.equals !== undefined) {
+				if (tagsMetaValue !== tag.equals)
+					return false;
+			}
+			else {
+				if (tag.greater !== undefined && tagsMetaValue <= tag.greater)
+					return false;
 
-			if (tag.less !== undefined && tagsMetaValue >= tag.less)
-				return false;
+				if (tag.less !== undefined && tagsMetaValue >= tag.less)
+					return false;
+			}
 
 			return true;
 		}
@@ -3001,17 +3005,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					var tagArray = searchTerm.split(":");
 					var metaObject = {
 						tagName: tagArray[0],
+						equals: undefined,
 						greater: undefined,
 						less: undefined
 					};
 					var numSearch = tagArray[1];
 					var numArray;
+					var equals;
 					var greater;
 					var less;
 
-					if (bbbIsNum(numSearch)) // Exact number. (tag:#)
-						mode.push(searchTerm.bbbSpacePad());
-					else if (numSearch.indexOf("<=") === 0 || numSearch.indexOf("..") === 0) { // Less than or equal to. (tag:<=# & tag:..#)
+					if (numSearch.indexOf("<=") === 0 || numSearch.indexOf("..") === 0) { // Less than or equal to. (tag:<=# & tag:..#)
 						less = parseInt(numSearch.slice(2), 10);
 
 						if (!isNaN(less)) {
@@ -3027,7 +3031,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.indexOf("..") === numSearch.length - 2) { // Greater than or equal to. (tag:#..)
+					else if (numSearch.length > 2 && numSearch.indexOf("..") === numSearch.length - 2) { // Greater than or equal to. (tag:#..)
 						greater = parseInt(numSearch.slice(0, -2), 10);
 
 						if (!isNaN(greater)) {
@@ -3059,6 +3063,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						if (!isNaN(greater) && !isNaN(less)) {
 							metaObject.greater = greater - 1;
 							metaObject.less = less + 1;
+							mode.push(metaObject);
+						}
+					}
+					else { // Exact number. (tag:#)
+						equals = parseInt(numSearch, 10);
+
+						if (!isNaN(equals)) {
+							metaObject.equals = equals;
 							mode.push(metaObject);
 						}
 					}
@@ -3105,36 +3117,36 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var statusDiv = document.createElement("div");
 		statusDiv.className = "bbb-status";
 		document.body.appendChild(statusDiv);
-		bbbInfo.el.status = statusDiv;
-		bbbInfo.statusCount = 0;
+		bbb.el.status = statusDiv;
+		bbb.statusCount = 0;
 	}
 
 	function bbbStatus(mode) {
 		// Updates the BBB status message.
 		if (!disable_status_message) {
-			var status = bbbInfo.el.status;
+			var status = bbb.el.status;
 
 			if (mode === "image") { // Status mode for loading thumbnails and hidden images.
 				status.style.display = "block";
 				status.innerHTML = "Loading image info...";
-				bbbInfo.statusCount++;
+				bbb.statusCount++;
 			}
 			else if (mode === "comment") { // Status mode for loading hidden comments.
 				status.style.display = "block";
 				status.innerHTML = "Loading comment info...";
-				bbbInfo.statusCount++;
+				bbb.statusCount++;
 			}
 			else if (mode === "loaded") { // Status mode for successful requests. Hides itself automatically.
-				bbbInfo.statusCount--;
+				bbb.statusCount--;
 
-				if (bbbInfo.statusCount === 0) {
+				if (bbb.statusCount === 0) {
 					status.style.display = "block";
 					status.innerHTML = "Loaded!";
 					window.setTimeout( function() { bbbStatus("clear"); }, 1500);
 				}
 			}
 			else if (mode === "error") { // Status mode for unsuccessful requests. Hides itself automatically.
-				bbbInfo.statusCount = -9000;
+				bbb.statusCount = -9000;
 				status.style.display = "block";
 				status.innerHTML = "Error.";
 				window.setTimeout( function() { bbbStatus("clear"); }, 1500);
@@ -3171,7 +3183,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function isOldVersion(ver) {
 		// Takes the provided version and compares it to the script version. Returns true if the provided version is older than the script version.
 		var userNums = ver.split(".");
-		var scriptNums = settings.options.bbb_version.split(".");
+		var scriptNums = bbb.options.bbb_version.split(".");
 
 		for (var i = 0, unl = userNums.length; i < unl; i++) {
 			var userNum = (userNums[i] ? Number(userNums[i]) : 0);
@@ -3185,14 +3197,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function dragScrollInit() {
-		bbbInfo.dragScroll = {
+		bbb.dragScroll = {
 			moved: false,
 			translate: Danbooru.Note.TranslationMode.active,
 			lastX: undefined,
 			lastY: undefined
 		};
 
-		if (!bbbInfo.dragScroll.translate)
+		if (!bbb.dragScroll.translate)
 			dragScrollEnable();
 		else
 			dragScrollDisable();
@@ -3209,13 +3221,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function dragScrollToggle() {
-		if (!bbbInfo.dragScroll.translate) {
+		if (!bbb.dragScroll.translate) {
 			dragScrollDisable();
-			bbbInfo.dragScroll.translate = true;
+			bbb.dragScroll.translate = true;
 		}
 		else {
 			dragScrollEnable();
-			bbbInfo.dragScroll.translate = false;
+			bbb.dragScroll.translate = false;
 		}
 	}
 
@@ -3237,9 +3249,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function dragScrollOn(event) {
 		if (event.button === 0) {
-			bbbInfo.dragScroll.lastX = event.clientX;
-			bbbInfo.dragScroll.lastY = event.clientY;
-			bbbInfo.dragScroll.moved = false;
+			bbb.dragScroll.lastX = event.clientX;
+			bbb.dragScroll.lastY = event.clientY;
+			bbb.dragScroll.moved = false;
 
 			document.addEventListener("mousemove", dragScrollMove, false);
 			document.addEventListener("mouseup", dragScrollOff, false);
@@ -3250,11 +3262,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var newX = event.clientX;
 		var newY = event.clientY;
 
-		window.scrollBy(bbbInfo.dragScroll.lastX - newX, bbbInfo.dragScroll.lastY - newY);
+		window.scrollBy(bbb.dragScroll.lastX - newX, bbb.dragScroll.lastY - newY);
 
-		bbbInfo.dragScroll.lastX = newX;
-		bbbInfo.dragScroll.lastY = newY;
-		bbbInfo.dragScroll.moved = true;
+		bbb.dragScroll.lastX = newX;
+		bbb.dragScroll.lastY = newY;
+		bbb.dragScroll.moved = true;
 	}
 
 	function dragScrollOff(event) {
@@ -3369,8 +3381,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function trackNewLoad() {
 		// Create the search URL and load it.
-		var info = settings.user.track_new_data;
-		var limitNum = settings.user.thumbnail_count || thumbnail_count_default;
+		var info = bbb.user.track_new_data;
+		var limitNum = bbb.user.thumbnail_count || thumbnail_count_default;
 		var savedPage = Math.ceil((info.viewing - limitNum) / limitNum) + 1;
 
 		if (info.viewed)
@@ -3383,9 +3395,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Reinitialize settings/Mark all viewed.
 		loadSettings();
 
-		var limitNum = settings.user.thumbnail_count || thumbnail_count_default;
+		var limitNum = bbb.user.thumbnail_count || thumbnail_count_default;
 
-		settings.user.track_new_data = settings.options.track_new_data.def;
+		bbb.user.track_new_data = bbb.options.track_new_data.def;
 		saveSettings();
 
 		danbNotice("Better Better Booru: Reinitializing new post tracking. Please wait.");
@@ -3396,8 +3408,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Mark the current images and older as viewed.
 		loadSettings();
 
-		var info = settings.user.track_new_data;
-		var limitNum = getVar("limit") || settings.user.thumbnail_count || thumbnail_count_default;
+		var info = bbb.user.track_new_data;
+		var limitNum = getVar("limit") || bbb.user.thumbnail_count || thumbnail_count_default;
 		var posts = document.getElementsByClassName("post-preview");
 		var lastPost = posts[posts.length - 1];
 		var lastId = (lastPost ? Number(lastPost.getAttribute("data-id")) : null );
@@ -3412,7 +3424,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			saveSettings();
 
 			danbNotice("Better Better Booru: Posts marked as viewed. Please wait while the pages are updated.");
-			location.href = "/posts?new_posts=list&tags=order:id_asc+id:>" + settings.user.track_new_data.viewed + "&page=1&limit=" + limitNum;
+			location.href = "/posts?new_posts=list&tags=order:id_asc+id:>" + bbb.user.track_new_data.viewed + "&page=1&limit=" + limitNum;
 		}
 	}
 
