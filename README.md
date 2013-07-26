@@ -6,6 +6,27 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version ?.?:
+ * Added a preferences tab for options directly related to how the script works.
+ * Added a help tab for information not well suited to other tabs or tooltips.
+ * Added a "manage cookies" option to allow the improved hiding of various notices.
+ * Added a "bypass api" option to allow automatic handling of the API features for users for that log out regularly.
+ * Added an "image drag scrolling" option to allow for finer control over the position/scrolling of an image via click and drag control.
+ * Added an "auto-scroll image" option to allow for automatic positioning of images/flash upon opening a page.
+ * Added an "override account settings" option to allow logged out settings to override account settings when logged in.
+ * Added a "track new posts" option for providing an easy method of keeping track of new posts.
+ * Added a backup/restore section for importing and exporting a user's settings.
+ * Added a status message for indicating when information is being requested from Danbooru.
+ * Added a tag editor window for easier tag editing.
+ * Upgraded the border options to support adding/deleting tag borders, arranging borders by priority, changing outline styles, individual enabling/disabling, and previewing.
+ * Upgraded image resizing to allow for resizing by window width and height in addition to Danbooru's current resizing by width only. There are now two links for resizing images in the post sidebar's options section and a "resize image mode" option added to the settings to allow a choice in how the automatic image resizing works.
+ * Updated to support Danbooru's intro page.
+ * Updated to support toddlercon being added to the censored/hidden tag list.
+ * Updated "thumbnail count" to support the notes post listing.
+ * Updated "direct downloads" to support the popular and pool post listings as was originally intended.
+ * Fixed "autohide sidebar" and "thumbnail count" support for Danbooru's tag autocompletion.
+ * Fixed the displaying of censored/hidden posts from banned artists.
+ * Removed the favorites listing link since the username list is no longer a requestable feature.
 * Version 5.4.1:
  * Fixed secondary border blank space on loading images with no primary status border.
 * Version 5.4:
