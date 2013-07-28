@@ -18,6 +18,7 @@ Changelog
  * Added a backup/restore section for importing and exporting a user's settings.
  * Added a status message for indicating when information is being requested from Danbooru.
  * Added a tag editor window for easier tag editing.
+ * Upgraded the menu display with various improvements.
  * Upgraded the border options to support adding/deleting tag borders, arranging borders by priority, changing outline styles, individual enabling/disabling, and previewing.
  * Upgraded image resizing to allow for resizing by window width and height in addition to Danbooru's current resizing by width only. There are now two links for resizing images in the post sidebar's options section and a "resize image mode" option added to the settings to allow a choice in how the automatic image resizing works.
  * Updated to support Danbooru's intro page.
