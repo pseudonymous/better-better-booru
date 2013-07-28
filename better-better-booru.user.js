@@ -38,15 +38,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
 		bypass_api: new Option("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
 		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br><u>Note</u></br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
-		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail colors for deleted, flagged, pending, parent, and child images."),
+		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail borders for deleted, flagged, pending, parent, and child images."),
 		custom_tag_borders: new Option("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to images with specific tags."),
 		direct_downloads: new Option("checkbox", false, "Direct Downloads", "Allow download managers to download the images displayed in the search, pool, and popular listings."),
-		disable_status_message: new Option("checkbox", false, "Disable Status Message", "When requesting information from Danbooru, do not display the request status in the lower right corner."),
+		enable_status_message: new Option("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
 		hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
 		hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"viewing original\" notice."),
 		hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
-		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Terms of Service agreement notice."),
+		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Danbooru terms of service agreement notice."),
 		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
 		image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image<br><br><u>Note</u><br>This option is automatically disabled when translation mode is active."),
 		image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Fit images to window\" setting will override this option."),
@@ -77,7 +77,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
 		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
 		misc: new Section("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
-		script_settings: new Section("general", ["bypass_api", "manage_cookies", "disable_status_message", "override_account"], "Script Settings"),
+		script_settings: new Section("general", ["bypass_api", "manage_cookies", "enable_status_message", "override_account"], "Script Settings"),
 		border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
 		status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 		tag_borders: new Section("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
@@ -91,7 +91,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gUrlQuery = location.search; // URL query string only
 	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
 
-	var thumbnail_count_default = 20; // Number of thumbnails BBB should expect Danbooru to return by default.
 
 	// Script variables.
 	// Global
@@ -110,7 +109,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	var bypass_api = bbb.user.bypass_api; // Automatically bypass API features when they can't be used.
 	var manage_cookies = bbb.user.manage_cookies; // Create cookies to completely stop notices.
-	var disable_status_message = bbb.user.disable_status_message; // Don't display the BBB status message.
+	var enable_status_message = bbb.user.enable_status_message; // Don't display the BBB status message.
 	var override_account = bbb.user.override_account; // Allow logged out settings to override account settings.
 	var track_new = bbb.user.track_new; // Enable the new post tracker.
 
@@ -125,6 +124,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var arrow_nav = bbb.user.arrow_nav; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
 	var search_add = bbb.user.search_add; // Add the + and - shortcuts to the tag list for including or excluding search terms.
 	var thumbnail_count = bbb.user.thumbnail_count; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
+	var thumbnail_count_default = 20; // Number of thumbnails BBB should expect Danbooru to return by default.
 
 	// Post
 	var alternate_image_swap = bbb.user.alternate_image_swap; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
@@ -184,7 +184,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	injectSettings();
 
-	if (!disable_status_message)
+	if (enable_status_message)
 		bbbStatusInit();
 
 	if (!noXML()) {
@@ -597,7 +597,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function parsePost(xml) {
 		var post = formatJSON(xml);
-		var container = document.getElementById("image-container");
+		var imgContainer = document.getElementById("image-container");
 
 		if (!post.id)
 			return;
@@ -611,9 +611,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var altTxt = "";
 
 		if (post.file_ext === "swf") // Create flash object.
-			container.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
 		else if (!post.image_height) // Create manual download.
-			container.innerHTML = '<p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
+			imgContainer.innerHTML = '<p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
 		else { // Create image
 			var useSample = (checkSetting("default-image-size", "large", load_sample_first) && post.has_large);
 
@@ -630,7 +630,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				altTxt = post.md5;
 			}
 
-			container.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-parent-id="' + post.parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-parent-id="' + post.parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 			var img = document.getElementById("image");
 			var bbbLoader = document.getElementById("bbb-loader");
 
@@ -647,7 +647,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				bbbResizeNotice.style.position = "relative";
 				bbbResizeNotice.style.display = "none";
 				bbbResizeNotice.innerHTML = '<span id="bbb-sample-notice" style="display:none;">Resized to ' + Math.round(ratio * 100) + '% of original (<a href="' + post.file_url + '" id="bbb-original-link">view original</a>)</span><span id="bbb-original-notice" style="display:none;">Viewing original (<a href="' + post.large_file_url + '" id="bbb-sample-link">view sample</a>)</span> <span id="bbb-img-status"></span><span style="display: none;" class="close-button ui-icon ui-icon-closethick" id="close-original-notice"></span>';
-				container.parentNode.insertBefore(bbbResizeNotice, container);
+				imgContainer.parentNode.insertBefore(bbbResizeNotice, imgContainer);
 
 				var swapInit = true;
 				var sampleNotice = document.getElementById("bbb-sample-notice");
@@ -1046,7 +1046,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(helpPage);
 		bbb.el.helpPage = helpPage;
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail match rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values (id, score, favcount, width, and height) can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values (id, score, favcount, width, and height) can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the UserScripts forums located <a target="_blank" href="http://userscripts.org/scripts/discuss/100614">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
 
@@ -3123,7 +3123,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function bbbStatus(mode) {
 		// Updates the BBB status message.
-		if (!disable_status_message) {
+		if (enable_status_message) {
 			var status = bbb.el.status;
 
 			if (mode === "image") { // Status mode for loading thumbnails and hidden images.
@@ -3315,7 +3315,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var posts = document.getElementsByClassName("post-preview");
 			var firstPost = posts[0];
 
-			if (mode === "init"  && !info.viewed && !getVar("tags") && !getVar("page")) { // Initialize.
+			if (mode === "init" && !info.viewed && !getVar("tags") && !getVar("page")) { // Initialize.
 				if (firstPost) {
 					info.viewed = Number(firstPost.getAttribute("data-id"));
 					info.viewing = 1;
