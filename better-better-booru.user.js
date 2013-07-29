@@ -23,64 +23,63 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
-		el: {}, // Script elements.
+		el: { // Script elements.
+			menu:{} // Menu elements.
+		},
 		img: {}, // Post content info.
-		user: {}
-	};
-
-	// Initialize settings.
-	bbb.options = {
-		bbb_version: "0",
-		alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
-		arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
-		autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
-		autoscroll_image: new Option("checkbox", false, "Auto-scroll Image", "Position the image as close as possible to the left and top edges of the window viewport when initially loading an individiual post."),
-		border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
-		bypass_api: new Option("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
-		clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br><u>Note</u></br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
-		custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail borders for deleted, flagged, pending, parent, and child images."),
-		custom_tag_borders: new Option("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to images with specific tags."),
-		direct_downloads: new Option("checkbox", false, "Direct Downloads", "Allow download managers to download the images displayed in the search, pool, and popular listings."),
-		enable_status_message: new Option("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
-		hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
-		hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
-		hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"viewing original\" notice."),
-		hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
-		hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Danbooru terms of service agreement notice."),
-		hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
-		image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image<br><br><u>Note</u><br>This option is automatically disabled when translation mode is active."),
-		image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Fit images to window\" setting will override this option."),
-		image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (Default):width", "Width & Height:all"]}),
-		load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Default image width\" setting will override this option."),
-		manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
-		override_account: new Option("checkbox", false, "Override Account Settings", "Allow logged out settings to override account settings when logged in."),
-		post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
-		remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
-		script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death<br><br><u>Note</u><br>When logged in, the account's \"Blacklisted tags\" list will override this option.", {tagEditMode: true}),
-		search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
-		show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
-		show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
-		show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
-		show_toddlercon: new Option("checkbox", false, "Show Toddlercon", "Display toddlercon images in the search, pool, popular, comments, and notes listings."),
-		single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
-		thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
-		track_new:new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
-		status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
-		tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"]),
-		track_new_data: {viewed:0, viewing:1}
-	};
-
-	bbb.sections = { // Setting sections and ordering.
-		browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count"], "Image Browsing"),
-		layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
-		sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
-		image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
-		logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
-		misc: new Section("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
-		script_settings: new Section("general", ["bypass_api", "manage_cookies", "enable_status_message", "override_account"], "Script Settings"),
-		border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
-		status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
-		tag_borders: new Section("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
+		options: { // Setting options and data.
+			bbb_version: "0",
+			alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
+			arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
+			autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
+			autoscroll_image: new Option("checkbox", false, "Auto-scroll Image", "Position the image as close as possible to the left and top edges of the window viewport when initially loading an individiual post."),
+			border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
+			bypass_api: new Option("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
+			clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br><u>Note</u></br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
+			custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail borders for deleted, flagged, pending, parent, and child images."),
+			custom_tag_borders: new Option("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to images with specific tags."),
+			direct_downloads: new Option("checkbox", false, "Direct Downloads", "Allow download managers to download the images displayed in the search, pool, and popular listings."),
+			enable_status_message: new Option("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
+			hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
+			hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
+			hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"viewing original\" notice."),
+			hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
+			hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Danbooru terms of service agreement notice."),
+			hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
+			image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image<br><br><u>Note</u><br>This option is automatically disabled when translation mode is active."),
+			image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Fit images to window\" setting will override this option."),
+			image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (Default):width", "Width & Height:all"]}),
+			load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Default image width\" setting will override this option."),
+			manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
+			override_account: new Option("checkbox", false, "Override Account Settings", "Allow logged out settings to override account settings when logged in."),
+			post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
+			remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
+			script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death<br><br><u>Note</u><br>When logged in, the account's \"Blacklisted tags\" list will override this option.", {tagEditMode: true}),
+			search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
+			show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
+			show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
+			show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
+			show_toddlercon: new Option("checkbox", false, "Show Toddlercon", "Display toddlercon images in the search, pool, popular, comments, and notes listings."),
+			single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
+			thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
+			track_new:new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
+			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
+			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"]),
+			track_new_data: {viewed:0, viewing:1}
+		},
+		sections: { // Setting sections and ordering.
+			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count"], "Image Browsing"),
+			layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
+			sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
+			image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
+			logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
+			misc: new Section("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
+			script_settings: new Section("general", ["bypass_api", "manage_cookies", "enable_status_message", "override_account"], "Script Settings"),
+			border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
+			status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
+			tag_borders: new Section("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
+		},
+		user: {} // User settings.
 	};
 
 	loadSettings(); // Load user settings.
@@ -89,8 +88,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var gUrl = location.href.split("#", 1)[0]; // URL without the anchor
 	var gUrlPath = location.pathname; // URL path only
 	var gUrlQuery = location.search; // URL query string only
-	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page)
-
+	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page, intro = introduction page)
 
 	// Script variables.
 	// Global
@@ -379,7 +377,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			uploader_name: /Uploader:\s*(.+?)\s*»/.exec(infoSection.textContent)[1],
 			is_deleted: (fetchMeta("post-is-deleted") === "false" ? false : true),
 			is_flagged: (fetchMeta("post-is-flagged") === "false" ? false : true),
-			is_pending: (fetchMeta("post-is-approvable") === "false" ? false : true),
+			is_pending: (!document.getElementById("pending-approval-notice") ? false : true),
 			image_height: imgHeight,
 			image_width: imgWidth,
 			has_large: hasLarge,
@@ -540,7 +538,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			// eek, huge line.
-			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '"></a></article>';
+			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '"></a></article>';
 
 			if (direct_downloads)
 				thumb += '<a style="display: none;" href="' + post.file_url + '">Direct Download</a></span>';
@@ -630,7 +628,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				altTxt = post.md5;
 			}
 
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-parent-id="' + post.parent + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 			var img = document.getElementById("image");
 			var bbbLoader = document.getElementById("bbb-loader");
 
@@ -894,7 +892,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Create the new post.
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-user="' + post.uploader_name + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.preview_file_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.preview_file_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
@@ -936,8 +934,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
 		link.addEventListener("click", function(event) {
-			loadSettings();
-			createMenu();
+			if (!bbb.el.menu.window) {
+				loadSettings();
+				createMenu();
+			}
+
 			event.preventDefault();
 		}, false);
 
@@ -954,7 +955,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var menu = document.createElement("div");
 		menu.id = "bbb_menu";
 		menu.style.visibility = "hidden";
-		bbb.el.menu = menu;
+		bbb.el.menu.window = menu;
 
 		var header = document.createElement("h1");
 		header.innerHTML = "Better Better Booru Settings";
@@ -979,7 +980,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		generalTab.innerHTML = "General";
 		generalTab.className = "bbb-tab bbb-active-tab";
 		tabBar.appendChild(generalTab);
-		bbb.el.generalTab = generalTab;
+		bbb.el.menu.generalTab = generalTab;
 
 		var borderTab = document.createElement("a");
 		borderTab.name = "borders";
@@ -987,7 +988,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		borderTab.innerHTML = "Borders";
 		borderTab.className = "bbb-tab";
 		tabBar.appendChild(borderTab);
-		bbb.el.borderTab = borderTab;
+		bbb.el.menu.borderTab = borderTab;
 
 		var prefTab = document.createElement("a");
 		prefTab.name = "pref";
@@ -995,7 +996,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		prefTab.innerHTML = "Preferences";
 		prefTab.className = "bbb-tab";
 		tabBar.appendChild(prefTab);
-		bbb.el.prefTab = prefTab;
+		bbb.el.menu.prefTab = prefTab;
 
 		var helpTab = document.createElement("a");
 		helpTab.name = "help";
@@ -1003,19 +1004,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		helpTab.innerHTML = "Help";
 		helpTab.className = "bbb-tab";
 		tabBar.appendChild(helpTab);
-		bbb.el.helpTab = helpTab;
+		bbb.el.menu.helpTab = helpTab;
 
 		var scrollDiv = document.createElement("div");
 		scrollDiv.className = "bbb-scroll-div";
 		menu.appendChild(scrollDiv);
 		scrollDiv.scrollTop = 0;
-		bbb.el.scrollDiv = scrollDiv;
+		bbb.el.menu.scrollDiv = scrollDiv;
 
 		var generalPage = document.createElement("div");
 		generalPage.className = "bbb-page";
 		generalPage.style.display = "block";
 		scrollDiv.appendChild(generalPage);
-		bbb.el.generalPage = generalPage;
+		bbb.el.menu.generalPage = generalPage;
 
 		generalPage.bbbSection(bbb.sections.browse);
 		generalPage.bbbSection(bbb.sections.image_control);
@@ -1027,7 +1028,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var bordersPage = document.createElement("div");
 		bordersPage.className = "bbb-page";
 		scrollDiv.appendChild(bordersPage);
-		bbb.el.bordersPage = bordersPage;
+		bbb.el.menu.bordersPage = bordersPage;
 
 		bordersPage.bbbSection(bbb.sections.border_options);
 		bordersPage.bbbSection(bbb.sections.status_borders);
@@ -1036,7 +1037,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var prefPage = document.createElement("div");
 		prefPage.className = "bbb-page";
 		scrollDiv.appendChild(prefPage);
-		bbb.el.prefPage = prefPage;
+		bbb.el.menu.prefPage = prefPage;
 
 		prefPage.bbbSection(bbb.sections.script_settings);
 		prefPage.bbbBackupSection();
@@ -1044,7 +1045,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var helpPage = document.createElement("div");
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
-		bbb.el.helpPage = helpPage;
+		bbb.el.menu.helpPage = helpPage;
 
 		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>Metatags that use numerical values (id, score, favcount, width, and height) can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the UserScripts forums located <a target="_blank" href="http://userscripts.org/scripts/discuss/100614">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
@@ -1091,12 +1092,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var tip = document.createElement("div");
 		tip.className = "bbb-expl";
 		menu.appendChild(tip);
-		bbb.el.tip = tip;
+		bbb.el.menu.tip = tip;
 
 		var tagEditBlocker = document.createElement("div");
 		tagEditBlocker.className = "bbb-edit-blocker";
 		menu.appendChild(tagEditBlocker);
-		bbb.el.tagEditBlocker = tagEditBlocker;
+		bbb.el.menu.tagEditBlocker = tagEditBlocker;
 
 		var tagEditBox = document.createElement("div");
 		tagEditBox.className = "bbb-edit-box";
@@ -1115,7 +1116,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var tagEditArea = document.createElement("textarea");
 		tagEditArea.className = "bbb-edit-area";
 		tagEditBox.appendChild(tagEditArea);
-		bbb.el.tagEditArea = tagEditArea;
+		bbb.el.menu.tagEditArea = tagEditArea;
 
 		var tagEditOk = document.createElement("a");
 		tagEditOk.innerHTML = "OK";
@@ -1575,7 +1576,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var backupTextarea = document.createElement("textarea");
 		backupTextarea.className = "bbb-backup-area";
 		sectionDiv.appendChild(backupTextarea);
-		bbb.el.backupTextarea = backupTextarea;
+		bbb.el.menu.backupTextarea = backupTextarea;
 
 		var buttonDiv = document.createElement("div");
 		buttonDiv.className = "bbb-section-options";
@@ -1655,7 +1656,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			if (targetValue) {
 				var sectionTop = pageSections[targetValue.split("#")[1]].offsetTop;
-				bbb.el.scrollDiv.scrollTop = sectionTop;
+				bbb.el.menu.scrollDiv.scrollTop = sectionTop;
 				event.preventDefault();
 			}
 		}, false);
@@ -1771,7 +1772,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		borderElement.nextSibling.className += " bbb-no-highlight";
 		bbb.borderEdit = {mode: "move", settings: borderSettings, section: section, index: index, element: borderElement};
 		section.className += " bbb-insert-highlight";
-		bbb.el.menu.addEventListener("click", insertBorder, true);
+		bbb.el.menu.window.addEventListener("click", insertBorder, true);
 	}
 
 	function newBorder(borderSettings, borderElement) {
@@ -1780,7 +1781,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		bbb.borderEdit = {mode: "new", settings: borderSettings, section: section};
 		section.className += " bbb-insert-highlight";
-		bbb.el.menu.addEventListener("click", insertBorder, true);
+		bbb.el.menu.window.addEventListener("click", insertBorder, true);
 	}
 
 	function insertBorder (event) {
@@ -1820,13 +1821,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		resetBorderElements(section);
 		section.className = section.className.replace(/\s?bbb-insert-highlight/gi, "");
-		bbb.el.menu.removeEventListener("click", insertBorder, true);
+		bbb.el.menu.window.removeEventListener("click", insertBorder, true);
 	}
 
 	function showTip(event, text, styleString) {
 		var x = event.clientX;
 		var y = event.clientY;
-		var tip = bbb.el.tip;
+		var tip = bbb.el.menu.tip;
 		var topOffset = 0;
 
 		if (styleString)
@@ -1859,7 +1860,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function hideTip() {
-		bbb.el.tip.removeAttribute("style");
+		bbb.el.menu.tip.removeAttribute("style");
 	}
 
 	Element.prototype.bbbBorderPreview = function(borderItem) {
@@ -1879,21 +1880,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return;
 
 		activeTab.className = activeTab.className.replace(/\s?bbb-active-tab/g, "");
-		bbb.el[activeTab.name + "Page"].style.display = "none";
-		bbb.el.scrollDiv.scrollTop = 0;
+		bbb.el.menu[activeTab.name + "Page"].style.display = "none";
+		bbb.el.menu.scrollDiv.scrollTop = 0;
 		tab.className += " bbb-active-tab";
-		bbb.el[tab.name + "Page"].style.display = "block";
+		bbb.el.menu[tab.name + "Page"].style.display = "block";
 	}
 
 	function tagEditWindow(input, object, prop) {
-		bbb.el.tagEditBlocker.style.display = "block";
-		bbb.el.tagEditArea.value = input.value.replace(/(,\s*)/g, "$1\r\n\r\n");
+		bbb.el.menu.tagEditBlocker.style.display = "block";
+		bbb.el.menu.tagEditArea.value = input.value.replace(/(,\s*)/g, "$1\r\n\r\n");
 		bbb.tagEdit = {input: input, object: object, prop: prop};
 	}
 
 	function adjustMenuHeight() {
-		var menu = bbb.el.menu;
-		var scrollDiv = bbb.el.scrollDiv;
+		var menu = bbb.el.menu.window;
+		var scrollDiv = bbb.el.menu.scrollDiv;
 		var viewHeight = window.innerHeight;
 		var scrollDivDiff = menu.offsetHeight - scrollDiv.clientHeight;
 
@@ -1901,18 +1902,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function adjustMenuTimer() {
-		if (!adjustMenuTimeout && bbb.el.scrollDiv)
+		if (!adjustMenuTimeout && bbb.el.menu.window)
 			var adjustMenuTimeout = window.setTimeout(function() { adjustMenuHeight(); }, 50);
 	}
 
 	function removeMenu() {
 		// Destroy the menu so that it gets rebuilt.
-		var menu = bbb.el.menu;
+		var menu = bbb.el.menu.window;
 
 		if (!menu)
 			return;
 
 		menu.parentNode.removeChild(menu);
+		bbb.el.menu = {};
 	}
 
 	function loadSettings() {
@@ -1993,7 +1995,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function createBackupText() {
 		// Create a plain text version of the settings.
-		var textarea = bbb.el.backupTextarea;
+		var textarea = bbb.el.menu.backupTextarea;
 		textarea.value = "Better Better Booru v" + bbb.user.bbb_version + " Backup (" + bbbTimestamp("y-m-d hh:mm:ss") + "):\r\n\r\n" + JSON.stringify(bbb.user) + "\r\n";
 		textarea.focus();
 		textarea.setSelectionRange(0,0);
@@ -2008,7 +2010,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function restoreBackupText() {
 		// Load the backup text provided into the script.
-		var textarea = bbb.el.backupTextarea;
+		var textarea = bbb.el.menu.backupTextarea;
 		var backupString = textarea.value.replace(/\r?\n/g, "").match(/{.+}/);
 
 		if (backupString) {
