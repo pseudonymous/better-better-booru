@@ -370,7 +370,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			url: infoHref,
 			fav_count: Number(document.getElementById("favcount-for-post-" + postId).textContent),
 			has_children: (document.getElementsByClassName("notice-parent").length ? true : false),
-			parent_id: (childNotice.length ? Number(/\d+/.exec(childNotice[0].children[0].href)[0]) : null),
+			parent_id: (childNotice.length ? Number(childNotice[0].children[0].href.match(/\d+/)) : null),
 			rating: /Rating:\s*(\w)/.exec(infoSection.textContent)[1].toLowerCase(),
 			score: Number(document.getElementById("score-for-post-" + postId).textContent),
 			tag_string: fetchMeta("tags"),
@@ -612,7 +612,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (post.file_ext === "swf") // Create flash object.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
 		else if (!post.image_height) // Create manual download.
-			imgContainer.innerHTML = '<p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
 		else { // Create image
 			var useSample = (checkSetting("default-image-size", "large", load_sample_first) && post.has_large);
 
@@ -2075,8 +2075,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function resizeImage(mode) {
 		// Custom resize post image script.
-		var currentMode = bbb.img.resized;
 		var img = document.getElementById("image");
+
+		if (!img)
+			return;
+
+		var currentMode = bbb.img.resized;
 		var imgContainer = document.getElementById("image-container");
 		var resizeLinkWidth = bbb.el.resizeLinkWidth;
 		var resizeLinkAll = bbb.el.resizeLinkAll;
@@ -2788,7 +2792,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var msg = txt;
 		var notice = document.getElementById("notice");
 
-		if (notice && /\w/.test(notice.children[0].innerHTML))
+		if (!notice)
+			return;
+
+		if (/\w/.test(notice.children[0].innerHTML))
 			msg = notice.children[0].innerHTML + "<hr/>" + msg;
 
 		noticeFunc(msg);
