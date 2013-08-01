@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name           better_better_booru_test
+// @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
-// @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts. Modified to support arrow navigation on pools, improved loli/shota display controls, and more.
-// @version        ?.?
+// @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts and more.
+// @version        6.0
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @match          http://*.donmai.us/*
@@ -28,7 +28,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		},
 		img: {}, // Post content info.
 		options: { // Setting options and data.
-			bbb_version: "0",
+			bbb_version: "6.0",
 			alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
@@ -95,44 +95,44 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var show_loli = bbb.user.show_loli;
 	var show_shota = bbb.user.show_shota;
 	var show_toddlercon = bbb.user.show_toddlercon;
-	var show_deleted = bbb.user.show_deleted; // Show all deleted posts.
-	var direct_downloads = bbb.user.direct_downloads; // Allow download managers for thumbnail listings.
+	var show_deleted = bbb.user.show_deleted;
+	var direct_downloads = bbb.user.direct_downloads;
 
-	var custom_tag_borders = bbb.user.custom_tag_borders; //
-	var custom_status_borders = bbb.user.custom_status_borders; // Change the border colors of flagged, parent, child, deleted, and pending posts.
-	var single_color_borders = bbb.user.single_color_borders; // Use simple single color borders.
-	var border_width = bbb.user.border_width; // Set the thumbnail border width.
-	var clean_links = bbb.user.clean_links; // Remove everything after the post ID in the thumbnail URLs. Enabling this disables search navigation for posts and active pool detection for posts.
-	var autohide_sidebar = bbb.user.autohide_sidebar; // Hide the sidebar for individual posts and searches until the mouse comes close to the left side of the window or the sidebar gains focus (ex: By pressing "Q" to focus on the search box).
+	var custom_tag_borders = bbb.user.custom_tag_borders;
+	var custom_status_borders = bbb.user.custom_status_borders;
+	var single_color_borders = bbb.user.single_color_borders;
+	var border_width = bbb.user.border_width;
+	var clean_links = bbb.user.clean_links;
+	var autohide_sidebar = bbb.user.autohide_sidebar;
 
-	var bypass_api = bbb.user.bypass_api; // Automatically bypass API features when they can't be used.
-	var manage_cookies = bbb.user.manage_cookies; // Create cookies to completely stop notices.
-	var enable_status_message = bbb.user.enable_status_message; // Don't display the BBB status message.
-	var override_account = bbb.user.override_account; // Allow logged out settings to override account settings.
-	var track_new = bbb.user.track_new; // Enable the new post tracker.
+	var bypass_api = bbb.user.bypass_api;
+	var manage_cookies = bbb.user.manage_cookies;
+	var enable_status_message = bbb.user.enable_status_message;
+	var override_account = bbb.user.override_account;
+	var track_new = bbb.user.track_new;
 
 	var hide_sign_up_notice = bbb.user.hide_sign_up_notice;
 	var hide_upgrade_notice = bbb.user.hide_upgrade_notice;
 	var hide_tos_notice = bbb.user.hide_tos_notice;
-	var hide_original_notice = bbb.user.hide_original_notice; // If you don't need the notice for switching back to the sample image, you can choose to hide it by default. You can also click the "X" on the notice to hide it by default via cookies.
+	var hide_original_notice = bbb.user.hide_original_notice;
 	var hide_advertisements = bbb.user.hide_advertisements;
 	var hide_ban_notice = bbb.user.hide_ban_notice;
 
 	// Search
-	var arrow_nav = bbb.user.arrow_nav; // Allow the use of the left and right keys to navigate index pages. Doesn't work when input has focus.
-	var search_add = bbb.user.search_add; // Add the + and - shortcuts to the tag list for including or excluding search terms.
-	var thumbnail_count = bbb.user.thumbnail_count; // Number of thumbnails to display per page. Use a number value of 0 to turn off.
+	var arrow_nav = bbb.user.arrow_nav;
+	var search_add = bbb.user.search_add;
+	var thumbnail_count = bbb.user.thumbnail_count;
 	var thumbnail_count_default = 20; // Number of thumbnails BBB should expect Danbooru to return by default.
 
 	// Post
-	var alternate_image_swap = bbb.user.alternate_image_swap; // Toggle notes via the options in the sidebar and make clicking the image swap between the original and sample image.
-	var image_resize = bbb.user.image_resize; // When initially loading, scale down large images to fit the browser window as needed. When logged in, your account settings will override this setting.
-	var image_resize_mode = bbb.user.image_resize_mode; // Choose how to scale down large images when initially loading them.
-	var image_drag_scroll = bbb.user.image_drag_scroll; // Allow held left clicks on the image to drag the image around.
-	var load_sample_first = bbb.user.load_sample_first; // Use sample images when available. When logged in, your account settings will override this setting.
-	var remove_tag_headers = bbb.user.remove_tag_headers; // Remove the "copyrights", "characters", and "artist" headers from the sidebar tag list.
-	var post_tag_titles = bbb.user.post_tag_titles; // Revert post page titles to the more detailed full list of tags
-	var autoscroll_image = bbb.user.autoscroll_image; // Automatically position the image when initially loading it.
+	var alternate_image_swap = bbb.user.alternate_image_swap;
+	var image_resize = bbb.user.image_resize;
+	var image_resize_mode = bbb.user.image_resize_mode;
+	var image_drag_scroll = bbb.user.image_drag_scroll;
+	var load_sample_first = bbb.user.load_sample_first;
+	var remove_tag_headers = bbb.user.remove_tag_headers;
+	var post_tag_titles = bbb.user.post_tag_titles;
+	var autoscroll_image = bbb.user.autoscroll_image;
 
 	// Stored data
 	var status_borders = bbb.user.status_borders;
@@ -140,11 +140,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var track_new_data = bbb.user.track_new_data;
 
 	// Blacklist
-	// Guidelines: Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match
-	// must be separated by a space. The whole blacklist must remain inside of quotation marks. Using empty quotation marks (ex:"") will
-	// disable the script blacklist. When logged in, your account blacklist will override this blacklist.
-	// Example: To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the
-	// following case: "spoilers, blood death"
 	var script_blacklisted_tags = bbb.user.script_blacklisted_tags;
 
 	// List of valid URL's to parse for. Feel free to suggest more!
@@ -405,14 +400,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 						childSpan.innerHTML = xmlhttp.responseText;
 
-						if (mode === "paginator") { // Fetch updated paginator for first page of searches.
+						if (mode === "paginator") { // Fetch updated paginator for the first page of searches.
 							target = document.getElementsByClassName("paginator")[0];
 							newContent = childSpan.getElementsByClassName("paginator")[0];
 
 							if (newContent)
 								target.parentNode.replaceChild(newContent, target);
 						}
-						else if (mode === "comments") { // Fetch post to get comments
+						else if (mode === "comments") { // Fetch post to get comments.
 							var post = optArg.post;
 							var postId = optArg.post_id;
 							var commentSection = childSpan.getElementsByClassName("comments-for-post")[0];
@@ -544,7 +539,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (direct_downloads)
 				thumb += '<a style="display: none;" href="' + post.file_url + '">Direct Download</a></span>';
 
-			// Generate output
+			// Generate output.
 			if (gLoc === "search" || gLoc === "notes" || gLoc === "popular")
 				out += thumb;
 			else if (gLoc === "pool") {
@@ -826,7 +821,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			// Load/reload notes.
 			Danbooru.Note.load_all();
 
-			// Allow drag scrolling
+			// Allow drag scrolling.
 			if (image_drag_scroll)
 				dragScrollInit();
 		}
@@ -915,10 +910,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else
 			bbbStatus("loaded");
 
-		// Thumbnail classes and titles
+		// Thumbnail classes and titles.
 		formatThumbnails();
 
-		// Blacklist
+		// Blacklist.
 		blacklistInit();
 	}
 
@@ -1048,7 +1043,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(helpPage);
 		bbb.el.menu.helpPage = helpPage;
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool corresponding to ID 1.</li><li><b>id:1</b> - Match posts with an ID of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the UserScripts forums located <a target="_blank" href="http://userscripts.org/scripts/discuss/100614">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
 
@@ -2036,10 +2031,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Functions for support, extra features, and content manipulation */
 	function blacklistInit() {
-		// Reset the blacklist with the account settings when logged in or script settings when logged out.
+		// Reset the blacklist with the account settings when logged in or script settings when logged out/using the override.
 		Danbooru.Blacklist.entries.length = 0;
 
-		if (!useAccount()) { // Clean up blacklisted entries and load the script blacklist if not logged in or blacklist override.
+		if (!useAccount()) { // Clean up blacklisted entries and load the script blacklist.
 			var blacklistedPosts = document.getElementsByClassName("blacklisted");
 
 			while (blacklistedPosts[0]) {
@@ -2642,7 +2637,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			'section#content {padding: 0px !important;}';
 		}
 
-		// Border setup
+		// Border setup.
 		var totalBorderWidth = (custom_tag_borders ? border_width * 2 + 1 : border_width);
 		var thumbMaxDim = 150 + totalBorderWidth * 2;
 		var listingExtraSpace = 14 - totalBorderWidth * 2;
@@ -3105,7 +3100,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function isNumMetatag(tag) {
-		// Check if the tag from a search string is numeric metatag.
+		// Check if the tag from a search string is a numeric metatag.
 		if (tag.indexOf(":") < 0)
 			return false;
 		else {
