@@ -6,7 +6,7 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
-* Version ?.?:
+* Version 6.0:
  * Added a preferences tab for options directly related to how the script works.
  * Added a help tab for information not well suited to other tabs or tooltips.
  * Added a "manage cookies" option to allow the improved hiding of various notices.
