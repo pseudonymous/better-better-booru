@@ -593,7 +593,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var post = formatJSON(xml);
 		var imgContainer = document.getElementById("image-container");
 
-		if (!post.id)
+		if (!post.id || !imgContainer)
 			return;
 
 		var ratio = (post.image_width > 850 ? 850 / post.image_width : 1);
@@ -2011,8 +2011,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (backupString) {
 			try {
+				bbb.user = JSON.parse(backupString); // This is where we expect an error.
 				removeMenu();
-				bbb.user = JSON.parse(backupString);
 				checkUser(bbb.user, bbb.options);
 				convertSettings();
 				createMenu();
@@ -2071,12 +2071,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function resizeImage(mode) {
 		// Custom resize post image script.
 		var img = document.getElementById("image");
+		var imgContainer = document.getElementById("image-container");
 
-		if (!img)
+		if (!img || !imgContainer)
 			return;
 
 		var currentMode = bbb.img.resized;
-		var imgContainer = document.getElementById("image-container");
 		var resizeLinkWidth = bbb.el.resizeLinkWidth;
 		var resizeLinkAll = bbb.el.resizeLinkAll;
 		var availableWidth = imgContainer.clientWidth;
@@ -2784,10 +2784,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function danbNotice(txt, isError) {
 		// Display the notice or append information to it if it already exists. If a second true argument is provided, the notice is displayed as an error.
 		var noticeFunc = (isError ? Danbooru.error : Danbooru.notice);
-		var msg = txt;
 		var notice = document.getElementById("notice");
+		var msg = txt;
 
-		if (!notice)
+		if (!notice || !noticeFunc)
 			return;
 
 		if (/\w/.test(notice.children[0].innerHTML))
