@@ -615,7 +615,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				newWidth = sampWidth;
 				newHeight = sampHeight;
 				newUrl = post.large_file_url;
-				altTxt = "sample";
+				altTxt = "Sample";
 			}
 			else {
 				newWidth = post.image_width;
@@ -696,6 +696,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							closeOriginalNotice.style.display = "inline";
 						}
 
+						img.alt = post.md5;
 						img.setAttribute("height", post.image_height);
 						img.setAttribute("width", post.image_width);
 
@@ -706,6 +707,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						sampleNotice.style.display = "inline";
 						originalNotice.style.display = "none";
 						closeOriginalNotice.style.display = "none";
+						img.alt = "Sample";
 						img.setAttribute("height", sampHeight);
 						img.setAttribute("width", sampWidth);
 
@@ -2681,8 +2683,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -280px !important; overflow-y: hidden !important; padding: 0px 20px !important; top: 0px !important; z-index: 2001 !important;}' +
 			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; left: 0px !important; overflow-y: auto !important; padding: 0px 15px !important;}' +
 			'section#content {margin-left: 0px !important;}' +
-			'.ui-autocomplete {z-index: 2002 !important;}' +
-			'.bbb-unhide {height: 100%; width: 15px; position: fixed; left: 0px; top: 0px; z-index: 2000;}';
+			'.ui-autocomplete {z-index: 2002 !important;}';
 		}
 
 		if (hide_advertisements) {
@@ -2790,7 +2791,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (!notice || !noticeFunc)
 			return;
 
-		if (/\w/.test(notice.children[0].innerHTML))
+		if (notice.style.display !== "none" && /\w/.test(notice.children[0].innerHTML))
 			msg = notice.children[0].innerHTML + "<hr/>" + msg;
 
 		noticeFunc(msg);
