@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name           better_better_booru_test
+// @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts and more.
 // @version        6.0
@@ -3221,9 +3221,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function isOldVersion(ver) {
 		// Takes the provided version and compares it to the script version. Returns true if the provided version is older than the script version.
 		var userNums = ver.split(".");
+		var userLength = userNums.length;
 		var scriptNums = bbb.options.bbb_version.split(".");
+		var scriptLength = scriptNums.length;
+		var loopLength = (userLength > scriptLength ? userLength : scriptLength);
 
-		for (var i = 0, unl = userNums.length; i < unl; i++) {
+		for (var i = 0; i < loopLength; i++) {
 			var userNum = (userNums[i] ? Number(userNums[i]) : 0);
 			var scriptNum = (scriptNums[i] ? Number(scriptNums[i]) : 0);
 
