@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name           better_better_booru
+// @name           better_better_booru_test
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts and more.
 // @version        6.0
@@ -26,7 +26,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		el: { // Script elements.
 			menu:{} // Menu elements.
 		},
-		img: {}, // Post content info.
+		img: { // Post content info.
+			resized: "none"
+		},
 		options: { // Setting options and data.
 			bbb_version: "6.0",
 			alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
@@ -191,7 +193,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		cleanLinks();
 
 	if (arrow_nav && allowArrowNav())
-		window.addEventListener("keydown", arrowNav, false);
+		document.addEventListener("keydown", arrowNav, false);
 
 	if (thumbnail_count)
 		limitFix();
@@ -625,6 +627,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+
 			var img = document.getElementById("image");
 			var bbbLoader = document.getElementById("bbb-loader");
 
@@ -731,20 +734,40 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			// Make translation mode work.
-			if (!post.exists && document.getElementById("translate")) {
-				document.getElementById("translate").addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
+			if (!document.getElementById("note-locked-notice")) {
+				var translateLink = document.getElementById("translate");
 
-				window.addEventListener("keydown", function(event) {
-					if (event.keyCode === 78)
-						Danbooru.Note.TranslationMode.toggle(event);
+				// Make the normal toggling work for hidden posts.
+				if (!post.exists) {
+					if (translateLink)
+						translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
+
+					document.addEventListener("keydown", function(event) {
+						if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
+							Danbooru.Note.TranslationMode.toggle(event);
+					}, false);
+				}
+
+				// Script translation mode events and tracking used to resolve timing issues.
+				bbb.img.translationMode = Danbooru.Note.TranslationMode.active;
+
+				translateLink.addEventListener("click", translationModeToggle, false);
+
+				document.addEventListener("keydown", function(event) {
+					if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
+						translationModeToggle();
 				}, false);
 			}
 
 			if (!alternate_image_swap) { // Make notes toggle when clicking the image.
-				img.addEventListener("click", function() {
-					if (!bbb.dragScroll.moved)
-						Danbooru.Note.Box.toggle_all();
-				}, false);
+				document.addEventListener("click", function(event) {
+					if (event.target.id === "image" && !bbb.img.translationMode) {
+						if (!bbb.dragScroll || !bbb.dragScroll.moved)
+							Danbooru.Note.Box.toggle_all();
+
+						event.stopPropagation();
+					}
+				}, true);
 			}
 			else { // Make sample/original images swap when clicking the image.
 				// Make a "Toggle Notes" link in the options bar.
@@ -763,24 +786,28 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				// Make clicking the image swap between the original and sample image when available.
 				if (post.has_large) {
-					img.addEventListener("click", function(event) {
-						if (!bbb.dragScroll.moved) {
-							if (img.src.indexOf("/sample/") > -1) {
-								if (swapInit)
-									swapInit = false;
+					document.addEventListener("click", function(event) {
+						if (event.target.id === "image" && !bbb.img.translationMode) {
+							if (!bbb.dragScroll || !bbb.dragScroll.moved) {
+								if (img.src.indexOf("/sample/") > -1) {
+									if (swapInit)
+										swapInit = false;
 
-								bbbLoader.src = post.file_url;
-								imgStatus.innerHTML = "Loading original image...";
-							}
-							else {
-								if (swapInit)
-									swapInit = false;
+									bbbLoader.src = post.file_url;
+									imgStatus.innerHTML = "Loading original image...";
+								}
+								else {
+									if (swapInit)
+										swapInit = false;
 
-								bbbLoader.src = post.large_file_url;
-								imgStatus.innerHTML = "Loading sample image...";
+									bbbLoader.src = post.large_file_url;
+									imgStatus.innerHTML = "Loading sample image...";
+								}
 							}
+
+							event.stopPropagation();
 						}
-					}, false);
+					}, true);
 				}
 			}
 
@@ -3210,36 +3237,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function dragScrollInit() {
 		bbb.dragScroll = {
 			moved: false,
-			translate: Danbooru.Note.TranslationMode.active,
 			lastX: undefined,
 			lastY: undefined
 		};
 
-		if (!bbb.dragScroll.translate)
+		if (!bbb.img.translationMode)
 			dragScrollEnable();
-		else
-			dragScrollDisable();
-
-		var translateLink = document.getElementById("translate");
-
-		if (translateLink)
-			translateLink.addEventListener("click", dragScrollToggle, false);
-
-		window.addEventListener("keydown", function(event) {
-			if (event.keyCode === 78)
-				dragScrollToggle();
-		}, false);
 	}
 
 	function dragScrollToggle() {
-		if (!bbb.dragScroll.translate) {
+		if (bbb.img.translationMode)
 			dragScrollDisable();
-			bbb.dragScroll.translate = true;
-		}
-		else {
+		else
 			dragScrollEnable();
-			bbb.dragScroll.translate = false;
-		}
 	}
 
 	function dragScrollEnable() {
@@ -3272,12 +3282,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function dragScrollMove(event) {
 		var newX = event.clientX;
 		var newY = event.clientY;
+		var xDistance = bbb.dragScroll.lastX - newX;
+		var yDistance = bbb.dragScroll.lastY - newY;
 
-		window.scrollBy(bbb.dragScroll.lastX - newX, bbb.dragScroll.lastY - newY);
+		window.scrollBy(xDistance, yDistance);
 
 		bbb.dragScroll.lastX = newX;
 		bbb.dragScroll.lastY = newY;
-		bbb.dragScroll.moved = true;
+		bbb.dragScroll.moved = xDistance !== 0 || yDistance !== 0 || bbb.dragScroll.moved; // Doing this since I'm not sure what Chrome's mousemove event is doing. It apparently fires even when the moved distance is equal to zero.
 	}
 
 	function dragScrollOff(event) {
@@ -3288,6 +3300,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function disableEvent(event) {
 		event.preventDefault();
 		event.stopPropagation();
+	}
+
+	function translationModeToggle() {
+		bbb.img.translationMode = !bbb.img.translationMode;
+
+		if (image_drag_scroll)
+			dragScrollToggle();
 	}
 
 	function trackNew() {
@@ -3438,7 +3457,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			location.href = "/posts?new_posts=list&tags=order:id_asc+id:>" + bbb.user.track_new_data.viewed + "&page=1&limit=" + limitNum;
 		}
 	}
-
 
 } // End of injectMe.
 
