@@ -27,7 +27,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			menu:{} // Menu elements.
 		},
 		img: { // Post content info.
-			resized: "none"
+			resized: "none",
+			translationMode: false
 		},
 		options: { // Setting options and data.
 			bbb_version: "6.0",
@@ -751,7 +752,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Script translation mode events and tracking used to resolve timing issues.
 				bbb.img.translationMode = Danbooru.Note.TranslationMode.active;
 
-				translateLink.addEventListener("click", translationModeToggle, false);
+				if (translateLink)
+					translateLink.addEventListener("click", translationModeToggle, false);
 
 				document.addEventListener("keydown", function(event) {
 					if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
@@ -2617,7 +2619,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu input {height: 17px; padding: 1px 0px; margin-top: 4px; vertical-align: top;}' +
 		'#bbb_menu input[type="checkbox"] {margin: 0px; vertical-align: middle; position: relative; bottom: 2px;}' +
 		'#bbb_menu select {height: 21px; margin-top: 4px; vertical-align: top;}' +
-		'#bbb_menu option {padding: 0px 2px;}' +
+		'#bbb_menu option {padding: 0px 3px;}' +
 		'#bbb_menu textarea {padding: 2px; resize: none;}' +
 		'#bbb_menu ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: inline-block;}' +
 		'#bbb_menu .bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 5px 0px; padding: 5px 0px; overflow-y: auto;}' +
