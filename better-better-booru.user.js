@@ -141,8 +141,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var status_borders = bbb.user.status_borders;
 	var tag_borders = bbb.user.tag_borders;
 	var track_new_data = bbb.user.track_new_data;
-
-	// Blacklist
 	var script_blacklisted_tags = bbb.user.script_blacklisted_tags;
 
 	// List of valid URL's to parse for. Feel free to suggest more!
@@ -274,7 +272,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 					else {
 						if (xmlhttp.status === 403 || xmlhttp.status === 401) {
-							danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', true);
+							danbNotice('Better Better Booru: Error retrieving information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', "error");
 							document.getElementById("bbb-bypass-api-link").addEventListener("click", function(event) {
 								updateSettings("bypass_api", true);
 								this.parentNode.innerHTML = "Settings updated. You may change this setting under preferences in the settings panel.";
@@ -282,9 +280,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							}, false);
 						}
 						else if (xmlhttp.status === 421)
-							danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", true);
+							danbNotice("Better Better Booru: Error retrieving information. Your Danbooru API access is currently throttled. Please try again later.", "error");
 						else if (xmlhttp.status !== 0)
-							danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.status + " " + xmlhttp.statusText + ")", true);
+							danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.status + " " + xmlhttp.statusText + ")", "error");
 
 						// Update status message.
 						bbbStatus("error");
@@ -463,7 +461,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 					}
 					else if (xmlhttp.status !== 0) {
-						danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.status + " " + xmlhttp.statusText + ")", true);
+						danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.status + " " + xmlhttp.statusText + ")", "error");
 
 						// Update status message.
 						bbbStatus("error");
@@ -935,7 +933,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// If we don't have the expected number of posts, the API info and page are too out of sync.
 		if (existingPosts.length !== expectedPosts) {
-			danbNotice("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.", true);
+			danbNotice("Better Better Booru: Loading of hidden loli/shota post(s) failed. Please refresh.", "error");
 			bbbStatus("error");
 		}
 		else
@@ -2290,7 +2288,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			sidebar.className += " bbb-sidebar-show";
 		}, true);
 		sidebar.addEventListener("blur", function() {
-			sidebar.className = sidebar.className.replace(/\sbbb-sidebar-show/gi, "");
+			sidebar.className = sidebar.className.replace(/\s?bbb-sidebar-show/gi, "");
 		}, true);
 	}
 
@@ -2660,7 +2658,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu .bbb-edit-area {height: 392px; width: 794px; margin-bottom: 5px;}' +
 		'#bbb_menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
 		'.bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
-		'.bbb-custom-tag {padding: 0px !important; display: inline-block !important; border-width: ' + border_width + 'px !important;}';
+		'.bbb-custom-tag {padding: 0px !important; display: inline-block !important; border-width: ' + border_width + 'px !important;}' +
+		'.bbb-keep-notice {display: block !important; opacity: 1.0 !important;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
 		if (thumbnail_count && (gLoc === "search" || gLoc === "notes")) {
@@ -2811,19 +2810,36 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			})(node);
 	}
 
-	function danbNotice(txt, isError) {
-		// Display the notice or append information to it if it already exists. If a second true argument is provided, the notice is displayed as an error.
-		var noticeFunc = (isError ? Danbooru.error : Danbooru.notice);
+	function danbNotice(txt, noticeType) {
+		// Display the notice or append information to it if it already exists.
+		// A secondary string argument can be provided: "temp" = automatically hidden temporary notice (default behavior), "perm" = permanent notice, "error" = permanent error notice
+		var type = noticeType || "temp";
+		var noticeFunc = (type === "error" ? Danbooru.error : Danbooru.notice);
 		var notice = document.getElementById("notice");
 		var msg = txt;
 
 		if (!notice || !noticeFunc)
 			return;
 
-		if (notice.style.display !== "none" && /\w/.test(notice.children[0].innerHTML))
+		if ((notice.style.display !== "none" || notice.className.indexOf("bbb-keep-notice") > -1) && /\w/.test(notice.children[0].innerHTML)) { // Keep the notice open if it's already open.
+			type = (type === "temp" ? "perm" : type);
 			msg = notice.children[0].innerHTML + "<hr/>" + msg;
+			notice.className += " bbb-keep-notice";
+			document.getElementById("close-notice-link").addEventListener("click", hideDanbNotice, false);
+		}
 
-		noticeFunc(msg);
+		if (type === "perm")
+			noticeFunc(msg, true);
+		else
+			noticeFunc(msg);
+	}
+
+	function hideDanbNotice(event) {
+		document.getElementById("close-notice-link").removeEventListener("click", hideDanbNotice, false);
+
+		var notice = document.getElementById("notice");
+		notice.style.display = "block";
+		notice.className = notice.className.replace(/\s?bbb-keep-notice/gi, "");
 	}
 
 	function scrollbarWidth() {
@@ -3355,7 +3371,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					info.viewed = Number(firstPost.getAttribute("data-id"));
 					info.viewing = 1;
 					saveSettings();
-					danbNotice("Better Better Booru: New post tracking initialized. New post tracking will start with new posts after the current last image.");
+					danbNotice("Better Better Booru: New post tracking initialized. Tracking will start with new posts after the current last image.", "perm");
 				}
 			}
 			else if (mode === "redirect") { // Bookmarkable redirect link. (http://danbooru.donmai.us/posts?new_posts=redirect&page=b1)
@@ -3435,7 +3451,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		bbb.user.track_new_data = bbb.options.track_new_data.def;
 		saveSettings();
 
-		danbNotice("Better Better Booru: Reinitializing new post tracking. Please wait.");
+		danbNotice("Better Better Booru: Reinitializing new post tracking. Please wait.", "perm");
 		location.href = "/posts?new_posts=init&limit=" + limitNum;
 	}
 
@@ -3450,15 +3466,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var lastId = (lastPost ? Number(lastPost.getAttribute("data-id")) : null );
 
 		if (!lastPost)
-			danbNotice("Better Better Booru: Unable to mark as viewed. No posts detected.", true);
+			danbNotice("Better Better Booru: Unable to mark as viewed. No posts detected.", "error");
 		else if (info.viewed >= lastId)
-			danbNotice("Better Better Booru: Unable to mark as viewed. Posts have already been marked.", true);
+			danbNotice("Better Better Booru: Unable to mark as viewed. Posts have already been marked.", "error");
 		else {
 			info.viewed = Number(lastPost.getAttribute("data-id"));
 			info.viewing = 1;
 			saveSettings();
 
-			danbNotice("Better Better Booru: Posts marked as viewed. Please wait while the pages are updated.");
+			danbNotice("Better Better Booru: Posts marked as viewed. Please wait while the pages are updated.", "perm");
 			location.href = "/posts?new_posts=list&tags=order:id_asc+id:>" + bbb.user.track_new_data.viewed + "&page=1&limit=" + limitNum;
 		}
 	}
