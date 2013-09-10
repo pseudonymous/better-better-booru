@@ -662,20 +662,24 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				document.getElementById("bbb-sample-link").addEventListener("click", function(event) {
-					if (swapInit)
-						swapInit = false;
+					if (event.button === 0) {
+						if (swapInit)
+							swapInit = false;
 
-					bbbLoader.src = this.href;
-					imgStatus.innerHTML = "Loading sample image...";
-					event.preventDefault();
+						bbbLoader.src = this.href;
+						imgStatus.innerHTML = "Loading sample image...";
+						event.preventDefault();
+					}
 				}, false);
 				document.getElementById("bbb-original-link").addEventListener("click", function(event) {
-					if (swapInit)
-						swapInit = false;
+					if (event.button === 0) {
+						if (swapInit)
+							swapInit = false;
 
-					bbbLoader.src = this.href;
-					imgStatus.innerHTML = "Loading original image...";
-					event.preventDefault();
+						bbbLoader.src = this.href;
+						imgStatus.innerHTML = "Loading original image...";
+						event.preventDefault();
+					}
 				}, false);
 				bbbLoader.addEventListener("load", function(event) {
 					img.src = this.src;
@@ -761,7 +765,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			if (!alternate_image_swap) { // Make notes toggle when clicking the image.
 				document.addEventListener("click", function(event) {
-					if (event.target.id === "image" && !bbb.img.translationMode) {
+					if (event.target.id === "image" && event.button === 0 && !bbb.img.translationMode) {
 						if (!bbb.dragScroll || !bbb.dragScroll.moved)
 							Danbooru.Note.Box.toggle_all();
 
@@ -787,7 +791,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Make clicking the image swap between the original and sample image when available.
 				if (post.has_large) {
 					document.addEventListener("click", function(event) {
-						if (event.target.id === "image" && !bbb.img.translationMode) {
+						if (event.target.id === "image" && event.button === 0 && !bbb.img.translationMode) {
 							if (!bbb.dragScroll || !bbb.dragScroll.moved) {
 								if (img.src.indexOf("/sample/") > -1) {
 									if (swapInit)
