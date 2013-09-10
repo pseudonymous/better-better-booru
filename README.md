@@ -6,6 +6,12 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 6.0.1:
+ * Updated to support Danbooru's translation mode changes.
+ * Updated the Danbooru notices to better handle multiple messages and support Danbooru's notice changes.
+ * Fixed backup error handling so that the window does not get removed upon an unsuccessful restoration.
+ * Fixed image drag scrolling for Chrome.
+ * Fixed the use of the "n" key inside of textareas and text inputs for hidden posts.
 * Version 6.0:
  * Added a preferences tab for options directly related to how the script works.
  * Added a help tab for information not well suited to other tabs or tooltips.
