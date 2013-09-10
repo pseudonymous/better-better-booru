@@ -12,6 +12,7 @@ Changelog
  * Fixed backup error handling so that the window does not get removed upon an unsuccessful restoration.
  * Fixed image drag scrolling for Chrome.
  * Fixed the use of the "n" key inside of textareas and text inputs for hidden posts.
+ * Fixed mouse click detection on the image and sample/original links.
 * Version 6.0:
  * Added a preferences tab for options directly related to how the script works.
  * Added a help tab for information not well suited to other tabs or tooltips.
