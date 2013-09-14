@@ -2635,9 +2635,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				statusBorderInfo[statusBorderItem.tags] = statusBorderItem;
 			}
 
-			if (!single_color_borders && statusBorderInfo.child.is_enabled && statusBorderInfo.parent.is_enabled)
-				styles += ".post-preview.post-status-has-children.post-status-has-parent img {border-color: " + statusBorderInfo.parent.border_color + " " + statusBorderInfo.child.border_color + " " + statusBorderInfo.child.border_color + " " + statusBorderInfo.parent.border_color + " !important; border-style: " + statusBorderInfo.parent.border_style + " " + statusBorderInfo.child.border_style + " " + statusBorderInfo.child.border_style + " " + statusBorderInfo.parent.border_style + " !important;}";
-
 			for (var i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
 
@@ -2649,8 +2646,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 				else {
 					if (statusBorderItem.is_enabled) {
-						if (statusBorderItem.tags === "parent" || statusBorderItem.tags === "child")
-							styles += ".post-preview." + statusBorderItem.class_name + " img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}";
+						if (statusBorderItem.tags === "parent") {
+							styles += ".post-preview.post-status-has-children img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}";
+
+							if (statusBorderInfo.child.is_enabled)
+								styles += ".post-preview.post-status-has-children.post-status-has-parent img {border-color: " + statusBorderItem.border_color + " " + statusBorderInfo.child.border_color + " " + statusBorderInfo.child.border_color + " " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " " + statusBorderInfo.child.border_style + " " + statusBorderInfo.child.border_style + " " + statusBorderItem.border_style + " !important;}";
+						}
+						else if (statusBorderItem.tags === "child")
+							styles += ".post-preview.post-status-has-parent img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}";
 						else {
 							activeStatusStyles = ".post-preview." + statusBorderItem.class_name + " img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}" + activeStatusStyles;
 
