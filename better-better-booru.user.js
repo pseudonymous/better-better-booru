@@ -65,7 +65,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			show_toddlercon: new Option("checkbox", false, "Show Toddlercon", "Display toddlercon images in the search, pool, popular, comments, and notes listings."),
 			single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
 			thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
-			track_new:new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
+			track_new: new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"]),
 			track_new_data: {viewed:0, viewing:1}
@@ -2455,33 +2455,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function statusBorderSort() {
-		// Ignore border ordering when multicolor borders are in use.
-		var statusBorderSettings = status_borders.slice(0); // Clone the array. Don't reference it.
-		var parent;
-		var child;
-
-		for (var i = 0, sbsl = statusBorderSettings.length; i < sbsl; i++) {
-			var borderItem = statusBorderSettings[i];
-
-			if (borderItem.tags === "parent") {
-				parent = statusBorderSettings.splice(i, 1)[0];
-				i--;
-				sbsl--;
-			}
-			else if (borderItem.tags === "child") {
-				child = statusBorderSettings.splice(i, 1)[0];
-				i--;
-				sbsl--;
-			}
-		}
-
-		statusBorderSettings.push(child);
-		statusBorderSettings.push(parent);
-
-		return statusBorderSettings;
-	}
-
 	function formatThumbnails() {
 		// Create thumbnail titles and borders.
 		var posts = document.getElementsByClassName("post-preview");
@@ -2490,7 +2463,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return;
 
 		var searches = [];
-		var statusBorderSettings = (!single_color_borders && custom_status_borders ? statusBorderSort() : null); // Sort borders to support multi color borders.
 
 		// Create and cache border search objects.
 		if (custom_tag_borders) {
@@ -2507,47 +2479,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				continue;
 
 			var link = img.parentNode;
-			var classes = post.className;
 			var tags = post.getAttribute("data-tags");
 			var user = " user:" + post.getAttribute("data-uploader");
 			var rating = " rating:" + post.getAttribute("data-rating");
 			var score = " score:" + post.getAttribute("data-score");
 			var title = tags + user + rating + score;
-			var primary = [];
-			var primaryLength = 0;
 			var secondary = [];
 			var secondaryLength = 0;
 
 			// Create title.
 			img.title = title;
-
-			// Primary status borders.
-			if (single_color_borders) // Don't allow multi color borders.
-				img.removeAttribute("style");
-			else if (custom_status_borders) {
-				var spacedPostClasses = classes.bbbSpacePad();
-
-				for (var j = 0, sbsl = statusBorderSettings.length; j < sbsl; j++) {
-					var statusBorderItem = statusBorderSettings[j];
-					var spacedStatusClass = statusBorderItem.class_name.bbbSpacePad();
-
-					if (statusBorderItem.is_enabled && spacedPostClasses.indexOf(spacedStatusClass) > -1) {
-						primary.push([statusBorderItem.border_color, statusBorderItem.border_style]);
-
-						if (j < 3)
-							j = 2;
-					}
-				}
-
-				primaryLength = primary.length;
-
-				if (primaryLength === 2)
-					img.setAttribute("style", "border-style: " + primary[1][1] + " " + primary[0][1] + " " + primary[0][1] + " " + primary[1][1] + " !important; border-color: " + primary[1][0] + " " + primary[0][0] + " " + primary[0][0] + " " + primary[1][0] + " !important;");
-				else if (primaryLength === 3)
-					img.setAttribute("style", "border-style: " + primary[2][1] + " " + primary[0][1] + " " + primary[0][1] + " " + primary[1][1] + " !important; border-color: " + primary[2][0] + " " + primary[0][0] + " " + primary[0][0] + " " + primary[1][0] + " !important;");
-			}
-			else // Default Danbooru border styling.
-				Danbooru.Post.initialize_preview_borders_for(post);
 
 			// Secondary custom tag borders.
 			if (custom_tag_borders) {
@@ -2676,6 +2617,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var thumbMaxDim = 150 + totalBorderWidth * 2;
 		var listingExtraSpace = 14 - totalBorderWidth * 2;
 		var commentExtraSpace = 34 - totalBorderWidth * 2;
+		var sbsl = status_borders.length;
 		var statusBorderItem;
 
 		styles += 'article.post-preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin: 0px ' + listingExtraSpace + 'px ' + listingExtraSpace + 'px 0px !important;}' +
@@ -2686,26 +2628,59 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (custom_status_borders) {
 			var activeStatusStyles = "";
+			var statusBorderInfo = {};
 
-			for (var i = 0, sbsl = status_borders.length; i < sbsl; i++) {
+			for (var i = 0; i < sbsl; i++) {
+				statusBorderItem = status_borders[i];
+				statusBorderInfo[statusBorderItem.tags] = statusBorderItem;
+			}
+
+			for (var i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
 
-				if (statusBorderItem.is_enabled) {
-					activeStatusStyles = ".post-preview." + statusBorderItem.class_name + " img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}" + activeStatusStyles;
-
-					if (custom_tag_borders)
-						activeStatusStyles = ".post-preview." + statusBorderItem.class_name + " a.bbb-custom-tag {padding: 1px !important;}" + activeStatusStyles;
+				if (single_color_borders) {
+					if (statusBorderItem.is_enabled)
+						activeStatusStyles = ".post-preview." + statusBorderItem.class_name + " img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}" + activeStatusStyles;
+					else
+						styles += ".post-preview." + statusBorderItem.class_name + " img {border: none !important;}";
 				}
-				else
-					styles += ".post-preview." + statusBorderItem.class_name + " img {border: none !important;}";
+				else {
+					if (statusBorderItem.is_enabled) {
+						if (statusBorderItem.tags === "parent") {
+							styles += ".post-preview.post-status-has-children img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}";
+
+							if (statusBorderInfo.child.is_enabled)
+								styles += ".post-preview.post-status-has-children.post-status-has-parent img {border-color: " + statusBorderItem.border_color + " " + statusBorderInfo.child.border_color + " " + statusBorderInfo.child.border_color + " " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " " + statusBorderInfo.child.border_style + " " + statusBorderInfo.child.border_style + " " + statusBorderItem.border_style + " !important;}";
+						}
+						else if (statusBorderItem.tags === "child")
+							styles += ".post-preview.post-status-has-parent img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}";
+						else {
+							activeStatusStyles = ".post-preview." + statusBorderItem.class_name + " img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}" + activeStatusStyles;
+
+							if (statusBorderInfo.parent.is_enabled)
+								activeStatusStyles = ".post-preview.post-status-has-children." + statusBorderItem.class_name + " img {border-color: " + statusBorderInfo.parent.border_color + " " + statusBorderItem.border_color + " " + statusBorderItem.border_color + " " + statusBorderInfo.parent.border_color + " !important; border-style: " + statusBorderInfo.parent.border_style + " " + statusBorderItem.border_style + " " + statusBorderItem.border_style + " " + statusBorderInfo.parent.border_style + " !important;}" + activeStatusStyles;
+
+							if (statusBorderInfo.child.is_enabled)
+								activeStatusStyles = ".post-preview.post-status-has-parent." + statusBorderItem.class_name + " img {border-color: " + statusBorderInfo.child.border_color + " " + statusBorderItem.border_color + " " + statusBorderItem.border_color + " " + statusBorderInfo.child.border_color + " !important; border-style: " + statusBorderInfo.child.border_style + " " + statusBorderItem.border_style + " " + statusBorderItem.border_style + " " + statusBorderInfo.child.border_style + " !important;}" + activeStatusStyles;
+
+							if (statusBorderInfo.child.is_enabled && statusBorderInfo.parent.is_enabled)
+								activeStatusStyles = ".post-preview.post-status-has-children.post-status-has-parent." + statusBorderItem.class_name + " img {border-color: " + statusBorderInfo.parent.border_color + " " + statusBorderItem.border_color + " " + statusBorderItem.border_color + " " + statusBorderInfo.child.border_color + " !important; border-style: " + statusBorderInfo.parent.border_style + " " + statusBorderItem.border_style + " " + statusBorderItem.border_style + " " + statusBorderInfo.child.border_style + " !important;}" + activeStatusStyles;
+						}
+					}
+					else
+						styles += ".post-preview." + statusBorderItem.class_name + " img {border: none !important;}";
+				}
 			}
 
 			styles += activeStatusStyles;
 		}
-		else if (custom_tag_borders) {
-			for (var i = 0, sbsl = status_borders.length; i < sbsl; i++) {
+
+		if (custom_tag_borders) {
+			for (var i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
-				styles += ".post-preview." + statusBorderItem.class_name + " a.bbb-custom-tag {padding: 1px !important;}";
+
+				if (statusBorderItem.is_enabled)
+					styles += ".post-preview." + statusBorderItem.class_name + " a.bbb-custom-tag {padding: 1px !important;}";
 			}
 		}
 
