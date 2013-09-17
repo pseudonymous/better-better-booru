@@ -6,6 +6,8 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 6.0.2:
+ * Updated custom tag borders to support Danbooru's status border changes.
 * Version 6.0.1:
  * Updated to support Danbooru's translation mode changes.
  * Updated to support Danbooru's status border changes.
