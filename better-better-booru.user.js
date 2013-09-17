@@ -2603,7 +2603,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu .bbb-edit-area {height: 392px; width: 794px; margin-bottom: 5px;}' +
 		'#bbb_menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
 		'.bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
-		'.bbb-custom-tag {padding: 0px !important; display: inline-block !important; border-width: ' + border_width + 'px !important;}' +
+		'.bbb-custom-tag {border-width: ' + border_width + 'px !important;}' +
 		'.bbb-keep-notice {display: block !important; opacity: 1.0 !important;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
@@ -2676,14 +2676,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		if (custom_tag_borders) {
-			styles += '.post-preview .bbb-custom-tag img {border-width: 0px !important;}'; // Remove the transparent border for images that get custom tag borders and no status borders.
+			var marginAlignment = border_width + 1;
+
+			styles += '.post-preview .bbb-custom-tag img {border-width: 0px !important;}' + // Remove the transparent border for images that get custom tag borders.
+			'article.post-preview a, .post-preview div.preview a {display: inline-block; margin: ' + marginAlignment + 'px !important;}'; // Align one border images with two border images.
+
+			if (border_width > 2)
+				styles += 'article.post-preview {border: 1px solid transparent !important;}'; // Add some "padding" for wider status/tag borders in thumbnail listings.
 
 			for (var i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
 
 				if (statusBorderItem.is_enabled)
-					styles += '.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag {padding: 1px !important;}' + // Border padding for images that have status and custom tag borders.
-					'.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag img {border-width: ' + border_width + 'px !important;}'; // Override the removal of the transparent border for images that do have status borders.
+					styles += '.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag {margin: 0px !important; padding: 1px !important;}' + // Remove margin alignment and add border padding for images that have status and custom tag borders.
+					'.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag img {border-width: ' + border_width + 'px !important;}'; // Override the removal of the transparent border for images that have status borders and custom tag borders.
 			}
 		}
 
