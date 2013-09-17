@@ -8,6 +8,7 @@ Changelog
 ----------
 * Version 6.0.1:
  * Updated to support Danbooru's translation mode changes.
+ * Updated to support Danbooru's status border changes.
  * Updated the Danbooru notices to better handle multiple messages and support Danbooru's notice changes.
  * Fixed backup error handling so that the window does not get removed upon an unsuccessful restoration.
  * Fixed image drag scrolling for Chrome.
