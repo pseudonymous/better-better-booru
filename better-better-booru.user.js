@@ -2640,35 +2640,35 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				if (single_color_borders) {
 					if (statusBorderItem.is_enabled)
-						activeStatusStyles = ".post-preview." + statusBorderItem.class_name + " img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}" + activeStatusStyles;
+						activeStatusStyles = '.post-preview.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}' + activeStatusStyles;
 					else
-						styles += ".post-preview." + statusBorderItem.class_name + " img {border: none !important;}";
+						styles += '.post-preview.' + statusBorderItem.class_name + ' img {border-color: transparent !important;}'; // Disable status border by resetting it to transparent.
 				}
 				else {
 					if (statusBorderItem.is_enabled) {
 						if (statusBorderItem.tags === "parent") {
-							styles += ".post-preview.post-status-has-children img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}";
+							styles += '.post-preview.post-status-has-children img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}'; // Parent only status border.
 
 							if (statusBorderInfo.child.is_enabled)
-								styles += ".post-preview.post-status-has-children.post-status-has-parent img {border-color: " + statusBorderItem.border_color + " " + statusBorderInfo.child.border_color + " " + statusBorderInfo.child.border_color + " " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " " + statusBorderInfo.child.border_style + " " + statusBorderInfo.child.border_style + " " + statusBorderItem.border_style + " !important;}";
+								styles += '.post-preview.post-status-has-children.post-status-has-parent img {border-color: ' + statusBorderItem.border_color + ' ' + statusBorderInfo.child.border_color + ' ' + statusBorderInfo.child.border_color + ' ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' ' + statusBorderInfo.child.border_style + ' ' + statusBorderInfo.child.border_style + ' ' + statusBorderItem.border_style + ' !important;}'; // Parent and child status border.
 						}
 						else if (statusBorderItem.tags === "child")
-							styles += ".post-preview.post-status-has-parent img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}";
+							styles += '.post-preview.post-status-has-parent img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}'; // Child only status border.
 						else {
-							activeStatusStyles = ".post-preview." + statusBorderItem.class_name + " img {border-color: " + statusBorderItem.border_color + " !important; border-style: " + statusBorderItem.border_style + " !important;}" + activeStatusStyles;
+							activeStatusStyles = '.post-preview.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged only status border.
 
 							if (statusBorderInfo.parent.is_enabled)
-								activeStatusStyles = ".post-preview.post-status-has-children." + statusBorderItem.class_name + " img {border-color: " + statusBorderInfo.parent.border_color + " " + statusBorderItem.border_color + " " + statusBorderItem.border_color + " " + statusBorderInfo.parent.border_color + " !important; border-style: " + statusBorderInfo.parent.border_style + " " + statusBorderItem.border_style + " " + statusBorderItem.border_style + " " + statusBorderInfo.parent.border_style + " !important;}" + activeStatusStyles;
+								activeStatusStyles = '.post-preview.post-status-has-children.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderInfo.parent.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderInfo.parent.border_color + ' !important; border-style: ' + statusBorderInfo.parent.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderInfo.parent.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged and parent status border.
 
 							if (statusBorderInfo.child.is_enabled)
-								activeStatusStyles = ".post-preview.post-status-has-parent." + statusBorderItem.class_name + " img {border-color: " + statusBorderInfo.child.border_color + " " + statusBorderItem.border_color + " " + statusBorderItem.border_color + " " + statusBorderInfo.child.border_color + " !important; border-style: " + statusBorderInfo.child.border_style + " " + statusBorderItem.border_style + " " + statusBorderItem.border_style + " " + statusBorderInfo.child.border_style + " !important;}" + activeStatusStyles;
+								activeStatusStyles = '.post-preview.post-status-has-parent.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderInfo.child.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderInfo.child.border_color + ' !important; border-style: ' + statusBorderInfo.child.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderInfo.child.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged and child status border.
 
 							if (statusBorderInfo.child.is_enabled && statusBorderInfo.parent.is_enabled)
-								activeStatusStyles = ".post-preview.post-status-has-children.post-status-has-parent." + statusBorderItem.class_name + " img {border-color: " + statusBorderInfo.parent.border_color + " " + statusBorderItem.border_color + " " + statusBorderItem.border_color + " " + statusBorderInfo.child.border_color + " !important; border-style: " + statusBorderInfo.parent.border_style + " " + statusBorderItem.border_style + " " + statusBorderItem.border_style + " " + statusBorderInfo.child.border_style + " !important;}" + activeStatusStyles;
+								activeStatusStyles = '.post-preview.post-status-has-children.post-status-has-parent.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderInfo.parent.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderInfo.child.border_color + ' !important; border-style: ' + statusBorderInfo.parent.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderInfo.child.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged, parent, and child status border.
 						}
 					}
 					else
-						styles += ".post-preview." + statusBorderItem.class_name + " img {border: none !important;}";
+						styles += '.post-preview.' + statusBorderItem.class_name + ' img {border-color: transparent !important;}'; // Disable status border by resetting it to transparent.
 				}
 			}
 
@@ -2676,11 +2676,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		if (custom_tag_borders) {
+			styles += '.post-preview .bbb-custom-tag img {border-width: 0px !important;}'; // Remove the transparent border for images that get custom tag borders and no status borders.
+
 			for (var i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
 
 				if (statusBorderItem.is_enabled)
-					styles += ".post-preview." + statusBorderItem.class_name + " a.bbb-custom-tag {padding: 1px !important;}";
+					styles += '.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag {padding: 1px !important;}' + // Border padding for images that have status and custom tag borders.
+					'.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag img {border-width: ' + border_width + 'px !important;}'; // Override the removal of the transparent border for images that do have status borders.
 			}
 		}
 
