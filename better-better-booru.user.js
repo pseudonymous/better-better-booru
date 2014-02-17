@@ -8,7 +8,6 @@
 // @match          http://*.donmai.us/*
 // @match          https://*.donmai.us/*
 // @match          http://donmai.us/*
-// @exclude        http://trac.donmai.us/*
 // @run-at         document-end
 // @grant          none
 // @icon           data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAAAAABWESUoAAAA9klEQVQ4y2NgGBgQu/Dau1/Pt/rhVPAfCkpwKXhUZ8Al2vT//yu89vDjV8AkP/P//zY0K//+eHVmoi5YyB7I/VDGiKYADP60wRT8P6aKTcH//0lgQcHS//+PYFdwFu7Ib8gKGBgYOQ22glhfGO7mqbEpzv///xyqAiAQAbGewIz8aoehQArEWsyQsu7O549XJiowoCpg4rM9CGS8V8UZ9GBwy5wBr4K/teL4Ffz//8mHgIL/v82wKgA6kkXE+zKIuRaHAhDQATFf4lHABmL+xKPAFhKUOBQwSyU+AzFXEvDFf3sCCnrxh8O3Ujwh+fXZvjoZ+udTAERqR5IgKEBRAAAAAElFTkSuQmCC
@@ -325,28 +324,24 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var imgContainer = document.getElementById("image-container");
 		var img = document.getElementById("image");
 		var object = imgContainer.getElementsByTagName("object")[0];
-		var childNotice = document.getElementsByClassName("notice-child");
 		var resizeNotice = document.getElementById("image-resize-notice");
 		var postId = imgContainer.getAttribute("data-id");
-		var infoSection = document.getElementById("score-for-post-" + postId).parentNode.parentNode;
+		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
+		var twitterInfo = fetchMeta("twitter:image:src");
+		var infoValues;
 		var md5 = "";
 		var ext = "";
 
-		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
-		var twitterInfo = fetchMeta("twitter:image:src");
+		if (infoLink)
+			infoValues = /data\/(\w+?)\.(\w+?)$/.exec(infoLink.href);
+		else if (twitterInfo)
+			infoValues = /(?:data\/sample\/sample-|data\/)(\w+?)\.(\w+?)$/.exec(twitterInfo);
 
-		if (infoLink) {
-			var infoHrefValues = (infoLink ? /data\/(.+?)\.(.+?)$/.exec(infoLink.href) : null);
-			md5 = infoHrefValues[1];
-			ext = infoHrefValues[2];
+		if (infoValues) {
+			md5 = infoValues[1];
+			ext = infoValues[2];
 		}
-		else if (twitterInfo) {
-			var twitterInfoValues = (twitterInfo ? /(?:data\/sample\/sample-|data\/)(.+?)\.(.+?)$/.exec(twitterInfo) : null);
-			md5 = twitterInfoValues[1];
-			ext = twitterInfoValues[2];
-		}
-
-		if (!md5) { // Irregular hidden files do not provide enough info to be found (bmp, rar, zip, etc).
+		else { // Irregular hidden files do not provide enough info to be found (bmp, rar, zip, etc).
 			danbNotice("Better Better Booru: Due to a lack of provided information, this post cannot be viewed.", "error");
 			bbbStatus("error");
 			return;
@@ -358,11 +353,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (hasLarge && !infoLink) { // Test for the original image file extension if it is unknown.
 			if (resizeNotice)
-				ext = /(?:data\/sample\/sample-|data\/).+?\.(\w+?)$/.exec(resizeNotice.getElementsByTagName("a")[0].href)[1];
+				ext = /(?:data\/sample\/sample-|data\/)\w+?\.(\w+?)$/.exec(resizeNotice.getElementsByTagName("a")[0].href)[1];
 			else {
 				var testExt = ["jpg", "png", "gif", "jpeg"];
 
-				for (var i = 0, numExt = testExt.length; i < numExt; i++) {
+				for (var i = 0, tel = testExt.length; i < tel; i++) {
 					if (isThere("/data/" + md5 + "." + testExt[i])) {
 						ext = testExt[i];
 						break;
