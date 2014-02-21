@@ -23,8 +23,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
+		cache: {
+			current: {
+				history: [],
+				names: {}
+			},
+			stored: {}
+		},
 		el: { // Script elements.
-			menu:{} // Menu elements.
+			menu: {} // Menu elements.
 		},
 		img: { // Post content info.
 			resized: "none",
@@ -68,11 +75,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			track_new: new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"]),
-			tag_scrollbars: new Option("dropdown", false, "Tag Scrollbars", "Limit the length of the sidebar tag list(s) for individual posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<br><br><u>Note</u><br>When using \"Remove Tag Headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:false"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000]}),
+			tag_scrollbars: new Option("dropdown", false, "Tag Scrollbars", "Limit the length of the sidebar tag lists for individual posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<br><br><u>Note</u><br>When using \"Remove Tag Headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
+			thumb_cache_limit: new Option("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<br><br><u>Note</u><br>No actual thumbnails are cached. Only information used to speed up the display of hidden thumbnails is stored. Every 500 entries is approximately equal to 51.2 kilobytes of space. The default value of 5000 is about 0.5 megabytes (512 kilobytes) of space.", {txtOptions:["Disabled:0"], numList:[500,1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500,7000,7500,8000,8500,9000,9500,10000,10500,11000,11500,12000,12500,13000,13500,14000,14500,15000,15500,16000,16500,17000,17500,18000,18500,19000,19500,20000,20500,21000,21500,22000,22500,23000,23500,24000,24500,25000,25500,26000,26500,27000,27500,28000,28500,29000,29500,30000]}),
 			track_new_data: {viewed:0, viewing:1}
 		},
 		sections: { // Setting sections and ordering.
-			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count"], "Image Browsing"),
+			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count", "thumb_cache_limit"], "Image Browsing"),
 			layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 			sidebar: new Section("general", ["search_add", "remove_tag_headers", "tag_scrollbars", "autohide_sidebar"], "Tag Sidebar"),
 			image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
@@ -127,6 +135,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var search_add = bbb.user.search_add;
 	var thumbnail_count = bbb.user.thumbnail_count;
 	var thumbnail_count_default = 20; // Number of thumbnails BBB should expect Danbooru to return by default.
+	var thumb_cache_limit = bbb.user.thumb_cache_limit;
 
 	// Post
 	var alternate_image_swap = bbb.user.alternate_image_swap;
@@ -325,17 +334,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var img = document.getElementById("image");
 		var object = imgContainer.getElementsByTagName("object")[0];
 		var resizeNotice = document.getElementById("image-resize-notice");
-		var postId = imgContainer.getAttribute("data-id");
-		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
+		var directLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]|//a[@id="image-resize-link"]', document, null, 9, null).singleNodeValue;
 		var twitterInfo = fetchMeta("twitter:image:src");
+		var headInfo = document.getElementsByTagName("head")[0].innerHTML;
+		var imgHeight = Number(imgContainer.getAttribute("data-height"));
+		var imgWidth = Number(imgContainer.getAttribute("data-width"));
+		var hasLarge = (imgWidth > 850 && ext !== "swf" ? true : false);
 		var infoValues;
 		var md5 = "";
 		var ext = "";
 
-		if (infoLink)
-			infoValues = /data\/(\w+?)\.(\w+?)$/.exec(infoLink.href);
+		if (directLink)
+			infoValues = /data\/(\w+)\.(\w+)/.exec(directLink.href);
 		else if (twitterInfo)
-			infoValues = /(?:data\/sample\/sample-|data\/)(\w+?)\.(\w+?)$/.exec(twitterInfo);
+			infoValues = (twitterInfo.indexOf("sample") > -1 ? /data\/sample\/sample-(\w+)\.\w/.exec(twitterInfo) : /data\/(\w+)\.(\w+)/.exec(twitterInfo));
+		else if (headInfo)
+			infoValues = /ssd\/data\/preview\/(\w+?)\.\w/.exec(headInfo);
 
 		if (infoValues) {
 			md5 = infoValues[1];
@@ -347,27 +361,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return;
 		}
 
-		var imgHeight = Number(imgContainer.getAttribute("data-height"));
-		var imgWidth = Number(imgContainer.getAttribute("data-width"));
-		var hasLarge = (imgWidth > 850 && ext !== "swf" ? true : false);
+		if (!ext && imgWidth) { // Test for the original image file extension if it is unknown.
+			var testExt = ["jpg", "png", "gif", "jpeg"];
 
-		if (hasLarge && !infoLink) { // Test for the original image file extension if it is unknown.
-			if (resizeNotice)
-				ext = /(?:data\/sample\/sample-|data\/)\w+?\.(\w+?)$/.exec(resizeNotice.getElementsByTagName("a")[0].href)[1];
-			else {
-				var testExt = ["jpg", "png", "gif", "jpeg"];
-
-				for (var i = 0, tel = testExt.length; i < tel; i++) {
-					if (isThere("/data/" + md5 + "." + testExt[i])) {
-						ext = testExt[i];
-						break;
-					}
+			for (var i = 0, tel = testExt.length; i < tel; i++) {
+				if (isThere("/data/" + md5 + "." + testExt[i])) {
+					ext = testExt[i];
+					break;
 				}
 			}
 		}
 
 		var imgInfo = {
-			id: Number(postId),
+			id: Number(imgContainer.getAttribute("data-id")),
 			file_ext: ext,
 			md5: md5,
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
@@ -421,15 +427,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							var comments = commentSection.getElementsByClassName("comment");
 							var numComments = comments.length;
 							var toShow = 6; // Number of comments to display.
-							var twitterImg = xmlhttp.responseText.match(/\/ssd\/data\/preview\/(\w+)\.jpg/);
+							var metaInfo = /\/ssd\/data\/preview\/(\w+)\.jpg/.exec(xmlhttp.responseText);
 							var previewImg = post.getElementsByTagName("img")[0];
 							target = post.getElementsByClassName("comments-for-post")[0];
 							newContent = document.createDocumentFragment();
 
 							// Fix the image.
-							if (twitterImg && previewImg) {
-								previewImg.src = twitterImg[0];
-								previewImg.alt = twitterImg[1];
+							if (metaInfo && previewImg) {
+								previewImg.src = metaInfo[0];
+								previewImg.alt = metaInfo[1];
 							}
 
 							// Fix the comments.
@@ -473,6 +479,33 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							// Update status message.
 							bbbStatus("loaded");
 						}
+						else if (mode === "hidden") { // Fetch the hidden image information from a post for thumbnails.
+							var hiddenImgs = optArg;
+							var postId = hiddenImgs.shift();
+							var metaInfo = /\/ssd\/data\/preview\/(\w+)\.jpg|\/images\/(download-preview).png/.exec(xmlhttp.responseText);
+
+							if (metaInfo) { // Update the thumbnail with the correct information and continue to the next.
+								var filename = metaInfo[1] || metaInfo[2];
+								var bcc = bbb.cache.current;
+								var bcs = bbb.cache.stored;
+
+								document.getElementById("bbb-img-" + postId).src = metaInfo[0];
+								bcc.history.push(postId);
+								bcc.names[postId] = filename;
+
+								if (hiddenImgs.length)
+									fetchPages("/posts/" + hiddenImgs[0], "hidden", hiddenImgs);
+								else {
+									updateThumbCache();
+									bbbStatus("loaded");
+								}
+							}
+							else { // The image information couldn't be found.
+								updateThumbCache();
+								danbNotice("Better Better Booru: Error retrieving thumbnail information.", "error");
+								bbbStatus("error");
+							}
+						}
 					}
 					else if (xmlhttp.status !== 0) {
 						danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.status + " " + xmlhttp.statusText + ")", "error");
@@ -499,6 +532,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var posts = xml;
 		var search = "";
 		var where;
+		var hiddenImgs = [];
 		var paginator = document.getElementsByClassName("paginator")[0];
 
 		// If no posts, do nothing.
@@ -548,12 +582,27 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				continue;
 			}
 
-			// Provide hidden images with a placeholder.
-			if (!post.preview_file_url)
-				post.preview_file_url = bbbHiddenImg;
+			// Alter hidden images.
+			if (!post.preview_file_url) {
+				if (!bbb.cache.stored.history)
+					loadThumbCache();
+
+				var cacheName = bbb.cache.stored.names[post.id];
+
+				if (cacheName) { // Load the thumbnail info from the cache.
+					if (cacheName === "download-preview")
+						post.preview_file_url = "/images/download-preview.png";
+					else
+						post.preview_file_url = "/ssd/data/preview/" + cacheName + ".jpg";
+				}
+				else { // Provide the hidden image with a placeholder and queue it for fixing.
+					post.preview_file_url = bbbHiddenImg;
+					hiddenImgs.push(post.id);
+				}
+			}
 
 			// eek, huge line.
-			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '"></a></article>';
+			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
 
 			if (direct_downloads)
 				thumb += '<a style="display: none;" href="' + post.file_url + '">Direct Download</a></span>';
@@ -603,6 +652,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Blacklist.
 		blacklistInit();
+
+		// Fix hidden thumbnails.
+		if (hiddenImgs.length) {
+			window.addEventListener("beforeunload", updateThumbCache);
+			fetchPages("/posts/" + hiddenImgs[0], "hidden", hiddenImgs);
+			bbbStatus("hidden");
+		}
 
 		// Update status message.
 		bbbStatus("loaded");
@@ -2009,9 +2065,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function saveSettings() {
-		// Save the user settings to localStorage after making any neccessary checks/adjustments.
+		// Save the user settings to localStorage after making any necessary checks/adjustments.
 		if (!bbb.user.track_new && bbb.user.track_new_data.viewed) // Reset new post tracking if it's disabled.
 			bbb.user.track_new_data = bbb.options.track_new_data.def;
+
+		if (thumb_cache_limit !== bbb.user.thumb_cache_limit) // Trim down the thumb cache as necessary if the limit has changed.
+			adjustThumbCache();
 
 		localStorage.bbb_settings = JSON.stringify(bbb.user);
 	}
@@ -2185,6 +2244,74 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
 		}
+	}
+
+	function loadThumbCache() {
+		// Initialize or load up the thumbnail cache.
+		if (typeof(localStorage.bbb_thumb_cache) !== "undefined")
+			bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+		else {
+			bbb.cache.stored = {history: [], names: {}};
+			localStorage.bbb_thumb_cache = JSON.stringify(bbb.cache.stored);
+		}
+	}
+
+	function updateThumbCache() {
+		// Add the current new thumbnail info to the saved thumbnail information.
+		if (!bbb.cache.current.history.length || !thumb_cache_limit)
+			return;
+
+		bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+
+		var bcc = bbb.cache.current;
+		var bcs = bbb.cache.stored;
+
+		// Make sure we don't have duplicates in the new info.
+		for (var i = 0, bhl = bcc.history.length; i < bhl; i++) {
+			if (bcs.names[bcc.history[i]]) {
+				delete bcc.names[bcc.history[i]];
+				bcc.history.splice(i, 1);
+				bhl--;
+				i--;
+			}
+		}
+
+		// Add the new thumbnail info in.
+		for (var i in bcc.names) {
+			if (bcc.names.hasOwnProperty(i)) {
+				bcs.names[i] = bcc.names[i];
+			}
+		}
+
+		bcs.history = bcs.history.concat(bcc.history);
+
+		// Prune the cache if it's larger than the user limit.
+		if (bcs.history.length > thumb_cache_limit) {
+			var removedIDs = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
+
+			for (var i = 0, rtl = removedIDs.length; i < rtl; i++)
+				delete bcs.names[removedIDs[i]];
+		}
+
+		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
+		bbb.cache.current = {history: [], names: {}};
+	}
+
+	function adjustThumbCache() {
+		// Prune the cache if it's larger than the user limit.
+		bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+		thumb_cache_limit = bbb.user.thumb_cache_limit;
+
+		var bcs = bbb.cache.stored;
+
+		if (bcs.history.length > thumb_cache_limit) {
+			var removedIDs = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
+
+			for (var i = 0, rtl = removedIDs.length; i < rtl; i++)
+				delete bcs.names[removedIDs[i]];
+		}
+
+		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
 	}
 
 	function limitFix() {
@@ -3211,6 +3338,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else if (mode === "comment") { // Status mode for loading hidden comments.
 				status.style.display = "block";
 				status.innerHTML = "Loading comment info...";
+				bbb.statusCount++;
+			}
+			else if (mode === "hidden") { // Status mode for fixing "Hidden" thumbnails.
+				status.style.display = "block";
+				status.innerHTML = "Loading hidden thumbnails...";
 				bbb.statusCount++;
 			}
 			else if (mode === "loaded") { // Status mode for successful requests. Hides itself automatically.
