@@ -6,6 +6,12 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 6.1:
+ * Added a "tag list srollbars" option to limit the length of a post's tag list(s).
+ * Added a "thumbnail info cache limit" option to limit the size of the hidden post cache.
+ * Added an icon to the script for the browser's script handling add-on/extension (Greasemonkey, Tampermonkey, etc).
+ * Updated "custom tag borders" to support banned as a status match (status:banned).
+ * Updated/fixed hidden post display to support Danbooru's API changes.
 * Version 6.0.2:
  * Updated custom tag borders to support Danbooru's status border changes.
 * Version 6.0.1:

@@ -2,15 +2,15 @@
 // @name           better_better_booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts and more.
-// @version        6.0.2
+// @version        6.1
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @match          http://*.donmai.us/*
 // @match          https://*.donmai.us/*
 // @match          http://donmai.us/*
-// @exclude        http://trac.donmai.us/*
 // @run-at         document-end
 // @grant          none
+// @icon           data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAAAAABWESUoAAAA9klEQVQ4y2NgGBgQu/Dau1/Pt/rhVPAfCkpwKXhUZ8Al2vT//yu89vDjV8AkP/P//zY0K//+eHVmoi5YyB7I/VDGiKYADP60wRT8P6aKTcH//0lgQcHS//+PYFdwFu7Ib8gKGBgYOQ22glhfGO7mqbEpzv///xyqAiAQAbGewIz8aoehQArEWsyQsu7O549XJiowoCpg4rM9CGS8V8UZ9GBwy5wBr4K/teL4Ffz//8mHgIL/v82wKgA6kkXE+zKIuRaHAhDQATFf4lHABmL+xKPAFhKUOBQwSyU+AzFXEvDFf3sCCnrxh8O3Ujwh+fXZvjoZ+udTAERqR5IgKEBRAAAAAElFTkSuQmCC
 // ==/UserScript==
 
 // Have a nice day. - A Pseudonymous Coder
@@ -23,15 +23,22 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
+		cache: {
+			current: {
+				history: [],
+				names: {}
+			},
+			stored: {}
+		},
 		el: { // Script elements.
-			menu:{} // Menu elements.
+			menu: {} // Menu elements.
 		},
 		img: { // Post content info.
 			resized: "none",
 			translationMode: false
 		},
 		options: { // Setting options and data.
-			bbb_version: "6.0.2",
+			bbb_version: "6.1",
 			alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
@@ -68,12 +75,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			track_new: new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"]),
+			tag_scrollbars: new Option("dropdown", 0, "Tag List Scrollbars", "Limit the length of the sidebar tag lists for individual posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<br><br><u>Note</u><br>When using \"Remove Tag Headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
+			thumb_cache_limit: new Option("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<br><br><u>Note</u><br>No actual thumbnails are cached. Only information used to speed up the display of hidden thumbnails is stored. Every 1000 entries is approximately equal to 102.4 kilobytes (0.1 megabytes) of space.", {txtOptions:["Disabled:0"], numList:[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000,20000,21000,22000,23000,24000,25000,26000,27000,28000,29000,30000]}),
 			track_new_data: {viewed:0, viewing:1}
 		},
 		sections: { // Setting sections and ordering.
-			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count"], "Image Browsing"),
+			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count", "thumb_cache_limit"], "Image Browsing"),
 			layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
-			sidebar: new Section("general", ["search_add", "remove_tag_headers", "autohide_sidebar"], "Tag Sidebar"),
+			sidebar: new Section("general", ["search_add", "remove_tag_headers", "tag_scrollbars", "autohide_sidebar"], "Tag Sidebar"),
 			image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
 			logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
 			misc: new Section("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
@@ -126,6 +135,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var search_add = bbb.user.search_add;
 	var thumbnail_count = bbb.user.thumbnail_count;
 	var thumbnail_count_default = 20; // Number of thumbnails BBB should expect Danbooru to return by default.
+	var thumb_cache_limit = bbb.user.thumb_cache_limit;
 
 	// Post
 	var alternate_image_swap = bbb.user.alternate_image_swap;
@@ -134,6 +144,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var image_drag_scroll = bbb.user.image_drag_scroll;
 	var load_sample_first = bbb.user.load_sample_first;
 	var remove_tag_headers = bbb.user.remove_tag_headers;
+	var tag_scrollbars = bbb.user.tag_scrollbars;
 	var post_tag_titles = bbb.user.post_tag_titles;
 	var autoscroll_image = bbb.user.autoscroll_image;
 
@@ -142,6 +153,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var tag_borders = bbb.user.tag_borders;
 	var track_new_data = bbb.user.track_new_data;
 	var script_blacklisted_tags = bbb.user.script_blacklisted_tags;
+
+	// Other data
+	var bbbHiddenImg = "data:image/png;base64,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";
 
 	// List of valid URL's to parse for. Feel free to suggest more!
 	var valid_urls = [
@@ -222,12 +236,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					fetchJSON(gUrl.replace(/\/notes\/?(?:\?|$)/, "/notes.json?") + limit, "notes");
 			}
 		}
-		else if (mode === "post") {
-			if (!needPostAPI())
-				fetchInfo();
-			else
-				fetchJSON(gUrl.replace(/\/posts\/(\d+).*/, "/posts/$1.json"), "post");
-		}
+		else if (mode === "post")
+			fetchInfo();
 		else if (mode === "popular") {
 			if (numThumbs !== thumbnail_count_default || direct_downloads)
 				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
@@ -302,10 +312,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function modifyPage(mode) {
 		// Let other functions that don't require the API run. (Alternative to searchJSON)
-		if (mode === "post") {
-			if (!needPostAPI())
-				fetchInfo();
-		}
+		if (mode === "post")
+			fetchInfo();
 		else if (mode === "search" || mode === "notes") {
 			if (allowUserLimit()) {
 				var url = gUrl;
@@ -322,69 +330,73 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function fetchInfo() {
 		// Retrieve info in the page. (Alternative to fetchJSON)
-		var infoLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]', document, null, 9, null).singleNodeValue;
-		var infoHref = infoLink.href;
-		var infoHrefValues = /data\/(.+?)\.(.+?)$/.exec(infoHref);
-		var md5 = infoHrefValues[1];
-		var ext = infoHrefValues[2];
-		var infoSection = infoLink.parentNode.parentNode;
-		var imgHeight = 0;
-		var imgWidth = 0;
-		var hasLarge = false;
-		var childNotice = document.getElementsByClassName("notice-child");
-		var img = document.getElementById("image");
 		var imgContainer = document.getElementById("image-container");
+		var img = document.getElementById("image");
 		var object = imgContainer.getElementsByTagName("object")[0];
-		var infoTextDim = /\((\d+)x(\d+)\)/.exec(infoLink.parentNode.textContent);
-		var postId = fetchMeta("post-id");
+		var directLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]|//a[@id="image-resize-link"]', document, null, 9, null).singleNodeValue;
+		var twitterInfo = fetchMeta("twitter:image:src");
+		var previewInfo = document.evaluate('//meta[@property="og:image"]', document, null, 9, null).singleNodeValue;
+		var imgHeight = Number(imgContainer.getAttribute("data-height"));
+		var imgWidth = Number(imgContainer.getAttribute("data-width"));
+		var hasLarge = (imgWidth > 850 && ext !== "swf" ? true : false);
+		var md5 = "";
+		var ext = "";
+		var infoValues;
 
-		if (img) { // Regular image.
-			imgHeight = Number(img.getAttribute("data-original-height"));
-			imgWidth = Number(img.getAttribute("data-original-width"));
-			hasLarge = (imgWidth > 850 ? true : false);
-		}
-		else if (object) { // Flash object.
-			imgHeight = Number(object.getAttribute("height"));
-			imgWidth = Number(object.getAttribute("width"));
-			hasLarge = false;
-		}
-		else if (infoTextDim) { // Displayed content removed but the link still exists.
-			imgHeight = Number(infoTextDim[2]);
-			imgWidth = Number(infoTextDim[1]);
-			hasLarge = (imgWidth > 850 ? true : false);
-		}
-		else { // Manual download.
-			imgHeight = null;
-			imgWidth = null;
-			hasLarge = false;
-		}
+		// Try to extract the file's name and extension.
+		if (directLink)
+			infoValues = /data\/(\w+)\.(\w+)/.exec(directLink.href);
+		else if (twitterInfo)
+			infoValues = (twitterInfo.indexOf("sample") > -1 ? /data\/sample\/sample-(\w+)\.\w/.exec(twitterInfo) : /data\/(\w+)\.(\w+)/.exec(twitterInfo));
+		else if (previewInfo)
+			infoValues = /ssd\/data\/preview\/(\w+?)\.\w/.exec(previewInfo.content);
 
-		var imgInfo = {
-			id: Number(postId),
-			file_ext: ext,
-			md5: md5,
-			url: infoHref,
-			fav_count: Number(document.getElementById("favcount-for-post-" + postId).textContent),
-			has_children: (document.getElementsByClassName("notice-parent").length ? true : false),
-			parent_id: (childNotice.length ? Number(childNotice[0].children[0].href.match(/\d+/)) : null),
-			rating: /Rating:\s*(\w)/.exec(infoSection.textContent)[1].toLowerCase(),
-			score: Number(document.getElementById("score-for-post-" + postId).textContent),
-			tag_string: fetchMeta("tags"),
-			pool_string: fetchMeta("pools"),
-			uploader_name: /Uploader:\s*(.+?)\s*»/.exec(infoSection.textContent)[1],
-			is_deleted: (fetchMeta("post-is-deleted") === "false" ? false : true),
-			is_flagged: (fetchMeta("post-is-flagged") === "false" ? false : true),
-			is_pending: (!document.getElementById("pending-approval-notice") ? false : true),
-			image_height: imgHeight,
-			image_width: imgWidth,
-			has_large: hasLarge,
-			file_url: "/data/" + md5 + "." + ext,
-			large_file_url: "/data/sample/sample-" + md5 + ".jpg",
-			preview_file_url: (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg"),
-			exists: true
-		};
+		if (infoValues) {
+			md5 = infoValues[1];
+			ext = infoValues[2];
 
-		delayMe(function(){parsePost(imgInfo);}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
+			// Test for the original image file extension if it is unknown.
+			if (!ext && imgWidth) {
+				var testExt = ["jpg", "png", "gif", "jpeg"];
+
+				for (var i = 0, tel = testExt.length; i < tel; i++) {
+					if (isThere("/data/" + md5 + "." + testExt[i])) {
+						ext = testExt[i];
+						break;
+					}
+				}
+			}
+
+			var imgInfo = {
+				id: Number(imgContainer.getAttribute("data-id")),
+				file_ext: ext,
+				md5: md5,
+				fav_count: Number(imgContainer.getAttribute("data-fav-count")),
+				has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
+				parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
+				rating: imgContainer.getAttribute("data-rating"),
+				score: Number(imgContainer.getAttribute("data-score")),
+				tag_string: imgContainer.getAttribute("data-tags"),
+				pool_string: imgContainer.getAttribute("data-pools"),
+				uploader_name: imgContainer.getAttribute("data-uploader"),
+				is_deleted: (fetchMeta("post-is-deleted") === "false" ? false : true),
+				is_flagged: (fetchMeta("post-is-flagged") === "false" ? false : true),
+				is_pending: (!document.getElementById("pending-approval-notice") ? false : true),
+				image_height: (imgHeight ? imgHeight : null),
+				image_width: (imgWidth ? imgWidth : null),
+				has_large: hasLarge,
+				file_url: "/data/" + md5 + "." + ext,
+				large_file_url: "/data/sample/sample-" + md5 + ".jpg",
+				preview_file_url: (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg"),
+				exists: (img || object ? true : false)
+			};
+
+			delayMe(function(){parsePost(imgInfo);}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
+		}
+		else { // Irregular hidden files do not provide enough info to be found (bmp, rar, zip, etc).
+			danbNotice("Better Better Booru: Due to a lack of provided information, this post cannot be viewed.", "error");
+			bbbStatus("error");
+		}
 	}
 
 	function fetchPages(url, mode, optArg) {
@@ -415,8 +427,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							var comments = commentSection.getElementsByClassName("comment");
 							var numComments = comments.length;
 							var toShow = 6; // Number of comments to display.
+							var previewInfo = document.evaluate('.//meta[@property="og:image"]', childSpan, null, 9, null).singleNodeValue;
+							var previewImg = post.getElementsByTagName("img")[0];
 							target = post.getElementsByClassName("comments-for-post")[0];
 							newContent = document.createDocumentFragment();
+
+							// Fix the image.
+							if (previewInfo && previewImg) {
+								previewImg.src = previewInfo.content;
+								previewImg.alt = /(\w+)\.\w+$/.exec(previewInfo.content)[1];
+							}
 
 							// Fix the comments.
 							if (numComments > toShow) {
@@ -459,6 +479,80 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							// Update status message.
 							bbbStatus("loaded");
 						}
+						else if (mode === "hidden") { // Fetch the hidden image information from a post for thumbnails.
+							var hiddenImgs = optArg;
+							var postId = hiddenImgs.shift();
+							var directLink = document.evaluate('.//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]|.//a[@id="image-resize-link"]', childSpan, null, 9, null).singleNodeValue;
+							var twitterInfo = document.evaluate('.//meta[@name="twitter:image:src"]', childSpan, null, 9, null).singleNodeValue;
+							var previewInfo = document.evaluate('.//meta[@property="og:image"]', childSpan, null, 9, null).singleNodeValue;
+							var md5 = "";
+							var ext = "";
+							var infoValues;
+
+							// Try to extract the file's name and extension.
+							if (directLink)
+								infoValues = /data\/(\w+)\.(\w+)/.exec(directLink.href);
+							else if (twitterInfo)
+								infoValues = (twitterInfo.content.indexOf("sample") > -1 ? /data\/sample\/sample-(\w+)\.\w/.exec(twitterInfo.content) : /data\/(\w+)\.(\w+)/.exec(twitterInfo.content));
+							else if (previewInfo)
+								infoValues = (previewInfo.content.indexOf("download-preview.png") > -1 ? ["/images/download-preview.png", "download-preview", "png"] : /ssd\/data\/preview\/(\w+?)\.\w/.exec(previewInfo.content));
+
+							if (infoValues) {
+								md5 = infoValues[1];
+								ext = infoValues[2];
+
+								// Test for the original image file extension if it is unknown.
+								if (!ext) {
+									var testExt = ["jpg", "png", "gif", "jpeg"];
+
+									for (var i = 0, tel = testExt.length; i < tel; i++) {
+										if (isThere("/data/" + md5 + "." + testExt[i])) {
+											ext = testExt[i];
+											break;
+										}
+									}
+								}
+							}
+
+							// Update the thumbnail with the correct information.
+							if (md5 && ext) {
+								var thumbUrl = "";
+								var fileUrl = "";
+
+								if (md5 === "download-preview") {
+									thumbUrl = "/images/download-preview.png";
+									fileUrl = "DDL unavailable for post " + postId + ".jpg"
+								}
+								else {
+									thumbUrl = (ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg");
+									fileUrl = "/data/" + md5 + "." + ext;
+								}
+
+								var bcc = bbb.cache.current;
+								var bcs = bbb.cache.stored;
+
+								document.getElementById("bbb-img-" + postId).src = thumbUrl;
+
+								if (direct_downloads)
+									document.getElementById("bbb-ddl-" + postId).href = fileUrl;
+
+								bcc.history.push(postId);
+								bcc.names[postId] = md5 + "." + ext;
+
+								// Continue to the next image or finish by updating the cache.
+								if (hiddenImgs.length)
+									fetchPages("/posts/" + hiddenImgs[0], "hidden", hiddenImgs);
+								else {
+									updateThumbCache();
+									bbbStatus("loaded");
+								}
+							}
+							else { // The image information couldn't be found.
+								updateThumbCache();
+								danbNotice("Better Better Booru: Error retrieving thumbnail information.", "error");
+								bbbStatus("error");
+							}
+						}
 					}
 					else if (xmlhttp.status !== 0) {
 						danbNotice("Better Better Booru: Error retrieving information. (Code: " + xmlhttp.status + " " + xmlhttp.statusText + ")", "error");
@@ -485,6 +579,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var posts = xml;
 		var search = "";
 		var where;
+		var hiddenImgs = [];
 		var paginator = document.getElementsByClassName("paginator")[0];
 
 		// If no posts, do nothing.
@@ -534,11 +629,38 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				continue;
 			}
 
+			// Alter hidden images.
+			if (!post.preview_file_url) {
+				if (!bbb.cache.stored.history)
+					loadThumbCache();
+
+				var cacheName = bbb.cache.stored.names[post.id];
+
+				if (cacheName) { // Load the thumbnail info from the cache.
+					var cacheMd5 = cacheName.split(".")[0];
+					var cacheExt = cacheName.split(".")[1];
+
+					if (cacheName === "download-preview.png") {
+						post.preview_file_url = "/images/download-preview.png";
+						post.file_url = "DDL unavailable for post " + post.id + ".jpg";
+					}
+					else {
+						post.preview_file_url = (cacheExt === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + cacheMd5 + ".jpg");
+						post.file_url = "/data/" + cacheName;
+					}
+				}
+				else { // Provide the hidden image with a placeholder and queue it for fixing.
+					post.preview_file_url = bbbHiddenImg;
+					post.file_url = "DDL unavailable for post " + post.id + ".jpg";
+					hiddenImgs.push(post.id);
+				}
+			}
+
 			// eek, huge line.
-			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '"></a></article>';
+			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
 
 			if (direct_downloads)
-				thumb += '<a style="display: none;" href="' + post.file_url + '">Direct Download</a></span>';
+				thumb += '<a style="display: none;" href="' + post.file_url + '" id="bbb-ddl-' + post.id + '">Direct Download</a></span>';
 
 			// Generate output.
 			if (gLoc === "search" || gLoc === "notes" || gLoc === "popular")
@@ -585,6 +707,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Blacklist.
 		blacklistInit();
+
+		// Fix hidden thumbnails.
+		if (hiddenImgs.length) {
+			window.addEventListener("beforeunload", updateThumbCache);
+			fetchPages("/posts/" + hiddenImgs[0], "hidden", hiddenImgs);
+			bbbStatus("hidden");
+		}
 
 		// Update status message.
 		bbbStatus("loaded");
@@ -639,6 +768,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					resizeNotice.parentNode.removeChild(resizeNotice);
 
 				var bbbResizeNotice = document.createElement("div");
+				bbbResizeNotice.id = "image-resize-notice";
 				bbbResizeNotice.className = "ui-corner-all ui-state-highlight notice notice-resized";
 				bbbResizeNotice.style.position = "relative";
 				bbbResizeNotice.style.display = "none";
@@ -898,6 +1028,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var limit = (thumbnail_count ? "&limit=" + thumbnail_count : "");
 				var tag;
 
+				// Temporary information for hidden images.
+				if (!post.preview_file_url)
+					post.preview_file_url = bbbHiddenImg;
+
+				if (!post.md5)
+					post.md5 = "";
+
 				for (var j = 0, gtl = generalTags.length; j < gtl; j++) {
 					tag = generalTags[j];
 					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
@@ -928,7 +1065,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				else // Insert new post before the post that should follow it.
 					existingPost.parentNode.insertBefore(childSpan.firstChild, existingPost);
 
-				// Get the comments.
+				// Get the comments and image info.
 				fetchPages("/posts/" + post.id, "comments", {post: existingPosts[eci], post_id: post.id});
 			}
 
@@ -1076,7 +1213,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(helpPage);
 		bbb.el.menu.helpPage = helpPage;
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br><br>Multiple match rules can be applied by using commas:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the UserScripts forums located <a target="_blank" href="http://userscripts.org/scripts/discuss/100614">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
 
@@ -1983,9 +2120,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function saveSettings() {
-		// Save the user settings to localStorage after making any neccessary checks/adjustments.
+		// Save the user settings to localStorage after making any necessary checks/adjustments.
 		if (!bbb.user.track_new && bbb.user.track_new_data.viewed) // Reset new post tracking if it's disabled.
 			bbb.user.track_new_data = bbb.options.track_new_data.def;
+
+		if (thumb_cache_limit !== bbb.user.thumb_cache_limit) // Trim down the thumb cache as necessary if the limit has changed.
+			adjustThumbCache();
 
 		localStorage.bbb_settings = JSON.stringify(bbb.user);
 	}
@@ -2014,7 +2154,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (isOldVersion(mode)) {
 			switch (mode) {
-				case "6.0":
+				case "6.0.2":
+					// Temporary special case for users that used the test version.
+					if (/500$/.test(bbb.user.thumb_cache_limit))
+						bbb.user.thumb_cache_limit = bbb.options.thumb_cache_limit.def;
+
+					if (!/\.(jpg|gif|png)/.test(localStorage.bbb_thumb_cache)) {
+						delete localStorage.bbb_thumb_cache;
+						loadThumbCache();
+					}
+
+					if (bbb.user.tag_scrollbars === "false")
+						bbb.user.tag_scrollbars = 0;
 					break;
 			}
 
@@ -2159,6 +2310,74 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (Danbooru.Post.place_jlist_ads)
 				Danbooru.Post.place_jlist_ads();
 		}
+	}
+
+	function loadThumbCache() {
+		// Initialize or load up the thumbnail cache.
+		if (typeof(localStorage.bbb_thumb_cache) !== "undefined")
+			bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+		else {
+			bbb.cache.stored = {history: [], names: {}};
+			localStorage.bbb_thumb_cache = JSON.stringify(bbb.cache.stored);
+		}
+	}
+
+	function updateThumbCache() {
+		// Add the current new thumbnail info to the saved thumbnail information.
+		if (!bbb.cache.current.history.length || !thumb_cache_limit)
+			return;
+
+		bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+
+		var bcc = bbb.cache.current;
+		var bcs = bbb.cache.stored;
+
+		// Make sure we don't have duplicates in the new info.
+		for (var i = 0, bhl = bcc.history.length; i < bhl; i++) {
+			if (bcs.names[bcc.history[i]]) {
+				delete bcc.names[bcc.history[i]];
+				bcc.history.splice(i, 1);
+				bhl--;
+				i--;
+			}
+		}
+
+		// Add the new thumbnail info in.
+		for (var i in bcc.names) {
+			if (bcc.names.hasOwnProperty(i)) {
+				bcs.names[i] = bcc.names[i];
+			}
+		}
+
+		bcs.history = bcs.history.concat(bcc.history);
+
+		// Prune the cache if it's larger than the user limit.
+		if (bcs.history.length > thumb_cache_limit) {
+			var removedIDs = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
+
+			for (var i = 0, rtl = removedIDs.length; i < rtl; i++)
+				delete bcs.names[removedIDs[i]];
+		}
+
+		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
+		bbb.cache.current = {history: [], names: {}};
+	}
+
+	function adjustThumbCache() {
+		// Prune the cache if it's larger than the user limit.
+		bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+		thumb_cache_limit = bbb.user.thumb_cache_limit;
+
+		var bcs = bbb.cache.stored;
+
+		if (bcs.history.length > thumb_cache_limit) {
+			var removedIDs = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
+
+			for (var i = 0, rtl = removedIDs.length; i < rtl; i++)
+				delete bcs.names[removedIDs[i]];
+		}
+
+		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
 	}
 
 	function limitFix() {
@@ -2527,16 +2746,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var thumbClass = "";
 
 		if (post.is_deleted) {
-			flags = "deleted";
+			flags += " deleted";
 			thumbClass += " post-status-deleted";
 		}
-		if (post.is_flagged) {
-			flags = "flagged";
-			thumbClass += " post-status-flagged";
-		}
 		if (post.is_pending) {
-			flags = "pending";
+			flags += " pending";
 			thumbClass += " post-status-pending";
+		}
+		if (post.is_banned)
+			flags += " banned";
+		if (flags === "")
+			flags += " active";
+		if (post.is_flagged) {
+			flags += " flagged";
+			thumbClass += " post-status-flagged";
 		}
 		if (post.has_children)
 			thumbClass += " post-status-has-children";
@@ -2544,7 +2767,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			thumbClass += " post-status-has-parent";
 
 		post.parent = (post.parent_id ? post.parent_id : "");
-		post.flags = flags;
+		post.flags = flags.bbbSpaceClean();
 		post.thumb_class = thumbClass;
 
 		return post;
@@ -2701,6 +2924,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			'section#content {margin-left: 0px !important;}' +
 			'.ui-autocomplete {z-index: 2002 !important;}';
 		}
+
+		if (tag_scrollbars)
+			styles += "#tag-list ul {max-height: " + tag_scrollbars + "px !important; overflow-y: auto !important; font-size: 87.5% !important;}";
 
 		if (hide_advertisements) {
 			styles += '#content.with-ads {margin-right: 0em !important;}' +
@@ -2886,8 +3112,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var id = post.getAttribute("data-id");
 		var width = post.getAttribute("data-width");
 		var height = post.getAttribute("data-height");
-		var flags = post.getAttribute("data-flags") || "active";
-		var status = (flags === "flagged" ? " status:flagged status:active" : " status:" + flags);
+		var flags = post.getAttribute("data-flags");
+		var status = " status:" + flags.replace(/\s/g, " status:");
 		var postInfo = {
 			tags: (tags + rating + status + user + pools).bbbSpacePad(),
 			score: Number(score),
@@ -3180,6 +3406,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				status.innerHTML = "Loading comment info...";
 				bbb.statusCount++;
 			}
+			else if (mode === "hidden") { // Status mode for fixing "Hidden" thumbnails.
+				status.style.display = "block";
+				status.innerHTML = "Loading hidden thumbnails...";
+				bbb.statusCount++;
+			}
 			else if (mode === "loaded") { // Status mode for successful requests. Hides itself automatically.
 				bbb.statusCount--;
 
@@ -3470,7 +3701,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 } // End of injectMe.
 
 // Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
-if (document.body) {
+if (document.body && Danbooru) {
 	var script = document.createElement('script');
 	script.type = "text/javascript";
 	script.appendChild(document.createTextNode('(' + injectMe + ')();'));
