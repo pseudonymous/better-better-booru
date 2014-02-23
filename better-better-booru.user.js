@@ -427,15 +427,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							var comments = commentSection.getElementsByClassName("comment");
 							var numComments = comments.length;
 							var toShow = 6; // Number of comments to display.
-							var metaInfo = /\/ssd\/data\/preview\/(\w+)\.jpg/.exec(xmlhttp.responseText);
+							var previewInfo = document.evaluate('.//meta[@property="og:image"]', childSpan, null, 9, null).singleNodeValue;
 							var previewImg = post.getElementsByTagName("img")[0];
 							target = post.getElementsByClassName("comments-for-post")[0];
 							newContent = document.createDocumentFragment();
 
 							// Fix the image.
-							if (metaInfo && previewImg) {
-								previewImg.src = metaInfo[0];
-								previewImg.alt = metaInfo[1];
+							if (previewInfo && previewImg) {
+								previewImg.src = previewInfo.content;
+								previewImg.alt = /(\w+)\.\w+$/.exec(previewInfo.content)[1];
 							}
 
 							// Fix the comments.
