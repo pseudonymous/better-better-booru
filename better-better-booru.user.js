@@ -1,5 +1,6 @@
 // ==UserScript==
 // @name           better_better_booru
+// @namespace      http://userscripts.org/scripts/show/100614
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts and more.
 // @version        6.1
@@ -1866,8 +1867,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		this.expl = expl; // Explanation.
 
 		if (optPropObject) { // Additional properties provided in the form of an object.
-			for (var i in optPropObject)
-				this[i] = optPropObject[i];
+			for (var i in optPropObject) {
+				if (optPropObject.hasOwnProperty(i))
+					this[i] = optPropObject[i];
+			}
 		}
 	}
 
@@ -2108,24 +2111,28 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		bbb.user = {};
 
 		for (var i in bbb.options) {
-			if (typeof(bbb.options[i].def) !== "undefined")
-				bbb.user[i] = bbb.options[i].def;
-			else
-				bbb.user[i] = bbb.options[i];
+			if (bbb.options.hasOwnProperty(i)) {
+				if (typeof(bbb.options[i].def) !== "undefined")
+					bbb.user[i] = bbb.options[i].def;
+				else
+					bbb.user[i] = bbb.options[i];
+			}
 		}
 	}
 
 	function checkUser(user, options) {
 		// Verify the user has all the base settings and add them with their default values if they don't.
 		for (var i in options) {
-			if (typeof(user[i]) === "undefined") {
-				if (typeof(options[i].def) !== "undefined")
-					user[i] = options[i].def;
-				else
-					user[i] = options[i];
+			if (options.hasOwnProperty(i)) {
+				if (typeof(user[i]) === "undefined") {
+					if (typeof(options[i].def) !== "undefined")
+						user[i] = options[i].def;
+					else
+						user[i] = options[i];
+				}
+				else if (typeof(user[i]) === "object" && !(user[i] instanceof Array))
+					checkUser(user[i], options[i]);
 			}
-			else if (typeof(user[i]) === "object" && !(user[i] instanceof Array))
-				checkUser(user[i], options[i]);
 		}
 	}
 
