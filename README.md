@@ -6,6 +6,14 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 6.2:
+ * Added a "hide comment guide notice" option for hiding the "how to comment guide" notice.
+ * Added a "hide tag guide notice" option for hiding the "how to tag guide" notice.
+ * Added a "hide upload guide notice" option for hiding the how to "how to upload guide" notice.
+ * Added a "hide pool guide notice" option for hiding the "pool guidelines"  notice.
+ * Added a namespace to the script to better manage updates.
+ * Fixed the "alternate image swap" option for posts with locked notes.
+ * Fixed several other potential problems related to the saved settings and cache.
 * Version 6.1:
  * Added a "tag list srollbars" option to limit the length of a post's tag list(s).
  * Added a "thumbnail info cache limit" option to limit the size of the hidden post cache.
