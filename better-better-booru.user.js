@@ -52,10 +52,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			enable_status_message: new Option("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
 			hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
 			hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
+			hide_comment_notice: new Option("checkbox", false, "Hide Comment Guide Notice", "Hide the Danbooru comment guide notice."),
 			hide_original_notice: new Option("checkbox", false, "Hide Original Notice", "Hide the Better Better Booru \"viewing original\" notice."),
+			hide_pool_notice: new Option("checkbox", false, "Hide Pool Guide Notice", "Hide the Danbooru pool guide notice."),
 			hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
+			hide_tag_notice: new Option("checkbox", false, "Hide Tag Guide Notice", "Hide the Danbooru tag guide notice."),
 			hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Danbooru terms of service agreement notice."),
 			hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
+			hide_upload_notice: new Option("checkbox", false, "Hide Upload Guide Notice", "Hide the Danbooru upload guide notice."),
 			image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image<br><br><u>Note</u><br>This option is automatically disabled when translation mode is active."),
 			image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Fit images to window\" setting will override this option."),
 			image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (Default):width", "Width & Height:all"]}),
@@ -81,7 +85,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		},
 		sections: { // Setting sections and ordering.
 			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count", "thumb_cache_limit"], "Image Browsing"),
-			layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
+			layout: new Section("general", ["hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_original_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 			sidebar: new Section("general", ["search_add", "remove_tag_headers", "tag_scrollbars", "autohide_sidebar"], "Tag Sidebar"),
 			image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
 			logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
@@ -127,6 +131,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var hide_upgrade_notice = bbb.user.hide_upgrade_notice;
 	var hide_tos_notice = bbb.user.hide_tos_notice;
 	var hide_original_notice = bbb.user.hide_original_notice;
+	var hide_comment_notice = bbb.user.hide_comment_notice;
+	var hide_tag_notice = bbb.user.hide_tag_notice;
+	var hide_upload_notice = bbb.user.hide_upload_notice;
+	var hide_pool_notice = bbb.user.hide_pool_notice;
 	var hide_advertisements = bbb.user.hide_advertisements;
 	var hide_ban_notice = bbb.user.hide_ban_notice;
 
@@ -906,11 +914,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else { // Make sample/original images swap when clicking the image.
 				// Make a "Toggle Notes" link in the options bar.
 				if (!document.getElementById("listnotetoggle")) { // For logged in users.
-					var translateOption = document.getElementById("translate").parentNode;
+					var translateOption = document.getElementById("add-notes-list");
 					var listNoteToggle = document.createElement("li");
 
-					listNoteToggle.innerHTML = '<a href="#" id="listnotetoggle">Toggle notes</a>';
-					translateOption.parentNode.insertBefore(listNoteToggle, translateOption);
+					if (translateOption) {
+						listNoteToggle.innerHTML = '<a href="#" id="listnotetoggle">Toggle notes</a>';
+						translateOption.parentNode.insertBefore(listNoteToggle, translateOption);
+					}
 				}
 
 				document.getElementById("listnotetoggle").addEventListener("click", function(event) {
@@ -2327,7 +2337,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (!bbb.cache.current.history.length || !thumb_cache_limit)
 			return;
 
-		bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+		loadThumbCache();
 
 		var bcc = bbb.cache.current;
 		var bcs = bbb.cache.stored;
@@ -2365,7 +2375,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function adjustThumbCache() {
 		// Prune the cache if it's larger than the user limit.
-		bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+		loadThumbCache();
+
 		thumb_cache_limit = bbb.user.thumb_cache_limit;
 
 		var bcs = bbb.cache.stored;
@@ -2565,6 +2576,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return "popular";
 		else if (/\/pools\/\d+/.test(gUrlPath))
 			return "pool";
+		else if (gUrlPath.indexOf("/uploads/new") === 0)
+			return "upload";
+		else if (gUrlPath.indexOf("/pools/new") === 0)
+			return "new pool";
 		else if (gUrlPath.indexOf("/explore/posts/intro") === 0)
 			return "intro";
 		else
@@ -2958,6 +2973,40 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (hide_ban_notice)
 			styles += '#ban-notice {display: none !important;}';
+
+		if (hide_comment_notice) {
+			var commentGuide;
+
+			if (gLoc === "post") {
+				commentGuide = document.evaluate('//section[@id="comments"]/h2/a[contains(@href,"/wiki_pages")]/..', document, null, 9, null).singleNodeValue;
+
+				if (commentGuide && commentGuide.textContent === "Before commenting, read the how to comment guide.")
+					commentGuide.style.display = "none";
+			}
+			else if (gLoc === "comments") {
+				commentGuide = document.evaluate('//div[@id="a-index"]/div/h2/a[contains(@href,"/wiki_pages")]/..', document, null, 9, null).singleNodeValue;
+
+				if (commentGuide && commentGuide.textContent === "Before commenting, read the how to comment guide.")
+					commentGuide.style.display = "none";
+			}
+		}
+
+		if (hide_tag_notice && gLoc === "post") {
+			var tagGuide = document.evaluate('//section[@id="edit"]/div/p/a[contains(@href,"/howto:tag")]/..', document, null, 9, null).singleNodeValue
+
+				if (tagGuide && tagGuide.textContent === "Before editing, read the how to tag guide.")
+					tagGuide.style.display = "none";
+		}
+
+		if (hide_upload_notice && gLoc === "upload")
+			styles += '#upload-guide-notice {display: none !important;}';
+
+		if (hide_pool_notice && gLoc === "new pool") {
+			var poolGuide = document.evaluate('//div[@id="c-new"]/p/a[contains(@href,"/howto:pools")]/..', document, null, 9, null).singleNodeValue
+
+				if (poolGuide && poolGuide.textContent === "Before creating a pool, read the pool guidelines.")
+					poolGuide.style.display = "none";
+		}
 
 		customStyles.innerHTML = styles;
 		document.getElementsByTagName("head")[0].appendChild(customStyles);
