@@ -75,8 +75,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			track_new: new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"]),
-			tag_scrollbars: new Option("dropdown", 0, "Tag Scrollbars", "Limit the length of the sidebar tag lists for individual posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<br><br><u>Note</u><br>When using \"Remove Tag Headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
-			thumb_cache_limit: new Option("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<br><br><u>Note</u><br>No actual thumbnails are cached. Only information used to speed up the display of hidden thumbnails is stored. Every 500 entries is approximately equal to 51.2 kilobytes of space. The default value of 5000 is about 0.5 megabytes (512 kilobytes) of space.", {txtOptions:["Disabled:0"], numList:[500,1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500,7000,7500,8000,8500,9000,9500,10000,10500,11000,11500,12000,12500,13000,13500,14000,14500,15000,15500,16000,16500,17000,17500,18000,18500,19000,19500,20000,20500,21000,21500,22000,22500,23000,23500,24000,24500,25000,25500,26000,26500,27000,27500,28000,28500,29000,29500,30000]}),
+			tag_scrollbars: new Option("dropdown", 0, "Tag List Scrollbars", "Limit the length of the sidebar tag lists for individual posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<br><br><u>Note</u><br>When using \"Remove Tag Headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
+			thumb_cache_limit: new Option("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<br><br><u>Note</u><br>No actual thumbnails are cached. Only information used to speed up the display of hidden thumbnails is stored. Every 1000 entries is approximately equal to 102.4 kilobytes (0.1 megabytes) of space.", {txtOptions:["Disabled:0"], numList:[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000,20000,21000,22000,23000,24000,25000,26000,27000,28000,29000,30000]}),
 			track_new_data: {viewed:0, viewing:1}
 		},
 		sections: { // Setting sections and ordering.
@@ -333,70 +333,70 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var imgContainer = document.getElementById("image-container");
 		var img = document.getElementById("image");
 		var object = imgContainer.getElementsByTagName("object")[0];
-		var resizeNotice = document.getElementById("image-resize-notice");
 		var directLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]|//a[@id="image-resize-link"]', document, null, 9, null).singleNodeValue;
 		var twitterInfo = fetchMeta("twitter:image:src");
-		var headInfo = document.getElementsByTagName("head")[0].innerHTML;
+		var previewInfo = document.evaluate('//meta[@property="og:image"]', document, null, 9, null).singleNodeValue;
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
 		var imgWidth = Number(imgContainer.getAttribute("data-width"));
 		var hasLarge = (imgWidth > 850 && ext !== "swf" ? true : false);
-		var infoValues;
 		var md5 = "";
 		var ext = "";
+		var infoValues;
 
+		// Try to extract the file's name and extension.
 		if (directLink)
 			infoValues = /data\/(\w+)\.(\w+)/.exec(directLink.href);
 		else if (twitterInfo)
 			infoValues = (twitterInfo.indexOf("sample") > -1 ? /data\/sample\/sample-(\w+)\.\w/.exec(twitterInfo) : /data\/(\w+)\.(\w+)/.exec(twitterInfo));
-		else if (headInfo)
-			infoValues = /ssd\/data\/preview\/(\w+?)\.\w/.exec(headInfo);
+		else if (previewInfo)
+			infoValues = /ssd\/data\/preview\/(\w+?)\.\w/.exec(previewInfo.content);
 
 		if (infoValues) {
 			md5 = infoValues[1];
 			ext = infoValues[2];
+
+			// Test for the original image file extension if it is unknown.
+			if (!ext && imgWidth) {
+				var testExt = ["jpg", "png", "gif", "jpeg"];
+
+				for (var i = 0, tel = testExt.length; i < tel; i++) {
+					if (isThere("/data/" + md5 + "." + testExt[i])) {
+						ext = testExt[i];
+						break;
+					}
+				}
+			}
+
+			var imgInfo = {
+				id: Number(imgContainer.getAttribute("data-id")),
+				file_ext: ext,
+				md5: md5,
+				fav_count: Number(imgContainer.getAttribute("data-fav-count")),
+				has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
+				parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
+				rating: imgContainer.getAttribute("data-rating"),
+				score: Number(imgContainer.getAttribute("data-score")),
+				tag_string: imgContainer.getAttribute("data-tags"),
+				pool_string: imgContainer.getAttribute("data-pools"),
+				uploader_name: imgContainer.getAttribute("data-uploader"),
+				is_deleted: (fetchMeta("post-is-deleted") === "false" ? false : true),
+				is_flagged: (fetchMeta("post-is-flagged") === "false" ? false : true),
+				is_pending: (!document.getElementById("pending-approval-notice") ? false : true),
+				image_height: (imgHeight ? imgHeight : null),
+				image_width: (imgWidth ? imgWidth : null),
+				has_large: hasLarge,
+				file_url: "/data/" + md5 + "." + ext,
+				large_file_url: "/data/sample/sample-" + md5 + ".jpg",
+				preview_file_url: (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg"),
+				exists: (img || object ? true : false)
+			};
+
+			delayMe(function(){parsePost(imgInfo);}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 		}
 		else { // Irregular hidden files do not provide enough info to be found (bmp, rar, zip, etc).
 			danbNotice("Better Better Booru: Due to a lack of provided information, this post cannot be viewed.", "error");
 			bbbStatus("error");
-			return;
 		}
-
-		if (!ext && imgWidth) { // Test for the original image file extension if it is unknown.
-			var testExt = ["jpg", "png", "gif", "jpeg"];
-
-			for (var i = 0, tel = testExt.length; i < tel; i++) {
-				if (isThere("/data/" + md5 + "." + testExt[i])) {
-					ext = testExt[i];
-					break;
-				}
-			}
-		}
-
-		var imgInfo = {
-			id: Number(imgContainer.getAttribute("data-id")),
-			file_ext: ext,
-			md5: md5,
-			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
-			has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
-			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
-			rating: imgContainer.getAttribute("data-rating"),
-			score: Number(imgContainer.getAttribute("data-score")),
-			tag_string: imgContainer.getAttribute("data-tags"),
-			pool_string: imgContainer.getAttribute("data-pools"),
-			uploader_name: imgContainer.getAttribute("data-uploader"),
-			is_deleted: (fetchMeta("post-is-deleted") === "false" ? false : true),
-			is_flagged: (fetchMeta("post-is-flagged") === "false" ? false : true),
-			is_pending: (!document.getElementById("pending-approval-notice") ? false : true),
-			image_height: (imgHeight ? imgHeight : null),
-			image_width: (imgWidth ? imgWidth : null),
-			has_large: hasLarge,
-			file_url: "/data/" + md5 + "." + ext,
-			large_file_url: "/data/sample/sample-" + md5 + ".jpg",
-			preview_file_url: (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg"),
-			exists: (img || object ? true : false)
-		};
-
-		delayMe(function(){parsePost(imgInfo);}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 	}
 
 	function fetchPages(url, mode, optArg) {
@@ -482,17 +482,64 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						else if (mode === "hidden") { // Fetch the hidden image information from a post for thumbnails.
 							var hiddenImgs = optArg;
 							var postId = hiddenImgs.shift();
-							var metaInfo = /\/ssd\/data\/preview\/(\w+)\.jpg|\/images\/(download-preview).png/.exec(xmlhttp.responseText);
+							var directLink = document.evaluate('.//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]|.//a[@id="image-resize-link"]', childSpan, null, 9, null).singleNodeValue;
+							var twitterInfo = document.evaluate('.//meta[@name="twitter:image:src"]', childSpan, null, 9, null).singleNodeValue;
+							var previewInfo = document.evaluate('.//meta[@property="og:image"]', childSpan, null, 9, null).singleNodeValue;
+							var md5 = "";
+							var ext = "";
+							var infoValues;
 
-							if (metaInfo) { // Update the thumbnail with the correct information and continue to the next.
-								var filename = metaInfo[1] || metaInfo[2];
+							// Try to extract the file's name and extension.
+							if (directLink)
+								infoValues = /data\/(\w+)\.(\w+)/.exec(directLink.href);
+							else if (twitterInfo)
+								infoValues = (twitterInfo.content.indexOf("sample") > -1 ? /data\/sample\/sample-(\w+)\.\w/.exec(twitterInfo.content) : /data\/(\w+)\.(\w+)/.exec(twitterInfo.content));
+							else if (previewInfo)
+								infoValues = (previewInfo.content.indexOf("download-preview.png") > -1 ? ["/images/download-preview.png", "download-preview", "png"] : /ssd\/data\/preview\/(\w+?)\.\w/.exec(previewInfo.content));
+
+							if (infoValues) {
+								md5 = infoValues[1];
+								ext = infoValues[2];
+
+								// Test for the original image file extension if it is unknown.
+								if (!ext) {
+									var testExt = ["jpg", "png", "gif", "jpeg"];
+
+									for (var i = 0, tel = testExt.length; i < tel; i++) {
+										if (isThere("/data/" + md5 + "." + testExt[i])) {
+											ext = testExt[i];
+											break;
+										}
+									}
+								}
+							}
+
+							// Update the thumbnail with the correct information.
+							if (md5 && ext) {
+								var thumbUrl = "";
+								var fileUrl = "";
+
+								if (md5 === "download-preview") {
+									thumbUrl = "/images/download-preview.png";
+									fileUrl = "DDL unavailable for post " + postId + ".jpg"
+								}
+								else {
+									thumbUrl = (ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg");
+									fileUrl = "/data/" + md5 + "." + ext;
+								}
+
 								var bcc = bbb.cache.current;
 								var bcs = bbb.cache.stored;
 
-								document.getElementById("bbb-img-" + postId).src = metaInfo[0];
-								bcc.history.push(postId);
-								bcc.names[postId] = filename;
+								document.getElementById("bbb-img-" + postId).src = thumbUrl;
 
+								if (direct_downloads)
+									document.getElementById("bbb-ddl-" + postId).href = fileUrl;
+
+								bcc.history.push(postId);
+								bcc.names[postId] = md5 + "." + ext;
+
+								// Continue to the next image or finish by updating the cache.
 								if (hiddenImgs.length)
 									fetchPages("/posts/" + hiddenImgs[0], "hidden", hiddenImgs);
 								else {
@@ -590,13 +637,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var cacheName = bbb.cache.stored.names[post.id];
 
 				if (cacheName) { // Load the thumbnail info from the cache.
-					if (cacheName === "download-preview")
+					var cacheMd5 = cacheName.split(".")[0];
+					var cacheExt = cacheName.split(".")[1];
+
+					if (cacheName === "download-preview.png") {
 						post.preview_file_url = "/images/download-preview.png";
-					else
-						post.preview_file_url = "/ssd/data/preview/" + cacheName + ".jpg";
+						post.file_url = "DDL unavailable for post " + post.id + ".jpg";
+					}
+					else {
+						post.preview_file_url = (cacheExt === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + cacheMd5 + ".jpg");
+						post.file_url = "/data/" + cacheName;
+					}
 				}
 				else { // Provide the hidden image with a placeholder and queue it for fixing.
 					post.preview_file_url = bbbHiddenImg;
+					post.file_url = "DDL unavailable for post " + post.id + ".jpg";
 					hiddenImgs.push(post.id);
 				}
 			}
@@ -605,7 +660,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
 
 			if (direct_downloads)
-				thumb += '<a style="display: none;" href="' + post.file_url + '">Direct Download</a></span>';
+				thumb += '<a style="display: none;" href="' + post.file_url + '" id="bbb-ddl-' + post.id + '">Direct Download</a></span>';
 
 			// Generate output.
 			if (gLoc === "search" || gLoc === "notes" || gLoc === "popular")
@@ -2099,7 +2154,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		if (isOldVersion(mode)) {
 			switch (mode) {
-				case "6.0":
+				case "6.0.2":
+					// Temporary special case for users that used the test version.
+					if (/500$/.test(bbb.user.thumb_cache_limit))
+						bbb.user.thumb_cache_limit = bbb.options.thumb_cache_limit.def;
+
+					if (!/\.(jpg|gif|png)/.test(localStorage.bbb_thumb_cache)) {
+						delete localStorage.bbb_thumb_cache;
+						loadThumbCache();
+					}
+
+					if (bbb.user.tag_scrollbars === "false")
+						bbb.user.tag_scrollbars = 0;
 					break;
 			}
 
@@ -3635,7 +3701,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 } // End of injectMe.
 
 // Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
-if (document.body) {
+if (document.body && Danbooru) {
 	var script = document.createElement('script');
 	script.type = "text/javascript";
 	script.appendChild(document.createTextNode('(' + injectMe + ')();'));
