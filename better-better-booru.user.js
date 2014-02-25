@@ -22,6 +22,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
 
+	if (!Danbooru)
+		return;
+
 	/* Global Variables */
 	var bbb = { // Container for script info.
 		cache: {
@@ -3757,7 +3760,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 } // End of injectMe.
 
 // Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
-if (document.body && Danbooru) {
+if (document.body) {
 	var script = document.createElement('script');
 	script.type = "text/javascript";
 	script.appendChild(document.createTextNode('(' + injectMe + ')();'));
