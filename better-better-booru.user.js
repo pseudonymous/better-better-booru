@@ -3,7 +3,7 @@
 // @namespace      http://userscripts.org/scripts/show/100614
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts and more.
-// @version        6.2
+// @version        6.2.1
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @match          http://*.donmai.us/*
