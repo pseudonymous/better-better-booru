@@ -6,6 +6,8 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 6.2.1:
+ * Fixed a compatibility problem when detecting Danbooru's JavaScript.
 * Version 6.2:
  * Added a "hide comment guide notice" option for hiding the "how to comment guide" notice.
  * Added a "hide tag guide notice" option for hiding the "how to tag guide" notice.

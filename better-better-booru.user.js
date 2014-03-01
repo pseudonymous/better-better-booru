@@ -3,7 +3,7 @@
 // @namespace      http://userscripts.org/scripts/show/100614
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts and more.
-// @version        6.2
+// @version        6.2.1
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @match          http://*.donmai.us/*
@@ -21,6 +21,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * NOTE: You no longer need to edit this script to change settings!
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
+	 
+	if (typeof(Danbooru) === "undefined")
+		return;
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
@@ -3757,7 +3760,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 } // End of injectMe.
 
 // Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
-if (document.body && Danbooru) {
+if (document.body) {
 	var script = document.createElement('script');
 	script.type = "text/javascript";
 	script.appendChild(document.createTextNode('(' + injectMe + ')();'));
