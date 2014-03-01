@@ -21,8 +21,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * NOTE: You no longer need to edit this script to change settings!
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
-
-	if (!Danbooru)
+	 
+	if (typeof(Danbooru) === "undefined")
 		return;
 
 	/* Global Variables */
