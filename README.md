@@ -6,6 +6,8 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 6.2.2:
+ * Updated to support the new thumbnail paths on Danbooru.
 * Version 6.2.1:
  * Fixed a compatibility problem when detecting Danbooru's JavaScript.
 * Version 6.2:
