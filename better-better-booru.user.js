@@ -3,7 +3,7 @@
 // @namespace      http://userscripts.org/scripts/show/100614
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts and more.
-// @version        6.2.1
+// @version        6.2.2
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
 // @match          http://*.donmai.us/*
@@ -21,7 +21,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * NOTE: You no longer need to edit this script to change settings!
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
-	 
+
 	if (typeof(Danbooru) === "undefined")
 		return;
 
@@ -42,7 +42,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			translationMode: false
 		},
 		options: { // Setting options and data.
-			bbb_version: "6.2",
+			bbb_version: "6.2.2",
 			alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
@@ -361,7 +361,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (twitterInfo)
 			infoValues = (twitterInfo.indexOf("sample") > -1 ? /data\/sample\/sample-(\w+)\.\w/.exec(twitterInfo) : /data\/(\w+)\.(\w+)/.exec(twitterInfo));
 		else if (previewInfo)
-			infoValues = /ssd\/data\/preview\/(\w+?)\.\w/.exec(previewInfo.content);
+			infoValues = /data\/preview\/(\w+?)\.\w/.exec(previewInfo.content);
 
 		if (infoValues) {
 			md5 = infoValues[1];
@@ -399,7 +399,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				has_large: hasLarge,
 				file_url: "/data/" + md5 + "." + ext,
 				large_file_url: "/data/sample/sample-" + md5 + ".jpg",
-				preview_file_url: (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg"),
+				preview_file_url: (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/data/preview/" + md5 + ".jpg"),
 				exists: (img || object ? true : false)
 			};
 
@@ -507,7 +507,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							else if (twitterInfo)
 								infoValues = (twitterInfo.content.indexOf("sample") > -1 ? /data\/sample\/sample-(\w+)\.\w/.exec(twitterInfo.content) : /data\/(\w+)\.(\w+)/.exec(twitterInfo.content));
 							else if (previewInfo)
-								infoValues = (previewInfo.content.indexOf("download-preview.png") > -1 ? ["/images/download-preview.png", "download-preview", "png"] : /ssd\/data\/preview\/(\w+?)\.\w/.exec(previewInfo.content));
+								infoValues = (previewInfo.content.indexOf("download-preview.png") > -1 ? ["/images/download-preview.png", "download-preview", "png"] : /data\/preview\/(\w+?)\.\w/.exec(previewInfo.content));
 
 							if (infoValues) {
 								md5 = infoValues[1];
@@ -536,7 +536,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 									fileUrl = "DDL unavailable for post " + postId + ".jpg"
 								}
 								else {
-									thumbUrl = (ext === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + md5 + ".jpg");
+									thumbUrl = (ext === "swf" ? "/images/download-preview.png" : "/data/preview/" + md5 + ".jpg");
 									fileUrl = "/data/" + md5 + "." + ext;
 								}
 
@@ -657,7 +657,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						post.file_url = "DDL unavailable for post " + post.id + ".jpg";
 					}
 					else {
-						post.preview_file_url = (cacheExt === "swf" ? "/images/download-preview.png" : "/ssd/data/preview/" + cacheMd5 + ".jpg");
+						post.preview_file_url = (cacheExt === "swf" ? "/images/download-preview.png" : "/data/preview/" + cacheMd5 + ".jpg");
 						post.file_url = "/data/" + cacheName;
 					}
 				}
@@ -874,7 +874,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var options = document.createElement("section");
 				var history = document.evaluate('//aside[@id="sidebar"]/section[last()]', document, null, 9, null).singleNodeValue;
 
-				options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/ssd/data/preview/' + post.md5 + '.jpg">Find similar</a></li></ul>';
+				options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/data/preview/' + post.md5 + '.jpg">Find similar</a></li></ul>';
 				history.parentNode.insertBefore(options, history);
 			}
 
@@ -2046,7 +2046,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	Element.prototype.bbbBorderPreview = function(borderItem) {
-		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/ssd/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + bbb.user.border_width + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
+		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + bbb.user.border_width + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
 		this.addEventListener("mouseout", hideTip, false);
 	};
 
