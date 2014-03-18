@@ -2161,7 +2161,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (isOldVersion(mode)) {
 			switch (mode) {
 				case "6.0.2":
-					// Temporary special case for users that used the test version.
+					// Temporary special tests for users that used the test version. Affects version 6.0.2.
 					if (/500$/.test(bbb.user.thumb_cache_limit))
 						bbb.user.thumb_cache_limit = bbb.options.thumb_cache_limit.def;
 
@@ -2172,6 +2172,29 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					if (bbb.user.tag_scrollbars === "false")
 						bbb.user.tag_scrollbars = 0;
+				case "6.1":
+				case "6.2":
+				case "6.2.1":
+				case "6.2.2":
+					// Remove download-preview.png entries in preparation for the new info from data tags. Affects versions 6.1 - 6.2.2.
+					if (localStorage.bbb_thumb_cache.indexOf("download-preview") > -1) {
+						loadThumbCache();
+
+						var bcs = bbb.cache.stored;
+						
+						for (var i = 0; i < bcs.history.length; i++) {
+							var postId = bcs.history[i];
+							var postName = bcs.names[postId];
+						
+							if (postName === "download-preview.png") {
+								bcs.history.splice(i, 1);
+								delete bcs.names[postId];
+								i--;
+							}
+						}					
+						
+						localStorage.bbb_thumb_cache = JSON.stringify(bcs);
+					}
 					break;
 			}
 
