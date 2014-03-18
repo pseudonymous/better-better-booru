@@ -642,7 +642,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 						post.md5 = cacheMd5;
 						post.file_ext = cacheExt;
-						post.preview_file_url = (cacheExt === "swf" ? "/images/download-preview.png" : "/data/preview/" + cacheMd5 + ".jpg");
+						post.preview_file_url = (!post.image_height || cacheExt === "swf" ? "/images/download-preview.png" : "/data/preview/" + cacheMd5 + ".jpg");
 						post.large_file_url = (post.has_large ? "/data/sample/sample-" + cacheMd5 + ".jpg" : "/data/" + cacheName);
 						post.file_url = "/data/" + cacheName;
 					}
