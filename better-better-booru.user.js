@@ -249,7 +249,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 		}
 		else if (mode === "post")
-			fetchInfo();
+			delayMe(function(){parsePost(fetchInfo());}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 		else if (mode === "popular") {
 			if (numThumbs !== thumbnail_count_default || direct_downloads)
 				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
@@ -325,7 +325,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function modifyPage(mode) {
 		// Let other functions that don't require the API run. (Alternative to searchJSON)
 		if (mode === "post")
-			fetchInfo();
+			delayMe(function(){parsePost(fetchInfo());}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 		else if (mode === "search" || mode === "notes") {
 			if (allowUserLimit()) {
 				var url = gUrl;
@@ -340,28 +340,55 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function fetchInfo() {
-		// Retrieve info in the page. (Alternative to fetchJSON)
-		var imgContainer = document.getElementById("image-container");
-		var img = document.getElementById("image");
+	function fetchInfo(pageEl) {
+		// Retrieve info from the current document or a supplied element containing it.
+		var target = pageEl || document;
+		var imgContainer = document.evaluate('.//section[@id="image-container"]', target, null, 9, null).singleNodeValue;
+		var img = document.evaluate('.//img[@id="image"]', target, null, 9, null).singleNodeValue;
 		var object = imgContainer.getElementsByTagName("object")[0];
-		var directLink = document.evaluate('//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]|//a[@id="image-resize-link"]', document, null, 9, null).singleNodeValue;
-		var twitterInfo = fetchMeta("twitter:image:src");
-		var previewInfo = document.evaluate('//meta[@property="og:image"]', document, null, 9, null).singleNodeValue;
+		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
+		var directLink = document.evaluate('.//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]|//a[@id="image-resize-link"]', target, null, 9, null).singleNodeValue;
+		var twitterInfo = fetchMeta("twitter:image:src", target);
+		var previewInfo = fetchMeta("og:image", target);
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
 		var imgWidth = Number(imgContainer.getAttribute("data-width"));
 		var hasLarge = (imgWidth > 850 && ext !== "swf" ? true : false);
 		var md5 = "";
 		var ext = "";
 		var infoValues;
+		var imgInfo = {
+			md5: "",
+			file_ext: "",
+			file_url: "",
+			large_file_url: "",
+			preview_file_url: "",
+			id: Number(imgContainer.getAttribute("data-id")),
+			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
+			has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
+			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
+			rating: imgContainer.getAttribute("data-rating"),
+			score: Number(imgContainer.getAttribute("data-score")),
+			tag_string: imgContainer.getAttribute("data-tags"),
+			pool_string: imgContainer.getAttribute("data-pools"),
+			uploader_name: imgContainer.getAttribute("data-uploader"),
+			is_deleted: (fetchMeta("post-is-deleted", target) === "false" ? false : true),
+			is_flagged: (fetchMeta("post-is-flagged", target) === "false" ? false : true),
+			is_pending: (!document.evaluate('.//div[@id="pending-approval-notice"]', target, null, 9, null).singleNodeValue ? false : true),
+			image_height: (imgHeight ? imgHeight : null),
+			image_width: (imgWidth ? imgWidth : null),
+			has_large: hasLarge,
+			exists: (img || object ? true : false)
+		};
 
 		// Try to extract the file's name and extension.
-		if (directLink)
+		if (dataInfo[1])
+			infoValues = dataInfo;
+		else if (directLink)
 			infoValues = /data\/(\w+)\.(\w+)/.exec(directLink.href);
 		else if (twitterInfo)
 			infoValues = (twitterInfo.indexOf("sample") > -1 ? /data\/sample\/sample-(\w+)\.\w/.exec(twitterInfo) : /data\/(\w+)\.(\w+)/.exec(twitterInfo));
 		else if (previewInfo)
-			infoValues = /data\/preview\/(\w+?)\.\w/.exec(previewInfo.content);
+			infoValues = /data\/preview\/(\w+?)\.\w/.exec(previewInfo);
 
 		if (infoValues) {
 			md5 = infoValues[1];
@@ -379,36 +406,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			var imgInfo = {
-				id: Number(imgContainer.getAttribute("data-id")),
-				file_ext: ext,
-				md5: md5,
-				fav_count: Number(imgContainer.getAttribute("data-fav-count")),
-				has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
-				parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
-				rating: imgContainer.getAttribute("data-rating"),
-				score: Number(imgContainer.getAttribute("data-score")),
-				tag_string: imgContainer.getAttribute("data-tags"),
-				pool_string: imgContainer.getAttribute("data-pools"),
-				uploader_name: imgContainer.getAttribute("data-uploader"),
-				is_deleted: (fetchMeta("post-is-deleted") === "false" ? false : true),
-				is_flagged: (fetchMeta("post-is-flagged") === "false" ? false : true),
-				is_pending: (!document.getElementById("pending-approval-notice") ? false : true),
-				image_height: (imgHeight ? imgHeight : null),
-				image_width: (imgWidth ? imgWidth : null),
-				has_large: hasLarge,
-				file_url: "/data/" + md5 + "." + ext,
-				large_file_url: "/data/sample/sample-" + md5 + ".jpg",
-				preview_file_url: (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/data/preview/" + md5 + ".jpg"),
-				exists: (img || object ? true : false)
-			};
+			imgInfo.md5 = md5;
+			imgInfo.file_ext = ext;
+			imgInfo.file_url = "/data/" + md5 + "." + ext;
+			imgInfo.large_file_url = (hasLarge ? "/data/sample/sample-" + md5 + ".jpg" : "/data/" + md5 + "." + ext);
+			imgInfo.preview_file_url = (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/data/preview/" + md5 + ".jpg");
+		}
+		else if (previewInfo === "/images/download-preview.png")
+			imgInfo.preview_file_url = "/images/download-preview.png";
 
-			delayMe(function(){parsePost(imgInfo);}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
-		}
-		else { // Irregular hidden files do not provide enough info to be found (bmp, rar, zip, etc).
-			danbNotice("Better Better Booru: Due to a lack of provided information, this post cannot be viewed.", "error");
-			bbbStatus("error");
-		}
+		return imgInfo;
 	}
 
 	function fetchPages(url, mode, optArg) {
@@ -422,6 +429,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						var childSpan = document.createElement("span");
 						var newContent;
 						var target;
+						var post;
+						var previewImg;
 
 						childSpan.innerHTML = xmlhttp.responseText;
 
@@ -433,21 +442,29 @@ function injectMe() { // This is needed to make this script work in Chrome.
 								target.parentNode.replaceChild(newContent, target);
 						}
 						else if (mode === "comments") { // Fetch post to get comments.
-							var post = optArg.post;
+							var commentDiv = optArg.post;
 							var postId = optArg.post_id;
 							var commentSection = childSpan.getElementsByClassName("comments-for-post")[0];
 							var comments = commentSection.getElementsByClassName("comment");
 							var numComments = comments.length;
 							var toShow = 6; // Number of comments to display.
-							var previewInfo = document.evaluate('.//meta[@property="og:image"]', childSpan, null, 9, null).singleNodeValue;
-							var previewImg = post.getElementsByTagName("img")[0];
-							target = post.getElementsByClassName("comments-for-post")[0];
+							post = fetchInfo(childSpan);
+							previewImg = commentDiv.getElementsByTagName("img")[0];
+							target = commentDiv.getElementsByClassName("comments-for-post")[0];
 							newContent = document.createDocumentFragment();
 
 							// Fix the image.
-							if (previewInfo && previewImg) {
-								previewImg.src = previewInfo.content;
-								previewImg.alt = /(\w+)\.\w+$/.exec(previewInfo.content)[1];
+							if (post.preview_file_url) {
+								if (post.file_url) {
+									commentDiv.setAttribute("data-md5", post.md5);
+									commentDiv.setAttribute("data-file-ext", post.file_ext);
+									commentDiv.setAttribute("data-file-url", post.file_url);
+									commentDiv.setAttribute("data-large-file-url", post.large_file_url);
+								}
+
+								previewImg.src = post.preview_file_url;
+								previewImg.alt = /(\w+)\.\w+$/.exec(post.preview_file_url)[1];
+								commentDiv.setAttribute("data-preview-file-url", post.preview_file_url);
 							}
 
 							// Fix the comments.
@@ -493,63 +510,30 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						}
 						else if (mode === "hidden") { // Fetch the hidden image information from a post for thumbnails.
 							var hiddenImgs = optArg;
-							var postId = hiddenImgs.shift();
-							var directLink = document.evaluate('.//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]|.//a[@id="image-resize-link"]', childSpan, null, 9, null).singleNodeValue;
-							var twitterInfo = document.evaluate('.//meta[@name="twitter:image:src"]', childSpan, null, 9, null).singleNodeValue;
-							var previewInfo = document.evaluate('.//meta[@property="og:image"]', childSpan, null, 9, null).singleNodeValue;
-							var md5 = "";
-							var ext = "";
-							var infoValues;
-
-							// Try to extract the file's name and extension.
-							if (directLink)
-								infoValues = /data\/(\w+)\.(\w+)/.exec(directLink.href);
-							else if (twitterInfo)
-								infoValues = (twitterInfo.content.indexOf("sample") > -1 ? /data\/sample\/sample-(\w+)\.\w/.exec(twitterInfo.content) : /data\/(\w+)\.(\w+)/.exec(twitterInfo.content));
-							else if (previewInfo)
-								infoValues = (previewInfo.content.indexOf("download-preview.png") > -1 ? ["/images/download-preview.png", "download-preview", "png"] : /data\/preview\/(\w+?)\.\w/.exec(previewInfo.content));
-
-							if (infoValues) {
-								md5 = infoValues[1];
-								ext = infoValues[2];
-
-								// Test for the original image file extension if it is unknown.
-								if (!ext) {
-									var testExt = ["jpg", "png", "gif", "jpeg"];
-
-									for (var i = 0, tel = testExt.length; i < tel; i++) {
-										if (isThere("/data/" + md5 + "." + testExt[i])) {
-											ext = testExt[i];
-											break;
-										}
-									}
-								}
-							}
+							var hiddenId = hiddenImgs.shift();
+							var bcc = bbb.cache.current;
+							var bcs = bbb.cache.stored;
+							var article = document.getElementById("post_" + hiddenId);
+							post = fetchInfo(childSpan);
+							previewImg = document.getElementById("bbb-img-" + hiddenId);
 
 							// Update the thumbnail with the correct information.
-							if (md5 && ext) {
-								var thumbUrl = "";
-								var fileUrl = "";
+							if (post.preview_file_url) {
+								if (post.file_url) {
+									article.setAttribute("data-md5", post.md5);
+									article.setAttribute("data-file-ext", post.file_ext);
+									article.setAttribute("data-file-url", post.file_url);
+									article.setAttribute("data-large-file-url", post.large_file_url);
 
-								if (md5 === "download-preview") {
-									thumbUrl = "/images/download-preview.png";
-									fileUrl = "DDL unavailable for post " + postId + ".jpg"
-								}
-								else {
-									thumbUrl = (ext === "swf" ? "/images/download-preview.png" : "/data/preview/" + md5 + ".jpg");
-									fileUrl = "/data/" + md5 + "." + ext;
+									if (direct_downloads)
+										document.getElementById("bbb-ddl-" + hiddenId).href = post.file_url;
 								}
 
-								var bcc = bbb.cache.current;
-								var bcs = bbb.cache.stored;
+								previewImg.src = post.preview_file_url;
+								article.setAttribute("data-preview-file-url", post.preview_file_url);
 
-								document.getElementById("bbb-img-" + postId).src = thumbUrl;
-
-								if (direct_downloads)
-									document.getElementById("bbb-ddl-" + postId).href = fileUrl;
-
-								bcc.history.push(postId);
-								bcc.names[postId] = md5 + "." + ext;
+								bcc.history.push(hiddenId);
+								bcc.names[hiddenId] = post.md5 + "." + post.file_ext;
 
 								// Continue to the next image or finish by updating the cache.
 								if (hiddenImgs.length)
@@ -642,37 +626,36 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			// Alter hidden images.
-			if (!post.preview_file_url) {
+			if (!post.md5) {
 				if (!bbb.cache.stored.history)
 					loadThumbCache();
 
 				var cacheName = bbb.cache.stored.names[post.id];
 
 				if (cacheName) { // Load the thumbnail info from the cache.
-					var cacheMd5 = cacheName.split(".")[0];
-					var cacheExt = cacheName.split(".")[1];
-
-					if (cacheName === "download-preview.png") {
+					if (cacheName === "download-preview.png")
 						post.preview_file_url = "/images/download-preview.png";
-						post.file_url = "DDL unavailable for post " + post.id + ".jpg";
-					}
 					else {
+						var cacheValues = cacheName.split(".");
+						var cacheMd5 = cacheValues[0];
+						var cacheExt = cacheValues[1];
+
+						post.md5 = cacheMd5;
+						post.file_ext = cacheExt;
 						post.preview_file_url = (cacheExt === "swf" ? "/images/download-preview.png" : "/data/preview/" + cacheMd5 + ".jpg");
+						post.large_file_url = (post.has_large ? "/data/sample/sample-" + cacheMd5 + ".jpg" : "/data/" + cacheName);
 						post.file_url = "/data/" + cacheName;
 					}
 				}
-				else { // Provide the hidden image with a placeholder and queue it for fixing.
-					post.preview_file_url = bbbHiddenImg;
-					post.file_url = "DDL unavailable for post " + post.id + ".jpg";
+				else // Queue hidden imgs for fixing.
 					hiddenImgs.push(post.id);
-				}
 			}
 
 			// eek, huge line.
-			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
+			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
 
 			if (direct_downloads)
-				thumb += '<a style="display: none;" href="' + post.file_url + '" id="bbb-ddl-' + post.id + '">Direct Download</a></span>';
+				thumb += '<a style="display: none;" href="' + (post.file_url ? post.file_url : "DDL unavailable for post " + post.id + ".jpg") + '" id="bbb-ddl-' + post.id + '">Direct Download</a></span>';
 
 			// Generate output.
 			if (gLoc === "search" || gLoc === "notes" || gLoc === "popular")
@@ -735,8 +718,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var post = formatJSON(xml);
 		var imgContainer = document.getElementById("image-container");
 
-		if (!post.id || !imgContainer)
+		if (!post.file_url || !imgContainer) {
+			danbNotice("Better Better Booru: Due to a lack of provided information, this post cannot be viewed.", "error");
+			bbbStatus("error");
 			return;
+		}
 
 		var ratio = (post.image_width > 850 ? 850 / post.image_width : 1);
 		var sampHeight = Math.round(post.image_height * ratio);
@@ -1072,7 +1058,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				// Create the new post.
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.preview_file_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div id="post_' + post.id + '" class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-approver-id="' + post.approver_id + '" data-fav-count="' + post.fav_count + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.preview_file_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
@@ -2604,8 +2590,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return false;
 	}
 
-	function fetchMeta(name) {
-		var tag = document.getElementsByName(name)[0];
+	function fetchMeta(meta, pageEl) {
+		var target = pageEl || document;
+		var tag = document.evaluate('.//meta[@name="' + meta + '" or @property="' + meta + '"]', target, null, 9, null).singleNodeValue;
 
 		if (tag) {
 			if (tag.hasAttribute("content"))
@@ -2766,7 +2753,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function formatJSON(post) {
-		// Add information to the JSON post object.
+		// Add information to/alter information in the JSON post object.
 		var flags = "";
 		var thumbClass = "";
 
@@ -2791,7 +2778,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (post.parent_id)
 			thumbClass += " post-status-has-parent";
 
-		post.parent = (post.parent_id ? post.parent_id : "");
+		// Hidden post fixes.
+		post.md5 = post.md5 || "";
+		post.file_ext = post.file_ext || "";
+		post.preview_file_url = post.preview_file_url || bbbHiddenImg;
+		post.large_file_url = post.large_file_url || "";
+		post.file_url = post.file_url || "";
+
+		// Potential null value fixes.
+		post.approver_id = post.approver_id || "";
+		post.parent = post.parent_id || "";
+		post.pixiv_id = post.pixiv_id || "";
+
 		post.flags = flags.bbbSpaceClean();
 		post.thumb_class = thumbClass;
 
@@ -3002,7 +3000,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		if (hide_tag_notice && gLoc === "post") {
-			var tagGuide = document.evaluate('//section[@id="edit"]/div/p/a[contains(@href,"/howto:tag")]/..', document, null, 9, null).singleNodeValue
+			var tagGuide = document.evaluate('//section[@id="edit"]/div/p/a[contains(@href,"/howto:tag")]/..', document, null, 9, null).singleNodeValue;
 
 				if (tagGuide && tagGuide.textContent === "Before editing, read the how to tag guide.")
 					tagGuide.style.display = "none";
@@ -3012,7 +3010,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			styles += '#upload-guide-notice {display: none !important;}';
 
 		if (hide_pool_notice && gLoc === "new pool") {
-			var poolGuide = document.evaluate('//div[@id="c-new"]/p/a[contains(@href,"/howto:pools")]/..', document, null, 9, null).singleNodeValue
+			var poolGuide = document.evaluate('//div[@id="c-new"]/p/a[contains(@href,"/howto:pools")]/..', document, null, 9, null).singleNodeValue;
 
 				if (poolGuide && poolGuide.textContent === "Before creating a pool, read the pool guidelines.")
 					poolGuide.style.display = "none";
