@@ -463,7 +463,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 								}
 
 								previewImg.src = post.preview_file_url;
-								previewImg.alt = /(\w+)\.\w+$/.exec(post.preview_file_url)[1];
+								previewImg.alt = /([^\/]+)\.\w+$/.exec(post.preview_file_url)[1];
 								commentDiv.setAttribute("data-preview-file-url", post.preview_file_url);
 							}
 
@@ -533,7 +533,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 								article.setAttribute("data-preview-file-url", post.preview_file_url);
 
 								bcc.history.push(hiddenId);
-								bcc.names[hiddenId] = post.md5 + "." + post.file_ext;
+								bcc.names[hiddenId] = /[^\/]+$/.exec(post.preview_file_url)[0];
 
 								// Continue to the next image or finish by updating the cache.
 								if (hiddenImgs.length)
@@ -2181,18 +2181,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						loadThumbCache();
 
 						var bcs = bbb.cache.stored;
-						
+
 						for (var i = 0; i < bcs.history.length; i++) {
 							var postId = bcs.history[i];
 							var postName = bcs.names[postId];
-						
+
 							if (postName === "download-preview.png") {
 								bcs.history.splice(i, 1);
 								delete bcs.names[postId];
 								i--;
 							}
-						}					
-						
+						}
+
 						localStorage.bbb_thumb_cache = JSON.stringify(bcs);
 					}
 					break;
