@@ -512,7 +512,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							var hiddenImgs = optArg;
 							var hiddenId = hiddenImgs.shift();
 							var bcc = bbb.cache.current;
-							var bcs = bbb.cache.stored;
 							var article = document.getElementById("post_" + hiddenId);
 							post = fetchInfo(childSpan);
 							previewImg = document.getElementById("bbb-img-" + hiddenId);
@@ -3426,7 +3425,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}
 				}
 				else if (searchTerm.indexOf("*") > -1) // Prepare wildcard tags as regular expressions.
-					mode.push(new RegExp(escapeRegEx(searchTerm).replace(/\*/g, "\S*").bbbSpacePad()));
+					mode.push(new RegExp(escapeRegEx(searchTerm).replace(/\*/g, "\S*").bbbSpacePad())); // Don't use "\\S*" here since escapeRegEx replaces * with \*. That escape carries over to the next replacement and makes us end up with "\\S*".
 				else if (typeof(searchTerm) === "string") // Add regular tags.
 					mode.push(searchTerm.bbbSpacePad());
 			}
@@ -3780,10 +3779,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 } // End of injectMe.
 
-// Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
 if (document.body) {
-	var script = document.createElement('script');
-	script.type = "text/javascript";
-	script.appendChild(document.createTextNode('(' + injectMe + ')();'));
-	document.body.appendChild(script);
+	if (typeof(Danbooru) === "undefined") { // Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
+		var script = document.createElement('script');
+		script.type = "text/javascript";
+		script.appendChild(document.createTextNode('(' + injectMe + ')();'));
+		document.body.appendChild(script);
+	}
+	else // Operate normally.
+		injectMe();
 }
