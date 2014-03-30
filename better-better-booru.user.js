@@ -2195,9 +2195,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function createBackupPage() {
 		// Open a new tab/window and place the setting text in it.
-		var backupWindow = window.open();
-		backupWindow.document.writeln('<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(bbb.user) + '</body></html>');
-		backupWindow.document.close();
+		window.open(('data:text/html,<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(bbb.user) + '</body></html>').replace(/#/g, encodeURIComponent("#")));
 	}
 
 	function restoreBackupText() {
