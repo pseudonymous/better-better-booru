@@ -27,7 +27,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
-		cache: {
+		cache: { // Thumbnail info cache.
 			current: {
 				history: [],
 				names: {}
@@ -814,8 +814,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					imgStatus.innerHTML = "";
 				}, false);
 				bbbLoader.addEventListener("error", function(event) {
-					if (this.src !== "about:blank")
+					if (this.src !== "about:blank") {
 						imgStatus.innerHTML = "Loading failed!";
+						this.src = "about:blank";
+					}
 
 					event.preventDefault();
 				}, false);
@@ -2310,9 +2312,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			resizeLinkWidth.style.fontWeight = "normal";
 			resizeLinkAll.style.fontWeight = "normal";
 			Danbooru.Note.Box.scale_all();
-
-			if (Danbooru.Post.place_jlist_ads)
-				Danbooru.Post.place_jlist_ads();
 		}
 		else if (mode === "width" && (tooWide || currentMode === "all")) {
 			ratio = widthRatio;
@@ -2322,9 +2321,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			resizeLinkWidth.style.fontWeight = "bold";
 			resizeLinkAll.style.fontWeight = "normal";
 			Danbooru.Note.Box.scale_all();
-
-			if (Danbooru.Post.place_jlist_ads)
-				Danbooru.Post.place_jlist_ads();
 		}
 		else if (mode === "all" && (tooWide || tooTall || currentMode === "width")) {
 			ratio = (widthRatio < heightRatio ? widthRatio : heightRatio);
@@ -2334,9 +2330,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			resizeLinkWidth.style.fontWeight = "normal";
 			resizeLinkAll.style.fontWeight = "bold";
 			Danbooru.Note.Box.scale_all();
-
-			if (Danbooru.Post.place_jlist_ads)
-				Danbooru.Post.place_jlist_ads();
 		}
 	}
 
