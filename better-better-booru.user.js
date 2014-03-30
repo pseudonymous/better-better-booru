@@ -1030,12 +1030,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var tag;
 
 				// Temporary information for hidden images.
-				if (!post.preview_file_url)
-					post.preview_file_url = bbbHiddenImg;
-
-				if (!post.md5)
-					post.md5 = "";
-
 				for (var j = 0, gtl = generalTags.length; j < gtl; j++) {
 					tag = generalTags[j];
 					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
