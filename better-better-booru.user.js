@@ -1017,7 +1017,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var limit = (thumbnail_count ? "&limit=" + thumbnail_count : "");
 				var tag;
 
-				// Temporary information for hidden images.
 				for (var j = 0, gtl = generalTags.length; j < gtl; j++) {
 					tag = generalTags[j];
 					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
