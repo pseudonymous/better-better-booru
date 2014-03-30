@@ -790,9 +790,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				document.getElementById("bbb-sample-link").addEventListener("click", function(event) {
 					if (event.button === 0) {
-						if (swapInit)
-							swapInit = false;
-
 						bbbLoader.src = this.href;
 						imgStatus.innerHTML = "Loading sample image...";
 						event.preventDefault();
@@ -800,15 +797,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}, false);
 				document.getElementById("bbb-original-link").addEventListener("click", function(event) {
 					if (event.button === 0) {
-						if (swapInit)
-							swapInit = false;
-
 						bbbLoader.src = this.href;
 						imgStatus.innerHTML = "Loading original image...";
 						event.preventDefault();
 					}
 				}, false);
 				bbbLoader.addEventListener("load", function(event) {
+					if (swapInit)
+						swapInit = false;
+
 					img.src = this.src;
 					this.src = "about:blank";
 					imgStatus.innerHTML = "";
@@ -834,9 +831,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						img.alt = post.md5;
 						img.setAttribute("height", post.image_height);
 						img.setAttribute("width", post.image_width);
-
-						if (!swapInit)
-							resizeImage("none");
 					}
 					else {
 						sampleNotice.style.display = "inline";
@@ -845,10 +839,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						img.alt = "Sample";
 						img.setAttribute("height", sampHeight);
 						img.setAttribute("width", sampWidth);
-
-						if (!swapInit)
-							resizeImage("none");
 					}
+
+					if (!swapInit)
+						resizeImage("none");
 				}, false);
 				closeOriginalNotice.addEventListener("click", function(event) {
 					bbbResizeNotice.style.display = "none";
@@ -925,16 +919,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						if (event.target.id === "image" && event.button === 0 && !bbb.img.translationMode) {
 							if (!bbb.dragScroll || !bbb.dragScroll.moved) {
 								if (img.src.indexOf("/sample/") > -1) {
-									if (swapInit)
-										swapInit = false;
-
 									bbbLoader.src = post.file_url;
 									imgStatus.innerHTML = "Loading original image...";
 								}
 								else {
-									if (swapInit)
-										swapInit = false;
-
 									bbbLoader.src = post.large_file_url;
 									imgStatus.innerHTML = "Loading sample image...";
 								}
