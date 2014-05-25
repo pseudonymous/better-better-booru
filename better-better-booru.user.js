@@ -172,7 +172,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* "INIT" */
 	customCSS(); // Contains the portions related to ads and notices.
 
-	if (single_color_borders || custom_status_borders || custom_tag_borders)
+	if (custom_status_borders || custom_tag_borders)
 		delayMe(formatThumbnails);
 
 	if (autohide_sidebar.indexOf(gLoc) > -1)
@@ -1841,7 +1841,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		 * ==================
 		 * Current section types are general and border.
 		 *
-		 * The setting list for general sections are provided in the form of an array containing the settings names as string.
+		 * The setting list for general sections are provided in the form of an array containing the setting names as strings.
 		 * The setting list for border sections is the setting name containing the borders as a string.
 		 */
 
@@ -2883,6 +2883,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			styles += activeStatusStyles;
+		}
+		else if (single_color_borders) { // Allow single color borders when not using custom status borders. Works off of the old border hierarchy: Deleted > Flagged > Pending > Child > Parent
+			var defaultStatusBorders = bbb.options.status_borders;
+
+			for (var i = defaultStatusBorders.length - 1; i >= 0; i--) {
+				statusBorderItem = defaultStatusBorders[i];
+
+				styles += '.post-preview.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}';
+			}
 		}
 
 		if (custom_tag_borders) {
