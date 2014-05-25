@@ -6,6 +6,14 @@ Various tweaks to make Danbooru better.
 
 Changelog
 ----------
+* Version 6.?:
+ * Added the "random post" link to the options on individual posts for logged out users.
+ * Updated to support and use additional data added to Danbooru's images.
+ * Updated the "single color borders" option so that it can be used on status borders without having to use "custom status borders".
+ * Updated the "create backup page" option to a simpler and more compatible method.
+ * Moved the "thumbnail info cache limit" option to the preferences tab.
+ * Fixed the loading message for images that repeatedly fail to load.
+ * Fixed the image resizing for initial images when switching to the sample/original image before the initial image has finished loading.
 * Version 6.2.2:
  * Updated to support the new thumbnail paths on Danbooru.
 * Version 6.2.1:
