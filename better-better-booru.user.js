@@ -172,7 +172,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* "INIT" */
 	customCSS(); // Contains the portions related to ads and notices.
 
-	if (custom_status_borders || custom_tag_borders)
+	if (custom_tag_borders)
 		delayMe(formatThumbnails);
 
 	if (autohide_sidebar.indexOf(gLoc) > -1)
@@ -2598,7 +2598,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function useAPI() {
-		if ((show_loli || show_shota || show_deleted || direct_downloads) && (isLoggedIn() || !bypass_api))
+		if ((show_loli || show_shota || show_toddlercon || show_deleted || direct_downloads) && (isLoggedIn() || !bypass_api))
 			return true;
 		else
 			return false;
