@@ -722,6 +722,48 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var newUrl = "";
 		var altTxt = "";
 
+		// Enable the "Resize to window", "Toggle Notes", "Random Post", and "Find similar" options for logged out users.
+		if (!isLoggedIn()) {
+			var options = document.createElement("section");
+			var history = document.evaluate('//aside[@id="sidebar"]/section[last()]', document, null, 9, null).singleNodeValue;
+
+			options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + post.preview_file_url + '">Find similar</a></li></ul>';
+			history.parentNode.insertBefore(options, history);
+		}
+
+		// Alter the "resize to window" link.
+		var resizeListItem = document.getElementById("image-resize-to-window-link").parentNode;
+		var resizeFrag = document.createDocumentFragment();
+
+		var resizeListWidth = document.createElement("li");
+		resizeFrag.appendChild(resizeListWidth);
+
+		var resizeLinkWidth = document.createElement("a");
+		resizeLinkWidth.href = "#";
+		resizeLinkWidth.innerHTML = "Resize to window width";
+		resizeLinkWidth.addEventListener("click", function(event) {
+			resizeImage("width");
+			event.preventDefault();
+		}, false);
+		resizeListWidth.appendChild(resizeLinkWidth);
+		bbb.el.resizeLinkWidth = resizeLinkWidth;
+
+		var resizeListAll = document.createElement("li");
+		resizeFrag.appendChild(resizeListAll);
+
+		var resizeLinkAll = document.createElement("a");
+		resizeLinkAll.href = "#";
+		resizeLinkAll.innerHTML = "Resize to window";
+		resizeLinkAll.addEventListener("click", function(event) {
+			resizeImage("all");
+			event.preventDefault();
+		}, false);
+		resizeListAll.appendChild(resizeLinkAll);
+		bbb.el.resizeLinkAll = resizeLinkAll;
+
+		resizeListItem.parentNode.replaceChild(resizeFrag, resizeListItem);
+
+		// Create content.
 		if (post.file_ext === "swf") // Create flash object.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
 		else if (!post.image_height) // Create manual download.
@@ -841,42 +883,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}, false);
 			}
 
-			// Enable the "Resize to window", "Toggle Notes", and "Find similar" options for logged out users.
-			if (!isLoggedIn()) {
-				var options = document.createElement("section");
-				var history = document.evaluate('//aside[@id="sidebar"]/section[last()]', document, null, 9, null).singleNodeValue;
-
-				options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us/data/preview/' + post.md5 + '.jpg">Find similar</a></li></ul>';
-				history.parentNode.insertBefore(options, history);
-			}
-
-			// Make translation mode work.
-			if (!document.getElementById("note-locked-notice")) {
-				var translateLink = document.getElementById("translate");
-
-				// Make the normal toggling work for hidden posts.
-				if (!post.exists) {
-					if (translateLink)
-						translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
-
-					document.addEventListener("keydown", function(event) {
-						if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
-							Danbooru.Note.TranslationMode.toggle(event);
-					}, false);
-				}
-
-				// Script translation mode events and tracking used to resolve timing issues.
-				bbb.img.translationMode = Danbooru.Note.TranslationMode.active;
-
-				if (translateLink)
-					translateLink.addEventListener("click", translationModeToggle, false);
-
-				document.addEventListener("keydown", function(event) {
-					if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
-						translationModeToggle();
-				}, false);
-			}
-
 			if (!alternate_image_swap) { // Make notes toggle when clicking the image.
 				document.addEventListener("click", function(event) {
 					if (event.target.id === "image" && event.button === 0 && !bbb.img.translationMode) {
@@ -925,49 +931,44 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			// Alter the "resize to window" link.
-			var resizeListItem = document.getElementById("image-resize-to-window-link").parentNode;
-			var resizeFrag = document.createDocumentFragment();
-
-			var resizeListWidth = document.createElement("li");
-			resizeFrag.appendChild(resizeListWidth);
-
-			var resizeLinkWidth = document.createElement("a");
-			resizeLinkWidth.href = "#";
-			resizeLinkWidth.innerHTML = "Resize to window width";
-			resizeLinkWidth.addEventListener("click", function(event) {
-				resizeImage("width");
-				event.preventDefault();
-			}, false);
-			resizeListWidth.appendChild(resizeLinkWidth);
-			bbb.el.resizeLinkWidth = resizeLinkWidth;
-
-			var resizeListAll = document.createElement("li");
-			resizeFrag.appendChild(resizeListAll);
-
-			var resizeLinkAll = document.createElement("a");
-			resizeLinkAll.href = "#";
-			resizeLinkAll.innerHTML = "Resize to window";
-			resizeLinkAll.addEventListener("click", function(event) {
-				resizeImage("all");
-				event.preventDefault();
-			}, false);
-			resizeListAll.appendChild(resizeLinkAll);
-			bbb.el.resizeLinkAll = resizeLinkAll;
-
-			resizeListItem.parentNode.replaceChild(resizeFrag, resizeListItem);
-
-			// Resize the image if desired.
-			if (checkSetting("always-resize-images", "true", image_resize))
-				resizeImage(image_resize_mode);
-
-			// Load/reload notes.
-			Danbooru.Note.load_all();
-
 			// Allow drag scrolling.
 			if (image_drag_scroll)
 				dragScrollInit();
 		}
+
+		// Make translation mode work.
+		if (!document.getElementById("note-locked-notice")) {
+			var translateLink = document.getElementById("translate");
+
+			// Make the normal toggling work for hidden posts.
+			if (!post.exists) {
+				if (translateLink)
+					translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
+
+				document.addEventListener("keydown", function(event) {
+					if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
+						Danbooru.Note.TranslationMode.toggle(event);
+				}, false);
+			}
+
+			// Script translation mode events and tracking used to resolve timing issues.
+			bbb.img.translationMode = Danbooru.Note.TranslationMode.active;
+
+			if (translateLink)
+				translateLink.addEventListener("click", translationModeToggle, false);
+
+			document.addEventListener("keydown", function(event) {
+				if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
+					translationModeToggle();
+			}, false);
+		}
+
+		// Resize the content if desired.
+		if (checkSetting("always-resize-images", "true", image_resize))
+			resizeImage(image_resize_mode);
+
+		// Load/reload notes.
+		Danbooru.Note.load_all();
 
 		// Auto position the content if desired.
 		if (autoscroll_image)
@@ -2252,11 +2253,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function resizeImage(mode) {
-		// Custom resize post image script.
-		var img = document.getElementById("image");
+		// Custom resize post script.
 		var imgContainer = document.getElementById("image-container");
+		var img = document.getElementById("image");
+		var swfObj = (imgContainer ? imgContainer.getElementsByTagName("object")[0] : undefined);
+		var swfEmb = (swfObj ? swfObj.getElementsByTagName("embed")[0] : undefined);
+		var target = img || swfEmb;
 
-		if (!img || !imgContainer)
+		if (!target || !imgContainer)
 			return;
 
 		var currentMode = bbb.img.resized;
@@ -2264,41 +2268,70 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var resizeLinkAll = bbb.el.resizeLinkAll;
 		var availableWidth = imgContainer.clientWidth;
 		var availableHeight = window.innerHeight - 40;
-		var imgStyleWidth = img.clientWidth;
-		var imgStyleHeight = img.clientHeight;
-		var imgWidth = img.getAttribute("width"); // Was NOT expecting img.width to return the current width (css style width) and not the width attribute's value here...
-		var imgHeight = img.getAttribute("height");
-		var tooWide = imgStyleWidth > availableWidth;
-		var tooTall = imgStyleHeight > availableHeight;
-		var widthRatio = availableWidth / imgWidth;
-		var heightRatio = availableHeight / imgHeight;
+		var targetCurrentWidth = target.clientWidth;
+		var targetCurrentHeight = target.clientHeight;
+		var targetWidth = (swfEmb ? imgContainer.getAttribute("data-width") : img.getAttribute("width")); // Was NOT expecting target.width to return the current width (css style width) and not the width attribute's value here...
+		var targetHeight = (swfEmb ? imgContainer.getAttribute("data-height") : img.getAttribute("height"));
+		var tooWide = targetCurrentWidth > availableWidth;
+		var tooTall = targetCurrentHeight > availableHeight;
+		var widthRatio = availableWidth / targetWidth;
+		var heightRatio = availableHeight / targetHeight;
 		var ratio;
 
 		if (mode === "none" || mode === currentMode || (mode === "width" && widthRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) {
-			img.style.width = imgWidth + "px";
-			img.style.height = imgHeight + "px";
+			if (img) {
+				img.style.width = targetWidth + "px";
+				img.style.height = targetHeight + "px";
+				Danbooru.Note.Box.scale_all();
+			}
+			else {
+				swfObj.height = targetHeight;
+				swfObj.width = targetWidth;
+				swfEmb.height = targetHeight;
+				swfEmb.width = targetWidth;
+			}
+
 			bbb.img.resized = "none";
 			resizeLinkWidth.style.fontWeight = "normal";
 			resizeLinkAll.style.fontWeight = "normal";
-			Danbooru.Note.Box.scale_all();
 		}
 		else if (mode === "width" && (tooWide || currentMode === "all")) {
 			ratio = widthRatio;
-			img.style.width = imgWidth * ratio + "px";
-			img.style.height = imgHeight * ratio + "px";
+
+			if (img) {
+				img.style.width = targetWidth * ratio + "px";
+				img.style.height = targetHeight * ratio + "px";
+				Danbooru.Note.Box.scale_all();
+			}
+			else {
+				swfObj.height = targetHeight * ratio;
+				swfObj.width = targetWidth * ratio;
+				swfEmb.height = targetHeight * ratio;
+				swfEmb.width = targetWidth * ratio;
+			}
+
 			bbb.img.resized = "width";
 			resizeLinkWidth.style.fontWeight = "bold";
 			resizeLinkAll.style.fontWeight = "normal";
-			Danbooru.Note.Box.scale_all();
 		}
 		else if (mode === "all" && (tooWide || tooTall || currentMode === "width")) {
 			ratio = (widthRatio < heightRatio ? widthRatio : heightRatio);
-			img.style.width = imgWidth * ratio + "px";
-			img.style.height = imgHeight * ratio + "px";
+
+			if (img) {
+				img.style.width = targetWidth * ratio + "px";
+				img.style.height = targetHeight * ratio + "px";
+				Danbooru.Note.Box.scale_all();
+			}
+			else {
+				swfObj.height = targetHeight * ratio;
+				swfObj.width = targetWidth * ratio;
+				swfEmb.height = targetHeight * ratio;
+				swfEmb.width = targetWidth * ratio;
+			}
+
 			bbb.img.resized = "all";
 			resizeLinkWidth.style.fontWeight = "normal";
 			resizeLinkAll.style.fontWeight = "bold";
-			Danbooru.Note.Box.scale_all();
 		}
 	}
 
