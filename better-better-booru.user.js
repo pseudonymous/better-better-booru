@@ -2065,7 +2065,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else {
 			bbb.user = JSON.parse(localStorage.bbb_settings);
 			checkUser(bbb.user, bbb.options);
-			convertSettings();
+			convertSettings(true);
 		}
 	}
 
@@ -2127,7 +2127,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		saveSettings();
 	}
 
-	function convertSettings() {
+	function convertSettings(autosave) {
 		// If the user settings are from an old version, attempt to convert some settings and update the version number. Settings will start conversion at the appropriate case and be allowed to run through every case after it until the end.
 		var mode = bbb.user.bbb_version;
 
@@ -2139,7 +2139,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						bbb.user.thumb_cache_limit = bbb.options.thumb_cache_limit.def;
 
 					if (!/\.(jpg|gif|png)/.test(localStorage.bbb_thumb_cache)) {
-						delete localStorage.bbb_thumb_cache;
+						localStorage.removeItem("bbb_thumb_cache");
 						loadThumbCache();
 					}
 
@@ -2149,29 +2149,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				case "6.2":
 				case "6.2.1":
 				case "6.2.2":
-					// Remove download-preview.png entries in preparation for the new info from data tags. Affects versions 6.1 - 6.2.2.
-					if (localStorage.bbb_thumb_cache.indexOf("download-preview") > -1) {
+					// Reset the thumb cache to deal with "download-preview" and incorrect extension entries.
+					if (localStorage.bbb_thumb_cache) {
+						localStorage.removeItem("bbb_thumb_cache");
 						loadThumbCache();
-
-						var bcs = bbb.cache.stored;
-
-						for (var i = 0; i < bcs.history.length; i++) {
-							var postId = bcs.history[i];
-							var postName = bcs.names[postId];
-
-							if (postName === "download-preview.png") {
-								bcs.history.splice(i, 1);
-								delete bcs.names[postId];
-								i--;
-							}
-						}
-
-						localStorage.bbb_thumb_cache = JSON.stringify(bcs);
 					}
 					break;
 			}
 
 			bbb.user.bbb_version = bbb.options.bbb_version;
+
+			if (autosave)
+				saveSettings();
 		}
 	}
 
@@ -2198,7 +2187,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				bbb.user = JSON.parse(backupString); // This is where we expect an error.
 				removeMenu();
 				checkUser(bbb.user, bbb.options);
-				convertSettings();
+				convertSettings(false);
 				createMenu();
 				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"Save & Close\" to finalize the restore.");
 			}
