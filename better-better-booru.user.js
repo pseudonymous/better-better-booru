@@ -240,7 +240,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 		}
 		else if (mode === "post")
-			delayMe(function(){parsePost(fetchInfo());}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
+			delayMe(function(){parsePost(scrapePost());}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 		else if (mode === "popular") {
 			if (numThumbs !== thumbnail_count_default || direct_downloads)
 				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
@@ -316,7 +316,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function modifyPage(mode) {
 		// Let other functions that don't require the API run. (Alternative to searchJSON)
 		if (mode === "post")
-			delayMe(function(){parsePost(fetchInfo());}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
+			delayMe(function(){parsePost(scrapePost());}); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 		else if (mode === "search" || mode === "notes") {
 			if (allowUserLimit()) {
 				var url = gUrl;
@@ -331,7 +331,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function fetchInfo(pageEl) {
+	function scrapePost(pageEl) {
 		// Retrieve info from the current document or a supplied element containing the html with it.
 		var target = pageEl || document;
 		var imgContainer = document.evaluate('.//section[@id="image-container"]', target, null, 9, null).singleNodeValue;
@@ -365,8 +365,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			is_deleted: (fetchMeta("post-is-deleted", target) === "false" ? false : true),
 			is_flagged: (fetchMeta("post-is-flagged", target) === "false" ? false : true),
 			is_pending: (!document.evaluate('.//div[@id="pending-approval-notice"]', target, null, 9, null).singleNodeValue ? false : true),
-			image_height: (imgHeight ? imgHeight : null),
-			image_width: (imgWidth ? imgWidth : null),
+			image_height: imgHeight || null,
+			image_width: imgWidth || null,
 			has_large: hasLarge,
 			exists: (img || object ? true : false)
 		};
@@ -439,7 +439,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							var comments = commentSection.getElementsByClassName("comment");
 							var numComments = comments.length;
 							var toShow = 6; // Number of comments to display.
-							post = fetchInfo(docEl);
+							post = scrapePost(docEl);
 							previewImg = commentDiv.getElementsByTagName("img")[0];
 							target = commentDiv.getElementsByClassName("comments-for-post")[0];
 							newContent = document.createDocumentFragment();
@@ -504,7 +504,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							var hiddenId = hiddenImgs.shift();
 							var bcc = bbb.cache.current;
 							var article = document.getElementById("post_" + hiddenId);
-							post = fetchInfo(docEl);
+							post = scrapePost(docEl);
 							previewImg = document.getElementById("bbb-img-" + hiddenId);
 
 							// Update the thumbnail with the correct information.
@@ -601,7 +601,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Result preparation.
 		for (var i = 0, pl = posts.length; i < pl; i++) {
-			var post = formatJSON(posts[i]);
+			var post = formatInfo(posts[i]);
 			var outId = "";
 			var thumb = "";
 
@@ -704,8 +704,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		bbbStatus("loaded");
 	}
 
-	function parsePost(xml) {
-		var post = formatJSON(xml);
+	function parsePost(postInfo) {
+		var post = formatInfo(postInfo);
 		var imgContainer = document.getElementById("image-container");
 
 		if (!post.file_url || !imgContainer) {
@@ -989,7 +989,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var eci = 0;
 
 		for (var i = 0; i < numPosts; i++) {
-			var post = formatJSON(posts[i]);
+			var post = formatInfo(posts[i]);
 			var existingPost = existingPosts[eci];
 
 			if (!existingPost || post.id !== Number(existingPost.getAttribute("data-id"))) {
@@ -2065,7 +2065,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else {
 			bbb.user = JSON.parse(localStorage.bbb_settings);
 			checkUser(bbb.user, bbb.options);
-			convertSettings(true);
+
+			if (bbb.user.bbb_version !== bbb.options.bbb_version) {
+				convertSettings();
+				saveSettings();
+			}
 		}
 	}
 
@@ -2127,7 +2131,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		saveSettings();
 	}
 
-	function convertSettings(autosave) {
+	function convertSettings() {
 		// If the user settings are from an old version, attempt to convert some settings and update the version number. Settings will start conversion at the appropriate case and be allowed to run through every case after it until the end.
 		var mode = bbb.user.bbb_version;
 
@@ -2149,7 +2153,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				case "6.2":
 				case "6.2.1":
 				case "6.2.2":
-					// Reset the thumb cache to deal with "download-preview" and incorrect extension entries.
+					// Reset the thumb cache to deal with "download-preview" and incorrect extension entries. Affects versions 6.1 - 6.2.2.
 					if (localStorage.bbb_thumb_cache) {
 						localStorage.removeItem("bbb_thumb_cache");
 						loadThumbCache();
@@ -2158,9 +2162,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 
 			bbb.user.bbb_version = bbb.options.bbb_version;
-
-			if (autosave)
-				saveSettings();
 		}
 	}
 
@@ -2187,7 +2188,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				bbb.user = JSON.parse(backupString); // This is where we expect an error.
 				removeMenu();
 				checkUser(bbb.user, bbb.options);
-				convertSettings(false);
+				convertSettings();
 				createMenu();
 				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"Save & Close\" to finalize the restore.");
 			}
@@ -2738,8 +2739,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function formatJSON(post) {
-		// Add information to/alter information in the JSON post object.
+	function formatInfo(post) {
+		// Add information to/alter information in the post object.
 		var flags = "";
 		var thumbClass = "";
 
