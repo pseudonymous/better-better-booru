@@ -7,13 +7,21 @@ Various tweaks to make Danbooru better.
 Changelog
 ----------
 * Version 6.?:
- * Added the "random post" link to the options on individual posts for logged out users.
+ * Added a "resized notice display" option for allowing more control over the resized notice bar.
+ * Added a "View original/sample" link to the options section on individual posts with a sample and original image.
+ * Added the "random post" link to the options section on individual posts for logged out users.
  * Updated to support and use additional data added to Danbooru's images.
+ * Updated to support Danbooru's new hotkey for swapping between original and sample images.
+ * Updated to allow the options section on flash and download posts for logged out users.
+ * Updated the resize to window links so that they can work on flash.
+ * Updated the image swapping to allow the cancelling of a swap between an original and sample image by sending the swap request a second time while still loading.
  * Updated the "single color borders" option so that it can be used on status borders without having to use "custom status borders".
  * Updated the "create backup page" option to a simpler and more compatible method.
- * Moved the "thumbnail info cache limit" option to the preferences tab.
  * Fixed the loading message for images that repeatedly fail to load.
  * Fixed the image resizing for initial images when switching to the sample/original image before the initial image has finished loading.
+ * Fixed a potential issue where "show toddlercon" wouldn't work.
+ * Moved the "thumbnail info cache limit" option to the preferences tab.
+ * Removed the "hide original notice" option that's been replaced by the "resized notice display" option.
 * Version 6.2.2:
  * Updated to support the new thumbnail paths on Danbooru.
 * Version 6.2.1:
