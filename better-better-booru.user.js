@@ -359,6 +359,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			id: Number(imgContainer.getAttribute("data-id")),
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
 			has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
+			has_active_children: (target.getElementsByClassName("notice-parent").length ? true : false),
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
 			rating: imgContainer.getAttribute("data-rating"),
 			score: Number(imgContainer.getAttribute("data-score")),
@@ -806,7 +807,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				altTxt = post.md5;
 			}
 
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-children="' + post.has_children + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 
 			var img = bbb.el.img = document.getElementById("image");
 			var bbbLoader = bbb.el.bbbLoader = document.getElementById("bbb-loader");
@@ -2853,7 +2854,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			flags += " flagged";
 			thumbClass += " post-status-flagged";
 		}
-		if (post.has_children)
+		if (post.has_active_children)
 			thumbClass += " post-status-has-children";
 		if (post.parent_id)
 			thumbClass += " post-status-has-parent";
