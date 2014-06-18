@@ -2707,7 +2707,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		for (var i = 1, mtl = metaTags.length; i < mtl; i++) {
 			tag = metaTags[i];
 
-			if ((tag.hasAttribute("name") && tag.name === meta) || (tag.hasAttribute("property") && tag.property === meta)){
+			if (tag.name === meta || tag.property === meta) {
 				if (tag.hasAttribute("content"))
 					return tag.content;
 				else
@@ -3209,7 +3209,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function outerHTML(node){
+	function outerHTML(node) {
 		// If IE, Chrome, or newer FF version take the internal method otherwise build one. More thanks to random forums for clearing up outerHTML support.
 		return node.outerHTML ||
 			(function(n) {
