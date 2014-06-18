@@ -72,11 +72,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			override_account: new Option("checkbox", false, "Override Account Settings", "Allow logged out settings to override account settings when logged in."),
 			post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
 			remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
-			resized_notice_display: new Option("dropdown", "always", "Resized Notice Display", "Set when the purple notice bar about image resizing is allowed to display. <br><br><u>Note</u><br>When using this option, you are choosing to allow the notice when the loaded image matches your selection. Selecting \"sample\" would allow the bar when viewing the sample image. <br><br><u>Tip</u><br>When a sample and original image are available for a post, a new option for swapping between the sample and original image becomes available in the sidebar options menu. Even if you disable the resized notice bar, you will always have access to its main function.", {txtOptions:["Never:never", "Original:original", "Sample:sample", "Original & Sample:always"]}),
 			script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death<br><br><u>Note</u><br>When logged in, the account's \"Blacklisted tags\" list will override this option.", {tagEditMode: true}),
 			search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
 			show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
 			show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
+			show_resized_notice: new Option("dropdown", "all", "Show Resized Notice", "Set which image type(s) the purple notice bar about image resizing is allowed to display on. <br><br><u>Tip</u><br>When a sample and original image are available for a post, a new option for swapping between the sample and original image becomes available in the sidebar options menu. Even if you disable the resized notice bar, you will always have access to its main function.", {txtOptions:["None (Disabled):none", "Original:original", "Sample:sample", "Original & Sample:all"]}),
 			show_shota: new Option("checkbox", false, "Show Shota", "Display shota images in the search, pool, popular, comments, and notes listings."),
 			show_toddlercon: new Option("checkbox", false, "Show Toddlercon", "Display toddlercon images in the search, pool, popular, comments, and notes listings."),
 			single_color_borders: new Option("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
@@ -90,7 +90,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		},
 		sections: { // Setting sections and ordering.
 			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count"], "Image Browsing"),
-			layout: new Section("general", ["resized_notice_display", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
+			layout: new Section("general", ["show_resized_notice", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 			sidebar: new Section("general", ["search_add", "remove_tag_headers", "tag_scrollbars", "autohide_sidebar"], "Tag Sidebar"),
 			image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
 			logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
@@ -132,7 +132,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var override_account = bbb.user.override_account;
 	var track_new = bbb.user.track_new;
 
-	var resized_notice_display = bbb.user.resized_notice_display;
+	var show_resized_notice = bbb.user.show_resized_notice;
 	var hide_sign_up_notice = bbb.user.hide_sign_up_notice;
 	var hide_upgrade_notice = bbb.user.hide_upgrade_notice;
 	var hide_tos_notice = bbb.user.hide_tos_notice;
@@ -337,11 +337,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function scrapePost(pageEl) {
 		// Retrieve info from the current document or a supplied element containing the html with it.
 		var target = pageEl || document;
-		var imgContainer = document.evaluate('.//section[@id="image-container"]', target, null, 9, null).singleNodeValue;
-		var img = document.evaluate('.//img[@id="image"]', target, null, 9, null).singleNodeValue;
+		var imgContainer = bbbGetID("image-container", target, "section");
+		var img = bbbGetID("image", target, "img");
 		var object = imgContainer.getElementsByTagName("object")[0];
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
-		var directLink = document.evaluate('.//aside[@id="sidebar"]/section/ul/li/a[starts-with(@href, "/data/")]|//a[@id="image-resize-link"]', target, null, 9, null).singleNodeValue;
+		var directLink = bbbGetID("image-resize-link", target, "a") || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
 		var twitterInfo = fetchMeta("twitter:image:src", target);
 		var previewInfo = fetchMeta("og:image", target);
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
@@ -368,7 +368,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			uploader_name: imgContainer.getAttribute("data-uploader"),
 			is_deleted: (fetchMeta("post-is-deleted", target) === "false" ? false : true),
 			is_flagged: (fetchMeta("post-is-flagged", target) === "false" ? false : true),
-			is_pending: (!document.evaluate('.//div[@id="pending-approval-notice"]', target, null, 9, null).singleNodeValue ? false : true),
+			is_pending: (bbbGetID("pending-approval-notice", target, "div") ? true : false),
 			image_height: imgHeight || null,
 			image_width: imgWidth || null,
 			exists: (img || object ? true : false)
@@ -589,7 +589,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 		else if (gLoc === "pool") {
 			var orderedPostIds = optArg;
-			where = document.getElementById("a-show").getElementsByTagName("section")[0];
+			where = document.getElementById("a-show");
+			where = (where ? where.getElementsByTagName("section")[0] : undefined);
 			search = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(gUrlPath)[1] : "");
 			out = "\f,;" + orderedPostIds.join("\f,;");
 		}
@@ -671,10 +672,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				if (allowUserLimit()) {
 					// Fix existing paginator with user's custom limit.
-					var pageLinks = document.evaluate('.//a', paginator, null, 6, null);
+					var pageLinks = paginator.getElementsByTagName("a");
 
-					for (var i = 0, isl = pageLinks.snapshotLength; i < isl; i++)
-						pageLinks.snapshotItem(i).href = pageLinks.snapshotItem(i).href + "&limit=" + thumbnail_count;
+					for (var i = 0, pll = pageLinks.length; i < pll; i++)
+						pageLinks[i].href = pageLinks[i].href + "&limit=" + thumbnail_count;
 
 					// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
 					if (pageUrl.indexOf("?") > -1)
@@ -729,11 +730,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Enable the "Resize to window", "Toggle Notes", "Random Post", and "Find similar" options for logged out users.
 		if (!isLoggedIn()) {
+			var infoSection = document.getElementById("post-information");
 			var options = document.createElement("section");
-			var history = document.evaluate('//aside[@id="sidebar"]/section[last()]', document, null, 9, null).singleNodeValue;
-
+			options.id = "post-options";
 			options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + post.preview_file_url + '">Find similar</a></li></ul>';
-			history.parentNode.insertBefore(options, history);
+			infoSection.parentNode.insertBefore(options, infoSection.nextElementSibling);
 		}
 
 		// Alter the "resize to window" link with new resize and swap links.
@@ -838,7 +839,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					resizeLink.innerHTML = "view original";
 					resizeLink.href = post.file_url;
 
-					if (resized_notice_display === "sample" || resized_notice_display === "always")
+					if (show_resized_notice === "sample" || show_resized_notice === "all")
 						bbbResizeNotice.style.display = "block";
 				}
 				else {
@@ -846,7 +847,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					resizeLink.innerHTML = "view sample";
 					resizeLink.href = post.large_file_url;
 
-					if (resized_notice_display === "original" || resized_notice_display === "always")
+					if (show_resized_notice === "original" || show_resized_notice === "all")
 						bbbResizeNotice.style.display = "block";
 				}
 
@@ -876,7 +877,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}, false);
 				img.addEventListener("load", function(event) {
 					if (bbbLoader.src === "about:blank") {
-						var resDisplay = bbb.user.resized_notice_display;
+						var showResNot = bbb.user.show_resized_notice;
 
 						if (img.src.indexOf("/sample/") < 0) { // Original image loaded.
 							resizeStatus.innerHTML = "Viewing original";
@@ -887,7 +888,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							img.alt = post.md5;
 							img.setAttribute("height", post.image_height);
 							img.setAttribute("width", post.image_width);
-							bbbResizeNotice.style.display = (resDisplay === "original" || resDisplay === "always" ? "block" : "none");
+							bbbResizeNotice.style.display = (showResNot === "original" || showResNot === "all" ? "block" : "none");
 						}
 						else { // Sample image loaded.
 							resizeStatus.innerHTML = "Resized to " + Math.round(ratio * 100) + "% of original";
@@ -898,7 +899,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							img.alt = "Sample";
 							img.setAttribute("height", sampHeight);
 							img.setAttribute("width", sampWidth);
-							bbbResizeNotice.style.display = (resDisplay === "sample" || resDisplay === "always" ? "block" : "none");
+							bbbResizeNotice.style.display = (showResNot === "sample" || showResNot === "all" ? "block" : "none");
 						}
 					}
 
@@ -906,28 +907,28 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						resizeImage("none");
 				}, false);
 				closeResizeNotice.addEventListener("click", function(event) {
-					var resDisplay = bbb.user.resized_notice_display;
+					var showResNot = bbb.user.show_resized_notice;
 
 					bbbResizeNotice.style.display = "none";
 
 					if (img.src.indexOf("/sample/") < 0) { // Original image.
-						if (resDisplay === "original")
-							resDisplay = "never";
-						else if (resDisplay === "always")
-							resDisplay = "sample";
+						if (showResNot === "original")
+							showResNot = "none";
+						else if (showResNot === "all")
+							showResNot = "sample";
 
 						danbNotice("Better Better Booru: Settings updated. The resized notice will now be hidden when viewing original images. You may change this setting under \"Layout\" in the settings panel.");
 					}
 					else { // Sample image.
-						if (resDisplay === "sample")
-							resDisplay = "never";
-						else if (resDisplay === "always")
-							resDisplay = "original";
+						if (showResNot === "sample")
+							showResNot = "none";
+						else if (showResNot === "all")
+							showResNot = "original";
 
 						danbNotice("Better Better Booru: Settings updated. The resized notice will now be hidden when viewing sample images. You may change this setting under \"Layout\" in the settings panel.");
 					}
 
-					updateSettings("resized_notice_display", resDisplay);
+					updateSettings("show_resized_notice", showResNot);
 				}, false);
 			}
 
@@ -2186,11 +2187,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						loadThumbCache();
 					}
 
-					// Convert the old hide_original_notice setting to the new resized_notice_display setting that replaces it.
+					// Convert the old hide_original_notice setting to the new show_resized_notice setting that replaces it.
 					if (bbb.user.hide_original_notice)
-						bbb.user.resized_notice_display = "sample";
+						bbb.user.show_resized_notice = "sample";
 
 					delete bbb.user.hide_original_notice;
+					delete bbb.user.resized_notice_display;
 					break;
 			}
 
@@ -2490,38 +2492,52 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function limitFix() {
 		// Add the limit variable to link URLs that are not thumbnails.
-		var links = document.evaluate('//div[@id="page"]//a[starts-with(@href, "/posts?")]', document, null, 6, null);
+		var page = document.getElementById("page");
+		var header = document.getElementById("top");
+		var searchParent = document.getElementById("search-box") || document.getElementById("a-intro");
+		var links;
 		var link;
+		var linkHref;
+		var search;
 
-		for (var i = 0, lsl = links.snapshotLength; i < lsl; i++) {
-			link = links.snapshotItem(i);
+		if (page) {
+			links = page.getElementsByTagName("a");
 
-			if (!/(?:page|limit)=/.test(link.href))
-				link.href += "&limit=" + thumbnail_count;
+			for (var i = 0, ll = links.length; i < ll; i++) {
+				link = links[i];
+				linkHref = link.getAttribute("href"); // Use getAttribute so that we get the exact value. "link.href" adds in the domain.
+
+				if (linkHref && linkHref.indexOf("/posts?") === 0 && !/(?:page|limit)=/.test(linkHref))
+					link.href = linkHref + "&limit=" + thumbnail_count;
+			}
 		}
 
-		links = document.evaluate('//header//a[starts-with(@href, "/posts") or @href="/" or @href="/notes?group_by=post"]', document, null, 6, null);
+		if (header) {
+			links = header.getElementsByTagName("a");
 
-		for (var i = 0, lsl = links.snapshotLength; i < lsl; i++) {
-			link = links.snapshotItem(i);
+			for (var i = 0, ll = links.length; i < ll; i++) {
+				link = links[i];
+				linkHref = link.getAttribute("href");
 
-			if (link.href.indexOf("?") > -1)
-				link.href += "&limit=" + thumbnail_count;
-			else
-				link.href += "?limit=" + thumbnail_count;
+				if (linkHref && (linkHref.indexOf("/posts") === 0 || linkHref === "/" || linkHref ==="/notes?group_by=post")) {
+					if (linkHref.indexOf("?") > -1)
+						link.href = linkHref + "&limit=" + thumbnail_count;
+					else
+						link.href = linkHref + "?limit=" + thumbnail_count;
+				}
+			}
 		}
 
-		if (gLoc === "search" || gLoc === "post" || gLoc === "intro") {
-			var container = document.getElementById("search-box") || document.getElementById("a-intro");
+		if (searchParent && (gLoc === "search" || gLoc === "post" || gLoc === "intro")) {
+			search = searchParent.getElementsByTagName("form")[0];
 
-			if (!container)
-				return;
-
-			var limitInput = document.createElement("input");
-			limitInput.name = "limit";
-			limitInput.value = thumbnail_count;
-			limitInput.type = "hidden";
-			container.getElementsByTagName("form")[0].appendChild(limitInput);
+			if (search) {
+				var limitInput = document.createElement("input");
+				limitInput.name = "limit";
+				limitInput.value = thumbnail_count;
+				limitInput.type = "hidden";
+				search.appendChild(limitInput);
+			}
 		}
 	}
 
@@ -2585,20 +2601,30 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function cleanLinks() {
 		// Remove the query portion of thumbnail links.
-		var target;
+		var targetContainer;
+		var links;
+		var link;
 
 		if (gLoc === "post")
-			target = document.evaluate('//div[@id="pool-nav"]//a', document, null, 6, null);
-		else if (gLoc === "pool")
-			target = document.evaluate('//section[@id="content"]/article/a', document, null, 6, null);
+			targetContainer = document.getElementById("pool-nav");
+		else if (gLoc === "pool") {
+			targetContainer = document.getElementById("a-show");
+			targetContainer = (targetContainer ? targetContainer.getElementsByTagName("section")[0] : undefined);
+		}
 		else if (gLoc === "search")
-			target = document.evaluate('//div[@id="posts"]/article/a', document, null, 6, null);
+			targetContainer = document.getElementById("posts");
 		else if (gLoc === "intro")
-			target = document.evaluate('//div[@id="a-intro"]//article/a', document, null, 6, null);
+			targetContainer = document.getElementById("a-intro");
 
-		if (target) {
-			for (var i = 0, isl = target.snapshotLength; i < isl; i++)
-				target.snapshotItem(i).href = target.snapshotItem(i).href.split("?", 1)[0];
+		if (targetContainer) {
+			links = targetContainer.getElementsByTagName("a");
+
+			for (var i = 0, ll = links.length; i < ll; i++) {
+				link = links[i];
+
+				if (gLoc === "post" || link.parentNode.tagName === "ARTICLE")
+					link.href = link.href.split("?", 1)[0];
+			}
 		}
 	}
 
@@ -2665,6 +2691,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return "upload";
 		else if (gUrlPath.indexOf("/pools/new") === 0)
 			return "new pool";
+		else if (/\/forum_topics\/\d+/.test(gUrlPath))
+			return "topic";
 		else if (gUrlPath.indexOf("/explore/posts/intro") === 0)
 			return "intro";
 		else
@@ -2673,16 +2701,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function fetchMeta(meta, pageEl) {
 		var target = pageEl || document;
-		var tag = document.evaluate('.//meta[@name="' + meta + '" or @property="' + meta + '"]', target, null, 9, null).singleNodeValue;
+		var metaTags = target.getElementsByTagName("meta");
+		var tag;
 
-		if (tag) {
-			if (tag.hasAttribute("content"))
-				return tag.content;
-			else
-				return undefined;
+		for (var i = 1, mtl = metaTags.length; i < mtl; i++) {
+			tag = metaTags[i];
+
+			if ((tag.hasAttribute("name") && tag.name === meta) || (tag.hasAttribute("property") && tag.property === meta)){
+				if (tag.hasAttribute("content"))
+					return tag.content;
+				else
+					return undefined;
+			}
 		}
-		else
-			return undefined;
+
+		return undefined;
 	}
 
 	function isLoggedIn() {
@@ -3155,6 +3188,25 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		document.cookie = data;
+	}
+
+	function bbbGetID(elID, target, elType) {
+		// Retrieve an element by ID from either the current document or an element containing it.
+		if (!target || target === document)
+			return document.getElementById(elID);
+		else {
+			var els = target.getElementsByTagName((elType ? elType : "*"));
+			var el;
+
+			for (var i = 0, elsl = els.length; i < elsl; i++) {
+				el = els[i];
+
+				if (el.id === elID)
+					return el;
+			}
+
+			return null;
+		}
 	}
 
 	function outerHTML(node){
