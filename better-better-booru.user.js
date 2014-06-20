@@ -74,6 +74,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
 			script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death<br><br><u>Note</u><br>When logged in, the account's \"Blacklisted tags\" list will override this option.", {tagEditMode: true}),
 			search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
+			show_banned: new Option("checkbox", false, "Show Banned", "Display all banned images in the search, pool, popular, and notes listings."),
 			show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
 			show_loli: new Option("checkbox", false, "Show Loli", "Display loli images in the search, pool, popular, comments, and notes listings."),
 			show_resized_notice: new Option("dropdown", "all", "Show Resized Notice", "Set which image type(s) the purple notice bar about image resizing is allowed to display on. <br><br><u>Tip</u><br>When a sample and original image are available for a post, a new option for swapping between the sample and original image becomes available in the sidebar options menu. Even if you disable the resized notice bar, you will always have access to its main function.", {txtOptions:["None (Disabled):none", "Original:original", "Sample:sample", "Original & Sample:all"]}),
@@ -89,7 +90,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			track_new_data: {viewed:0, viewing:1}
 		},
 		sections: { // Setting sections and ordering.
-			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_deleted", "thumbnail_count"], "Image Browsing"),
+			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count"], "Image Browsing"),
 			layout: new Section("general", ["show_resized_notice", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 			sidebar: new Section("general", ["search_add", "remove_tag_headers", "tag_scrollbars", "autohide_sidebar"], "Tag Sidebar"),
 			image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
@@ -116,6 +117,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var show_loli = bbb.user.show_loli;
 	var show_shota = bbb.user.show_shota;
 	var show_toddlercon = bbb.user.show_toddlercon;
+	var show_banned = bbb.user.show_banned;
 	var show_deleted = bbb.user.show_deleted;
 	var direct_downloads = bbb.user.direct_downloads;
 
@@ -369,6 +371,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			is_deleted: (fetchMeta("post-is-deleted", target) === "false" ? false : true),
 			is_flagged: (fetchMeta("post-is-flagged", target) === "false" ? false : true),
 			is_pending: (bbbGetID("pending-approval-notice", target, "div") ? true : false),
+			is_banned: (imgContainer.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
 			image_height: imgHeight || null,
 			image_width: imgWidth || null,
 			exists: (img || object ? true : false)
@@ -610,8 +613,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var outId = "";
 			var thumb = "";
 
-			// Don't display loli/shota/toddlercon/deleted if the user has opted so and skip to the next image.
-			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted)) {
+			// Don't display loli/shota/toddlercon/deleted/banned if the user has opted so and skip to the next image.
+			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted) || (!show_banned && post.is_banned)) {
 				if (gLoc === "pool") {
 					outId = new RegExp("\f,;" + post.id + "(?=<|\f|$)");
 					out = out.replace(outId, "");
@@ -2193,6 +2196,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					delete bbb.user.hide_original_notice;
 					delete bbb.user.resized_notice_display;
+
+					// Set the new show_banned setting to true if show_deleted is true.
+					if (bbb.user.show_deleted)
+						bbb.user.show_banned = true;
 					break;
 			}
 
@@ -2748,7 +2755,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function useAPI() {
-		if ((show_loli || show_shota || show_toddlercon || show_deleted || direct_downloads) && (isLoggedIn() || !bypass_api))
+		if ((show_loli || show_shota || show_toddlercon || show_deleted || show_banned || direct_downloads) && (isLoggedIn() || !bypass_api))
 			return true;
 		else
 			return false;
@@ -2784,18 +2791,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			where = where.getElementsByTagName("li");
 
 			var tag = getVar("tags");
-
-			if (!tag)
-				tag = "";
-			else
-				tag = "+" + tag;
+			tag = (tag ? "+" + tag : "");
 
 			for (var i = 0, wl = where.length; i < wl; i++) {
-				var newTag = getVar("tags", where[i].getElementsByTagName("a")[1].href);
-				var newLink = "/posts?tags=" + newTag + tag;
-				where[i].innerHTML = '<a href="' + newLink + '">+</a> ' + where[i].innerHTML;
-				newLink = "/posts?tags=-" + newTag + tag;
-				where[i].innerHTML = '<a href="' + newLink + '">-</a> ' + where[i].innerHTML;
+				var listItem = where[i];
+				var newTag = getVar("tags", listItem.getElementsByClassName("search-tag")[0].href);
+
+				listItem.innerHTML = '<a href="/posts?tags=-' + newTag + tag + '">-</a> <a href="/posts?tags=' + newTag + tag + '">+</a> ' + listItem.innerHTML;
 			}
 		}
 	}
