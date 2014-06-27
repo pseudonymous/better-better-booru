@@ -873,7 +873,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 						event.preventDefault();
 					}
 				}, false);
-				bbbLoader.addEventListener("load", function(event) {
+				bbbLoader.addEventListener("load", function() {
 					if (swapInit)
 						swapInit = false;
 
@@ -891,7 +891,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					event.preventDefault();
 				}, false);
-				img.addEventListener("load", function(event) {
+				img.addEventListener("load", function() {
 					if (bbbLoader.src === "about:blank") {
 						var showResNot = bbb.user.show_resized_notice;
 
@@ -922,7 +922,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					if (!swapInit)
 						resizeImage("none");
 				}, false);
-				closeResizeNotice.addEventListener("click", function(event) {
+				closeResizeNotice.addEventListener("click", function() {
 					var showResNot = bbb.user.show_resized_notice;
 
 					bbbResizeNotice.style.display = "none";
@@ -3293,7 +3293,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			noticeFunc(msg);
 	}
 
-	function hideDanbNotice(event) {
+	function hideDanbNotice() {
 		document.getElementById("close-notice-link").removeEventListener("click", hideDanbNotice, false);
 
 		var notice = document.getElementById("notice");
@@ -3315,7 +3315,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var pendingNotice = document.getElementsByClassName("notice-pending")[0];
 		var deletedNotices = document.getElementsByClassName("notice-deleted");
 		var deletedNotice;
-		var bannedNotice
+		var bannedNotice;
 
 		if (infoListItems) {
 			// Locate the status portion of the information section.
@@ -3393,8 +3393,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function statusLinkEvents(link, notice, timer) {
 		// Attach events to the status links to enable a tooltip style notice.
 		link.addEventListener("click", function(event) {showStatusNotice(event, notice);}, false);
-		link.addEventListener("mouseout", function(event) {bbb[timer] = window.setTimeout(function() { notice.style.display = "none";}, 200)}, false);
-		notice.addEventListener("mouseover", function() {window.clearTimeout(bbb[timer])}, false);
+		link.addEventListener("mouseout", function() {bbb[timer] = window.setTimeout(function() { notice.style.display = "none";}, 200);}, false);
+		notice.addEventListener("mouseover", function() {window.clearTimeout(bbb[timer]);}, false);
 		notice.addEventListener("mouseleave", function() {notice.style.display = "none";}, false);
 	}
 
@@ -3894,7 +3894,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		bbb.dragScroll.moved = xDistance !== 0 || yDistance !== 0 || bbb.dragScroll.moved; // Doing this since I'm not sure what Chrome's mousemove event is doing. It apparently fires even when the moved distance is equal to zero.
 	}
 
-	function dragScrollOff(event) {
+	function dragScrollOff() {
 		document.removeEventListener("mousemove", dragScrollMove, false);
 		document.removeEventListener("mouseup", dragScrollOff, false);
 	}
