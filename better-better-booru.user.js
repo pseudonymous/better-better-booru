@@ -60,6 +60,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			hide_comment_notice: new Option("checkbox", false, "Hide Comment Guide Notice", "Hide the Danbooru comment guide notice."),
 			hide_pool_notice: new Option("checkbox", false, "Hide Pool Guide Notice", "Hide the Danbooru pool guide notice."),
 			hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
+			hide_status_notices: new Option("checkbox", false, "Hide Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			hide_tag_notice: new Option("checkbox", false, "Hide Tag Guide Notice", "Hide the Danbooru tag guide notice."),
 			hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Danbooru terms of service agreement notice."),
 			hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
@@ -84,14 +85,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			thumbnail_count: new Option("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
 			track_new: new Option("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<br><br><u>Note</u><br>While browsing the new posts, the current page of images is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the images where browsing was left off at.<br><br><u>Tip</u><br>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
-			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"]),
+			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"], ["status:banned", true, "#000000", "solid"]),
 			tag_scrollbars: new Option("dropdown", 0, "Tag List Scrollbars", "Limit the length of the sidebar tag lists for individual posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<br><br><u>Note</u><br>When using \"Remove Tag Headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			thumb_cache_limit: new Option("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<br><br><u>Note</u><br>No actual thumbnails are cached. Only filename information used to speed up the display of hidden thumbnails is stored. Every 1000 entries is approximately equal to 0.1 megabytes of space.", {txtOptions:["Disabled:0"], numList:[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000,20000,21000,22000,23000,24000,25000,26000,27000,28000,29000,30000]}),
 			track_new_data: {viewed:0, viewing:1}
 		},
 		sections: { // Setting sections and ordering.
 			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count"], "Image Browsing"),
-			layout: new Section("general", ["show_resized_notice", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
+			layout: new Section("general", ["show_resized_notice", "hide_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
 			sidebar: new Section("general", ["search_add", "remove_tag_headers", "tag_scrollbars", "autohide_sidebar"], "Tag Sidebar"),
 			image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
 			logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
@@ -137,6 +138,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var show_resized_notice = bbb.user.show_resized_notice;
 	var hide_sign_up_notice = bbb.user.hide_sign_up_notice;
 	var hide_upgrade_notice = bbb.user.hide_upgrade_notice;
+	var hide_status_notices = bbb.user.hide_status_notices;
 	var hide_tos_notice = bbb.user.hide_tos_notice;
 	var hide_comment_notice = bbb.user.hide_comment_notice;
 	var hide_tag_notice = bbb.user.hide_tag_notice;
@@ -189,6 +191,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	if (remove_tag_headers)
 		removeTagHeaders();
+
+	if (hide_status_notices)
+		hideStatusNotices();
 
 	if (post_tag_titles)
 		postTagTitles();
@@ -838,7 +843,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var closeResizeNotice = bbb.el.closeResizeNotice = document.getElementById("close-resize-notice");
 
 				if (useSample) {
-					resizeStatus.innerHTML = "Resized to " + Math.round(ratio * 100) + "% of original";
+					resizeStatus.innerHTML = "Resized to " + Math.floor(ratio * 100) + "% of original";
 					resizeLink.innerHTML = "view original";
 					resizeLink.href = post.file_url;
 
@@ -894,7 +899,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							bbbResizeNotice.style.display = (showResNot === "original" || showResNot === "all" ? "block" : "none");
 						}
 						else { // Sample image loaded.
-							resizeStatus.innerHTML = "Resized to " + Math.round(ratio * 100) + "% of original";
+							resizeStatus.innerHTML = "Resized to " + Math.floor(ratio * 100) + "% of original";
 							resizeLink.innerHTML = "view original";
 							resizeLink.href = post.file_url;
 							swapLink.innerHTML = "View original";
@@ -2180,6 +2185,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 					if (bbb.user.tag_scrollbars === "false")
 						bbb.user.tag_scrollbars = 0;
+
 				case "6.1":
 				case "6.2":
 				case "6.2.1":
@@ -2200,6 +2206,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					// Set the new show_banned setting to true if show_deleted is true.
 					if (bbb.user.show_deleted)
 						bbb.user.show_banned = true;
+
+					// Add a custom border for banned posts to match the other hidden post borders.
+					if (!/\bstatus:banned\b/i.test(JSON.stringify(bbb.user.tag_borders)))
+						bbb.user.tag_borders.push(new Border("status:banned", false, "#000000", "solid"));
+
 					break;
 			}
 
@@ -2387,7 +2398,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				swapLink.innerHTML = "View sample";
 			}
 			else {
-				resizeStatus.innerHTML = "Resized to " + Math.round(ratio * 100) + "% of original";
+				resizeStatus.innerHTML = "Resized to " + Math.floor(ratio * 100) + "% of original";
 				resizeLink.innerHTML = "view original";
 				swapLink.innerHTML = "View original";
 			}
@@ -3255,6 +3266,123 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var notice = document.getElementById("notice");
 		notice.style.display = "block";
 		notice.className = notice.className.replace(/\s?bbb-keep-notice/gi, "");
+	}
+
+	function hideStatusNotices() {
+		if (gLoc !== "post")
+			return;
+
+		var infoSection = document.getElementById("post-information");
+		var infoListItems = (infoSection ? infoSection.getElementsByTagName("li") : null);
+		var infoListItem;
+		var statusListItem;
+		var newStatusContent;
+		var flaggedNotice = document.getElementsByClassName("notice-flagged")[0];
+		var appealedNotice = document.getElementsByClassName("notice-appealed")[0];
+		var pendingNotice = document.getElementsByClassName("notice-pending")[0];
+		var deletedNotices = document.getElementsByClassName("notice-deleted");
+		var deletedNotice;
+		var bannedNotice
+
+		if (infoListItems) {
+			// Locate the status portion of the information section.
+			for (var i = infoListItems.length - 1; i >= 0; i--) {
+				infoListItem = infoListItems[i];
+
+				if (infoListItem.textContent.indexOf("Status:") > -1) {
+					statusListItem = infoListItem;
+					newStatusContent = statusListItem.textContent;
+					break;
+				}
+			}
+
+			// Hide and alter the notices and create the appropriate status links.
+			if (statusListItem) {
+				if (flaggedNotice) {
+					flaggedNotice.style.display = "none";
+					flaggedNotice.style.position = "absolute";
+					flaggedNotice.style.zIndex = "2003";
+					newStatusContent = newStatusContent.replace("Flagged", '<a href="#" id="bbb-flagged-link">Flagged</a>');
+				}
+
+				if (pendingNotice) {
+					pendingNotice.style.display = "none";
+					pendingNotice.style.position = "absolute";
+					pendingNotice.style.zIndex = "2003";
+					newStatusContent = newStatusContent.replace("Pending", '<a href="#" id="bbb-pending-link">Pending</a>');
+				}
+
+				for (var i = 0, dnl = deletedNotices.length; i < dnl; i++) {
+					deletedNotices[i].style.display = "none";
+					deletedNotices[i].style.position = "absolute";
+					deletedNotices[i].style.zIndex = "2003";
+
+					if (deletedNotices[i].getElementsByTagName("li").length) {
+						deletedNotice = deletedNotices[i];
+						newStatusContent = newStatusContent.replace("Deleted", '<a href="#" id="bbb-deleted-link">Deleted</a>');
+					}
+					else {
+						bannedNotice = deletedNotices[i];
+						newStatusContent = newStatusContent.replace("Banned", '<a href="#" id="bbb-banned-link">Banned</a>');
+					}
+				}
+
+				if (appealedNotice) {
+					appealedNotice.style.display = "none";
+					appealedNotice.style.position = "absolute";
+					appealedNotice.style.zIndex = "2003";
+					newStatusContent = newStatusContent + ' <a href="#" id="bbb-appealed-link">Appealed</a>';
+				}
+
+				statusListItem.innerHTML = newStatusContent;
+			}
+
+			// Prepare the links.
+			var flaggedLink = document.getElementById("bbb-flagged-link");
+			var appealedLink = document.getElementById("bbb-appealed-link");
+			var pendingLink = document.getElementById("bbb-pending-link");
+			var deletedLink = document.getElementById("bbb-deleted-link");
+			var bannedLink = document.getElementById("bbb-banned-link");
+
+			if (flaggedLink)
+				statusLinkEvents(flaggedLink, flaggedNotice, "flaggedTimer");
+			if (appealedLink)
+				statusLinkEvents(appealedLink, appealedNotice, "appealedTimer");
+			if (pendingLink)
+				statusLinkEvents(pendingLink, pendingNotice, "pendingTimer");
+			if (deletedLink)
+				statusLinkEvents(deletedLink, deletedNotice, "deletedTimer");
+			if (bannedLink)
+				statusLinkEvents(bannedLink, bannedNotice, "bannedTimer");
+		}
+	}
+
+	function statusLinkEvents(link, notice, timer) {
+		// Attach events to the status links to enable a tooltip style notice.
+		link.addEventListener("click", function(event) {showStatusNotice(event, notice);}, false);
+		link.addEventListener("mouseout", function(event) {bbb[timer] = window.setTimeout(function() { notice.style.display = "none";}, 200)}, false);
+		notice.addEventListener("mouseover", function() {window.clearTimeout(bbb[timer])}, false);
+		notice.addEventListener("mouseleave", function() {notice.style.display = "none";}, false);
+	}
+
+	function showStatusNotice(event, noticeEl) {
+		var x = event.pageX;
+		var y = event.pageY;
+		var notice = noticeEl;
+		var topOffset = 0;
+
+		notice.style.visibility = "hidden";
+		notice.style.display = "block";
+
+		// Don't allow the notice to go above the top of the window.
+		if (event.clientY - notice.offsetHeight - 2 < 5)
+			topOffset = event.clientY - notice.offsetHeight - 7;
+
+		notice.style.left = x + 2 + "px";
+		notice.style.top = y - notice.offsetHeight - 2 - topOffset + "px";
+		notice.style.visibility = "visible";
+
+		event.preventDefault();
 	}
 
 	function scrollbarWidth() {
