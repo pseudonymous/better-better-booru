@@ -216,6 +216,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (clean_links)
 		cleanLinks();
 
+	if (direct_downloads)
+		bbbDDL();
+
 	if (arrow_nav && allowArrowNav())
 		document.addEventListener("keydown", arrowNav, false);
 
@@ -242,7 +245,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			else
 				numDesired = numExpected;
 
-			if (numThumbs !== numDesired || numThumbs < numExpected || direct_downloads) {
+			if (numThumbs !== numDesired || numThumbs < numExpected) {
 				if (mode === "search")
 					fetchJSON(gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit, "search");
 				else
@@ -252,11 +255,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (mode === "post")
 			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 		else if (mode === "popular") {
-			if (numThumbs !== thumbnail_count_default || direct_downloads)
+			if (numThumbs !== thumbnail_count_default)
 				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
 		}
 		else if (mode === "pool") {
-			if (numThumbs !== thumbnail_count_default || direct_downloads)
+			if (numThumbs !== thumbnail_count_default)
 				fetchJSON(gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
 		}
 		else if (mode === "poolsearch") {
@@ -508,6 +511,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							if (clean_links)
 								cleanLinks();
 
+							// Direct downloads.
+							if (direct_downloads)
+								bbbDDL();
+
 							// Update status message.
 							bbbStatus("loaded");
 						}
@@ -657,9 +664,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			// eek, huge line.
 			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
 
-			if (direct_downloads)
-				thumb += '<a style="display: none;" href="' + (post.file_url ? post.file_url : "DDL unavailable for post " + post.id + ".jpg") + '" id="bbb-ddl-' + post.id + '">Direct Download</a></span>';
-
 			// Generate output.
 			if (gLoc === "search" || gLoc === "notes" || gLoc === "popular")
 				out += thumb;
@@ -705,6 +709,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Blacklist.
 		blacklistInit();
+
+		// Direct downloads.
+		if (direct_downloads)
+			bbbDDL();
 
 		// Fix hidden thumbnails.
 		if (hiddenImgs.length) {
@@ -2766,7 +2774,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function useAPI() {
-		if ((show_loli || show_shota || show_toddlercon || show_deleted || show_banned || direct_downloads) && (isLoggedIn() || !bypass_api))
+		if ((show_loli || show_shota || show_toddlercon || show_deleted || show_banned) && (isLoggedIn() || !bypass_api))
 			return true;
 		else
 			return false;
@@ -3170,6 +3178,31 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Replace the post title with the full set of tags.
 		if (gLoc === "post")
 			document.title = fetchMeta("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
+	}
+
+	function bbbDDL() {
+		// Add direct downloads to thumbnails.
+		if (gLoc !== "search" && gLoc !== "pool" && gLoc !== "popular")
+			return;
+
+		var posts = document.getElementsByClassName("post-preview");
+		var post;
+		var postID;
+		var postUrl;
+		var ddlLink;
+
+		for (var i = 0, pl = posts.length; i <pl; i++) {
+			post = posts[i];
+			postUrl = post.getAttribute("data-file-url");
+			postID = post.getAttribute("data-id");
+
+			ddlLink = document.createElement("a");
+			ddlLink.innerHTML = "Direct Download";
+			ddlLink.href = postUrl || "DDL unavailable for post " + postID + ".jpg";
+			ddlLink.id = "bbb-ddl-" + postID;
+			ddlLink.style.display = "none";
+			post.appendChild(ddlLink);
+		}
 	}
 
 	function getCookie() {
