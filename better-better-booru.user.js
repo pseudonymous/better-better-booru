@@ -534,7 +534,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 									article.setAttribute("data-file-url", post.file_url);
 									article.setAttribute("data-large-file-url", post.large_file_url);
 
-									if (direct_downloads)
+									if (direct_downloads && (gLoc === "search" || gLoc === "pool" || gLoc === "popular"))
 										document.getElementById("bbb-ddl-" + hiddenId).href = post.file_url;
 								}
 
