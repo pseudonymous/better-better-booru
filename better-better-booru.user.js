@@ -2312,6 +2312,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			if (blacklistList) {
 				var blacklistItem = document.createElement("li");
+				blacklistItem.title = blacklistTag;
 				blacklistItem.style.display = "none";
 
 				var blacklistLink = document.createElement("a");
@@ -2408,11 +2409,19 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var entry = bbb.blacklist.entries[i];
 
 				if (thumbSearchMatch(element, entry.search)) {
-					if (entry.active)
-						element.className += " blacklisted blacklisted-active";
+					if (element.className.indexOf("blacklisted") < 0)
+						element.className += " blacklisted";
+
+					if (entry.active) {
+						if (element.className.indexOf("blacklisted-active") < 0)
+							element.className += " blacklisted-active";
+
+						matchList[matchId] = ++matchList[matchId] || 1;
+					}
+					else
+						matchList[matchId] = matchList[matchId] || 0;
 
 					entry.matches.push({id:matchId, elId:element.id});
-					matchList[matchId] = ++matchList[matchId] || 1;
 				}
 			}
 
