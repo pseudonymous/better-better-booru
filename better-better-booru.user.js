@@ -27,12 +27,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
+		blacklist: {
+			entries: [],
+			match_list: {}
+		},
 		cache: { // Thumbnail info cache.
 			current: {
 				history: [],
 				names: {}
 			},
 			stored: {}
+		},
+		custom_tag: {
+			searches: [],
+			style_list: {}
 		},
 		el: { // Script elements.
 			menu: {} // Menu elements.
@@ -183,8 +191,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (autohide_sidebar.indexOf(gLoc) > -1)
 		autohideSidebar();
 
-	if (!useAccount()) // Immediately apply script blacklist for logged out users or blacklist override.
-		delayMe(blacklistInit);
+	delayMe(blacklistInit);
 
 	if (search_add)
 		searchAdd();
@@ -231,7 +238,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Functions for creating a url and retrieving info from it */
 	function searchJSON(mode, xml) {
-		var numThumbs = document.getElementsByClassName("post-preview").length;
+		var numThumbs = bbbGetPosts().length;
 		var limit = "";
 
 		if (mode === "search" || mode === "notes") {
@@ -347,11 +354,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function scrapePost(pageEl) {
 		// Retrieve info from the current document or a supplied element containing the html with it.
 		var target = pageEl || document;
-		var imgContainer = bbbGetID("image-container", target, "section");
-		var img = bbbGetID("image", target, "img");
+		var imgContainer = bbbGetId("image-container", target, "section");
+		var img = bbbGetId("image", target, "img");
 		var object = imgContainer.getElementsByTagName("object")[0];
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
-		var directLink = bbbGetID("image-resize-link", target, "a") || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
+		var directLink = bbbGetId("image-resize-link", target, "a") || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
 		var twitterInfo = fetchMeta("twitter:image:src", target);
 		var previewInfo = fetchMeta("og:image", target);
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
@@ -378,7 +385,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			uploader_name: imgContainer.getAttribute("data-uploader"),
 			is_deleted: (fetchMeta("post-is-deleted", target) === "false" ? false : true),
 			is_flagged: (fetchMeta("post-is-flagged", target) === "false" ? false : true),
-			is_pending: (bbbGetID("pending-approval-notice", target, "div") ? true : false),
+			is_pending: (bbbGetId("pending-approval-notice", target, "div") ? true : false),
 			is_banned: (imgContainer.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
 			image_height: imgHeight || null,
 			image_width: imgWidth || null,
@@ -505,7 +512,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							formatThumbnails();
 
 							// Blacklist
-							blacklistInit();
+							blacklistUpdate();
 
 							// Clean links
 							if (clean_links)
@@ -708,7 +715,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		formatThumbnails();
 
 		// Blacklist.
-		blacklistInit();
+		blacklistUpdate();
 
 		// Direct downloads.
 		if (direct_downloads)
@@ -1033,7 +1040,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			autoscrollImage();
 
 		// Blacklist.
-		blacklistInit();
+		blacklistUpdate();
 
 		// Update status message.
 		bbbStatus("loaded");
@@ -1043,7 +1050,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var posts = xml;
 		var numPosts = posts.length;
 		var expectedPosts = numPosts;
-		var existingPosts = document.getElementsByClassName("post post-preview"); // Live node list so adding/removing a "post post-preview" class item immediately changes this.
+		var existingPosts = bbbGetPosts(); // Live node list so adding/removing a "post-preview" class item immediately changes this.
 		var eci = 0;
 
 		for (var i = 0; i < numPosts; i++) {
@@ -1116,7 +1123,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		formatThumbnails();
 
 		// Blacklist.
-		blacklistInit();
+		blacklistUpdate();
 	}
 
 	/* Functions for the settings panel */
@@ -1920,7 +1927,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Reset the list of border items after moving or creating a new border.
 		var borderElements = section.children;
 
-		for (var i = 0, bel = borderElements.length; i < bel; i ++) {
+		for (var i = 0, bel = borderElements.length; i < bel; i++) {
 			var borderElement = borderElements[i];
 
 			borderElement.className = borderElement.className.replace(/\s?bbb-no-highlight/gi, "");
@@ -2264,43 +2271,156 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			alert("A backup could not be detected in the text provided. Please make sure everything was pasted correctly/completely.");
 	}
 
-	/* Functions for support, extra features, and content manipulation */
 	function blacklistInit() {
 		// Reset the blacklist with the account settings when logged in or script settings when logged out/using the override.
-		Danbooru.Blacklist.entries.length = 0;
+		var blacklistTags = (useAccount() ? fetchMeta("blacklisted-tags") : script_blacklisted_tags);
 
-		if (!useAccount()) { // Clean up blacklisted entries and load the script blacklist.
-			var blacklistedPosts = document.getElementsByClassName("blacklisted");
+		if (!/\S/.test(blacklistTags))
+			return;
+		else
+			blacklistTags = blacklistTags.split(",");
 
-			while (blacklistedPosts[0]) {
-				var blacklistedPost = blacklistedPosts[0];
-				blacklistedPost.className = blacklistedPost.className.replace(/\s?blacklisted(-active)?/ig, "");
+		var blacklistBox = document.getElementById("blacklist-box");
+		var blacklistList = document.getElementById("blacklist-list");
+		var blacklistedPosts = document.getElementsByClassName("blacklisted");
+
+		// Reset sidebar blacklist.
+		if (blacklistBox && blacklistList) {
+			blacklistBox.style.display = "none";
+			blacklistList.innerHTML = "";
+		}
+
+		// Reset any blacklist info.
+		if (bbb.blacklist.entries.length) {
+			delete bbb.blacklist;
+			bbb.blacklist = {entries: [], match_list: {}};
+		}
+
+		// Reset any blacklisted thumbnails.
+		while (blacklistedPosts[0]) {
+			var blacklistedPost = blacklistedPosts[0];
+			blacklistedPost.className = blacklistedPost.className.replace(/\s?blacklisted(-active)?/ig, "");
+		}
+
+		// Create the the blacklist section.
+		for (var i = 0, bltl = blacklistTags.length; i < bltl; i++) {
+			var blacklistTag = blacklistTags[i];
+			var blacklistSearch = createSearch(blacklistTag);
+			var newEntry = {active: true, tags:blacklistTag, search:blacklistSearch, matches: []};
+
+			bbb.blacklist.entries.push(newEntry);
+
+			if (blacklistList) {
+				var blacklistItem = document.createElement("li");
+				blacklistItem.style.display = "none";
+
+				var blacklistLink = document.createElement("a");
+				blacklistLink.innerHTML = (blacklistTag.length < 21 ? blacklistTag + " " : blacklistTag.substring(0, 20).bbbSpaceClean() + "... ");
+				blacklistLink.addEventListener("click", function(entry) {
+					return function(event) {
+						if (event.button === 0) {
+							var matches = entry.matches;
+							var link = this;
+							var post;
+							var el;
+
+							if (entry.active) {
+								entry.active = false;
+								link.className = "blacklisted-active";
+
+								for (var i = 0, ml = matches.length; i < ml; i++) {
+									post = matches[i];
+									el = document.getElementById(post.elId);
+									bbb.blacklist.match_list[post.id]--;
+
+									if (!bbb.blacklist.match_list[post.id])
+										el.className = el.className.replace(/\s?blacklisted-active/ig, "");
+								}
+							}
+							else {
+								entry.active = true;
+								link.className = "";
+
+								for (var i = 0, ml = matches.length; i < ml; i++) {
+									post = matches[i];
+									el = document.getElementById(post.elId);
+									bbb.blacklist.match_list[post.id]++;
+									el.className += " blacklisted-active";
+								}
+							}
+						}
+					};
+				}(newEntry), false);
+				blacklistItem.appendChild(blacklistLink);
+
+				var blacklistCount = document.createElement("span");
+				blacklistCount.innerHTML = "0";
+				blacklistItem.appendChild(blacklistCount);
+
+				blacklistList.appendChild(blacklistItem);
 			}
+		}
 
-			if (/\S/.test(script_blacklisted_tags)) {
-				var blacklistTags = script_blacklisted_tags.toLowerCase().replace(/\b(rating:[qes])\w+/, "$1").split(",");
+		// Test all posts on the page for a match and set up the initial blacklist.
+		blacklistUpdate();
+	}
 
-				for (var i = 0, bl = blacklistTags.length; i < bl; i++) {
-					var tag = Danbooru.Blacklist.parse_entry(blacklistTags[i]);
-					Danbooru.Blacklist.entries.push(tag);
+	function blacklistUpdate(target) {
+		// Update the blacklists without resetting everything.
+		var blacklistBox = document.getElementById("blacklist-box");
+		var blacklistList = document.getElementById("blacklist-list");
+		var imgContainer = document.getElementById("image-container");
+		var posts = bbbGetPosts(target);
+
+		// Test the image for a match when viewing a post.
+		if (imgContainer)
+			blacklistTest("imgContainer", imgContainer);
+
+		// Search the posts for matches.
+		for (var i = 0, pl = posts.length; i < pl; i++) {
+			var post = posts[i];
+			var postId = post.getAttribute("data-id");
+
+			blacklistTest(postId, post);
+		}
+
+		// Update the blacklist sidebar section match counts and display any blacklist items that have a match.
+		if (blacklistBox && blacklistList) {
+			for (var i = 0, bbel = bbb.blacklist.entries.length; i < bbel; i++) {
+				var entryLength = bbb.blacklist.entries[i].matches.length;
+				var item = blacklistList.getElementsByTagName("li")[i];
+
+				if (entryLength) {
+					blacklistBox.style.display = "block";
+					item.style.display = "";
+					item.getElementsByTagName("span")[0].innerHTML = entryLength;
 				}
 			}
 		}
-		else // Reload the account blacklist.
-			Danbooru.Blacklist.parse_entries();
+	}
 
-		// Apply the blacklist and update the sidebar for search listings.
-		var blacklistUsed = Danbooru.Blacklist.apply();
-		var blacklistList = document.getElementById("blacklist-list");
+	function blacklistTest(matchId, element) {
+		// Test a post/image for a blacklist match and use the provided ID to store its info.
+		var matchList = bbb.blacklist.match_list;
 
-		if (blacklistList) {
-			blacklistList.innerHTML = "";
+		if (typeof(matchList[matchId]) === "undefined") {
+			for (var i = 0, bbel = bbb.blacklist.entries.length; i < bbel; i++) {
+				var entry = bbb.blacklist.entries[i];
 
-			if (blacklistUsed)
-				Danbooru.Blacklist.update_sidebar();
-			else
-				document.getElementById("blacklist-box").style.display = "none";
+				if (thumbSearchMatch(element, entry.search)) {
+					if (entry.active)
+						element.className += " blacklisted blacklisted-active";
+
+					entry.matches.push({id:matchId, elId:element.id});
+					matchList[matchId] = ++matchList[matchId] || 1;
+				}
+			}
+
+			if (typeof(matchList[matchId]) === "undefined")
+				matchList[matchId] = false;
 		}
+		else if (matchList[matchId] !== false && element.className.indexOf("blacklisted") < 0)
+				element.className += (matchList[matchId] > 0 ? " blacklisted blacklisted-active" : " blacklisted");
 	}
 
 	function resizeImage(mode) {
@@ -2488,10 +2608,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Prune the cache if it's larger than the user limit.
 		if (bcs.history.length > thumb_cache_limit) {
-			var removedIDs = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
+			var removedIds = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
 
-			for (var i = 0, rtl = removedIDs.length; i < rtl; i++)
-				delete bcs.names[removedIDs[i]];
+			for (var i = 0, rtl = removedIds.length; i < rtl; i++)
+				delete bcs.names[removedIds[i]];
 		}
 
 		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
@@ -2507,10 +2627,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var bcs = bbb.cache.stored;
 
 		if (bcs.history.length > thumb_cache_limit) {
-			var removedIDs = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
+			var removedIds = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
 
-			for (var i = 0, rtl = removedIDs.length; i < rtl; i++)
-				delete bcs.names[removedIDs[i]];
+			for (var i = 0, rtl = removedIds.length; i < rtl; i++)
+				delete bcs.names[removedIds[i]];
 		}
 
 		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
@@ -2821,17 +2941,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function formatThumbnails() {
+	function formatThumbnails(target) {
 		// Create thumbnail titles and borders.
-		var posts = document.getElementsByClassName("post-preview");
+		var posts = bbbGetPosts(target);
 
 		if (!posts.length)
 			return;
 
-		var searches = [];
+		var searches = bbb.custom_tag.searches;
 
 		// Create and cache border search objects.
-		if (custom_tag_borders) {
+		if (custom_tag_borders && !searches.length) {
 			for (var i = 0, tbsl = tag_borders.length; i < tbsl; i++)
 				searches.push(createSearch(tag_borders[i].tags));
 		}
@@ -2850,38 +2970,52 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var rating = " rating:" + post.getAttribute("data-rating");
 			var score = " score:" + post.getAttribute("data-score");
 			var title = tags + user + rating + score;
+			var id = post.getAttribute("data-id");
 			var secondary = [];
 			var secondaryLength = 0;
+			var borderStyle;
+			var styleList = bbb.custom_tag.style_list;
 
 			// Create title.
 			img.title = title;
 
 			// Secondary custom tag borders.
 			if (custom_tag_borders) {
-				for (var j = 0, tbsl = tag_borders.length; j < tbsl; j++) {
-					var tagBorderItem = tag_borders[j];
+				if (typeof(styleList[id]) === "undefined") {
+					for (var j = 0, tbsl = tag_borders.length; j < tbsl; j++) {
+						var tagBorderItem = tag_borders[j];
 
-					if (tagBorderItem.is_enabled && thumbSearchMatch(post, searches[j])) {
-						secondary.push([tagBorderItem.border_color, tagBorderItem.border_style]);
+						if (tagBorderItem.is_enabled && thumbSearchMatch(post, searches[j])) {
+							secondary.push([tagBorderItem.border_color, tagBorderItem.border_style]);
 
-						if (secondary.length === 4)
-							break;
+							if (secondary.length === 4)
+								break;
+						}
 					}
+
+					secondaryLength = secondary.length;
+
+					if (secondaryLength) {
+						link.className += " bbb-custom-tag";
+
+						if (secondaryLength === 1 || (single_color_borders && secondaryLength > 1))
+							borderStyle = "border: " + border_width + "px " + secondary[0][0] + " " + secondary[0][1] + " !important;";
+						else if (secondaryLength === 2)
+							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[1][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[1][1] + " " + secondary[0][1] + " !important;";
+						else if (secondaryLength === 3)
+							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[2][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[2][1] + " " + secondary[0][1] + " !important;";
+						else if (secondaryLength === 4)
+							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[2][0] + " " + secondary[3][0] + " " + secondary[1][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[2][1] + " " + secondary[3][1] + " " + secondary[1][1] + " !important;";
+
+						link.setAttribute("style", borderStyle);
+						styleList[id] = borderStyle;
+					}
+					else
+						styleList[id] = false;
 				}
-
-				secondaryLength = secondary.length;
-
-				if (secondaryLength) {
+				else if (styleList[id] !== false && post.className.indexOf("bbb-custom-tag") < 0) {
 					link.className += " bbb-custom-tag";
-
-					if (secondaryLength === 1 || (single_color_borders && secondaryLength > 1))
-						link.setAttribute("style", "border: " + border_width + "px " + secondary[0][0] + " " + secondary[0][1] + " !important;");
-					else if (secondaryLength === 2)
-						link.setAttribute("style", "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[1][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[1][1] + " " + secondary[0][1] + " !important;");
-					else if (secondaryLength === 3)
-						link.setAttribute("style", "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[2][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[2][1] + " " + secondary[0][1] + " !important;");
-					else if (secondaryLength === 4)
-						link.setAttribute("style", "border-color: " + secondary[0][0] + " " + secondary[2][0] + " " + secondary[3][0] + " " + secondary[1][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[2][1] + " " + secondary[3][1] + " " + secondary[1][1] + " !important;");
+					link.setAttribute("style", styleList[id]);
 				}
 			}
 		}
@@ -3185,21 +3319,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (gLoc !== "search" && gLoc !== "pool" && gLoc !== "popular")
 			return;
 
-		var posts = document.getElementsByClassName("post-preview");
+		var posts = bbbGetPosts();
 		var post;
-		var postID;
+		var postId;
 		var postUrl;
 		var ddlLink;
 
 		for (var i = 0, pl = posts.length; i <pl; i++) {
 			post = posts[i];
 			postUrl = post.getAttribute("data-file-url");
-			postID = post.getAttribute("data-id");
+			postId = post.getAttribute("data-id");
 
 			ddlLink = document.createElement("a");
 			ddlLink.innerHTML = "Direct Download";
-			ddlLink.href = postUrl || "DDL unavailable for post " + postID + ".jpg";
-			ddlLink.id = "bbb-ddl-" + postID;
+			ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
+			ddlLink.id = "bbb-ddl-" + postId;
 			ddlLink.style.display = "none";
 			post.appendChild(ddlLink);
 		}
@@ -3236,10 +3370,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		document.cookie = data;
 	}
 
-	function bbbGetID(elID, target, elType) {
+	function bbbGetId(elId, target, elType) {
 		// Retrieve an element by ID from either the current document or an element containing it.
 		if (!target || target === document)
-			return document.getElementById(elID);
+			return document.getElementById(elId);
 		else {
 			var els = target.getElementsByTagName((elType ? elType : "*"));
 			var el;
@@ -3247,12 +3381,28 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			for (var i = 0, elsl = els.length; i < elsl; i++) {
 				el = els[i];
 
-				if (el.id === elID)
+				if (el.id === elId)
 					return el;
 			}
 
 			return null;
 		}
+	}
+
+	function bbbGetPosts(target) {
+		// Return a list of posts depending on the target supplied.
+		var posts;
+
+		if (!target || target === document) // All posts in the document.
+			posts = document.getElementsByClassName("post-preview");
+		else if (target instanceof Element) { // All posts in a specific element.
+			if (target.className.indexOf("post-preview") < 0)
+				posts = target.getElementsByClassName("post-preview");
+			else // Single specified post.
+				posts = [target];
+		}
+
+		return posts || [];
 	}
 
 	function outerHTML(node) {
@@ -3404,6 +3554,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var notice = noticeEl;
 		var topOffset = 0;
 
+		notice.style.maxWidth = window.innerWidth * 0.66 + "px";
 		notice.style.visibility = "hidden";
 		notice.style.display = "block";
 
@@ -3465,6 +3616,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function thumbSearchMatch(post, searchArray) {
 		// Take search objects and test them against a thumbnail's info.
+		if (!searchArray.length)
+			return false;
+
 		var tags = post.getAttribute("data-tags");
 		var user = " user:" + post.getAttribute("data-uploader").replace(/\s/g, "_").toLowerCase();
 		var rating = " rating:" + post.getAttribute("data-rating");
@@ -3715,7 +3869,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			searchObject.all.total = searchObject.all.includes.length + searchObject.all.excludes.length;
 			searchObject.any.total = searchObject.any.includes.length + searchObject.any.excludes.length;
-			searches.push(searchObject);
+
+			if (searchObject.all.total || searchObject.any.total)
+				searches.push(searchObject);
 		}
 
 		return searches;
@@ -3944,7 +4100,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var mode = getVar("new_posts");
 			var postsDiv = document.getElementById("posts");
 			var postSections = document.getElementById("post-sections");
-			var posts = document.getElementsByClassName("post-preview");
+			var posts = bbbGetPosts();
 			var firstPost = posts[0];
 
 			if (mode === "init" && !info.viewed && !getVar("tags") && !getVar("page")) { // Initialize.
@@ -4042,7 +4198,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		var info = bbb.user.track_new_data;
 		var limitNum = getVar("limit") || bbb.user.thumbnail_count || thumbnail_count_default;
-		var posts = document.getElementsByClassName("post-preview");
+		var posts = bbbGetPosts();
 		var lastPost = posts[posts.length - 1];
 		var lastId = (lastPost ? Number(lastPost.getAttribute("data-id")) : null );
 
