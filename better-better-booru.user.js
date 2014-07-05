@@ -376,7 +376,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			id: Number(imgContainer.getAttribute("data-id")),
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
 			has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
-			has_active_children: (target.getElementsByClassName("notice-parent").length ? true : false),
+			has_active_children: (img ? (img.getAttribute("data-has-active-children") === "true" ? true : false) : !!target.getElementsByClassName("notice-parent").length),
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
 			rating: imgContainer.getAttribute("data-rating"),
 			score: Number(imgContainer.getAttribute("data-score")),
@@ -389,7 +389,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			is_banned: (imgContainer.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
 			image_height: imgHeight || null,
 			image_width: imgWidth || null,
-			exists: (img || object ? true : false)
+			is_hidden: (img || object ? false : true)
 		};
 
 		// Try to extract the file's name and extension.
@@ -760,7 +760,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			infoSection.parentNode.insertBefore(options, infoSection.nextElementSibling);
 		}
 
-		// Alter the "resize to window" link with new resize and swap links.
+		// Replace the "resize to window" link with new resize and swap links.
 		var resizeListItem = document.getElementById("image-resize-to-window-link").parentNode;
 		var optionsFrag = document.createDocumentFragment();
 
@@ -1006,7 +1006,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var translateLink = document.getElementById("translate");
 
 			// Make the normal toggling work for hidden posts.
-			if (!post.exists) {
+			if (post.is_hidden) {
 				if (translateLink)
 					translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
 
@@ -2370,7 +2370,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Update the blacklists without resetting everything.
 		var blacklistBox = document.getElementById("blacklist-box");
 		var blacklistList = document.getElementById("blacklist-list");
-		var imgContainer = document.getElementById("image-container");
+		var imgContainer = bbbGetId("image-container", target);
 		var posts = bbbGetPosts(target);
 
 		// Test the image for a match when viewing a post.
@@ -2465,10 +2465,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				Danbooru.Note.Box.scale_all();
 			}
 			else {
-				swfObj.height = targetHeight;
-				swfObj.width = targetWidth;
-				swfEmb.height = targetHeight;
-				swfEmb.width = targetWidth;
+				swfObj.height = swfEmb.height = targetHeight;
+				swfObj.width = swfEmb.width = targetWidth;
 			}
 
 			bbb.post.resized = "none";
@@ -2484,10 +2482,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				Danbooru.Note.Box.scale_all();
 			}
 			else {
-				swfObj.height = targetHeight * ratio;
-				swfObj.width = targetWidth * ratio;
-				swfEmb.height = targetHeight * ratio;
-				swfEmb.width = targetWidth * ratio;
+				swfObj.height = swfEmb.height = targetHeight * ratio;
+				swfObj.width = swfEmb.width = targetWidth * ratio;
 			}
 
 			bbb.post.resized = "width";
@@ -2503,10 +2499,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				Danbooru.Note.Box.scale_all();
 			}
 			else {
-				swfObj.height = targetHeight * ratio;
-				swfObj.width = targetWidth * ratio;
-				swfEmb.height = targetHeight * ratio;
-				swfEmb.width = targetWidth * ratio;
+				swfObj.height = swfEmb.height = targetHeight * ratio;
+				swfObj.width = swfEmb.width = targetWidth * ratio;
 			}
 
 			bbb.post.resized = "all";
@@ -2754,13 +2748,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function cleanLinks() {
+	function cleanLinks(target) {
 		// Remove the query portion of thumbnail links.
 		var targetContainer;
 		var links;
 		var link;
 
-		if (gLoc === "post")
+		if (target)
+			targetContainer = target;
+		else if (gLoc === "post")
 			targetContainer = document.getElementById("pool-nav");
 		else if (gLoc === "pool") {
 			targetContainer = document.getElementById("a-show");
@@ -3148,7 +3144,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'article.post-preview a {line-height: 0px !important;}' +
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview div.preview a {line-height: 0px !important;}' +
-		'.post-preview img {border-width: ' + border_width + 'px !important;}';
+		'.post-preview img {border-width: ' + border_width + 'px !important;}' +
+		'article.post-preview[data-tags~=animated]:before, article.post-preview[data-file-ext=swf]:before, article.post-preview[data-file-ext=webm]:before {margin: ' + totalBorderWidth + 'px !important;}';
 
 		if (custom_status_borders) {
 			var activeStatusStyles = "";
@@ -3234,6 +3231,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			'section#content {margin-left: 0px !important;}' +
 			'.ui-autocomplete {z-index: 2002 !important;}';
 		}
+
+		if (direct_downloads)
+			styles += ".bbb-ddl {display: none !important;}";
 
 		if (tag_scrollbars)
 			styles += "#tag-list ul {max-height: " + tag_scrollbars + "px !important; overflow-y: auto !important; font-size: 87.5% !important;}";
@@ -3323,12 +3323,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			document.title = fetchMeta("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
 	}
 
-	function bbbDDL() {
+	function bbbDDL(target) {
 		// Add direct downloads to thumbnails.
 		if (gLoc !== "search" && gLoc !== "pool" && gLoc !== "popular")
 			return;
 
-		var posts = bbbGetPosts();
+		var posts = bbbGetPosts(target);
 		var post;
 		var postId;
 		var postUrl;
@@ -3339,12 +3339,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			postUrl = post.getAttribute("data-file-url");
 			postId = post.getAttribute("data-id");
 
-			ddlLink = document.createElement("a");
-			ddlLink.innerHTML = "Direct Download";
-			ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
-			ddlLink.id = "bbb-ddl-" + postId;
-			ddlLink.style.display = "none";
-			post.appendChild(ddlLink);
+			if (!post.getElementsByClassName("bbb-ddl").length) {
+				ddlLink = document.createElement("a");
+				ddlLink.innerHTML = "Direct Download";
+				ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
+				ddlLink.id = "bbb-ddl-" + postId;
+				ddlLink.className = "bbb-ddl";
+				post.appendChild(ddlLink);
+			}
 		}
 	}
 
