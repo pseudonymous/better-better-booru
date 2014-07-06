@@ -56,6 +56,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
 			autoscroll_image: new Option("checkbox", false, "Auto-scroll Image", "Position the image as close as possible to the left and top edges of the window viewport when initially loading an individiual post."),
+			border_spacing: new Option("dropdown", 0, "Border Spacing", "Set the amount of blank space between a border and image and between a custom tag border and status border. <br><br><u>Note</u></br>Even when set to 0, status borders and custom tag borders will always have a minimum value of 1 between them.", {txtOptions:["0 (Default):0", "1:1", "2:2", "3:3"]}),
 			border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
 			bypass_api: new Option("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
 			clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br><u>Note</u></br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
@@ -106,7 +107,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
 			misc: new Section("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles"], "Misc."),
 			script_settings: new Section("general", ["bypass_api", "manage_cookies", "enable_status_message", "override_account", "thumb_cache_limit"], "Script Settings"),
-			border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width"], "Options"),
+			border_options: new Section("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: new Section("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 		},
@@ -133,6 +134,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	var custom_tag_borders = bbb.user.custom_tag_borders;
 	var custom_status_borders = bbb.user.custom_status_borders;
 	var single_color_borders = bbb.user.single_color_borders;
+	var border_spacing = bbb.user.border_spacing;
 	var border_width = bbb.user.border_width;
 	var clean_links = bbb.user.clean_links;
 	var autohide_sidebar = bbb.user.autohide_sidebar;
@@ -2056,7 +2058,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	Element.prototype.bbbBorderPreview = function(borderItem) {
-		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + bbb.user.border_width + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
+		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + bbb.user.border_width + "px; padding:" + border_spacing + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
 		this.addEventListener("mouseout", hideTip, false);
 	};
 
@@ -3133,9 +3135,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		// Border setup.
-		var totalBorderWidth = (custom_tag_borders ? border_width * 2 + 1 : border_width);
+		var totalBorderWidth = (custom_tag_borders ? border_width * 2 + (border_spacing * 2 || 1) : border_width + border_spacing);
 		var thumbMaxDim = 150 + totalBorderWidth * 2;
-		var listingExtraSpace = 14 - totalBorderWidth * 2;
+		var listingExtraSpace = (14 - totalBorderWidth * 2 > 2 ? 14 - totalBorderWidth * 2 : 2);
 		var commentExtraSpace = 34 - totalBorderWidth * 2;
 		var sbsl = status_borders.length;
 		var statusBorderItem;
@@ -3144,7 +3146,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'article.post-preview a {line-height: 0px !important;}' +
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview div.preview a {line-height: 0px !important;}' +
-		'.post-preview img {border-width: ' + border_width + 'px !important;}' +
+		'.post-preview img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
 		'article.post-preview[data-tags~=animated]:before, article.post-preview[data-file-ext=swf]:before, article.post-preview[data-file-ext=webm]:before {margin: ' + totalBorderWidth + 'px !important;}';
 
 		if (custom_status_borders) {
@@ -3206,19 +3208,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		if (custom_tag_borders) {
-			var marginAlignment = border_width + 1;
+			var customBorderSpacing = (border_spacing || 1);
+			var marginAlignment = border_width + customBorderSpacing;
 
 			styles += '.post-preview .bbb-custom-tag img {border-width: 0px !important;}' + // Remove the transparent border for images that get custom tag borders.
 			'article.post-preview a, .post-preview div.preview a {display: inline-block; margin: ' + marginAlignment + 'px !important;}'; // Align one border images with two border images.
-
-			if (border_width > 2)
-				styles += 'article.post-preview {border: 1px solid transparent !important;}'; // Add some "padding" for wider status/tag borders in thumbnail listings.
 
 			for (var i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
 
 				if (statusBorderItem.is_enabled)
-					styles += '.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag {margin: 0px !important; padding: 1px !important;}' + // Remove margin alignment and add border padding for images that have status and custom tag borders.
+					styles += '.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag {margin: 0px !important; padding: ' + customBorderSpacing + 'px !important;}' + // Remove margin alignment and add border padding for images that have status and custom tag borders.
 					'.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag img {border-width: ' + border_width + 'px !important;}'; // Override the removal of the transparent border for images that have status borders and custom tag borders.
 			}
 		}
