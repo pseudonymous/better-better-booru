@@ -3054,7 +3054,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			flags += " flagged";
 			thumbClass += " post-status-flagged";
 		}
-		if ((post.has_children && post.has_active_children) || (post.has_children && !post.has_active_children && show_deleted))
+		if (post.has_children && (post.has_active_children || show_deleted))
 			thumbClass += " post-status-has-children";
 		if (post.parent_id)
 			thumbClass += " post-status-has-parent";
