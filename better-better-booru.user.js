@@ -2978,6 +2978,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var score = " score:" + post.getAttribute("data-score");
 			var title = tags + user + rating + score;
 			var id = post.getAttribute("data-id");
+			var hasChildren = (post.getAttribute("data-has-children") === "true" ? true : false);
 			var secondary = [];
 			var secondaryLength = 0;
 			var borderStyle;
@@ -2985,6 +2986,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// Create title.
 			img.title = title;
+
+			// Correct parent status borders on "no active children" posts for logged out users.
+			if (hasChildren && show_deleted && post.className.indexOf("post-status-has-children") < 0)
+				post.className += " post-status-has-children";					
 
 			// Secondary custom tag borders.
 			if (custom_tag_borders) {
@@ -3049,7 +3054,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			flags += " flagged";
 			thumbClass += " post-status-flagged";
 		}
-		if (post.has_active_children)
+		if ((post.has_children && post.has_active_children) || (post.has_children && !post.has_active_children && show_deleted))
 			thumbClass += " post-status-has-children";
 		if (post.parent_id)
 			thumbClass += " post-status-has-parent";
