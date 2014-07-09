@@ -228,8 +228,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	if (direct_downloads)
 		bbbDDL();
 
-	if (arrow_nav && allowArrowNav())
-		document.addEventListener("keydown", arrowNav, false);
+	if (arrow_nav)
+		arrowNav();
 
 	if (thumbnail_count)
 		limitFix();
@@ -241,11 +241,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Functions for creating a url and retrieving info from it */
 	function searchJSON(mode, xml) {
 		var numThumbs = bbbGetPosts().length;
-		var limit = "";
 
 		if (mode === "search" || mode === "notes") {
-			var numExpected = getVar("limit") || thumbnail_count_default;
+			var limitUrl = getVar("limit");
+			var limitSearch = getLimitSearch();
 			var numDesired = 0;
+			var limit = "";
+			var numExpected;
+
+			if (limitUrl !== undefined)
+				numExpected = limitUrl;
+			else if (limitSearch !== undefined)
+				numExpected = limitSearch;
+			else
+				numExpected = thumbnail_count_default;
 
 			if (allowUserLimit()) {
 				numDesired = thumbnail_count;
@@ -2650,6 +2659,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var link;
 		var linkHref;
 		var search;
+		var tagsInput;
 
 		if (page) {
 			links = page.getElementsByTagName("a");
@@ -2679,6 +2689,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			}
 		}
 
+		// Fix the search.
 		if (searchParent && (gLoc === "search" || gLoc === "post" || gLoc === "intro")) {
 			search = searchParent.getElementsByTagName("form")[0];
 
@@ -2688,6 +2699,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				limitInput.value = thumbnail_count;
 				limitInput.type = "hidden";
 				search.appendChild(limitInput);
+
+				// Remove the user's default limit if the user tries to specify a limit value in the tags.
+				tagsInput = bbbGetId("tags", search, "input");
+
+				if (tagsInput) {
+					search.addEventListener("submit", function(event) {
+						if (/\blimit:\d+\b/.test(tagsInput.value))
+							search.removeChild(limitInput);
+						else if (limitInput.parentNode !== search)
+							search.appendChild(limitInput);
+					}, false);
+				}
 			}
 		}
 	}
@@ -2724,13 +2747,26 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return result;
 	}
 
-	function arrowNav(e) {
+	function getLimitSearch(url) {
+		// Retrieve the limit tag value from the tag search string.
+		var limitTag = decodeURIComponent(getVar("tags", url) || "").match(/\blimit:(\d+)\b/);
+
+		return (limitTag ? Number(limitTag[1]) : undefined);
+	}
+
+	function arrowNav() {
 		// Bind the arrow keys to Danbooru's page navigation.
-		if (document.activeElement.type !== "text" && document.activeElement.type !== "textarea") {
-			if (e.keyCode === 37)
-				danbooruNav("left");
-			else if (e.keyCode === 39)
-				danbooruNav("right");
+		var paginator = document.getElementsByClassName("paginator")[0];
+
+		if (paginator || gLoc === "popular") { // If the paginator exists, arrow navigation should be applicable.
+			document.addEventListener("keydown", function(event) {
+				if (document.activeElement.type !== "text" && document.activeElement.type !== "textarea") {
+					if (event.keyCode === 37)
+						danbooruNav("left");
+					else if (event.keyCode === 39)
+						danbooruNav("right");
+				}
+			}, false);
 		}
 	}
 
@@ -2811,16 +2847,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function allowUserLimit() {
 		// Allow use of the limit variable if it isn't currently set and we're on the first page.
-		if (thumbnail_count && !/(?:page|limit)=\d/.test(gUrlQuery))
-			return true;
-		else
-			return false;
-	}
-
-	function allowArrowNav() {
-		var paginator = document.getElementsByClassName("paginator")[0];
-
-		if (paginator || gLoc === "popular") // If the paginator exists, arrow navigation should be applicable.
+		if (thumbnail_count && !/(?:page|limit)=\d/.test(gUrlQuery) && getLimitSearch() === undefined)
 			return true;
 		else
 			return false;
@@ -2881,11 +2908,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function noXML() {
 		// Don't use XML requests on certain pages where it won't do any good.
 		var limit = getVar("limit");
+		var limitTag = getLimitSearch();
 		var page = getVar("page");
 		var result = false;
 
 		if (gLoc === "search") {
-			if (limit === 0 || page === "b1")
+			if (limit === 0 || page === "b1" || limitTag === 0)
 				result = true;
 		}
 		else if (gLoc === "notes") {
@@ -2989,7 +3017,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// Correct parent status borders on "no active children" posts for logged out users.
 			if (hasChildren && show_deleted && post.className.indexOf("post-status-has-children") < 0)
-				post.className += " post-status-has-children";					
+				post.className += " post-status-has-children";
 
 			// Secondary custom tag borders.
 			if (custom_tag_borders) {
