@@ -36,6 +36,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				history: [],
 				names: {}
 			},
+			hidden_imgs: [],
+			save_enabled: false,
 			stored: {}
 		},
 		custom_tag: {
@@ -239,7 +241,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Functions */
 
 	/* Functions for creating a url and retrieving info from it */
-	function searchJSON(mode, xml) {
+	function searchJSON(mode, optArg) {
 		var numThumbs = bbbGetPosts().length;
 
 		if (mode === "search" || mode === "notes") {
@@ -281,7 +283,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				fetchJSON(gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
 		}
 		else if (mode === "poolsearch") {
-			var poolIds = xml.post_ids.split(" ");
+			var poolIds = optArg.post_ids.split(" ");
 			var page = getVar("page") || 1;
 			var postIds = poolIds.slice((page - 1) * thumbnail_count_default, page * thumbnail_count_default);
 
@@ -290,6 +292,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (mode === "comments") {
 			if (numThumbs !== 5)
 				fetchJSON(gUrl.replace(/\/comments\/?/, "/comments.json"), "comments");
+		}
+		else if (mode === "parent" || mode === "child") {
+			var parentUrl = "/posts.json?limit=200&tags=status:any+parent:" + optArg;
+
+			fetchJSON(parentUrl, mode, optArg);
 		}
 	}
 
@@ -313,6 +320,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							parseListing(xml, optArg);
 						else if (mode === "comments")
 							parseComments(xml);
+						else if (mode === "parent" || mode === "child")
+							parseRelations(xml, mode, optArg);
 					}
 					else {
 						if (xmlhttp.status === 403 || xmlhttp.status === 401) {
@@ -337,7 +346,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			xmlhttp.send(null);
 
 			// Loading status message.
-			if (mode === "search" || mode === "popular" || mode === "notes" || mode === "post" || mode === "pool")
+			if (mode === "search" || mode === "popular" || mode === "notes" || mode === "post" || mode === "pool" || mode === "parent" || mode === "child")
 				bbbStatus("image");
 			else if (mode === "comments")
 				bbbStatus("comment");
@@ -537,7 +546,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 							bbbStatus("loaded");
 						}
 						else if (mode === "hidden") { // Fetch the hidden image information from a post for thumbnails.
-							var hiddenImgs = optArg;
+							var hiddenImgs = bbb.cache.hidden_imgs;
 							var hiddenId = hiddenImgs.shift();
 							var bcc = bbb.cache.current;
 							var article = document.getElementById("post_" + hiddenId);
@@ -564,7 +573,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 								// Continue to the next image or finish by updating the cache.
 								if (hiddenImgs.length)
-									fetchPages("/posts/" + hiddenImgs[0], "hidden", hiddenImgs);
+									fetchPages("/posts/" + hiddenImgs[0], "hidden");
 								else {
 									updateThumbCache();
 									bbbStatus("loaded");
@@ -602,7 +611,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var posts = xml;
 		var search = "";
 		var where;
-		var hiddenImgs = [];
 		var paginator = document.getElementsByClassName("paginator")[0];
 
 		// If no posts, do nothing.
@@ -653,34 +661,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				continue;
 			}
 
-			// Alter hidden images.
-			if (!post.md5) {
-				if (!bbb.cache.stored.history)
-					loadThumbCache();
+			// Check if the post is hidden.
+			checkHiddenImg(post);
 
-				var cacheName = bbb.cache.stored.names[post.id];
-
-				if (cacheName) { // Load the thumbnail info from the cache.
-					if (cacheName === "download-preview.png")
-						post.preview_file_url = "/images/download-preview.png";
-					else {
-						var cacheValues = cacheName.split(".");
-						var cacheMd5 = cacheValues[0];
-						var cacheExt = cacheValues[1];
-
-						post.md5 = cacheMd5;
-						post.file_ext = cacheExt;
-						post.preview_file_url = (!post.image_height || cacheExt === "swf" ? "/images/download-preview.png" : "/data/preview/" + cacheMd5 + ".jpg");
-						post.large_file_url = (post.has_large ? "/data/sample/sample-" + cacheMd5 + ".jpg" : "/data/" + cacheName);
-						post.file_url = "/data/" + cacheName;
-					}
-				}
-				else // Queue hidden imgs for fixing.
-					hiddenImgs.push(post.id);
-			}
-
-			// eek, huge line.
-			thumb = '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + search + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
+			// eek, not so huge line.
+			thumb = createThumbHTML(post, search);
 
 			// Generate output.
 			if (gLoc === "search" || gLoc === "notes" || gLoc === "popular")
@@ -733,11 +718,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			bbbDDL();
 
 		// Fix hidden thumbnails.
-		if (hiddenImgs.length) {
-			window.addEventListener("beforeunload", updateThumbCache);
-			fetchPages("/posts/" + hiddenImgs[0], "hidden", hiddenImgs);
-			bbbStatus("hidden");
-		}
+		fixHiddenImgs();
 
 		// Update status message.
 		bbbStatus("loaded");
@@ -1053,8 +1034,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Blacklist.
 		blacklistUpdate();
 
-		// Update status message.
-		bbbStatus("loaded");
+		// Fix the parent/child notice(s).
+		checkRelations();
 	}
 
 	function parseComments(xml) {
@@ -1135,6 +1116,145 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Blacklist.
 		blacklistUpdate();
+	}
+
+	function parseRelations(xml, mode, parentId) {
+		// Create a new parent/child notice.
+		var posts = xml;
+		var post;
+		var activePost = bbb.post.info;
+		var numPosts = posts.length;
+		var showPreview = (getCookie()["show-relationship-previews"] === "1" ? true : false);
+		var childSpan = document.createElement("span");
+		var target;
+		var newNotice;
+		var previewLink;
+		var previewLinkId;
+		var previewLinkTxt;
+		var previewId;
+		var classes;
+		var msg;
+		var search = "?tags=parent:" + parentId + (thumbnail_count ? "&limit=" + thumbnail_count : "");
+		var thumbDiv;
+		var thumb;
+		var displayStyle;
+		var forceShowDeleted = activePost.is_deleted; // If the parent is deleted or the active post is deleted, all deleted posts are shown.
+		var parentDeleted;
+
+		// Figure out if the parent is deleted.
+		for (var i = 0; i < numPosts; i++) {
+			post = posts[i];
+
+			if (post.id === parentId) {
+				parentDeleted = post.is_deleted;
+				forceShowDeleted = forceShowDeleted || parentDeleted;
+			}
+		}
+
+		// Setup the notice variables.
+		if (showPreview) {
+			previewLinkTxt = "&laquo; hide";
+			displayStyle = "block";
+		}
+		else {
+			previewLinkTxt = "show &raquo;";
+			displayStyle = "none";
+		}
+
+		if (mode === "child") {
+			target = document.getElementsByClassName("notice-child")[0];
+			previewLinkId = "has-parent-relationship-preview-link";
+			previewId = "has-parent-relationship-preview";
+			classes = "notice-child";
+
+			if (numPosts)
+				msg = 'This post belongs to a <a href="/posts' + search + '">parent</a>' + (parentDeleted ? " (deleted)" : "" );
+
+			if (numPosts === 3)
+				msg += ' and has <a href="/posts' + search + '">a sibling</a>';
+			else if (numPosts > 3)
+				msg += ' and has <a href="/posts' + search + '">' + (numPosts - 2) + ' siblings</a>';
+		}
+		else if (mode === "parent") {
+			target = document.getElementsByClassName("notice-parent")[0];
+			previewLinkId = "has-children-relationship-preview-link";
+			previewId = "has-children-relationship-preview";
+			classes = "notice-parent";
+
+			if (numPosts === 2)
+				msg = 'This post has <a href="/posts' + search + '">a child</a>';
+			else if (numPosts > 2)
+				msg = 'This post has <a href="/posts' + search + '">' + (numPosts - 1) + ' children</a>';
+		}
+
+		// Create the main notice element.
+		childSpan.innerHTML = '<div class="ui-corner-all ui-state-highlight notice ' + classes + '"> ' + msg + ' (<a href="/wiki_pages?title=help%3Apost_relationships">learn more</a>) <a href="#" id="' + previewLinkId + '">' + previewLinkTxt + '</a> <div id="' + previewId + '" style="display: ' + displayStyle + ';"> </div> </div>';
+		newNotice = childSpan.firstChild;
+		thumbDiv = bbbGetId(previewId, newNotice, "div");
+		previewLink = bbbGetId(previewLinkId, newNotice, "a");
+
+		// Create the thumbnails.
+		for (var i = numPosts - 1; i >= 0; i--) {
+			post = formatInfo(posts[i]);
+
+			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted && !forceShowDeleted) || (!show_banned && post.is_banned))
+				continue;
+
+			checkHiddenImg(post);
+			thumb = createThumbHTML(post, (clean_links ? "" : search)) + " ";
+
+			if (post.id === parentId)
+				thumbDiv.innerHTML = thumb + thumbDiv.innerHTML;
+			else
+				thumbDiv.innerHTML += thumb;
+		}
+
+		// Highlight the post we're one.
+		bbbGetId("post_" + activePost.id, thumbDiv, "article").className += " current-post";
+
+		// Make the show/hide links work.
+		previewLink.addEventListener("click", function(event) {
+			if (thumbDiv.style.display === "block") {
+				thumbDiv.style.display = "none";
+				previewLink.innerHTML = "show &raquo;";
+				createCookie("show-relationship-previews", 0, 365);
+			}
+			else {
+				thumbDiv.style.display = "block";
+				previewLink.innerHTML = "&laquo; hide";
+				createCookie("show-relationship-previews", 1, 365);
+			}
+
+			event.preventDefault();
+		}, false);
+
+		// Thumbnail classes and titles.
+		formatThumbnails(newNotice);
+
+		// Blacklist.
+		blacklistUpdate(newNotice);
+
+		// Replace/add the notice.
+		if (target)
+			target.parentNode.replaceChild(newNotice, target);
+		else if (mode === "child") {
+			target = document.getElementsByClassName("notice-parent")[0] || bbb.el.resizeNotice || document.getElementById("image-container");
+			target.parentNode.insertBefore(newNotice, target);
+		}
+		else if (mode === "parent") {
+			target = bbb.el.resizeNotice || document.getElementById("image-container");
+			target.parentNode.insertBefore(newNotice, target);
+		}
+
+		// Fix hidden thumbnails.
+		fixHiddenImgs();
+
+		// Update status message:
+		bbbStatus("loaded");
+	}
+
+	function createThumbHTML(post, query) {
+		return '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + query + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
 	}
 
 	/* Functions for the settings panel */
@@ -1314,7 +1434,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		var tagEditText = document.createElement("div");
 		tagEditText.className = "bbb-edit-text";
-		tagEditText.innerHTML = "<b>Note:</b> Unlike Danbooru, separate matching rules/tag combinations have to be separated by commas and not by separate lines. Separate lines are only used here to improve readability.";
+		tagEditText.innerHTML = "<b>Note:</b> While using this window, separate matching rules/tag combinations can be separated by commas or separate lines. Blank lines are ignored.";
 		tagEditBox.appendChild(tagEditText);
 
 		var tagEditArea = bbb.el.menu.tagEditArea = document.createElement("textarea");
@@ -1326,7 +1446,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		tagEditOk.href = "#";
 		tagEditOk.className = "bbb-button";
 		tagEditOk.addEventListener("click", function(event) {
-			var tags = tagEditArea.value.replace(/\r?\n/g, "").replace(/,(\S)/g, ", $1").bbbSpaceClean();
+			var tags = tagEditArea.value.replace(/[\r\n]+/g, ",").replace(/,\s+/g, ",").replace(/,+/g, ",").replace(/,$|^,/g, "").replace(/,(\S)/g, ", $1").bbbSpaceClean();
 			var args = bbb.tagEdit;
 
 			tagEditBlocker.style.display = "none";
@@ -2091,7 +2211,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function tagEditWindow(input, object, prop) {
 		bbb.el.menu.tagEditBlocker.style.display = "block";
-		bbb.el.menu.tagEditArea.value = input.value.replace(/(,\s*)/g, "$1\r\n\r\n");
+		bbb.el.menu.tagEditArea.value = input.value.replace(/,\s*/g, "\r\n\r\n");
 		bbb.tagEdit = {input: input, object: object, prop: prop};
 	}
 
@@ -2701,10 +2821,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				search.appendChild(limitInput);
 
 				// Remove the user's default limit if the user tries to specify a limit value in the tags.
-				tagsInput = bbbGetId("tags", search, "input");
+				tagsInput = document.getElementById("tags");
 
 				if (tagsInput) {
-					search.addEventListener("submit", function(event) {
+					search.addEventListener("submit", function() {
 						if (/\blimit:\d+\b/.test(tagsInput.value))
 							search.removeChild(limitInput);
 						else if (limitInput.parentNode !== search)
@@ -2795,7 +2915,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (target)
 			targetContainer = target;
 		else if (gLoc === "post")
-			targetContainer = document.getElementById("pool-nav");
+			targetContainer = document.getElementById("content");
 		else if (gLoc === "pool") {
 			targetContainer = document.getElementById("a-show");
 			targetContainer = (targetContainer ? targetContainer.getElementsByTagName("section")[0] : undefined);
@@ -2811,7 +2931,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			for (var i = 0, ll = links.length; i < ll; i++) {
 				link = links[i];
 
-				if (gLoc === "post" || link.parentNode.tagName === "ARTICLE")
+				if (link.parentNode.tagName === "ARTICLE" || link.parentNode.id.indexOf("nav-link-for-pool-") === 0)
 					link.href = link.href.split("?", 1)[0];
 			}
 		}
@@ -3076,8 +3196,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 		if (post.is_banned)
 			flags += " banned";
-		if (flags === "")
-			flags += " active";
 		if (post.is_flagged) {
 			flags += " flagged";
 			thumbClass += " post-status-flagged";
@@ -3103,6 +3221,118 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		post.thumb_class = thumbClass;
 
 		return post;
+	}
+
+	function checkRelations() {
+		// Test whether the parent/child notice could have hidden posts.
+		var post = bbb.post.info;
+		var thumbCount;
+		var loggedIn = isLoggedIn();
+		var fixParent = false;
+		var fixChild = false;
+		var showPreview = (getCookie()["show-relationship-previews"] === "1" ? true : false);
+		var parentLink = document.getElementById("has-children-relationship-preview-link");
+		var childLink = document.getElementById("has-parent-relationship-preview-link");
+
+		if (post.has_children) {
+			var parentNotice = document.getElementsByClassName("notice-parent")[0];
+
+			if (parentNotice) {
+				var parentText = parentNotice.textContent.match(/has (\d+|a) child/);
+				var parentCount = (parentText ? Number(parentText[1]) || 1 : 0);
+				thumbCount = bbbGetPosts(parentNotice).length;
+
+				if ((!loggedIn && show_deleted) || (parentCount && parentCount + 1 !== thumbCount))
+					fixParent = true;
+			}
+			else if (show_deleted)
+				fixParent = true;
+		}
+
+		if (fixParent) {
+			if (showPreview || !parentLink)
+				searchJSON("parent", post.id);
+			else if (parentLink)
+				parentLink.addEventListener("click", requestRelations, false);
+		}
+
+		if (post.parent_id) {
+			var childNotice = document.getElementsByClassName("notice-child")[0];
+
+			if (childNotice) {
+				var childText = childNotice.textContent.match(/has (\d+|a) sibling/);
+				var childCount = (childText ? Number(childText[1]) || 1 : 0) + 1;
+				thumbCount = bbbGetPosts(childNotice).length;
+
+				if ((!loggedIn && show_deleted) || (childCount && childCount + 1 !== thumbCount))
+					fixChild = true;
+			}
+		}
+
+		if (fixChild) {
+			if (showPreview || !childLink)
+				searchJSON("child", post.parent_id);
+			else if (childLink)
+				childLink.addEventListener("click", requestRelations, false);
+		}
+	}
+
+	function requestRelations(event) {
+		// Start the parent/child notice JSON request when the user chooses to display the thumbs in a notice.
+		var post = bbb.post.info;
+		var target = event.target;
+
+		if (target.id === "has-children-relationship-preview-link")
+			searchJSON("parent", post.id);
+		else if (target.id === "has-parent-relationship-preview-link")
+			searchJSON("child", post.parent_id);
+
+		target.removeEventListener("click", requestRelations, false);
+
+		event.preventDefault();
+	}
+
+	function checkHiddenImg(post) {
+		// Alter a hidden image with cache info or queue it for the cache.
+		if (!post.md5) {
+			if (!bbb.cache.stored.history)
+				loadThumbCache();
+
+			var cacheName = bbb.cache.stored.names[post.id];
+
+			if (cacheName) { // Load the thumbnail info from the cache.
+				if (cacheName === "download-preview.png")
+					post.preview_file_url = "/images/download-preview.png";
+				else {
+					var cacheValues = cacheName.split(".");
+					var cacheMd5 = cacheValues[0];
+					var cacheExt = cacheValues[1];
+
+					post.md5 = cacheMd5;
+					post.file_ext = cacheExt;
+					post.preview_file_url = (!post.image_height || cacheExt === "swf" ? "/images/download-preview.png" : "/data/preview/" + cacheMd5 + ".jpg");
+					post.large_file_url = (post.has_large ? "/data/sample/sample-" + cacheMd5 + ".jpg" : "/data/" + cacheName);
+					post.file_url = "/data/" + cacheName;
+				}
+			}
+			else // Queue hidden img for fixing.
+				bbb.cache.hidden_imgs.push(post.id);
+		}
+	}
+
+	function fixHiddenImgs() {
+		// Fix hidden thumbnails by fetching the info from a page.
+		var hiddenImgs = bbb.cache.hidden_imgs;
+
+		if (hiddenImgs.length) {
+			if (!bbb.cache.save_enabled) {
+				window.addEventListener("beforeunload", updateThumbCache);
+				bbb.cache.save_enabled = true;
+			}
+
+			fetchPages("/posts/" + hiddenImgs[0], "hidden");
+			bbbStatus("hidden");
+		}
 	}
 
 	function customCSS() {
@@ -3176,11 +3406,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var statusBorderItem;
 
 		styles += 'article.post-preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin: 0px ' + listingExtraSpace + 'px ' + listingExtraSpace + 'px 0px !important;}' +
+		'#has-parent-relationship-preview article.post-preview, #has-children-relationship-preview article.post-preview {width: auto !important; max-width: ' + thumbMaxDim + 'px !important; margin: 0px !important;}' +
 		'article.post-preview a {line-height: 0px !important;}' +
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview div.preview a {line-height: 0px !important;}' +
 		'.post-preview img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
-		'article.post-preview[data-tags~=animated]:before, article.post-preview[data-file-ext=swf]:before, article.post-preview[data-file-ext=webm]:before {margin: ' + totalBorderWidth + 'px !important;}';
+		'article.post-preview:before {margin: ' + totalBorderWidth + 'px !important;}';
 
 		if (custom_status_borders) {
 			var activeStatusStyles = "";
@@ -3672,8 +3903,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var id = post.getAttribute("data-id");
 		var width = post.getAttribute("data-width");
 		var height = post.getAttribute("data-height");
-		var flags = post.getAttribute("data-flags");
-		var status = " status:" + flags.replace(/\s/g, " status:");
+		var flags = post.getAttribute("data-flags") || "active";
+		var status = " status:" + (flags === "flagged" ? flags + " active" : flags).replace(/\s/g, " status:");
 		var postInfo = {
 			tags: (tags + rating + status + user + pools).bbbSpacePad(),
 			score: Number(score),
