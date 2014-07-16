@@ -1142,7 +1142,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var previewId;
 		var classes;
 		var msg;
-		var search = "?tags=parent:" + parentId + (thumbnail_count ? "&limit=" + thumbnail_count : "");
+		var search = "?tags=parent:" + parentId + (show_deleted ? "+status:any" : "") + (thumbnail_count ? "&limit=" + thumbnail_count : "");
 		var thumbDiv;
 		var thumb;
 		var displayStyle;
@@ -3248,6 +3248,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Test whether the parent/child notice could have hidden posts.
 		var post = bbb.post.info;
 		var thumbCount;
+		var deletedCount;
 		var loggedIn = isLoggedIn();
 		var fixParent = false;
 		var fixChild = false;
@@ -3262,8 +3263,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var parentText = parentNotice.textContent.match(/has (\d+|a) child/);
 				var parentCount = (parentText ? Number(parentText[1]) || 1 : 0);
 				thumbCount = bbbGetPosts(parentNotice).length;
+				deletedCount = parentNotice.getElementsByClassName("post-status-deleted").length;
 
-				if ((!loggedIn && show_deleted) || (parentCount && parentCount + 1 !== thumbCount))
+				if ((!loggedIn && show_deleted && !deletedCount) || (parentCount && parentCount + 1 !== thumbCount))
 					fixParent = true;
 			}
 			else if (show_deleted)
@@ -3284,8 +3286,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var childText = childNotice.textContent.match(/has (\d+|a) sibling/);
 				var childCount = (childText ? Number(childText[1]) || 1 : 0) + 1;
 				thumbCount = bbbGetPosts(childNotice).length;
+				deletedCount = childNotice.getElementsByClassName("post-status-deleted").length;
 
-				if ((!loggedIn && show_deleted) || (childCount && childCount + 1 !== thumbCount))
+				if ((!loggedIn && show_deleted && !deletedCount) || (childCount && childCount + 1 !== thumbCount))
 					fixChild = true;
 			}
 		}
