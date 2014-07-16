@@ -434,7 +434,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// Test for the original image file extension if it is unknown.
 			if (!ext && imgWidth) {
-				var testExt = ["jpg", "png", "gif", "jpeg", "swf", "webm"];
+				var testExt = ["jpg", "png", "gif", "jpeg", "webm"];
 
 				for (var i = 0, tel = testExt.length; i < tel; i++) {
 					if (isThere("/data/" + md5 + "." + testExt[i])) {
