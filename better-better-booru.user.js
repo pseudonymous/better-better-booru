@@ -44,6 +44,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			searches: [],
 			style_list: {}
 		},
+		dragscroll: {
+			moved: false,
+			lastX: undefined,
+			lastY: undefined,
+			target: undefined
+		},
 		el: { // Script elements.
 			menu: {} // Menu elements.
 		},
@@ -76,7 +82,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Danbooru terms of service agreement notice."),
 			hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
 			hide_upload_notice: new Option("checkbox", false, "Hide Upload Guide Notice", "Hide the Danbooru upload guide notice."),
-			image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image, mouse movement can be used to scroll the whole page and reposition/scroll the image<br><br><u>Note</u><br>This option is automatically disabled when translation mode is active."),
+			image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image/webm video, mouse movement can be used to scroll the whole page and reposition the image/webm video.<br><br><u>Note</u><br>This option is automatically disabled when translation mode is active."),
 			image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Fit images to window\" setting will override this option."),
 			image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (Default):width", "Width & Height:all"]}),
 			load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Default image width\" setting will override this option."),
@@ -952,7 +958,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (!alternate_image_swap) { // Make notes toggle when clicking the image.
 				document.addEventListener("click", function(event) {
 					if (event.target.id === "image" && event.button === 0 && !bbb.post.translationMode) {
-						if (!bbb.dragScroll || !bbb.dragScroll.moved)
+						if (!image_drag_scroll || !bbb.dragscroll.moved)
 							Danbooru.Note.Box.toggle_all();
 
 						event.stopPropagation();
@@ -980,7 +986,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (post.has_large) {
 					document.addEventListener("click", function(event) {
 						if (event.target.id === "image" && event.button === 0 && !bbb.post.translationMode) {
-							if (!bbb.dragScroll || !bbb.dragScroll.moved) {
+							if (!image_drag_scroll || !bbb.dragscroll.moved) {
 								swapImage();
 							}
 
@@ -989,11 +995,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					}, true);
 				}
 			}
-
-			// Allow drag scrolling.
-			if (image_drag_scroll)
-				dragScrollInit();
 		}
+
+		// Enable drag scrolling.
+		if (image_drag_scroll)
+			dragScrollInit();
 
 		// Make translation mode work.
 		if (!document.getElementById("note-locked-notice")) {
@@ -4283,14 +4289,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function dragScrollInit() {
-		bbb.dragScroll = {
-			moved: false,
-			lastX: undefined,
-			lastY: undefined
-		};
+		var imgContainer = document.getElementById("image-container");
+		var img = document.getElementById("image");
+		var webmVid = (imgContainer ? imgContainer.getElementsByTagName("video")[0] : undefined);
+		var target = img || webmVid;
 
-		if (!bbb.post.translationMode)
-			dragScrollEnable();
+		if (target) {
+			bbb.dragscroll.target = target;
+
+			if (!bbb.post.translationMode)
+				dragScrollEnable();
+		}
 	}
 
 	function dragScrollToggle() {
@@ -4301,26 +4310,26 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function dragScrollEnable() {
-		var img = document.getElementById("image");
+		var target = bbb.dragscroll.target;
 
-		img.addEventListener("mousedown", dragScrollOn, false);
-		img.addEventListener("dragstart", disableEvent, false);
-		img.addEventListener("selectstart", disableEvent, false);
+		target.addEventListener("mousedown", dragScrollOn, false);
+		target.addEventListener("dragstart", disableEvent, false);
+		target.addEventListener("selectstart", disableEvent, false);
 	}
 
 	function dragScrollDisable() {
-		var img = document.getElementById("image");
+		var target = bbb.dragscroll.target;
 
-		img.removeEventListener("mousedown", dragScrollOn, false);
-		img.removeEventListener("dragstart", disableEvent, false);
-		img.removeEventListener("selectstart", disableEvent, false);
+		target.removeEventListener("mousedown", dragScrollOn, false);
+		target.removeEventListener("dragstart", disableEvent, false);
+		target.removeEventListener("selectstart", disableEvent, false);
 	}
 
 	function dragScrollOn(event) {
 		if (event.button === 0) {
-			bbb.dragScroll.lastX = event.clientX;
-			bbb.dragScroll.lastY = event.clientY;
-			bbb.dragScroll.moved = false;
+			bbb.dragscroll.lastX = event.clientX;
+			bbb.dragscroll.lastY = event.clientY;
+			bbb.dragscroll.moved = false;
 
 			document.addEventListener("mousemove", dragScrollMove, false);
 			document.addEventListener("mouseup", dragScrollOff, false);
@@ -4330,14 +4339,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function dragScrollMove(event) {
 		var newX = event.clientX;
 		var newY = event.clientY;
-		var xDistance = bbb.dragScroll.lastX - newX;
-		var yDistance = bbb.dragScroll.lastY - newY;
+		var xDistance = bbb.dragscroll.lastX - newX;
+		var yDistance = bbb.dragscroll.lastY - newY;
 
 		window.scrollBy(xDistance, yDistance);
 
-		bbb.dragScroll.lastX = newX;
-		bbb.dragScroll.lastY = newY;
-		bbb.dragScroll.moved = xDistance !== 0 || yDistance !== 0 || bbb.dragScroll.moved; // Doing this since I'm not sure what Chrome's mousemove event is doing. It apparently fires even when the moved distance is equal to zero.
+		bbb.dragscroll.lastX = newX;
+		bbb.dragscroll.lastY = newY;
+		bbb.dragscroll.moved = xDistance !== 0 || yDistance !== 0 || bbb.dragscroll.moved; // Doing this since I'm not sure what Chrome's mousemove event is doing. It apparently fires even when the moved distance is equal to zero.
 	}
 
 	function dragScrollOff() {
@@ -4353,7 +4362,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function translationModeToggle() {
 		bbb.post.translationMode = !bbb.post.translationMode;
 
-		if (image_drag_scroll)
+		if (image_drag_scroll && bbb.dragscroll.target)
 			dragScrollToggle();
 	}
 
