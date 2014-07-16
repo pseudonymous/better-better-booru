@@ -8,13 +8,21 @@ Changelog
 ----------
 * Version 6.?:
  * Added a "resized notice display" option for allowing more control over the resized notice bar.
- * Added a "View original/sample" link to the options section on individual posts with a sample and original image.
+ * Added a "border spacing" option for controlling the amount of blank space between a border and image and between status borders and custom tag borders.
+ * Added a "hide status notices" option for freeing up all the space used by status notices while still allowing access to them.
+ * Added a "show banned" option to support banned posts' separation from deleted posts as a new post status.
+ * Added a "view original/sample" link to the options section on individual posts with a sample and original image.
  * Added the "random post" link to the options section on individual posts for logged out users.
+ * Updated to support webm video posts.
+ * Updated to support hidden posts in parent/child notices.
  * Updated to support and use additional data added to Danbooru's images.
  * Updated to support Danbooru's new hotkey for swapping between original and sample images.
+ * Updated to support the "limit:" tag in searches.
  * Updated to allow the options section on flash and download posts for logged out users.
- * Updated the resize to window links so that they can work on flash.
+ * Updated the blacklist to allow the use of the "thumbnail matching rules" under the help tab and provide flexibility for customization in the future.
+ * Updated the resize to window links so that they can work on flash and webm videos.
  * Updated the image swapping to allow the cancelling of a swap between an original and sample image by sending the swap request a second time while still loading.
+ * Updated the "direct downloads" option so that it no longer requires requesting information from Danbooru's API.
  * Updated the "single color borders" option so that it can be used on status borders without having to use "custom status borders".
  * Updated the "create backup page" option to a simpler and more compatible method.
  * Fixed the loading message for images that repeatedly fail to load.
@@ -35,7 +43,7 @@ Changelog
  * Fixed the "alternate image swap" option for posts with locked notes.
  * Fixed several other potential problems related to the saved settings and cache.
 * Version 6.1:
- * Added a "tag list srollbars" option to limit the length of a post's tag list(s).
+ * Added a "tag list scrollbars" option to limit the length of a post's tag list(s).
  * Added a "thumbnail info cache limit" option to limit the size of the hidden post cache.
  * Added an icon to the script for the browser's script handling add-on/extension (Greasemonkey, Tampermonkey, etc).
  * Updated "custom tag borders" to support banned as a status match (status:banned).
