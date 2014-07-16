@@ -428,7 +428,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			// Test for the original image file extension if it is unknown.
 			if (!ext && imgWidth) {
-				var testExt = ["jpg", "png", "gif", "jpeg"];
+				var testExt = ["jpg", "png", "gif", "jpeg", "swf", "webm"];
 
 				for (var i = 0, tel = testExt.length; i < tel; i++) {
 					if (isThere("/data/" + md5 + "." + testExt[i])) {
@@ -438,7 +438,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			imgInfo.has_large = (imgWidth > 850 && ext !== "swf" ? true : false);
+			imgInfo.has_large = (imgWidth > 850 && ext !== "swf" && ext !== "webm" ? true : false);
 			imgInfo.md5 = md5;
 			imgInfo.file_ext = ext;
 			imgInfo.file_url = "/data/" + md5 + "." + ext;
@@ -807,6 +807,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Create content.
 		if (post.file_ext === "swf") // Create flash object.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
+		else if (post.file_ext === "webm") // Create webm video
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
 		else if (!post.image_height) // Create manual download.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
 		else { // Create image
@@ -2569,7 +2571,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var img = document.getElementById("image");
 		var swfObj = (imgContainer ? imgContainer.getElementsByTagName("object")[0] : undefined);
 		var swfEmb = (swfObj ? swfObj.getElementsByTagName("embed")[0] : undefined);
-		var target = img || swfEmb;
+		var webmVid = (imgContainer ? imgContainer.getElementsByTagName("video")[0] : undefined);
+		var target = img || swfEmb || webmVid;
 
 		if (!target || !imgContainer)
 			return;
@@ -2581,8 +2584,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var availableHeight = window.innerHeight - 40;
 		var targetCurrentWidth = target.clientWidth;
 		var targetCurrentHeight = target.clientHeight;
-		var targetWidth = (swfEmb ? imgContainer.getAttribute("data-width") : img.getAttribute("width")); // Was NOT expecting target.width to return the current width (css style width) and not the width attribute's value here...
-		var targetHeight = (swfEmb ? imgContainer.getAttribute("data-height") : img.getAttribute("height"));
+		var targetWidth = (swfEmb || webmVid ? imgContainer.getAttribute("data-width") : img.getAttribute("width")); // Was NOT expecting target.width to return the current width (css style width) and not the width attribute's value here...
+		var targetHeight = (swfEmb || webmVid ? imgContainer.getAttribute("data-height") : img.getAttribute("height"));
 		var tooWide = targetCurrentWidth > availableWidth;
 		var tooTall = targetCurrentHeight > availableHeight;
 		var widthRatio = availableWidth / targetWidth;
@@ -2595,9 +2598,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				img.style.height = targetHeight + "px";
 				Danbooru.Note.Box.scale_all();
 			}
-			else {
+			else if (swfEmb) {
 				swfObj.height = swfEmb.height = targetHeight;
 				swfObj.width = swfEmb.width = targetWidth;
+			}
+			else {
+				webmVid.height = targetHeight;
+				webmVid.width = targetWidth;
 			}
 
 			bbb.post.resized = "none";
@@ -2612,9 +2619,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				img.style.height = targetHeight * ratio + "px";
 				Danbooru.Note.Box.scale_all();
 			}
-			else {
+			else if (swfEmb) {
 				swfObj.height = swfEmb.height = targetHeight * ratio;
 				swfObj.width = swfEmb.width = targetWidth * ratio;
+			}
+			else {
+				webmVid.height = targetHeight * ratio;
+				webmVid.width = targetWidth * ratio;
 			}
 
 			bbb.post.resized = "width";
@@ -2629,9 +2640,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				img.style.height = targetHeight * ratio + "px";
 				Danbooru.Note.Box.scale_all();
 			}
-			else {
+			else if (swfEmb) {
 				swfObj.height = swfEmb.height = targetHeight * ratio;
 				swfObj.width = swfEmb.width = targetWidth * ratio;
+			}
+			else {
+				webmVid.height = targetHeight * ratio;
+				webmVid.width = targetWidth * ratio;
 			}
 
 			bbb.post.resized = "all";
@@ -3252,7 +3267,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (fixParent) {
 			if (showPreview || !parentLink)
 				searchJSON("parent", post.id);
-			else if (parentLink)
+			else
 				parentLink.addEventListener("click", requestRelations, false);
 		}
 
@@ -3272,7 +3287,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (fixChild) {
 			if (showPreview || !childLink)
 				searchJSON("child", post.parent_id);
-			else if (childLink)
+			else
 				childLink.addEventListener("click", requestRelations, false);
 		}
 	}
@@ -3411,7 +3426,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview div.preview a {line-height: 0px !important;}' +
 		'.post-preview img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
-		'article.post-preview:before {margin: ' + totalBorderWidth + 'px !important;}';
+		'article.post-preview:before, .post-preview div.preview:before {margin: ' + totalBorderWidth + 'px !important;}';
 
 		if (custom_status_borders) {
 			var activeStatusStyles = "";
