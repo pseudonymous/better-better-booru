@@ -22,8 +22,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
 
-	if (typeof(Danbooru) === "undefined")
+	if (typeof(Danbooru) === "undefined") {
+		danbNotice("Better Better Booru: Danbooru's script could not be detected.", "error");
+		bbbStatus("error");
 		return;
+	}
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
@@ -381,8 +384,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Retrieve info from the current document or a supplied element containing the html with it.
 		var target = pageEl || document;
 		var imgContainer = getId("image-container", target, "section");
+
+		if (!imgContainer) {
+			bbbStatus("error");
+			return undefined;
+		}
+
 		var img = getId("image", target, "img");
 		var object = imgContainer.getElementsByTagName("object")[0];
+		var webmVid = imgContainer.getElementsByTagName("video")[0];
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
 		var directLink = getId("image-resize-link", target, "a") || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
 		var twitterInfo = fetchMeta("twitter:image:src", target);
@@ -415,7 +425,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			is_banned: (imgContainer.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
 			image_height: imgHeight || null,
 			image_width: imgWidth || null,
-			is_hidden: (img || object ? false : true)
+			is_hidden: (img || object || webmVid ? false : true)
 		};
 
 		// Try to extract the file's name and extension.
@@ -652,6 +662,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		if (!target) {
+			danbNotice("Better Better Booru: Thumbnail section could not be located.", "error");
 			bbbStatus("error");
 			return;
 		}
@@ -724,7 +735,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var post = bbb.post.info = formatInfo(postInfo || scrapePost());
 		var imgContainer = document.getElementById("image-container");
 
-		if (!post.file_url || !imgContainer) {
+		if (!imgContainer) {
+			danbNotice("Better Better Booru: Post content could not be located.", "error");
+			bbbStatus("error");
+			return;
+		}
+
+		if (!post || !post.file_url) {
 			danbNotice("Better Better Booru: Due to a lack of provided information, this post cannot be viewed.", "error");
 			bbbStatus("error");
 			return;
@@ -1313,11 +1330,13 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	/* Functions for the settings panel */
 	function injectSettings() {
 		var menu = document.getElementById("top");
+		menu = (menu ? menu.getElementsByTagName("menu")[0] : undefined);
 
-		if (!menu)
+		if (!menu) {
+			danbNotice("Better Better Booru: The settings panel link could not be created.", "error");
+			bbbStatus("error");
 			return;
-
-		menu = menu.getElementsByTagName("menu")[0];
+		}
 
 		var link = document.createElement("a");
 		link.href = "#";
@@ -3039,7 +3058,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function autoscrollImage() {
-		var target = document.getElementById("image") || document.getElementById("image-container").getElementsByTagName("object")[0];
+		var imgContainer = document.getElementById("image-container");
+		var img = document.getElementById("image");
+		var swfObj = (imgContainer ? imgContainer.getElementsByTagName("object")[0] : undefined);
+		var webmVid = (imgContainer ? imgContainer.getElementsByTagName("video")[0] : undefined);
+		var target = img || swfObj || webmVid;
 
 		if (target)
 			target.scrollIntoView();
@@ -3264,6 +3287,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function formatInfo(post) {
 		// Add information to/alter information in the post object.
+		if (!post)
+			return undefined;
+
 		var flags = "";
 		var thumbClass = "";
 
