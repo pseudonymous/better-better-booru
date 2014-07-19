@@ -90,7 +90,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			override_account: new Option("checkbox", false, "Override Account Settings", "Allow logged out settings to override account settings when logged in."),
 			post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
 			remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
-			script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death<br><br><u>Note</u><br>When logged in, the account's \"Blacklisted tags\" list will override this option.", {tagEditMode: true}),
+			script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death<br><br><u>Note</u><br>When logged in, the account's \"Blacklisted tags\" list will override this option.", {isTagInput: true}),
 			search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
 			show_banned: new Option("checkbox", false, "Show Banned", "Display all banned images in the search, pool, popular, and notes listings."),
 			show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
@@ -234,7 +234,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		cleanLinks();
 
 	if (direct_downloads)
-		bbbDDL();
+		postDDL();
 
 	if (arrow_nav)
 		arrowNav();
@@ -248,7 +248,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Functions for creating a url and retrieving info from it */
 	function searchJSON(mode, optArg) {
-		var numThumbs = bbbGetPosts().length;
+		var numThumbs = getPosts().length;
 
 		if (mode === "search" || mode === "notes") {
 			var limitUrl = getVar("limit");
@@ -380,11 +380,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function scrapePost(pageEl) {
 		// Retrieve info from the current document or a supplied element containing the html with it.
 		var target = pageEl || document;
-		var imgContainer = bbbGetId("image-container", target, "section");
-		var img = bbbGetId("image", target, "img");
+		var imgContainer = getId("image-container", target, "section");
+		var img = getId("image", target, "img");
 		var object = imgContainer.getElementsByTagName("object")[0];
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
-		var directLink = bbbGetId("image-resize-link", target, "a") || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
+		var directLink = getId("image-resize-link", target, "a") || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
 		var twitterInfo = fetchMeta("twitter:image:src", target);
 		var previewInfo = fetchMeta("og:image", target);
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
@@ -411,7 +411,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			uploader_name: imgContainer.getAttribute("data-uploader"),
 			is_deleted: (fetchMeta("post-is-deleted", target) === "false" ? false : true),
 			is_flagged: (fetchMeta("post-is-flagged", target) === "false" ? false : true),
-			is_pending: (bbbGetId("pending-approval-notice", target, "div") ? true : false),
+			is_pending: (getId("pending-approval-notice", target, "div") ? true : false),
 			is_banned: (imgContainer.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
 			image_height: imgHeight || null,
 			image_width: imgWidth || null,
@@ -436,7 +436,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (!ext && imgWidth) {
 				var testExt = ["jpg", "png", "gif", "jpeg", "webm"];
 
-				for (var i = 0, tel = testExt.length; i < tel; i++) {
+				for (var i = 0, il = testExt.length; i < il; i++) {
 					if (isThere("/data/" + md5 + "." + testExt[i])) {
 						ext = testExt[i];
 						break;
@@ -546,7 +546,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 							// Direct downloads.
 							if (direct_downloads)
-								bbbDDL();
+								postDDL();
 
 							// Update status message.
 							bbbStatus("loaded");
@@ -613,10 +613,16 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	/* Functions for creating content from retrieved info */
 	function parseListing(xml, optArg) {
-		var out = "";
+		// Use JSON results for thumbnail listings.
 		var posts = xml;
-		var search = "";
-		var where;
+		var query = "";
+		var target;
+		var replacement;
+		var before;
+		var child;
+		var childIndex = 0;
+		var newThumbs;
+		var orderedIds;
 		var paginator = document.getElementsByClassName("paginator")[0];
 
 		// If no posts, do nothing.
@@ -625,103 +631,87 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			return;
 		}
 
-		// Use JSON results for searches and pool collections.
+		// Determine where the thumbnails are.
 		if (gLoc === "search") {
-			where = document.getElementById("posts");
-			search = (gUrlQuery.indexOf("tags=") > -1 && !clean_links ? "?tags=" + getVar("tags") : "");
+			target = document.getElementById("posts");
+			target = (target ? target.getElementsByTagName("div")[0] : undefined);
+			query = (gUrlQuery.indexOf("tags=") > -1 && !clean_links ? "?tags=" + getVar("tags") : "");
 		}
-		else if (gLoc === "popular") {
-			where = document.getElementById("a-index");
-			out = document.getElementById("a-index").innerHTML.split("<article", 1)[0];
-		}
+		else if (gLoc === "popular")
+			target = document.getElementById("a-index");
 		else if (gLoc === "pool") {
-			var orderedPostIds = optArg;
-			where = document.getElementById("a-show");
-			where = (where ? where.getElementsByTagName("section")[0] : undefined);
-			search = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(gUrlPath)[1] : "");
-			out = "\f,;" + orderedPostIds.join("\f,;");
+			target = document.getElementById("a-show");
+			target = (target ? target.getElementsByTagName("section")[0] : undefined);
+			query = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(gUrlPath)[1] : "");
+			before = paginator;
+			orderedIds = optArg;
 		}
 		else if (gLoc === "notes") {
-			where = document.getElementById("a-index");
-			out = "<h1>Notes</h1>";
+			target = document.getElementById("a-index");
+			before = paginator;
 		}
 
-		if (!where) {
+		if (!target) {
 			bbbStatus("error");
 			return;
 		}
 
-		// Result preparation.
-		for (var i = 0, pl = posts.length; i < pl; i++) {
-			var post = formatInfo(posts[i]);
-			var outId = "";
-			var thumb = "";
+		// Thumb preparation.
+		newThumbs = createThumbListing(posts, query, orderedIds);
 
-			// Don't display loli/shota/toddlercon/deleted/banned if the user has opted so and skip to the next image.
-			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted) || (!show_banned && post.is_banned)) {
-				if (gLoc === "pool") {
-					outId = new RegExp("\f,;" + post.id + "(?=<|\f|$)");
-					out = out.replace(outId, "");
-				}
+		// New thumbnail container preparation.
+		replacement = target.cloneNode(false);
 
-				continue;
-			}
+		while (target.children[childIndex]) {
+			child = target.children[childIndex];
 
-			// Check if the post is hidden.
-			checkHiddenImg(post);
-
-			// eek, not so huge line.
-			thumb = createThumbHTML(post, search);
-
-			// Generate output.
-			if (gLoc === "search" || gLoc === "notes" || gLoc === "popular")
-				out += thumb;
-			else if (gLoc === "pool") {
-				outId = new RegExp("\f,;" + post.id + "(?=<|\f|$)");
-				out = out.replace(outId, thumb);
-			}
+			if (child.tagName !== "ARTICLE")
+				replacement.appendChild(child);
+			else
+				childIndex++;
 		}
 
-		// Replace results with new results.
-		if (paginator) {
-			where.innerHTML = out + outerHTML(paginator);
-			paginator = document.getElementsByClassName("paginator")[0];
-
-			if (gLoc === "search" || gLoc === "notes") {
-				var noPages = paginator.textContent.indexOf("Go back") > -1;
-				var pageUrl = gUrl;
-
-				if (allowUserLimit()) {
-					// Fix existing paginator with user's custom limit.
-					var pageLinks = paginator.getElementsByTagName("a");
-
-					for (var i = 0, pll = pageLinks.length; i < pll; i++)
-						pageLinks[i].href = pageLinks[i].href + "&limit=" + thumbnail_count;
-
-					// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
-					if (pageUrl.indexOf("?") > -1)
-						pageUrl += "&limit=" + thumbnail_count;
-					else
-						pageUrl += "?limit=" + thumbnail_count;
-
-					fetchPages(pageUrl, "paginator");
-				}
-				else if (noPages) // Fix the paginator if the post xml and existing page are out of sync.
-					fetchPages(pageUrl, "paginator");
-			}
-		}
+		if (!before)
+			replacement.appendChild(newThumbs);
 		else
-			where.innerHTML = out;
+			replacement.insertBefore(newThumbs, before);
+
+		// Fix the paginator;
+		if (paginator && (gLoc === "search" || gLoc === "notes")) {
+			var noPages = paginator.textContent.indexOf("Go back") > -1;
+			var pageUrl = gUrl;
+
+			if (allowUserLimit()) {
+				// Fix existing paginator with user's custom limit.
+				var pageLinks = paginator.getElementsByTagName("a");
+
+				for (var i = 0, il = pageLinks.length; i < il; i++)
+					pageLinks[i].href = pageLinks[i].href + "&limit=" + thumbnail_count;
+
+				// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
+				if (pageUrl.indexOf("?") > -1)
+					pageUrl += "&limit=" + thumbnail_count;
+				else
+					pageUrl += "?limit=" + thumbnail_count;
+
+				fetchPages(pageUrl, "paginator");
+			}
+			else if (noPages) // Fix the paginator if the post xml and existing page are out of sync.
+				fetchPages(pageUrl, "paginator");
+		}
 
 		// Thumbnail classes and titles.
-		formatThumbnails();
+		formatThumbnails(replacement);
 
 		// Blacklist.
-		blacklistUpdate();
+		blacklistUpdate(replacement);
 
 		// Direct downloads.
 		if (direct_downloads)
-			bbbDDL();
+			postDDL(replacement);
+
+		// Replace results with new results.
+		target.parentNode.replaceChild(replacement, target);
 
 		// Fix hidden thumbnails.
 		fixHiddenImgs();
@@ -1050,7 +1040,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var posts = xml;
 		var numPosts = posts.length;
 		var expectedPosts = numPosts;
-		var existingPosts = bbbGetPosts(); // Live node list so adding/removing a "post-preview" class item immediately changes this.
+		var existingPosts = getPosts(); // Live node list so adding/removing a "post-preview" class item immediately changes this.
 		var eci = 0;
 
 		for (var i = 0; i < numPosts; i++) {
@@ -1073,23 +1063,24 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				var characterTags = post.tag_string_character.split(" ");
 				var limit = (thumbnail_count ? "&limit=" + thumbnail_count : "");
 				var tag;
+				var j, jl; // Loop variables.
 
-				for (var j = 0, gtl = generalTags.length; j < gtl; j++) {
+				for (j = 0, jl = generalTags.length; j < jl; j++) {
 					tag = generalTags[j];
 					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-0"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
 				}
 
-				for (var j = 0, atl = artistTags.length; j < atl; j++) {
+				for (j = 0, jl = artistTags.length; j < jl; j++) {
 					tag = artistTags[j];
 					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-1"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
 				}
 
-				for (var j = 0, ctl = copyrightTags.length; j < ctl; j++) {
+				for (j = 0, jl = copyrightTags.length; j < jl; j++) {
 					tag = copyrightTags[j];
 					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-3"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
 				}
 
-				for (var j = 0, ctl = characterTags.length; j < ctl; j++) {
+				for (j = 0, jl = characterTags.length; j < jl; j++) {
 					tag = characterTags[j];
 					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-4"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
 				}
@@ -1142,15 +1133,17 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var previewId;
 		var classes;
 		var msg;
-		var search = "?tags=parent:" + parentId + (show_deleted ? "+status:any" : "") + (thumbnail_count ? "&limit=" + thumbnail_count : "");
+		var query = "?tags=parent:" + parentId + (show_deleted ? "+status:any" : "") + (thumbnail_count ? "&limit=" + thumbnail_count : "");
 		var thumbDiv;
 		var thumb;
+		var thumbs = "";
 		var displayStyle;
 		var forceShowDeleted = activePost.is_deleted; // If the parent is deleted or the active post is deleted, all deleted posts are shown.
 		var parentDeleted;
+		var i; // Loop variable.
 
 		// Figure out if the parent is deleted.
-		for (var i = 0; i < numPosts; i++) {
+		for (i = 0; i < numPosts; i++) {
 			post = posts[i];
 
 			if (post.id === parentId) {
@@ -1176,12 +1169,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			classes = "notice-child";
 
 			if (numPosts)
-				msg = 'This post belongs to a <a href="/posts' + search + '">parent</a>' + (parentDeleted ? " (deleted)" : "" );
+				msg = 'This post belongs to a <a href="/posts' + query + '">parent</a>' + (parentDeleted ? " (deleted)" : "" );
 
 			if (numPosts === 3)
-				msg += ' and has <a href="/posts' + search + '">a sibling</a>';
+				msg += ' and has <a href="/posts' + query + '">a sibling</a>';
 			else if (numPosts > 3)
-				msg += ' and has <a href="/posts' + search + '">' + (numPosts - 2) + ' siblings</a>';
+				msg += ' and has <a href="/posts' + query + '">' + (numPosts - 2) + ' siblings</a>';
 		}
 		else if (mode === "parent") {
 			target = document.getElementsByClassName("notice-parent")[0];
@@ -1190,35 +1183,37 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			classes = "notice-parent";
 
 			if (numPosts === 2)
-				msg = 'This post has <a href="/posts' + search + '">a child</a>';
+				msg = 'This post has <a href="/posts' + query + '">a child</a>';
 			else if (numPosts > 2)
-				msg = 'This post has <a href="/posts' + search + '">' + (numPosts - 1) + ' children</a>';
+				msg = 'This post has <a href="/posts' + query + '">' + (numPosts - 1) + ' children</a>';
 		}
 
 		// Create the main notice element.
 		childSpan.innerHTML = '<div class="ui-corner-all ui-state-highlight notice ' + classes + '"> ' + msg + ' (<a href="/wiki_pages?title=help%3Apost_relationships">learn more</a>) <a href="#" id="' + previewLinkId + '">' + previewLinkTxt + '</a> <div id="' + previewId + '" style="display: ' + displayStyle + ';"> </div> </div>';
 		newNotice = childSpan.firstChild;
-		thumbDiv = bbbGetId(previewId, newNotice, "div");
-		previewLink = bbbGetId(previewLinkId, newNotice, "a");
+		thumbDiv = getId(previewId, newNotice, "div");
+		previewLink = getId(previewLinkId, newNotice, "a");
 
 		// Create the thumbnails.
-		for (var i = numPosts - 1; i >= 0; i--) {
+		for (i = numPosts - 1; i >= 0; i--) {
 			post = formatInfo(posts[i]);
 
 			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted && !forceShowDeleted) || (!show_banned && post.is_banned))
 				continue;
 
 			checkHiddenImg(post);
-			thumb = createThumbHTML(post, (clean_links ? "" : search)) + " ";
+			thumb = createThumbHTML(post, (clean_links ? "" : query)) + " ";
 
 			if (post.id === parentId)
-				thumbDiv.innerHTML = thumb + thumbDiv.innerHTML;
+				thumbs = thumb + thumbs;
 			else
-				thumbDiv.innerHTML += thumb;
+				thumbs += thumb;
 		}
 
+		thumbDiv.innerHTML = thumbs;
+
 		// Highlight the post we're one.
-		bbbGetId("post_" + activePost.id, thumbDiv, "article").className += " current-post";
+		getId("post_" + activePost.id, thumbDiv, "article").className += " current-post";
 
 		// Make the show/hide links work.
 		previewLink.addEventListener("click", function(event) {
@@ -1262,7 +1257,57 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function createThumbHTML(post, query) {
+		// Create a thumbnail HTML string.
 		return '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + query + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
+	}
+
+	function createThumb(post, query) {
+		// Create a thumbnail element. (lazy method <_<)
+		var childSpan = document.createElement("span");
+		childSpan.innerHTML = createThumbHTML(post, query);
+
+		return childSpan.firstChild;
+	}
+
+	function createThumbListing(posts, query, orderedIds) {
+		// Create a listing of thumbnails.
+		var thumb;
+		var thumbs = document.createDocumentFragment();
+		var postHolder = {};
+		var i, il; // Loop variables;
+
+		// Generate thumbnails.
+		for (i = 0, il = posts.length; i < il; i++) {
+			var post = formatInfo(posts[i]);
+
+			// Don't display loli/shota/toddlercon/deleted/banned if the user has opted so and skip to the next image.
+			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted) || (!show_banned && post.is_banned))
+				continue;
+
+			// Check if the post is hidden.
+			checkHiddenImg(post);
+
+			// eek, not so huge line.
+			thumb = createThumb(post, query);
+
+			// Generate output.
+			if (!orderedIds)
+				thumbs.appendChild(thumb);
+			else
+				postHolder[post.id] = thumb;
+		}
+
+		// Place thumbnails in the correct order for pools.
+		if (orderedIds) {
+			for (i = 0, il = orderedIds.length; i < il; i++) {
+				thumb = postHolder[orderedIds[i]];
+
+					if (thumb)
+						thumbs.appendChild(thumb);
+			}
+		}
+
+		return thumbs;
 	}
 
 	/* Functions for the settings panel */
@@ -1454,7 +1499,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		tagEditOk.href = "#";
 		tagEditOk.className = "bbb-button";
 		tagEditOk.addEventListener("click", function(event) {
-			var tags = tagEditArea.value.replace(/[\r\n]+/g, ",").replace(/,\s+/g, ",").replace(/,+/g, ",").replace(/,$|^,/g, "").replace(/,(\S)/g, ", $1").bbbSpaceClean();
+			var tags = tagEditArea.value.replace(/[\r\n]+/g, ",").bbbTagClean();
 			var args = bbb.tagEdit;
 
 			tagEditBlocker.style.display = "none";
@@ -1494,6 +1539,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function createSection(section) {
 		var sectionFrag = document.createDocumentFragment();
+		var i, il; // Loop variables.
 
 		if (section.header) {
 			var sectionHeader = document.createElement("h2");
@@ -1528,7 +1574,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 			var optionTarget = leftSide;
 
-			for (var i = 0; i < sll; i++) {
+			for (i = 0; i < sll; i++) {
 				var settingName = settingList[i];
 
 				if (halfway && i >= halfway)
@@ -1541,7 +1587,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (section.type === "border") {
 			var borderSettings = bbb.user[section.settings];
 
-			for (var i = 0, bsl = borderSettings.length; i < bsl; i++) {
+			for (i = 0, il = borderSettings.length; i < il; i++) {
 				var newBorderOption = createBorderOption(borderSettings, i);
 				sectionDiv.appendChild(newBorderOption);
 			}
@@ -1565,6 +1611,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function createOption(settingName) {
 		var optionObject = bbb.options[settingName];
 		var userSetting = bbb.user[settingName];
+		var i, il; // Loop variables.
 
 		var label = document.createElement("label");
 		label.className = "bbb-general-label";
@@ -1592,7 +1639,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 
 				if (txtOptions) {
-					for (var i = 0, tol = txtOptions.length; i < tol; i++) {
+					for (i = 0, il = txtOptions.length; i < il; i++) {
 						var txtOption = txtOptions[i].split(":");
 
 						selectOption = document.createElement("option");
@@ -1607,7 +1654,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				if (numList) {
-					for (var i = 0, nll = numList.length; i < nll; i++) {
+					for (i = 0, il = numList.length; i < il; i++) {
 						selectOption = document.createElement("option");
 						selectOption.innerHTML = numList[i];
 						selectOption.value = numList[i];
@@ -1620,7 +1667,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				}
 
 				if (numRange) {
-					for (var i = numRange[0], end = numRange[1]; i <= end; i++) {
+					var end = numRange[1];
+
+					for (i = numRange[0]; i <= end; i++) {
 						selectOption = document.createElement("option");
 						selectOption.innerHTML = i;
 						selectOption.value = i;
@@ -1651,10 +1700,10 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 				item.type = "text";
 				item.value = userSetting;
-				item.addEventListener("change", function() { bbb.user[settingName] = this.value.bbbSpaceClean(); }, false);
+				item.addEventListener("change", function() { bbb.user[settingName] = (optionObject.isTagInput ? this.value.bbbTagClean() : this.value.bbbSpaceClean()); }, false);
 				itemFrag.appendChild(item);
 
-				if (optionObject.tagEditMode) {
+				if (optionObject.isTagInput) {
 					var tagExpand = document.createElement("a");
 					tagExpand.href = "#";
 					tagExpand.className = "bbb-edit-link";
@@ -1691,8 +1740,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return label;
 	}
 
-	function createBorderOption(borderSettings, i) {
-		var borderItem = borderSettings[i];
+	function createBorderOption(borderSettings, index) {
+		var borderItem = borderSettings[index];
 		var isStatus = (borderItem.class_name ? true : false);
 
 		var borderSpacer = document.createElement("span");
@@ -1795,7 +1844,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var nameInput = document.createElement("input");
 			nameInput.type = "text";
 			nameInput.value = borderItem.tags;
-			nameInput.addEventListener("change", function() { borderItem.tags = this.value.bbbSpaceClean(); }, false);
+			nameInput.addEventListener("change", function() { borderItem.tags = this.value.bbbTagClean(); }, false);
 			nameLabel.appendChild(nameInput);
 
 			var nameExpand = document.createElement("a");
@@ -1969,7 +2018,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		tocList.className = "bbb-toc";
 		sectionText.appendChild(tocList);
 
-		for (var i = 0, psl = pageSections.length; i < psl;) {
+		for (var i = 0, il = pageSections.length; i < il;) {
 			var listItem = document.createElement("li");
 			tocList.appendChild(listItem);
 
@@ -2053,7 +2102,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function borderSet() {
 		var formatted = [];
 
-		for (var i = 0, al = arguments.length; i < al; i++) {
+		for (var i = 0, il = arguments.length; i < il; i++) {
 			var border = arguments[i];
 
 			formatted.push(new Border(border[0], border[1], border[2], border[3], border[4]));
@@ -2066,7 +2115,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Reset the list of border items after moving or creating a new border.
 		var borderElements = section.children;
 
-		for (var i = 0, bel = borderElements.length; i < bel; i++) {
+		for (var i = 0, il = borderElements.length; i < il; i++) {
 			var borderElement = borderElements[i];
 
 			borderElement.className = borderElement.className.replace(/\s?bbb-no-highlight/gi, "");
@@ -2219,7 +2268,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function tagEditWindow(input, object, prop) {
 		bbb.el.menu.tagEditBlocker.style.display = "block";
-		bbb.el.menu.tagEditArea.value = input.value.replace(/,\s*/g, "\r\n\r\n");
+		bbb.el.menu.tagEditArea.value = input.value.bbbTagClean().replace(/,\s*/g, "\r\n\r\n");
 		bbb.tagEdit = {input: input, object: object, prop: prop};
 	}
 
@@ -2307,12 +2356,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		// Change & save the settings without the panel. Accepts a comma delimited list of alternating settings and values: setting1, value1, setting2, value2
 		loadSettings();
 
-		for (var i = 0, al = arguments.length; i < al; i += 2) {
+		for (var i = 0, il = arguments.length; i < il; i += 2) {
 			var setting = arguments[i].split(".");
 			var value = arguments[i + 1];
 			var settingPath = bbb.user;
 
-			for (var j = 0, spl = setting.length - 1; j < spl; j++)
+			for (var j = 0, jl = setting.length - 1; j < jl; j++)
 				settingPath = settingPath[setting[j]];
 
 			settingPath[setting[j]] = value;
@@ -2375,14 +2424,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function createBackupText() {
 		// Create a plain text version of the settings.
 		var textarea = bbb.el.menu.backupTextarea;
-		textarea.value = "Better Better Booru v" + bbb.user.bbb_version + " Backup (" + bbbTimestamp("y-m-d hh:mm:ss") + "):\r\n\r\n" + JSON.stringify(bbb.user) + "\r\n";
+		textarea.value = "Better Better Booru v" + bbb.user.bbb_version + " Backup (" + timestamp("y-m-d hh:mm:ss") + "):\r\n\r\n" + JSON.stringify(bbb.user) + "\r\n";
 		textarea.focus();
 		textarea.setSelectionRange(0,0);
 	}
 
 	function createBackupPage() {
 		// Open a new tab/window and place the setting text in it.
-		window.open(('data:text/html,<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + bbbTimestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(bbb.user) + '</body></html>').replace(/#/g, encodeURIComponent("#")));
+		window.open(('data:text/html,<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + timestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(bbb.user) + '</body></html>').replace(/#/g, encodeURIComponent("#")));
 	}
 
 	function restoreBackupText() {
@@ -2413,12 +2462,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	function blacklistInit() {
 		// Reset the blacklist with the account settings when logged in or script settings when logged out/using the override.
 		var blacklistTags = (useAccount() ? fetchMeta("blacklisted-tags") : script_blacklisted_tags);
-
-		if (!/\S/.test(blacklistTags))
-			return;
-		else
-			blacklistTags = blacklistTags.split(",");
-
 		var blacklistBox = document.getElementById("blacklist-box");
 		var blacklistList = document.getElementById("blacklist-list");
 		var blacklistedPosts = document.getElementsByClassName("blacklisted");
@@ -2441,63 +2484,73 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			blacklistedPost.className = blacklistedPost.className.replace(/\s?blacklisted(-active)?/ig, "");
 		}
 
+		// Check if there actually are any tags.
+		if (!/[^\s,]/.test(blacklistTags))
+			return;
+		else
+			blacklistTags = blacklistTags.split(",");
+
 		// Create the the blacklist section.
-		for (var i = 0, bltl = blacklistTags.length; i < bltl; i++) {
+		for (var i = 0, il = blacklistTags.length; i < il; i++) {
 			var blacklistTag = blacklistTags[i];
 			var blacklistSearch = createSearch(blacklistTag);
-			var newEntry = {active: true, tags:blacklistTag, search:blacklistSearch, matches: []};
 
-			bbb.blacklist.entries.push(newEntry);
+			if (blacklistSearch.length) {
+				var newEntry = {active: true, tags:blacklistTag, search:blacklistSearch, matches: []};
 
-			if (blacklistList) {
-				var blacklistItem = document.createElement("li");
-				blacklistItem.title = blacklistTag;
-				blacklistItem.style.display = "none";
+				bbb.blacklist.entries.push(newEntry);
 
-				var blacklistLink = document.createElement("a");
-				blacklistLink.innerHTML = (blacklistTag.length < 21 ? blacklistTag + " " : blacklistTag.substring(0, 20).bbbSpaceClean() + "... ");
-				blacklistLink.addEventListener("click", function(entry) {
-					return function(event) {
-						if (event.button === 0) {
-							var matches = entry.matches;
-							var link = this;
-							var post;
-							var el;
+				if (blacklistList) {
+					var blacklistItem = document.createElement("li");
+					blacklistItem.title = blacklistTag;
+					blacklistItem.style.display = "none";
 
-							if (entry.active) {
-								entry.active = false;
-								link.className = "blacklisted-active";
+					var blacklistLink = document.createElement("a");
+					blacklistLink.innerHTML = (blacklistTag.length < 21 ? blacklistTag + " " : blacklistTag.substring(0, 20).bbbSpaceClean() + "... ");
+					blacklistLink.addEventListener("click", function(entry) {
+						return function(event) {
+							if (event.button === 0) {
+								var matches = entry.matches;
+								var link = this;
+								var post;
+								var el;
+								var i, il; // Loop variables.
 
-								for (var i = 0, ml = matches.length; i < ml; i++) {
-									post = matches[i];
-									el = document.getElementById(post.elId);
-									bbb.blacklist.match_list[post.id]--;
+								if (entry.active) {
+									entry.active = false;
+									link.className = "blacklisted-active";
 
-									if (!bbb.blacklist.match_list[post.id])
-										el.className = el.className.replace(/\s?blacklisted-active/ig, "");
+									for (i = 0, il = matches.length; i < il; i++) {
+										post = matches[i];
+										el = document.getElementById(post.elId);
+										bbb.blacklist.match_list[post.id]--;
+
+										if (!bbb.blacklist.match_list[post.id])
+											el.className = el.className.replace(/\s?blacklisted-active/ig, "");
+									}
+								}
+								else {
+									entry.active = true;
+									link.className = "";
+
+									for (i = 0, il = matches.length; i < il; i++) {
+										post = matches[i];
+										el = document.getElementById(post.elId);
+										bbb.blacklist.match_list[post.id]++;
+										el.className += " blacklisted-active";
+									}
 								}
 							}
-							else {
-								entry.active = true;
-								link.className = "";
+						};
+					}(newEntry), false);
+					blacklistItem.appendChild(blacklistLink);
 
-								for (var i = 0, ml = matches.length; i < ml; i++) {
-									post = matches[i];
-									el = document.getElementById(post.elId);
-									bbb.blacklist.match_list[post.id]++;
-									el.className += " blacklisted-active";
-								}
-							}
-						}
-					};
-				}(newEntry), false);
-				blacklistItem.appendChild(blacklistLink);
+					var blacklistCount = document.createElement("span");
+					blacklistCount.innerHTML = "0";
+					blacklistItem.appendChild(blacklistCount);
 
-				var blacklistCount = document.createElement("span");
-				blacklistCount.innerHTML = "0";
-				blacklistItem.appendChild(blacklistCount);
-
-				blacklistList.appendChild(blacklistItem);
+					blacklistList.appendChild(blacklistItem);
+				}
 			}
 		}
 
@@ -2507,17 +2560,21 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function blacklistUpdate(target) {
 		// Update the blacklists without resetting everything.
+		if (!bbb.blacklist.entries.length)
+			return;
+
 		var blacklistBox = document.getElementById("blacklist-box");
 		var blacklistList = document.getElementById("blacklist-list");
-		var imgContainer = bbbGetId("image-container", target);
-		var posts = bbbGetPosts(target);
+		var imgContainer = getId("image-container", target);
+		var posts = getPosts(target);
+		var i, il; // Loop variables.
 
 		// Test the image for a match when viewing a post.
 		if (imgContainer)
 			blacklistTest("imgContainer", imgContainer);
 
 		// Search the posts for matches.
-		for (var i = 0, pl = posts.length; i < pl; i++) {
+		for (i = 0, il = posts.length; i < il; i++) {
 			var post = posts[i];
 			var postId = post.getAttribute("data-id");
 
@@ -2526,7 +2583,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Update the blacklist sidebar section match counts and display any blacklist items that have a match.
 		if (blacklistBox && blacklistList) {
-			for (var i = 0, bbel = bbb.blacklist.entries.length; i < bbel; i++) {
+			for (i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
 				var entryLength = bbb.blacklist.entries[i].matches.length;
 				var item = blacklistList.getElementsByTagName("li")[i];
 
@@ -2544,7 +2601,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var matchList = bbb.blacklist.match_list;
 
 		if (typeof(matchList[matchId]) === "undefined") {
-			for (var i = 0, bbel = bbb.blacklist.entries.length; i < bbel; i++) {
+			for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
 				var entry = bbb.blacklist.entries[i];
 
 				if (thumbSearchMatch(element, entry.search)) {
@@ -2741,19 +2798,20 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		var bcc = bbb.cache.current;
 		var bcs = bbb.cache.stored;
+		var i, il; // Loop variables.
 
 		// Make sure we don't have duplicates in the new info.
-		for (var i = 0, bhl = bcc.history.length; i < bhl; i++) {
+		for (i = 0, il = bcc.history.length; i < il; i++) {
 			if (bcs.names[bcc.history[i]]) {
 				delete bcc.names[bcc.history[i]];
 				bcc.history.splice(i, 1);
-				bhl--;
+				il--;
 				i--;
 			}
 		}
 
 		// Add the new thumbnail info in.
-		for (var i in bcc.names) {
+		for (i in bcc.names) {
 			if (bcc.names.hasOwnProperty(i)) {
 				bcs.names[i] = bcc.names[i];
 			}
@@ -2765,7 +2823,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (bcs.history.length > thumb_cache_limit) {
 			var removedIds = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
 
-			for (var i = 0, rtl = removedIds.length; i < rtl; i++)
+			for (i = 0, il = removedIds.length; i < il; i++)
 				delete bcs.names[removedIds[i]];
 		}
 
@@ -2784,7 +2842,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (bcs.history.length > thumb_cache_limit) {
 			var removedIds = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
 
-			for (var i = 0, rtl = removedIds.length; i < rtl; i++)
+			for (var i = 0, il = removedIds.length; i < il; i++)
 				delete bcs.names[removedIds[i]];
 		}
 
@@ -2801,11 +2859,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var linkHref;
 		var search;
 		var tagsInput;
+		var i, il; // Loop variables.
 
 		if (page) {
 			links = page.getElementsByTagName("a");
 
-			for (var i = 0, ll = links.length; i < ll; i++) {
+			for (i = 0, il = links.length; i < il; i++) {
 				link = links[i];
 				linkHref = link.getAttribute("href"); // Use getAttribute so that we get the exact value. "link.href" adds in the domain.
 
@@ -2817,7 +2876,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (header) {
 			links = header.getElementsByTagName("a");
 
-			for (var i = 0, ll = links.length; i < ll; i++) {
+			for (i = 0, il = links.length; i < il; i++) {
 				link = links[i];
 				linkHref = link.getAttribute("href");
 
@@ -2949,7 +3008,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		if (targetContainer) {
 			links = targetContainer.getElementsByTagName("a");
 
-			for (var i = 0, ll = links.length; i < ll; i++) {
+			for (var i = 0, il = links.length; i < il; i++) {
 				link = links[i];
 
 				if (link.parentNode.tagName === "ARTICLE" || link.parentNode.id.indexOf("nav-link-for-pool-") === 0)
@@ -3025,7 +3084,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var metaTags = target.getElementsByTagName("meta");
 		var tag;
 
-		for (var i = 1, mtl = metaTags.length; i < mtl; i++) {
+		for (var i = 1, il = metaTags.length; i < il; i++) {
 			tag = metaTags[i];
 
 			if (tag.name === meta || tag.property === meta) {
@@ -3108,7 +3167,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var tag = getVar("tags");
 			tag = (tag ? "+" + tag : "");
 
-			for (var i = 0, wl = where.length; i < wl; i++) {
+			for (var i = 0, il = where.length; i < il; i++) {
 				var listItem = where[i];
 				var newTag = getVar("tags", listItem.getElementsByClassName("search-tag")[0].href);
 
@@ -3119,7 +3178,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function formatThumbnails(target) {
 		// Create thumbnail titles and borders.
-		var posts = bbbGetPosts(target);
+		var posts = getPosts(target);
+		var i, il; // Loop variables.
 
 		if (!posts.length)
 			return;
@@ -3128,12 +3188,12 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		// Create and cache border search objects.
 		if (custom_tag_borders && !searches.length) {
-			for (var i = 0, tbsl = tag_borders.length; i < tbsl; i++)
+			for (i = 0, il = tag_borders.length; i < il; i++)
 				searches.push(createSearch(tag_borders[i].tags));
 		}
 
 		// Cycle through each post and apply titles and borders.
-		for (var i = 0, pl = posts.length; i < pl; i++) {
+		for (i = 0, il = posts.length; i < il; i++) {
 			var post = posts[i];
 			var img = post.getElementsByTagName("img")[0];
 
@@ -3163,7 +3223,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			// Secondary custom tag borders.
 			if (custom_tag_borders) {
 				if (typeof(styleList[id]) === "undefined") {
-					for (var j = 0, tbsl = tag_borders.length; j < tbsl; j++) {
+					for (var j = 0, jl = tag_borders.length; j < jl; j++) {
 						var tagBorderItem = tag_borders[j];
 
 						if (tagBorderItem.is_enabled && thumbSearchMatch(post, searches[j])) {
@@ -3262,7 +3322,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (parentNotice) {
 				var parentText = parentNotice.textContent.match(/has (\d+|a) child/);
 				var parentCount = (parentText ? Number(parentText[1]) || 1 : 0);
-				thumbCount = bbbGetPosts(parentNotice).length;
+				thumbCount = getPosts(parentNotice).length;
 				deletedCount = parentNotice.getElementsByClassName("post-status-deleted").length;
 
 				if ((!loggedIn && show_deleted && !deletedCount) || (parentCount && parentCount + 1 !== thumbCount))
@@ -3285,7 +3345,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (childNotice) {
 				var childText = childNotice.textContent.match(/has (\d+|a) sibling/);
 				var childCount = (childText ? Number(childText[1]) || 1 : 0) + 1;
-				thumbCount = bbbGetPosts(childNotice).length;
+				thumbCount = getPosts(childNotice).length;
 				deletedCount = childNotice.getElementsByClassName("post-status-deleted").length;
 
 				if ((!loggedIn && show_deleted && !deletedCount) || (childCount && childCount + 1 !== thumbCount))
@@ -3360,6 +3420,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 	}
 
 	function customCSS() {
+		var i; // Loop variable.
 		var customStyles = document.createElement("style");
 		customStyles.type = "text/css";
 
@@ -3435,18 +3496,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview div.preview a {line-height: 0px !important;}' +
 		'.post-preview img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
-		'article.post-preview:before, .post-preview div.preview:before {margin: ' + totalBorderWidth + 'px !important;}';
+		'article.post-preview:before, .post-preview div.preview:before {margin: ' + totalBorderWidth + 'px !important;}'; // Thumbnail icon overlay position adjustment.
 
 		if (custom_status_borders) {
 			var activeStatusStyles = "";
 			var statusBorderInfo = {};
 
-			for (var i = 0; i < sbsl; i++) {
+			for (i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
 				statusBorderInfo[statusBorderItem.tags] = statusBorderItem;
 			}
 
-			for (var i = 0; i < sbsl; i++) {
+			for (i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
 
 				if (single_color_borders) {
@@ -3488,7 +3549,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		else if (single_color_borders) { // Allow single color borders when not using custom status borders. Works off of the old border hierarchy: Deleted > Flagged > Pending > Child > Parent
 			var defaultStatusBorders = bbb.options.status_borders;
 
-			for (var i = defaultStatusBorders.length - 1; i >= 0; i--) {
+			for (i = defaultStatusBorders.length - 1; i >= 0; i--) {
 				statusBorderItem = defaultStatusBorders[i];
 
 				styles += '.post-preview.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}';
@@ -3502,7 +3563,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			styles += '.post-preview .bbb-custom-tag img {border-width: 0px !important;}' + // Remove the transparent border for images that get custom tag borders.
 			'article.post-preview a, .post-preview div.preview a {display: inline-block; margin: ' + marginAlignment + 'px !important;}'; // Align one border images with two border images.
 
-			for (var i = 0; i < sbsl; i++) {
+			for (i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
 
 				if (statusBorderItem.is_enabled)
@@ -3611,18 +3672,18 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			document.title = fetchMeta("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
 	}
 
-	function bbbDDL(target) {
+	function postDDL(target) {
 		// Add direct downloads to thumbnails.
 		if (gLoc !== "search" && gLoc !== "pool" && gLoc !== "popular")
 			return;
 
-		var posts = bbbGetPosts(target);
+		var posts = getPosts(target);
 		var post;
 		var postId;
 		var postUrl;
 		var ddlLink;
 
-		for (var i = 0, pl = posts.length; i <pl; i++) {
+		for (var i = 0, il = posts.length; i < il; i++) {
 			post = posts[i];
 			postUrl = post.getAttribute("data-file-url");
 			postId = post.getAttribute("data-id");
@@ -3648,7 +3709,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		data = data.split("; ");
 		var out = [];
 
-		for (var i = 0, dl = data.length; i < dl; i++) {
+		for (var i = 0, il = data.length; i < il; i++) {
 			var temp = data[i].split("=");
 			out[temp[0]] = temp[1];
 		}
@@ -3669,7 +3730,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		document.cookie = data;
 	}
 
-	function bbbGetId(elId, target, elType) {
+	function getId(elId, target, elType) {
 		// Retrieve an element by ID from either the current document or an element containing it.
 		if (!target || target === document)
 			return document.getElementById(elId);
@@ -3677,7 +3738,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var els = target.getElementsByTagName((elType ? elType : "*"));
 			var el;
 
-			for (var i = 0, elsl = els.length; i < elsl; i++) {
+			for (var i = 0, il = els.length; i < il; i++) {
 				el = els[i];
 
 				if (el.id === elId)
@@ -3688,7 +3749,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function bbbGetPosts(target) {
+	function getPosts(target) {
 		// Return a list of posts depending on the target supplied.
 		var posts;
 
@@ -3702,20 +3763,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 
 		return posts || [];
-	}
-
-	function outerHTML(node) {
-		// If IE, Chrome, or newer FF version take the internal method otherwise build one. More thanks to random forums for clearing up outerHTML support.
-		return node.outerHTML ||
-			(function(n) {
-				var div = document.createElement('div'), outer;
-
-				div.appendChild( n.cloneNode(true) );
-				outer = div.innerHTML;
-				div = null;
-
-				return outer;
-			})(node);
 	}
 
 	function danbNotice(txt, noticeType) {
@@ -3765,10 +3812,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var deletedNotices = document.getElementsByClassName("notice-deleted");
 		var deletedNotice;
 		var bannedNotice;
+		var i, il; // Loop variables.
 
 		if (infoListItems) {
 			// Locate the status portion of the information section.
-			for (var i = infoListItems.length - 1; i >= 0; i--) {
+			for (i = infoListItems.length - 1; i >= 0; i--) {
 				infoListItem = infoListItems[i];
 
 				if (infoListItem.textContent.indexOf("Status:") > -1) {
@@ -3794,7 +3842,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 					newStatusContent = newStatusContent.replace("Pending", '<a href="#" id="bbb-pending-link">Pending</a>');
 				}
 
-				for (var i = 0, dnl = deletedNotices.length; i < dnl; i++) {
+				for (i = 0, il = deletedNotices.length; i < il; i++) {
 					deletedNotices[i].style.display = "none";
 					deletedNotices[i].style.position = "absolute";
 					deletedNotices[i].style.zIndex = "2003";
@@ -3909,6 +3957,11 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return this.replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
 	};
 
+	String.prototype.bbbTagClean = function() {
+		// Remove extra commas along with leading, trailing, and multiple spaces.
+		return this.replace(/[\s,]*,[\s,]*/g, ", ").replace(/[\s,]+$|^[\s,]+/g, "").replace(/\s+/g, " ");
+	};
+
 	function bbbIsNum(value) {
 		return /^-?\d+(\.\d+)?$/.test(value);
 	}
@@ -3940,8 +3993,9 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var anyResult;
 		var allResult;
 		var searchTerm = "";
+		var j, jl; // Loop variables.
 
-		for (var i = 0, sal = searchArray.length; i < sal; i++) {
+		for (var i = 0, il = searchArray.length; i < il; i++) {
 			var searchObject = searchArray[i];
 			var all = searchObject.all;
 			var any = searchObject.any;
@@ -3954,7 +4008,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				anyResult = false;
 
 				// Loop until one positive match is found.
-				for (var j = 0, ail = any.includes.length; j < ail; j++) {
+				for (j = 0, jl = any.includes.length; j < jl; j++) {
 					searchTerm = any.includes[j];
 
 					if (thumbTagMatch(postInfo, searchTerm)) {
@@ -3965,7 +4019,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				// If we don't have a positive match yet, loop through the excludes.
 				if (!anyResult) {
-					for (var j = 0, ael = any.excludes.length; j < ael; j++) {
+					for (j = 0, jl = any.excludes.length; j < jl; j++) {
 						searchTerm = any.excludes[j];
 
 						if (!thumbTagMatch(postInfo, searchTerm)) {
@@ -3984,7 +4038,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				allResult = true;
 
 				// Loop until a negative match is found.
-				for (var j = 0, ail = all.includes.length; j < ail; j++) {
+				for (j = 0, jl = all.includes.length; j < jl; j++) {
 					searchTerm = all.includes[j];
 
 					if (!thumbTagMatch(postInfo, searchTerm)) {
@@ -3995,7 +4049,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 				// If we still have a positive match, loop through the excludes.
 				if (allResult) {
-					for (var j = 0, ael = all.excludes.length; j < ael; j++) {
+					for (j = 0, jl = all.excludes.length; j < jl; j++) {
 						searchTerm = all.excludes[j];
 
 						if (thumbTagMatch(postInfo, searchTerm)) {
@@ -4050,11 +4104,14 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 	function createSearch(search) {
 		// Take search strings, turn them into search objects, and pass back the objects in an array.
+		if (!/[^\s,]/.test(search))
+			return [];
+
 		var searchStrings = search.toLowerCase().replace(/\b(rating:[qes])\w+/g, "$1").split(",");
 		var searches = [];
 
 		// Sort through each matching rule.
-		for (var i = 0, sssl = searchStrings.length; i < sssl; i++) {
+		for (var i = 0, il = searchStrings.length; i < il; i++) {
 			var searchString = searchStrings[i].split(" ");
 			var searchObject = {
 				all: {includes: [], excludes: [], total: 0},
@@ -4062,7 +4119,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			};
 
 			// Divide the tags into any and all sets with excluded and included tags.
-			for (var j = 0, ssl = searchString.length; j < ssl; j++) {
+			for (var j = 0, jl = searchString.length; j < jl; j++) {
 				var searchTerm = searchString[j];
 				var mode;
 				var primaryMode = "all";
@@ -4258,7 +4315,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		return numString;
 	};
 
-	function bbbTimestamp(format) {
+	function timestamp(format) {
 		// Returns a simple timestamp based on the format string provided. String placeholders: y = year, m = month, d = day, hh = hours, mm = minutes, ss = seconds
 		var time = new Date();
 		var year = time.getFullYear();
@@ -4402,7 +4459,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			var mode = getVar("new_posts");
 			var postsDiv = document.getElementById("posts");
 			var postSections = document.getElementById("post-sections");
-			var posts = bbbGetPosts();
+			var posts = getPosts();
 			var firstPost = posts[0];
 
 			if (mode === "init" && !info.viewed && !getVar("tags") && !getVar("page")) { // Initialize.
@@ -4500,7 +4557,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 
 		var info = bbb.user.track_new_data;
 		var limitNum = getVar("limit") || bbb.user.thumbnail_count || thumbnail_count_default;
-		var posts = bbbGetPosts();
+		var posts = getPosts();
 		var lastPost = posts[posts.length - 1];
 		var lastId = (lastPost ? Number(lastPost.getAttribute("data-id")) : null );
 
