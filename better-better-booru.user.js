@@ -2,7 +2,7 @@
 // @name           better_better_booru
 // @namespace      http://userscripts.org/scripts/show/100614
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
-// @description    Several changes to make Danbooru much better. Including the viewing of loli/shota images on non-upgraded accounts and more.
+// @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
 // @version        6.2.2
 // @updateURL      https://userscripts.org/scripts/source/100614.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/100614.user.js
@@ -16,7 +16,7 @@
 
 // Have a nice day. - A Pseudonymous Coder
 
-function injectMe() { // This is needed to make this script work in Chrome.
+function bbbScript() { // This is needed to make this script work in Chrome.
 	/*
 	 * NOTE: You no longer need to edit this script to change settings!
 	 * Use the "BBB Settings" button in the menu instead.
@@ -385,10 +385,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var target = pageEl || document;
 		var imgContainer = getId("image-container", target, "section");
 
-		if (!imgContainer) {
-			bbbStatus("error");
-			return undefined;
-		}
+		if (!imgContainer)
+			return {};
 
 		var img = getId("image", target, "img");
 		var object = imgContainer.getElementsByTagName("object")[0];
@@ -965,7 +963,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 			if (!alternate_image_swap) { // Make notes toggle when clicking the image.
 				document.addEventListener("click", function(event) {
 					if (event.target.id === "image" && event.button === 0 && !bbb.post.translationMode) {
-						if (!image_drag_scroll || !bbb.dragscroll.moved)
+						if (!bbb.dragscroll.moved)
 							Danbooru.Note.Box.toggle_all();
 
 						event.stopPropagation();
@@ -993,9 +991,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 				if (post.has_large) {
 					document.addEventListener("click", function(event) {
 						if (event.target.id === "image" && event.button === 0 && !bbb.post.translationMode) {
-							if (!image_drag_scroll || !bbb.dragscroll.moved) {
+							if (!bbb.dragscroll.moved)
 								swapImage();
-							}
 
 							event.stopPropagation();
 						}
@@ -1140,7 +1137,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var post;
 		var activePost = bbb.post.info;
 		var numPosts = posts.length;
-		var showPreview = (getCookie()["show-relationship-previews"] === "1" ? true : false);
+		var relationCookie = getCookie()["show-relationship-previews"];
+		var showPreview = (relationCookie === undefined || relationCookie === "1" ? true : false);
 		var childSpan = document.createElement("span");
 		var target;
 		var newNotice;
@@ -3338,7 +3336,8 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		var loggedIn = isLoggedIn();
 		var fixParent = false;
 		var fixChild = false;
-		var showPreview = (getCookie()["show-relationship-previews"] === "1" ? true : false);
+		var relationCookie = getCookie()["show-relationship-previews"];
+		var showPreview = (relationCookie === undefined || relationCookie === "1" ? true : false);
 		var parentLink = document.getElementById("has-children-relationship-preview-link");
 		var childLink = document.getElementById("has-parent-relationship-preview-link");
 
@@ -3499,7 +3498,6 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'#bbb_menu .bbb-edit-area {height: 392px; width: 794px; margin-bottom: 5px;}' +
 		'#bbb_menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
 		'.bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
-		'.bbb-custom-tag {border-width: ' + border_width + 'px !important;}' +
 		'.bbb-keep-notice {display: block !important; opacity: 1.0 !important;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
@@ -3522,6 +3520,7 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview div.preview a {line-height: 0px !important;}' +
 		'.post-preview img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
+		'.bbb-custom-tag {border-width: ' + border_width + 'px !important;}' +
 		'article.post-preview:before, .post-preview div.preview:before {margin: ' + totalBorderWidth + 'px !important;}'; // Thumbnail icon overlay position adjustment.
 
 		if (custom_status_borders) {
@@ -4601,15 +4600,15 @@ function injectMe() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-} // End of injectMe.
+} // End of bbbScript.
 
 if (document.body) {
 	if (typeof(Danbooru) === "undefined") { // Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
 		var script = document.createElement('script');
 		script.type = "text/javascript";
-		script.appendChild(document.createTextNode('(' + injectMe + ')();'));
+		script.appendChild(document.createTextNode('(' + bbbScript + ')();'));
 		document.body.appendChild(script);
 	}
 	else // Operate normally.
-		injectMe();
+		bbbScript();
 }
