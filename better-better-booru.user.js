@@ -93,7 +93,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			override_account: new Option("checkbox", false, "Override Account Settings", "Allow logged out settings to override account settings when logged in."),
 			post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
 			remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
-			script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space.<br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death<br><br><u>Note</u><br>When logged in, the account's \"Blacklisted tags\" list will override this option.", {isTagInput: true}),
+			script_blacklisted_tags: new Option("text", "", "Blacklisted Tags", "Hide images and posts that match the specified tag(s).<br><br><u>Guidelines</u><br>Matches can consist of a single tag or multiple tags. Each match must be separated by a comma and each tag in a match must be separated by a space. While using this script, the rules in the \"Thumbnail Matching Rules\" section under the help tab can be used in the blacklist. <br><br><u>Example</u><br>To filter posts tagged with spoilers and posts tagged with blood AND death, the blacklist would normally look like the following case:<br>spoilers, blood death<br><br><u>Note</u><br>When logged in, the account's \"Blacklisted tags\" list will override this option.", {isTagInput: true}),
 			search_add: new Option("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
 			show_banned: new Option("checkbox", false, "Show Banned", "Display all banned images in the search, pool, popular, and notes listings."),
 			show_deleted: new Option("checkbox", false, "Show Deleted", "Display all deleted images in the search, pool, popular, and notes listings."),
@@ -1765,7 +1765,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		borderSpacer.className = "bbb-border-spacer";
 
 		var indexWrapper = document.createElement("div");
-		indexWrapper.setAttribute("data-bbb-index", i);
+		indexWrapper.setAttribute("data-bbb-index", index);
 
 		var borderDivider = document.createElement("div");
 		borderDivider.className = "bbb-border-divider";
