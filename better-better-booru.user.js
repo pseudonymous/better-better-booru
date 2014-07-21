@@ -75,7 +75,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			custom_tag_borders: new Option("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to images with specific tags."),
 			direct_downloads: new Option("checkbox", false, "Direct Downloads", "Allow download managers to download the images displayed in the search, pool, and popular listings."),
 			enable_status_message: new Option("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
-			hide_advertisements: new Option("checkbox", false, "Hide Advertisements", "Hide the advertisements and free up some of the space set aside for them by adjusting the layout."),
 			hide_ban_notice: new Option("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 			hide_comment_notice: new Option("checkbox", false, "Hide Comment Guide Notice", "Hide the Danbooru comment guide notice."),
 			hide_pool_notice: new Option("checkbox", false, "Hide Pool Guide Notice", "Hide the Danbooru pool guide notice."),
@@ -112,7 +111,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		},
 		sections: { // Setting sections and ordering.
 			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count"], "Image Browsing"),
-			layout: new Section("general", ["show_resized_notice", "hide_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_advertisements", "hide_ban_notice"], "Layout"),
+			notices: new Section("general", ["show_resized_notice", "hide_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: new Section("general", ["search_add", "remove_tag_headers", "tag_scrollbars", "autohide_sidebar"], "Tag Sidebar"),
 			image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
 			logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
@@ -165,7 +164,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var hide_tag_notice = bbb.user.hide_tag_notice;
 	var hide_upload_notice = bbb.user.hide_upload_notice;
 	var hide_pool_notice = bbb.user.hide_pool_notice;
-	var hide_advertisements = bbb.user.hide_advertisements;
 	var hide_ban_notice = bbb.user.hide_ban_notice;
 
 	// Search
@@ -945,7 +943,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						else if (showResNot === "all")
 							showResNot = "sample";
 
-						danbNotice("Better Better Booru: Settings updated. The resized notice will now be hidden when viewing original images. You may change this setting under \"Layout\" in the settings panel.");
+						danbNotice("Better Better Booru: Settings updated. The resized notice will now be hidden when viewing original images. You may change this setting under \"Notices\" in the settings panel.");
 					}
 					else { // Sample image.
 						if (showResNot === "sample")
@@ -953,7 +951,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						else if (showResNot === "all")
 							showResNot = "original";
 
-						danbNotice("Better Better Booru: Settings updated. The resized notice will now be hidden when viewing sample images. You may change this setting under \"Layout\" in the settings panel.");
+						danbNotice("Better Better Booru: Settings updated. The resized notice will now be hidden when viewing sample images. You may change this setting under \"Notices\" in the settings panel.");
 					}
 
 					updateSettings("show_resized_notice", showResNot);
@@ -1421,7 +1419,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		generalPage.bbbSection(bbb.sections.image_control);
 		generalPage.bbbSection(bbb.sections.sidebar);
 		generalPage.bbbSection(bbb.sections.misc);
-		generalPage.bbbSection(bbb.sections.layout);
+		generalPage.bbbSection(bbb.sections.notices);
 		generalPage.bbbSection(bbb.sections.logged_out);
 
 		var bordersPage = bbb.el.menu.bordersPage = document.createElement("div");
@@ -2032,7 +2030,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		sectionText.className = "bbb-section-text";
 		sectionFrag.appendChild(sectionText);
 
-		var tocList = document.createElement("ul");
+		var tocList = document.createElement("ol");
 		tocList.className = "bbb-toc";
 		sectionText.appendChild(tocList);
 
@@ -3460,7 +3458,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb_menu select {height: 21px; margin-top: 4px; vertical-align: top;}' +
 		'#bbb_menu option {padding: 0px 3px;}' +
 		'#bbb_menu textarea {padding: 2px; resize: none;}' +
-		'#bbb_menu ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: block;}' +
+		'#bbb_menu ul, #bbb_menu ol {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: block;}' +
 		'#bbb_menu .bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 5px 0px; padding: 5px 0px; overflow-y: auto;}' +
 		'#bbb_menu .bbb-page {position: relative; display: none;}' +
 		'#bbb_menu .bbb-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px;}' +
@@ -3612,13 +3610,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (tag_scrollbars)
 			styles += "#tag-list ul {max-height: " + tag_scrollbars + "px !important; overflow-y: auto !important; font-size: 87.5% !important;}";
-
-		if (hide_advertisements) {
-			styles += '#content.with-ads {margin-right: 0em !important;}' +
-			'img[alt="Advertisement"] {display: none !important;}' +
-			'img[alt="Your Ad Here"] {display: none !important;}' +
-			'iframe {display: none !important;}';
-		}
 
 		if (hide_tos_notice && document.getElementById("tos-notice")) {
 			styles += '#tos-notice {display: none !important;}';
