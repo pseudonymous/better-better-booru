@@ -19,6 +19,7 @@ Changelog
  * Updated to support Danbooru's new hotkey for swapping between original and sample images.
  * Updated to support the "limit:" tag in searches.
  * Updated to allow the options section on flash and download posts for logged out users.
+ * Updated the image resizing to allow for resizing by height.
  * Updated the blacklist to allow the use of the "thumbnail matching rules" under the help tab and provide flexibility for customization in the future.
  * Updated the resize to window links so that they can work on flash and webm videos.
  * Updated the image swapping to allow the cancelling of a swap between an original and sample image by sending the swap request a second time while still loading.
@@ -30,6 +31,7 @@ Changelog
  * Fixed a potential issue where "show toddlercon" wouldn't work.
  * Moved the "thumbnail info cache limit" option to the preferences tab.
  * Removed the "hide original notice" option that's been replaced by the "resized notice display" option.
+ * Removed the "hide advertisements" option due to the removal of ads and prevalence of ad blockers.
 * Version 6.2.2:
  * Updated to support the new thumbnail paths on Danbooru.
 * Version 6.2.1:
