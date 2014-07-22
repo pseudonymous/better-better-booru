@@ -68,7 +68,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
 			autoscroll_image: new Option("checkbox", false, "Auto-scroll Image", "Position the image as close as possible to the left and top edges of the window viewport when initially loading an individiual post."),
 			border_spacing: new Option("dropdown", 0, "Border Spacing", "Set the amount of blank space between a border and image and between a custom tag border and status border. <br><br><u>Note</u></br>Even when set to 0, status borders and custom tag borders will always have a minimum value of 1 between them.", {txtOptions:["0 (Default):0", "1:1", "2:2", "3:3"]}),
-			border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3"]}),
+			border_width: new Option("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3", "4:4", "5:5"]}),
 			bypass_api: new Option("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
 			clean_links: new Option("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<br><br><u>Note</u></br>Enabling this option will disable Danbooru's search navigation and active pool detection for individual posts."),
 			custom_status_borders: new Option("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail borders for deleted, flagged, pending, parent, and child images."),
@@ -79,7 +79,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			hide_comment_notice: new Option("checkbox", false, "Hide Comment Guide Notice", "Hide the Danbooru comment guide notice."),
 			hide_pool_notice: new Option("checkbox", false, "Hide Pool Guide Notice", "Hide the Danbooru pool guide notice."),
 			hide_sign_up_notice: new Option("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
-			hide_status_notices: new Option("checkbox", false, "Hide Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			hide_tag_notice: new Option("checkbox", false, "Hide Tag Guide Notice", "Hide the Danbooru tag guide notice."),
 			hide_tos_notice: new Option("checkbox", false, "Hide TOS Notice", "Hide the Danbooru terms of service agreement notice."),
 			hide_upgrade_notice: new Option("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
@@ -89,6 +88,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (Default):width", "Width & Height:all"]}),
 			load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Default image width\" setting will override this option."),
 			manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
+			minimize_status_notices: new Option("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			override_account: new Option("checkbox", false, "Override Account Settings", "Allow logged out settings to override account settings when logged in."),
 			post_tag_titles: new Option("checkbox", false, "Post Tag Titles", "Change the page titles for individual posts to a full list of the post tags."),
 			remove_tag_headers: new Option("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
@@ -111,7 +111,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		},
 		sections: { // Setting sections and ordering.
 			browse: new Section("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count"], "Image Browsing"),
-			notices: new Section("general", ["show_resized_notice", "hide_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
+			notices: new Section("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: new Section("general", ["search_add", "remove_tag_headers", "tag_scrollbars", "autohide_sidebar"], "Tag Sidebar"),
 			image_control: new Section("general", ["alternate_image_swap", "image_resize_mode", "image_drag_scroll", "autoscroll_image"], "Image Control"),
 			logged_out: new Section("general", ["image_resize", "load_sample_first", "script_blacklisted_tags"], "Logged Out Settings"),
@@ -158,7 +158,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var show_resized_notice = bbb.user.show_resized_notice;
 	var hide_sign_up_notice = bbb.user.hide_sign_up_notice;
 	var hide_upgrade_notice = bbb.user.hide_upgrade_notice;
-	var hide_status_notices = bbb.user.hide_status_notices;
+	var minimize_status_notices = bbb.user.minimize_status_notices;
 	var hide_tos_notice = bbb.user.hide_tos_notice;
 	var hide_comment_notice = bbb.user.hide_comment_notice;
 	var hide_tag_notice = bbb.user.hide_tag_notice;
@@ -210,8 +210,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	if (remove_tag_headers)
 		removeTagHeaders();
 
-	if (hide_status_notices)
-		hideStatusNotices();
+	if (minimize_status_notices)
+		minimizeStatusNotices();
 
 	if (post_tag_titles)
 		postTagTitles();
@@ -1841,7 +1841,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		helpButton.innerHTML = "Help";
 		helpButton.className = "bbb-border-button";
 		helpButton.addEventListener("click", function(event) { event.preventDefault(); }, false);
-		helpButton.bbbSetTip("<b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<br><br><b>Status/Tags:</b> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating rules.<br><br><b>Color:</b> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<br><br><b>Style:</b> Set how the border looks. Please note that double only works with a border width of 3.<br><br><b>Move:</b> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<br><br><b>Preview:</b> Display a preview of the border's current settings.<br><br><b>Delete:</b> Remove the border and its settings.<br><br><b>New:</b> Create a new border.");
+		helpButton.bbbSetTip("<b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<br><br><b>Status/Tags:</b> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating rules.<br><br><b>Color:</b> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<br><br><b>Style:</b> Set how the border looks. Please note that double only works with a border width of 3 or higher.<br><br><b>Move:</b> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<br><br><b>Preview:</b> Display a preview of the border's current settings.<br><br><b>Delete:</b> Remove the border and its settings.<br><br><b>New:</b> Create a new border.");
 		editSpan.appendChild(helpButton);
 
 		var borderSettingsDiv = document.createElement("div");
@@ -2420,7 +2420,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						bbb.user.show_resized_notice = "sample";
 
 					delete bbb.user.hide_original_notice;
-					delete bbb.user.resized_notice_display;
 
 					// Set the new show_banned setting to true if show_deleted is true.
 					if (bbb.user.show_deleted)
@@ -2429,6 +2428,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					// Add a custom border for banned posts to match the other hidden post borders.
 					if (!/\bstatus:banned\b/i.test(JSON.stringify(bbb.user.tag_borders)))
 						bbb.user.tag_borders.push(new Border("status:banned", false, "#000000", "solid"));
+
+					// Remove potential testing options.
+					delete bbb.user.resized_notice_display;
+					delete bbb.user.hide_status_notices;
 
 					break;
 			}
@@ -3814,7 +3817,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		notice.className = notice.className.replace(/\s?bbb-keep-notice/gi, "");
 	}
 
-	function hideStatusNotices() {
+	function minimizeStatusNotices() {
 		if (gLoc !== "post")
 			return;
 
