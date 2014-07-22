@@ -945,7 +945,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					}
 
 					if (!swapInit)
-						resizeImage("none");
+						resizeImage("swap");
 				}, false);
 				closeResizeNotice.addEventListener("click", function() {
 					var showResNot = bbb.user.show_resized_notice;
@@ -2689,14 +2689,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var tooTall = targetCurrentHeight > availableHeight;
 		var widthRatio = availableWidth / targetWidth;
 		var heightRatio = availableHeight / targetHeight;
+		var imgMode = mode;
 		var switchMode = false;
 		var ratio = 1;
 		var linkWeight = {all: "normal", width: "normal", height: "normal"}
 
-		if (mode === "none" || mode === currentMode || (mode === "width" && widthRatio >= 1) || (mode === "height" && heightRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) { // Cases where resizing is being toggled off or isn't needed.
-			if (currentMode !== "none") {
+		if (mode === "swap") { // The image is being swapped between the original and sample image so everything needs to be reset.
+			switchMode = true;
+			imgMode = "none";
+		}
+		else if (mode === currentMode || (mode === "width" && widthRatio >= 1) || (mode === "height" && heightRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) { // Cases where resizing is being toggled off or isn't needed.
+			if (currentMode !== "none") { // No need to do anything if the content is already at the original dimensions.
 				switchMode = true;
-				mode = "none";
+				imgMode = "none";
 			}
 		}
 		else if (mode === "height" && (tooTall || currentMode !== "none")) {
@@ -2716,7 +2721,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		if (switchMode) {
-			if (currentRatio !== ratio) {
+			if (currentRatio !== ratio || mode === "swap") {
 				if (img) {
 					img.style.width = targetWidth * ratio + "px";
 					img.style.height = targetHeight * ratio + "px";
@@ -2732,7 +2737,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			bbb.post.resize.mode = mode;
+			bbb.post.resize.mode = imgMode;
 			bbb.post.resize.ratio = ratio;
 			resizeLinkAll.style.fontWeight = linkWeight.all;
 			resizeLinkWidth.style.fontWeight = linkWeight.width;
