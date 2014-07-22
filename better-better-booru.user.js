@@ -58,7 +58,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		},
 		post: { // Post content info and status.
 			info: {}, // Post information object.
-			resized: "none",
+			resize: {
+				mode: "none",
+				ratio: 1
+			},
 			translationMode: false
 		},
 		options: { // Setting options and data.
@@ -85,7 +88,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			hide_upload_notice: new Option("checkbox", false, "Hide Upload Guide Notice", "Hide the Danbooru upload guide notice."),
 			image_drag_scroll: new Option("checkbox", false, "Image Drag Scrolling", "While holding down left click on a post image/webm video, mouse movement can be used to scroll the whole page and reposition the image/webm video.<br><br><u>Note</u><br>This option is automatically disabled when translation mode is active."),
 			image_resize: new Option("checkbox", true, "Resize Image", "Shrink large images to fit the browser window when initially loading an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Fit images to window\" setting will override this option."),
-			image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (Default):width", "Width & Height:all"]}),
+			image_resize_mode: new Option("dropdown", "width", "Resize Image Mode", "Choose how to shrink large images to fit the browser window when initially loading an individual post.", {txtOptions:["Width (Default):width", "Height:height", "Width & Height:all"]}),
 			load_sample_first: new Option("checkbox", true, "Load Sample First", "Load sample images first when viewing an individual post.<br><br><u>Note</u><br>When logged in, the account's \"Default image width\" setting will override this option."),
 			manage_cookies: new Option("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<br><br><u>Tip</u><br>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: new Option("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
@@ -787,6 +790,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			swapList.appendChild(swapLink);
 		}
 
+		var resizeListAll = document.createElement("li");
+		optionsFrag.appendChild(resizeListAll);
+
+		var resizeLinkAll = bbb.el.resizeLinkAll = document.createElement("a");
+		resizeLinkAll.href = "#";
+		resizeLinkAll.innerHTML = "Resize to window";
+		resizeLinkAll.addEventListener("click", function(event) {
+			resizeImage("all");
+			event.preventDefault();
+		}, false);
+		resizeListAll.appendChild(resizeLinkAll);
+
 		var resizeListWidth = document.createElement("li");
 		optionsFrag.appendChild(resizeListWidth);
 
@@ -799,17 +814,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}, false);
 		resizeListWidth.appendChild(resizeLinkWidth);
 
-		var resizeListAll = document.createElement("li");
-		optionsFrag.appendChild(resizeListAll);
+		var resizeListHeight = document.createElement("li");
+		optionsFrag.appendChild(resizeListHeight);
 
-		var resizeLinkAll = bbb.el.resizeLinkAll = document.createElement("a");
-		resizeLinkAll.href = "#";
-		resizeLinkAll.innerHTML = "Resize to window";
-		resizeLinkAll.addEventListener("click", function(event) {
-			resizeImage("all");
+		var resizeLinkHeight = bbb.el.resizeLinkHeight = document.createElement("a");
+		resizeLinkHeight.href = "#";
+		resizeLinkHeight.innerHTML = "Resize to window height";
+		resizeLinkHeight.addEventListener("click", function(event) {
+			resizeImage("height");
 			event.preventDefault();
 		}, false);
-		resizeListAll.appendChild(resizeLinkAll);
+		resizeListHeight.appendChild(resizeLinkHeight);
 
 		resizeListItem.parentNode.replaceChild(optionsFrag, resizeListItem);
 
@@ -2659,9 +2674,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!target || !imgContainer)
 			return;
 
-		var currentMode = bbb.post.resized;
-		var resizeLinkWidth = bbb.el.resizeLinkWidth;
+		var currentMode = bbb.post.resize.mode;
+		var currentRatio = bbb.post.resize.ratio;
 		var resizeLinkAll = bbb.el.resizeLinkAll;
+		var resizeLinkWidth = bbb.el.resizeLinkWidth;
+		var resizeLinkHeight = bbb.el.resizeLinkHeight;
 		var availableWidth = imgContainer.clientWidth;
 		var availableHeight = window.innerHeight - 40;
 		var targetCurrentWidth = target.clientWidth;
@@ -2672,68 +2689,54 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var tooTall = targetCurrentHeight > availableHeight;
 		var widthRatio = availableWidth / targetWidth;
 		var heightRatio = availableHeight / targetHeight;
-		var ratio;
+		var switchMode = false;
+		var ratio = 1;
+		var linkWeight = {all: "normal", width: "normal", height: "normal"}
 
-		if (mode === "none" || mode === currentMode || (mode === "width" && widthRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) {
-			if (img) {
-				img.style.width = targetWidth + "px";
-				img.style.height = targetHeight + "px";
-				Danbooru.Note.Box.scale_all();
+		if (mode === "none" || mode === currentMode || (mode === "width" && widthRatio >= 1) || (mode === "height" && heightRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) { // Cases where resizing is being toggled off or isn't needed.
+			if (currentMode !== "none") {
+				switchMode = true;
+				mode = "none";
 			}
-			else if (swfEmb) {
-				swfObj.height = swfEmb.height = targetHeight;
-				swfObj.width = swfEmb.width = targetWidth;
-			}
-			else {
-				webmVid.height = targetHeight;
-				webmVid.width = targetWidth;
-			}
-
-			bbb.post.resized = "none";
-			resizeLinkWidth.style.fontWeight = "normal";
-			resizeLinkAll.style.fontWeight = "normal";
 		}
-		else if (mode === "width" && (tooWide || currentMode === "all")) {
+		else if (mode === "height" && (tooTall || currentMode !== "none")) {
+			switchMode = true;
+			ratio = heightRatio;
+			linkWeight.height = "bold";
+		}
+		else if (mode === "width" && (tooWide || currentMode !== "none")) {
+			switchMode = true;
 			ratio = widthRatio;
-
-			if (img) {
-				img.style.width = targetWidth * ratio + "px";
-				img.style.height = targetHeight * ratio + "px";
-				Danbooru.Note.Box.scale_all();
-			}
-			else if (swfEmb) {
-				swfObj.height = swfEmb.height = targetHeight * ratio;
-				swfObj.width = swfEmb.width = targetWidth * ratio;
-			}
-			else {
-				webmVid.height = targetHeight * ratio;
-				webmVid.width = targetWidth * ratio;
-			}
-
-			bbb.post.resized = "width";
-			resizeLinkWidth.style.fontWeight = "bold";
-			resizeLinkAll.style.fontWeight = "normal";
+			linkWeight.width = "bold";
 		}
-		else if (mode === "all" && (tooWide || tooTall || currentMode === "width")) {
+		else if (mode === "all" && (tooWide || tooTall || currentMode !== "none")) {
+			switchMode = true;
 			ratio = (widthRatio < heightRatio ? widthRatio : heightRatio);
+			linkWeight.all = "bold";
+		}
 
-			if (img) {
-				img.style.width = targetWidth * ratio + "px";
-				img.style.height = targetHeight * ratio + "px";
-				Danbooru.Note.Box.scale_all();
-			}
-			else if (swfEmb) {
-				swfObj.height = swfEmb.height = targetHeight * ratio;
-				swfObj.width = swfEmb.width = targetWidth * ratio;
-			}
-			else {
-				webmVid.height = targetHeight * ratio;
-				webmVid.width = targetWidth * ratio;
+		if (switchMode) {
+			if (currentRatio !== ratio) {
+				if (img) {
+					img.style.width = targetWidth * ratio + "px";
+					img.style.height = targetHeight * ratio + "px";
+					Danbooru.Note.Box.scale_all();
+				}
+				else if (swfEmb) {
+					swfObj.height = swfEmb.height = targetHeight * ratio;
+					swfObj.width = swfEmb.width = targetWidth * ratio;
+				}
+				else {
+					webmVid.height = targetHeight * ratio;
+					webmVid.width = targetWidth * ratio;
+				}
 			}
 
-			bbb.post.resized = "all";
-			resizeLinkWidth.style.fontWeight = "normal";
-			resizeLinkAll.style.fontWeight = "bold";
+			bbb.post.resize.mode = mode;
+			bbb.post.resize.ratio = ratio;
+			resizeLinkAll.style.fontWeight = linkWeight.all;
+			resizeLinkWidth.style.fontWeight = linkWeight.width;
+			resizeLinkHeight.style.fontWeight = linkWeight.height;
 		}
 	}
 
