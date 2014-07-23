@@ -7,8 +7,8 @@ Links
 -----
 * [Homepage](https://github.com/pseudonymous/better-better-booru)
 * [Greasy Fork](https://greasyfork.org/scripts/#To-Be-Determined)
-* [Changelog](#changelog) ([Full Log](https://github.com/pseudonymous/better-better-booru/blob/master/changelog.md))
 * [Installation Help](#getting-started)
+* [Changelog](#changelog) ([Full Log](https://github.com/pseudonymous/better-better-booru/blob/master/changelog.md))
  
 ---
 Features<a name="features"></a>
