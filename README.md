@@ -1,16 +1,17 @@
 Better Better Booru
 ===================
 Various tweaks to make Danbooru better.
-
+ 
 ---
 Links
 -----
 * [Homepage](https://github.com/pseudonymous/better-better-booru)
 * [Greasy Fork](https://greasyfork.org/scripts/#To-Be-Determined)
 * [Full Changelog](https://github.com/pseudonymous/better-better-booru/blob/master/README.md#changelog)
-
+* [Installation Help](#getting-started)
+ 
 ---
-Features
+Features<a name="features"></a>
 --------
 * Allows the viewing of hidden/censored tags and automatic control of the number of thumbnails per a page with a basic account or no account.
 * Improved image resizing that works on flash and webm content and also allows resizing by width, height, or both.
@@ -26,7 +27,7 @@ Features
  * Remove tag headers - Remove the headers from the post sidebar tag lists and combine them into a single list sorted by type.
  * Tag list scrollbars - Limit the length of the post sidebar tag list(s) and use scrollbars when the list(s) exceed that limit.
  * Auto-hide sidebar - Hide the sidebar on the window's left side and display it when it gains focus or the mouse gets near it.
-* Several other misc. options:
+* Several other miscellaneous options:
  * Direct downloads - Let download managers download all the images currently displayed as thumbnails.
  * Track new posts - Create a specialized link focused on tracking and browsing new images.
  * Clean links - Remove extra information from post links in order to reduce history clutter/problems.
@@ -38,9 +39,26 @@ Features
  * Load sample first - Automatically load the sample or original image first.
  * Blacklist tags - Create a blacklist for hiding unwanted posts.
 * Various options for customizing the majority of notices by either altering or hiding them.
-
+ 
 ---
-Changelog
+Getting Started<a name="getting-started"></a>
+---------------
+1. Installing a userscript manager is strongly recommended and sometimes required. Suggestions:
+ * [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) (Firefox)
+ * [Tampermonkey](http://tampermonkey.net/) (Chrome, Opera)
+ * [Violentmonkey](https://addons.opera.com/extensions/details/violent-monkey/) (Opera)
+2. Open/install the script from a site or local computer file**. Please be sure you're using a trustworthy source. Recommendations:
+ * [GitHub](https://github.com/pseudonymous/better-better-booru/raw/master/better-better-booru.user.js)
+ * [Greasy Fork](https://greasyfork.org/scripts/#To-Be-Determined)
+3. A prompt about allowing the installation should display.
+4. Choose to allow/install after reviewing your options.
+5. The script should now be installed and ready for use on Danbooru.
+6. To access script features, use the "BBB Settings" link in the Danbooru navigation bar.
+ 
+** Note: If installing from a local file on your computer, your browser may require additional steps.
+ 
+---
+Changelog<a name="changelog"></a>
 ----------
 * Version 6.3:
  * Added a "resized notice display" option for allowing more control over the resized notice bar.
