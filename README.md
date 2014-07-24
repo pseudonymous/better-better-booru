@@ -7,7 +7,7 @@ Links
 -----
 * [Homepage](https://github.com/pseudonymous/better-better-booru)
 * [Greasy Fork](https://greasyfork.org/scripts/3575-better-better-booru)
-* [Installation](#getting-started)
+* [Installation](#installation)
 * [Changelog](#changelog) ([Full Log](https://github.com/pseudonymous/better-better-booru/blob/master/changelog.md))
  
 ---
@@ -41,15 +41,15 @@ Features<a name="features"></a>
 * Various options for customizing the majority of notices by either altering or hiding them.
  
 ---
-Getting Started<a name="getting-started"></a>
+Installation<a name="installation"></a>
 ---------------
 1. Installing a userscript manager is strongly recommended and sometimes required. Suggestions:
  * [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) (Firefox)
  * [Tampermonkey](http://tampermonkey.net/) (Chrome, Opera)
  * [Violentmonkey](https://addons.opera.com/extensions/details/violent-monkey/) (Opera)
 2. Open/install the script from a site or local computer file**. Please be sure you're using a trustworthy source. Recommendations:
- * [GitHub](https://github.com/pseudonymous/better-better-booru/raw/master/better-better-booru.user.js)
- * [Greasy Fork](https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js)
+ * [Greasy Fork](https://greasyfork.org/scripts/3575-better-better-booru)
+ * [GitHub](https://github.com/pseudonymous/better-better-booru)
 3. A prompt about allowing the installation should display.
 4. Choose to allow/install after reviewing your options.
 5. The script should now be installed and ready for use on Danbooru.
@@ -89,15 +89,3 @@ Changelog<a name="changelog"></a>
  * Moved the "thumbnail info cache limit" option to the preferences tab.
  * Removed the "hide original notice" option that's been replaced by the "resized notice display" option.
  * Removed the "hide advertisements" option due to the removal of ads and prevalence of ad blockers.
-* Version 6.2.2:
- * Updated to support the new thumbnail paths on Danbooru.
-* Version 6.2.1:
- * Fixed a compatibility problem when detecting Danbooru's JavaScript.
-* Version 6.2:
- * Added a "hide comment guide notice" option for hiding the "how to comment guide" notice.
- * Added a "hide tag guide notice" option for hiding the "how to tag guide" notice.
- * Added a "hide upload guide notice" option for hiding the how to "how to upload guide" notice.
- * Added a "hide pool guide notice" option for hiding the "pool guidelines"  notice.
- * Added a namespace to the script to better manage updates.
- * Fixed the "alternate image swap" option for posts with locked notes.
- * Fixed several other potential problems related to the saved settings and cache.
