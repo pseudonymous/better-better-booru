@@ -6,8 +6,8 @@ Various tweaks to make Danbooru better.
 Links
 -----
 * [Homepage](https://github.com/pseudonymous/better-better-booru)
-* [Greasy Fork](https://greasyfork.org/scripts/#To-Be-Determined)
-* [Installation Help](#getting-started)
+* [Greasy Fork](https://greasyfork.org/scripts/3575-better-better-booru)
+* [Installation](#getting-started)
 * [Changelog](#changelog) ([Full Log](https://github.com/pseudonymous/better-better-booru/blob/master/changelog.md))
  
 ---
@@ -49,7 +49,7 @@ Getting Started<a name="getting-started"></a>
  * [Violentmonkey](https://addons.opera.com/extensions/details/violent-monkey/) (Opera)
 2. Open/install the script from a site or local computer file**. Please be sure you're using a trustworthy source. Recommendations:
  * [GitHub](https://github.com/pseudonymous/better-better-booru/raw/master/better-better-booru.user.js)
- * [Greasy Fork](https://greasyfork.org/scripts/#To-Be-Determined)
+ * [Greasy Fork](https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js)
 3. A prompt about allowing the installation should display.
 4. Choose to allow/install after reviewing your options.
 5. The script should now be installed and ready for use on Danbooru.
@@ -82,7 +82,10 @@ Changelog<a name="changelog"></a>
  * Updated the "create backup page" option to a simpler and more compatible method.
  * Fixed the loading message for images that repeatedly fail to load.
  * Fixed the image resizing for initial images when switching to the sample/original image before the initial image has finished loading.
+ * Fixed the notice "close" link overlapping with the notice text when displaying long messages.
  * Fixed a potential issue where "show toddlercon" wouldn't work.
+ * Fixed a potential issue with downgrading to older versions.
+ * Replaced all Userscripts.org information with Greasy Fork information.
  * Moved the "thumbnail info cache limit" option to the preferences tab.
  * Removed the "hide original notice" option that's been replaced by the "resized notice display" option.
  * Removed the "hide advertisements" option due to the removal of ads and prevalence of ad blockers.
