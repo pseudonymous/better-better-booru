@@ -22,7 +22,10 @@ Changelog
  * Updated the "create backup page" option to a simpler and more compatible method.
  * Fixed the loading message for images that repeatedly fail to load.
  * Fixed the image resizing for initial images when switching to the sample/original image before the initial image has finished loading.
+ * Fixed the notice "close" link overlapping with the notice text when displaying long messages.
  * Fixed a potential issue where "show toddlercon" wouldn't work.
+ * Fixed a potential issue with downgrading to older versions.
+ * Replaced all Userscripts.org information with Greasy Fork information.
  * Moved the "thumbnail info cache limit" option to the preferences tab.
  * Removed the "hide original notice" option that's been replaced by the "resized notice display" option.
  * Removed the "hide advertisements" option due to the removal of ads and prevalence of ad blockers.
