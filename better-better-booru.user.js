@@ -2337,7 +2337,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			checkUser(bbb.user, bbb.options);
 
 			if (bbb.user.bbb_version !== bbb.options.bbb_version) {
-				convertSettings();
+				convertSettings("load");
 				saveSettings();
 			}
 		}
@@ -2401,12 +2401,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		saveSettings();
 	}
 
-	function convertSettings() {
+	function convertSettings(reason) {
 		// If the user settings are from an old version, attempt to convert some settings and update the version number. Settings will start conversion at the appropriate case and be allowed to run through every case after it until the end.
-		var mode = bbb.user.bbb_version;
+		var userVer = bbb.user.bbb_version;
+		var scriptVer = bbb.options.bbb_version;
 
-		if (isOldVersion(mode)) {
-			switch (mode) {
+		if (isOldVersion(userVer)) {
+			switch (userVer) {
 				case "6.0.2":
 					// Temporary special tests for users that used the test version. Affects version 6.0.2.
 					if (/500$/.test(bbb.user.thumb_cache_limit))
@@ -2434,8 +2435,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (bbb.user.hide_original_notice)
 						bbb.user.show_resized_notice = "sample";
 
-					delete bbb.user.hide_original_notice;
-
 					// Set the new show_banned setting to true if show_deleted is true.
 					if (bbb.user.show_deleted)
 						bbb.user.show_banned = true;
@@ -2444,17 +2443,29 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (!/\bstatus:banned\b/i.test(JSON.stringify(bbb.user.tag_borders)))
 						bbb.user.tag_borders.push(new Border("status:banned", false, "#000000", "solid"));
 
-					// Remove potential testing options.
-					delete bbb.user.resized_notice_display;
-					delete bbb.user.hide_status_notices;
-
 					// Warn about uninstalling old version from Userscripts.org
-					danbNotice("Better Better Booru: You have just been updated from a version of this script that was hosted on Userscripts.org. Before continuing any further, please open your userscript manager and remove any versions of this script older than version 6.3 that may be there.", "perm");
+					if (reason !== "backup")
+						danbNotice("Better Better Booru: You have just been updated from a version of this script that was hosted on Userscripts.org. Before continuing any further, please open your userscript manager and remove any versions of this script older than version 6.3 that may be there.", "perm");
 
 					break;
 			}
 
-			bbb.user.bbb_version = bbb.options.bbb_version;
+			cleanUser();
+			bbb.user.bbb_version = scriptVer;
+		}
+		else if (userVer !== scriptVer) // Revert the version number for downgrades so that conversion can properly work on the settings again for a future upgrade.
+			bbb.user.bbb_version = scriptVer;
+	}
+
+	function cleanUser() {
+		// Verify the user doesn't have any settings that aren't in the base settings and delete them if they do.
+		var user = bbb.user;
+
+		for (var i in user) {
+			if (user.hasOwnProperty(i)) {
+				if (typeof(bbb.options[i]) === "undefined")
+					delete user[i];
+			}
 		}
 	}
 
@@ -2481,7 +2492,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				bbb.user = JSON.parse(backupString); // This is where we expect an error.
 				removeMenu();
 				checkUser(bbb.user, bbb.options);
-				convertSettings();
+				convertSettings("backup");
 				createMenu();
 				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"Save & Close\" to finalize the restore.");
 			}
@@ -3511,7 +3522,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb_menu .bbb-edit-area {height: 392px; width: 794px; margin-bottom: 5px;}' +
 		'#bbb_menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
 		'.bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
-		'.bbb-keep-notice {display: block !important; opacity: 1.0 !important;}';
+		'.bbb-keep-notice {display: block !important; opacity: 1.0 !important;}' +
+		'#notice {padding-right: 55px !important;}'; // Fix Danbooru notice overlapping text for long messages.
 
 		// Provide a little extra space for listings that allow thumbnail_count.
 		if (thumbnail_count && (gLoc === "search" || gLoc === "notes")) {
@@ -4362,9 +4374,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function isOldVersion(ver) {
 		// Takes the provided version and compares it to the script version. Returns true if the provided version is older than the script version.
-		var userNums = ver.split(".");
+		var userVer = ver || bbb.user.bbb_version;
+		var scriptVer = bbb.options.bbb_version;
+		var userNums = userVer.split(".");
 		var userLength = userNums.length;
-		var scriptNums = bbb.options.bbb_version.split(".");
+		var scriptNums = scriptVer.split(".");
 		var scriptLength = scriptNums.length;
 		var loopLength = (userLength > scriptLength ? userLength : scriptLength);
 
@@ -4374,6 +4388,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (userNum < scriptNum)
 				return true;
+			else if (scriptNum < userNum)
+				return false;
 		}
 
 		return false;
