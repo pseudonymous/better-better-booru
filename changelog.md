@@ -1,10 +1,10 @@
 Changelog
 ----------
 * Version 6.3:
- * Added a "resized notice display" option for allowing more control over the resized notice bar.
- * Added a "border spacing" option for controlling the amount of blank space between a border and image and between status borders and custom tag borders.
- * Added a "hide status notices" option for freeing up all the space used by status notices while still allowing access to them.
- * Added a "show banned" option to support banned posts' separation from deleted posts as a new post status.
+ * Added a "show resized notice" option for allowing more control over the resized notice bar.
+ * Added a "border spacing" option for controlling the amount of blank space between status borders and images and between custom tag borders and status borders.
+ * Added a "minimize status notices" option for freeing up all the space used by status notices while still allowing access to them.
+ * Added a "show banned" option to support the separation of banned posts from deleted posts as a new post status.
  * Added a "view original/sample" link to the options section on individual posts with a sample and original image.
  * Added the "random post" link to the options section on individual posts for logged out users.
  * Updated to support webm video posts.
