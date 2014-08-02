@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        6.3
+// @version        6.3.1
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          http://*.donmai.us/*
@@ -22,11 +22,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	 * Use the "BBB Settings" button in the menu instead.
 	 */
 
-	if (typeof(Danbooru) === "undefined") {
-		danbNotice("Better Better Booru: Danbooru's script could not be detected.", "error");
-		bbbStatus("error");
+	// If Danbooru's JS isn't available, assume we're somewhere this script isn't needed and stop.
+	if (typeof(Danbooru) === "undefined")
 		return;
-	}
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
@@ -65,7 +63,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			translationMode: false
 		},
 		options: { // Setting options and data.
-			bbb_version: "6.3",
+			bbb_version: "6.3.1",
 			alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
@@ -662,7 +660,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (!target) {
 			danbNotice("Better Better Booru: Thumbnail section could not be located.", "error");
-			bbbStatus("error");
 			return;
 		}
 
@@ -736,13 +733,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (!imgContainer) {
 			danbNotice("Better Better Booru: Post content could not be located.", "error");
-			bbbStatus("error");
 			return;
 		}
 
 		if (!post || !post.file_url) {
 			danbNotice("Better Better Booru: Due to a lack of provided information, this post cannot be viewed.", "error");
-			bbbStatus("error");
 			return;
 		}
 
@@ -1075,9 +1070,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var existingPost = existingPosts[eci];
 
 			if (!existingPost || post.id !== Number(existingPost.getAttribute("data-id"))) {
-				if (!/\b(?:loli|shota|toddlercon)\b/.test(post.tag_string)) // API post isn't loli/shota and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
+				if (!/\b(?:loli|shota|toddlercon)\b/.test(post.tag_string) && !post.is_banned) // API post isn't hidden and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
 					continue;
-				else if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string))) { // Skip loli/shota/toddlercon if the user has selected to do so.
+				else if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_banned && post.is_banned)) { // Skip hidden posts if the user has selected to do so.
 					expectedPosts--;
 					continue;
 				}
@@ -1345,7 +1340,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (!menu) {
 			danbNotice("Better Better Booru: The settings panel link could not be created.", "error");
-			bbbStatus("error");
 			return;
 		}
 
@@ -2446,7 +2440,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					// Warn about uninstalling old version from Userscripts.org
 					if (reason !== "backup")
 						danbNotice("Better Better Booru: You have just been updated from a version of this script that was hosted on Userscripts.org. Before continuing any further, please open your userscript manager and remove any versions of this script older than version 6.3 that may be there.", "perm");
-
+				case "6.3":
 					break;
 			}
 
@@ -3189,12 +3183,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function checkSetting(metaName, metaData, scriptSetting) {
 		// Check for the user's account settings and use the script setting if they're logged out or want to override them.
-		if (useAccount()) {
-			if (fetchMeta(metaName) === metaData)
-				return true;
-			else
-				return false;
-		}
+		if (useAccount())
+			return fetchMeta(metaName) === metaData;
 		else
 			return scriptSetting;
 	}
