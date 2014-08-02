@@ -1,5 +1,7 @@
 Changelog
 ----------
+* Version 6.3.1:
+ * Updated to support showing banned posts in the comments section.
 * Version 6.3:
  * Added a "show resized notice" option for allowing more control over the resized notice bar.
  * Added a "border spacing" option for controlling the amount of blank space between status borders and images and between custom tag borders and status borders.
