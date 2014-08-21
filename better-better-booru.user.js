@@ -3555,7 +3555,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function bbbStatus(mode, xmlState) {
 		// Updates the BBB status message.
-		// xmlState: Positive numbers indicate the number of requests to be made/being made. Negative numbers indicate successful requests. An "error" value means the request failed.
+		// xmlState: "add" = opening an XML request, "done" = closing an xml request, "error" = xml request failed.
 		if (!enable_status_message)
 			return;
 
@@ -3601,7 +3601,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			newCount = (xmlState === "error" ? 0 : msg.queue.length);
 			bbb.status.count += newCount - msg.count;
 			msg.count = newCount;
-			msg.info.innerHTML = msg.count; // Update the number of hidden thumbnails remaining.
+			msg.info.innerHTML = msg.count; // Update the displayed number of requests remaining.
 		}
 		else { // For simultaneous xml requests, just increment/decrement.
 			if (xmlState === "new")
