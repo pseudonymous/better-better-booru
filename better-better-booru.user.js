@@ -74,7 +74,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
 			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted post thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"x\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will display what blacklist entries it matches. Clicking a second time while that display is open will reveal the thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries from the blacklist bar/list will have no effect on posts that have been changed via their individual controls."),
 			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <br><br><b>Removed:</b> The default Danbooru behavior where the posts and the space they take up are completely removed. <br><br><b>Hidden:</b> Post space is preserved, but thumbnails are hidden. <br><br><b>Replaced:</b> Thumbnails are replaced by \"Blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
-			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>While the post's own content will not be affected by the blacklist, all other content such as child/parent thumbnails will be."),
+			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
 			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <br><br><b>Highlight:</b> Change the background color of blacklisted thumbnails. <br><br><b>Icon Overlay:</b> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
 			border_spacing: newOption("dropdown", 0, "Border Spacing", "Set the amount of blank space between a border and thumbnail and between a custom tag border and status border. <tiphead>Note</tiphead>Even when set to 0, status borders and custom tag borders will always have a minimum value of 1 between them. <tiphead>Tip</tiphead>Use this option if you often have trouble distinguishing a border from the thumbnail image.", {txtOptions:["0 (Default):0", "1:1", "2:2", "3:3"]}),
 			border_width: newOption("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3", "4:4", "5:5"]}),
@@ -220,7 +220,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var bbbBlacklistIcon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAAC6V+0/AAAAkFBMVEUAAAD////////////////////////////////////////////////////////////////p6en////////////////////////////////////////////////////////+/v7///////////////////////////////////////////////////////////97JICZAAAAL3RSTlMACAQBoUSi5QcnMfmnsMW9VQno+vjsxrwstPyzMhOpSxS65vX06czqQf7NvqbzQKZY7GsAAADASURBVHhefZDnDoJAEITn8Kh3FAEFQbH3Mu//doaNLSFxfn7J7hT80cgJlAqc0S8bu55P+p47/rJQ8yUdflhCHq/WpjmZvKjSPPOyBFbZlNRKPFySzTaOANQJ6fZujsf9YUcjNMvpOQACn+kyLmjaObBI6QcAFGkRxYblLAIsqd4Q0ayUDzeBcr4A5q2h6U5Vfy5GeQbIh8l6I0YSKal72k3uhUSS8OQ0WwGPddFQq2/NPLW22rxrDgcZTvd35KGevk8VfmeGhUQAAAAASUVORK5CYII=";
 
 	/* "INIT" */
-	customCSS(); // Contains the portions related to ads and notices.
+	customCSS(); // Contains the portions related to notices.
 
 	delayMe(formatThumbnails);
 
@@ -243,12 +243,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	injectSettings();
 
-	if (!noXML()) {
-		if (useAPI()) // API only features.
-			searchJSON(gLoc);
-		else // Alternate mode for features.
-			searchPages(gLoc);
-	}
+	modifyPage();
 
 	cleanLinks();
 
@@ -298,8 +293,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				bbbStatus("posts", "new");
 			}
 		}
-		else if (mode === "post")
-			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 		else if (mode === "popular") {
 			if (numThumbs !== thumbnail_count_default) {
 				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
@@ -438,7 +431,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (gLoc === "search") {
 			target = document.getElementById("posts");
 			target = (target ? target.getElementsByTagName("div")[0] : undefined);
-			query = (gUrlQuery.indexOf("tags=") > -1 && !clean_links ? "?tags=" + getVar("tags") : "");
+			query = getVar("tags");
+			query = (query !== undefined && !clean_links ? "?tags=" + query : "");
 		}
 		else if (gLoc === "popular")
 			target = document.getElementById("a-index");
@@ -804,9 +798,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Let other functions that don't require the API run (alternative to searchJSON) and retrieve various pages for info.
 		var url;
 
-		if (mode === "post")
-			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
-		else if (mode === "search" || mode === "notes" || mode === "favorites") {
+		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			if (allowUserLimit()) {
 				url = appendUrlQuery(gUrl, "limit=" + thumbnail_count);
 
@@ -910,7 +902,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var target = document.getElementsByClassName("paginator")[0];
 		var newContent = docEl.getElementsByClassName("paginator")[0];
 
-		if (newContent)
+		if (target && newContent)
 			target.parentNode.replaceChild(newContent, target);
 	}
 
@@ -2622,7 +2614,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function alternateImageSwap(post) {
 		// Make clicking the image swap between the original and sample image when available.
 		// Make a "Toggle Notes" link in the sidebar options.
-		var before = document.getElementById((isLoggedIn() ? "add-notes-list" : "bbb-random-post"));
+		var before = document.getElementById((isLoggedIn() ? "add-notes-list" : "random-post"));
 
 		if (before) {
 			var listNoteToggle = document.createElement("li");
@@ -2656,7 +2648,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var infoSection = document.getElementById("post-information");
 		var options = document.createElement("section");
 		options.id = "post-options";
-		options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li><li><a id="bbb-random-post" href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + post.preview_file_url + '">Find similar</a></li></ul>';
+		options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li><li><a id="random-post" href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + post.preview_file_url + '">Find similar</a></li></ul>';
 		infoSection.parentNode.insertBefore(options, infoSection.nextElementSibling);
 	}
 
@@ -3225,6 +3217,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	/* Other functions */
+	function modifyPage() {
+		if (noXML())
+			return;
+
+		if (gLoc === "post")
+			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
+		else if (useAPI()) // API only features.
+			searchJSON(gLoc);
+		else // Alternate mode for features.
+			searchPages(gLoc);
+	}
+
 	function formatThumbnails(target) {
 		// Create thumbnail titles and borders.
 		var posts = getPosts(target);
@@ -3555,7 +3559,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function bbbStatus(mode, xmlState) {
 		// Updates the BBB status message.
-		// xmlState: "add" = opening an XML request, "done" = closing an xml request, "error" = xml request failed.
+		// xmlState: "new" = opening an XML request, "done" = closing an xml request, "error" = xml request failed.
 		if (!enable_status_message)
 			return;
 
@@ -3601,7 +3605,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			newCount = (xmlState === "error" ? 0 : msg.queue.length);
 			bbb.status.count += newCount - msg.count;
 			msg.count = newCount;
-			msg.info.innerHTML = msg.count; // Update the displayed number of requests remaining.
+			msg.info.innerHTML = newCount; // Update the displayed number of requests remaining.
 		}
 		else { // For simultaneous xml requests, just increment/decrement.
 			if (xmlState === "new")
@@ -4180,10 +4184,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					searchTerm = searchTerm.slice(1);
 				}
 
-				if (searchTerm.length > 0)
-					mode = searchObject[primaryMode][secondaryMode];
-				else
+				if (searchTerm.length < 1) // Stop if there is no actual tag.
 					continue;
+
+				mode = searchObject[primaryMode][secondaryMode];
 
 				if (isNumMetatag(searchTerm)) { // Parse numeric metatags and turn them into objects.
 					var tagArray = searchTerm.split(":");
@@ -4572,10 +4576,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		styles += 'article.post-preview a, .post-preview div.preview a {display: inline-block}' +
 		'article.post-preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin: 0px ' + listingExtraSpace + 'px ' + listingExtraSpace + 'px 0px !important;}' +
+		'article.post-preview.pooled {height: ' + (thumbMaxDim + 40) + 'px !important;}' + // Pool gallery view thumb height adjustment.
 		'#has-parent-relationship-preview article.post-preview, #has-children-relationship-preview article.post-preview {padding: 5px 5px 10px !important; width: auto !important; max-width: ' + thumbMaxDim + 'px !important; margin: 0px !important;}' +
-		'article.post-preview a {line-height: 0px !important;}' +
+		'article.post-preview > a {line-height: 0px !important;}' +
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
-		'.post-preview div.preview a {line-height: 0px !important;}' +
+		'.post-preview div.preview > a {line-height: 0px !important;}' +
 		'.post-preview img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
 		'.bbb-custom-tag {border-width: ' + border_width + 'px !important;}' +
 		'article.post-preview:before, .post-preview div.preview:before {margin: ' + totalBorderWidth + 'px !important;}'; // Thumbnail icon overlay position adjustment.
@@ -4831,17 +4836,24 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function bbbHotkeys() {
 		// Create hotkeys or override Danbooru's existing ones.
-		document.addEventListener("keypress", function(event) {
-			if (document.activeElement.type !== "text" && document.activeElement.type !== "textarea") {
-				switch (event.charCode) {
-					case 118: // "v"
-						if (gLoc === "post") {
-							swapImage();
-							event.stopPropagation();
-							event.preventDefault();
-						}
-						break;
-				}
+		document.addEventListener("keydown", function(event) {
+			if (document.activeElement.type === "text" || document.activeElement.type === "textarea" || event.ctrlKey || event.shiftKey)
+				return;
+
+			var match = false;
+
+			switch (event.keyCode) {
+				case 86: // "v"
+					if (gLoc === "post") {
+						match = true;
+						swapImage();
+					}
+					break;
+			}
+
+			if (match) {
+				event.stopPropagation();
+				event.preventDefault();
 			}
 		}, true);
 	}
@@ -4925,15 +4937,25 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Bind the arrow keys to Danbooru's page navigation.
 		var paginator = document.getElementsByClassName("paginator")[0];
 
-		if (!arrow_nav || ((!paginator && gLoc !== "popular"))) // If the paginator exists, arrow navigation should be applicable.
+		if (!arrow_nav || (!paginator && gLoc !== "popular")) // If the paginator exists, arrow navigation should be applicable.
 			return;
 
 		document.addEventListener("keydown", function(event) {
-			if (document.activeElement.type !== "text" && document.activeElement.type !== "textarea") {
-				if (event.keyCode === 37)
-					danbooruNav("left");
-				else if (event.keyCode === 39)
-					danbooruNav("right");
+			if (document.activeElement.type === "text" || document.activeElement.type === "textarea")
+				return;
+
+			var match = true;
+
+			if (event.keyCode === 37) // Left arrow
+				danbooruNav("prev");
+			else if (event.keyCode === 39) // Right arrow
+				danbooruNav("next");
+			else
+				match = false;
+
+			if (match) {
+				event.stopPropagation();
+				event.preventDefault();
 			}
 		}, false);
 	}
@@ -4941,15 +4963,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function danbooruNav(dir) {
 		// Determine the correct Danbooru page function and use it.
 		if (gLoc === "popular") {
-			if (dir === "left")
+			if (dir === "prev")
 				Danbooru.PostPopular.nav_prev();
-			else if (dir === "right")
+			else if (dir === "next")
 				Danbooru.PostPopular.nav_next();
 		}
 		else {
-			if (dir === "left")
+			if (dir === "prev")
 				Danbooru.Paginator.prev_page();
-			else if (dir === "right")
+			else if (dir === "next")
 				Danbooru.Paginator.next_page();
 		}
 	}
@@ -5101,7 +5123,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function useAPI() {
-		// Determine whether any options that required the API are enabled.
+		// Determine whether any options that require the API are enabled.
 		if ((show_loli || show_shota || show_toddlercon || show_deleted || show_banned) && (isLoggedIn() || !bypass_api))
 			return true;
 		else
@@ -5345,14 +5367,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function uniqueIdNum() {
-		var uId = bbb.uId;
-
 		if (!bbb.uId)
-			uId = 0;
+			bbb.uId =  1;
 		else
-			uId++;
+			bbb.uId++;
 
-		return "bbbuid" + uId;
+		return "bbbuid" + bbb.uId;
 	}
 
 
