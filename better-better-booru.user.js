@@ -259,30 +259,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	/* Functions for XML API info */
 	function searchJSON(mode, optArg) {
-		var numThumbs = getPosts().length;
-
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
-			var limitUrl = getVar("limit");
-			var limitSearch = getLimitSearch();
-			var numDesired = 0;
-			var limit = "";
-			var numExpected;
+			if (potentialHiddenPosts(mode)) {
+				var limit = (allowUserLimit() ? "&limit=" + thumbnail_count : "");
 
-			if (limitUrl !== undefined)
-				numExpected = limitUrl;
-			else if (limitSearch !== undefined)
-				numExpected = limitSearch;
-			else
-				numExpected = thumbnail_count_default;
-
-			if (allowUserLimit()) {
-				numDesired = thumbnail_count;
-				limit = "&limit=" + thumbnail_count;
-			}
-			else
-				numDesired = numExpected;
-
-			if (numThumbs !== numDesired || numThumbs < numExpected) {
 				if (mode === "search")
 					fetchJSON(gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit, "search");
 				else if (mode === "notes")
@@ -294,13 +274,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 		}
 		else if (mode === "popular") {
-			if (numThumbs !== thumbnail_count_default) {
+			if (potentialHiddenPosts(mode)) {
 				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
 				bbbStatus("posts", "new");
 			}
 		}
 		else if (mode === "pool") {
-			if (numThumbs !== thumbnail_count_default) {
+			if (potentialHiddenPosts(mode)) {
 				var poolId = /\/pools\/(\d+)/.exec(gUrl)[1];
 				var poolCache = sessionStorage["pool" + poolId];
 				var curTime = new Date().getTime();
@@ -323,13 +303,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "poolsearch") {
 			var poolIds = optArg.post_ids.split(" ");
-			var page = getVar("page") || 1;
+			var page = Number(getVar("page")) || 1;
 			var postIds = poolIds.slice((page - 1) * thumbnail_count_default, page * thumbnail_count_default);
 
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
 		}
 		else if (mode === "comments") {
-			if (numThumbs !== 5) {
+			if (potentialHiddenPosts(mode)) {
 				fetchJSON(gUrl.replace(/\/comments\/?/, "/comments.json"), "comments");
 				bbbStatus("posts", "new");
 			}
@@ -1127,9 +1107,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (el.id === elId)
 					return el;
 			}
-
-			return null;
 		}
+
+		return null;
 	}
 
 	function getPosts(target) {
@@ -1149,6 +1129,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function getMeta(meta, pageEl) {
+		// Get a value from an HTML meta tag.
 		var target = pageEl || document;
 		var metaTags = target.getElementsByTagName("meta");
 
@@ -1167,7 +1148,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function getVar(urlVar, url) {
-		// Retrieve a variable value from a specified URL or the current URL.
+		// Retrieve a value from a specified/current URL's query string.
 		if (!url)
 			url = gUrlQuery;
 
@@ -1175,15 +1156,34 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (!result)
 			return undefined;
-		else
-			result = result.split(/[#&]/, 1)[0];
 
-		if (!result)
+		result = result.split(/[#&]/, 1)[0];
+
+		return result;
+	}
+
+	function getTagVar(urlVar, url) {
+		// Retrieve a metatag's value from the tag portion of a specified/current URL's query string.
+		if (!url)
+			url = gUrlQuery;
+
+		var tags = getVar("tags", url);
+		var tag;
+		var result;
+
+		if (tags === undefined)
 			return undefined;
-		else if (bbbIsNum(result))
-			return Number(result);
-		else
-			return result;
+
+		tags = tags.split(/\+|%20/g);
+
+		for (var i = 0, tl = tags.length; i < tl; i++) {
+			tag = decodeURIComponent(tags[i]);
+
+			if (tag.indexOf(urlVar + ":") === 0)
+				result = encodeURIComponent(tag.split(":")[1]); // Let the calling function decide whether it wants the decoded tag or not.
+		}
+
+		return result;
 	}
 
 	/* Functions for the settings panel */
@@ -1421,7 +1421,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Add menu to the DOM and manipulate the dimensions.
 		document.body.appendChild(menu);
 
-		var viewHeight = window.innerHeight;
+		var viewHeight = document.documentElement.clientHeight;
 		var barWidth = scrollbarWidth();
 		var scrollDivDiff = menu.offsetHeight - scrollDiv.clientHeight;
 
@@ -2220,7 +2220,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function adjustMenuHeight() {
 		var menu = bbb.el.menu.window;
 		var scrollDiv = bbb.el.menu.scrollDiv;
-		var viewHeight = window.innerHeight;
+		var viewHeight = document.documentElement.clientHeight;
 		var scrollDivDiff = menu.offsetHeight - scrollDiv.clientHeight;
 
 		scrollDiv.style.maxHeight = viewHeight - scrollDiv.bbbGetPadding().height - scrollDivDiff - 50 + "px"; // Subtract 50 for margins (25 each).
@@ -2745,7 +2745,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLinkWidth = bbb.el.resizeLinkWidth;
 		var resizeLinkHeight = bbb.el.resizeLinkHeight;
 		var availableWidth = imgContainer.clientWidth || contentDiv.clientWidth - contentDiv.bbbGetPadding().width;
-		var availableHeight = window.innerHeight - 40;
+		var availableHeight = document.documentElement.clientHeight - 40;
 		var targetCurrentWidth = target.clientWidth || parseFloat(target.style.width) || target.getAttribute("width");
 		var targetCurrentHeight = target.clientHeight || parseFloat(target.style.height) || target.getAttribute("height");
 		var targetWidth = (swfEmb || webmVid ? imgContainer.getAttribute("data-width") : img.getAttribute("width")); // Was NOT expecting target.width to return the current width (css style width) and not the width attribute's value here...
@@ -3092,7 +3092,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var notice = noticeEl;
 		var topOffset = 0;
 
-		notice.style.maxWidth = window.innerWidth * 0.66 + "px";
+		notice.style.maxWidth = document.documentElement.clientWidth * 0.66 + "px";
 		notice.style.visibility = "hidden";
 		notice.style.display = "block";
 
@@ -3502,7 +3502,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var noticeMsg = bbb.el.noticeMsg;
 		var type = (typeof(noticeType) !== "undefined" ? noticeType : 6);
 
-		var msg = document.createElement("span");
+		var msg = document.createElement("div");
+		msg.className = "bbb-notice-msg-entry";
 		msg.innerHTML = txt;
 		msg.style.color = (type === -1 ? "#FF0000" : "#000000");
 
@@ -3538,7 +3539,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (notice.style.display === "block" && /\S/.test(noticeMsg.textContent)) { // Insert new text at the top if the notice is already open.
 			type = (type > 0 ? 0 : type);
-			msg.innerHTML += "<hr/>";
 			noticeMsg.insertBefore(msg, noticeMsg.children[0]);
 			window.clearTimeout(bbb.timers.bbbNotice);
 		}
@@ -3683,8 +3683,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Check if there actually are any tags.
 		if (!/[^\s,]/.test(blacklistTags))
 			return;
-		else
-			blacklistTags = blacklistTags.split(",");
+
+		blacklistTags = blacklistTags.split(",");
 
 		// Create the blacklist section.
 		for (var i = 0, il = blacklistTags.length; i < il; i++) {
@@ -4400,8 +4400,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				trackNewLoad();
 			}
 			else if (mode === "list") {
-				var limitNum = getVar("limit") || thumbnail_count || thumbnail_count_default;
-				var currentPage = getVar("page") || 1;
+				var limitNum = getLimit() || thumbnail_count || thumbnail_count_default;
+				var currentPage = Number(getVar("page")) || 1;
 				var savedPage = Math.ceil((info.viewing - limitNum) / limitNum) + 1;
 				var currentViewed = Number(/id:>(\d+)/.exec(decodeURIComponent(gUrlQuery))[1]);
 
@@ -4479,7 +4479,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		loadSettings();
 
 		var info = bbb.user.track_new_data;
-		var limitNum = getVar("limit") || bbb.user.thumbnail_count || thumbnail_count_default;
+		var limitNum = getLimit() || bbb.user.thumbnail_count || thumbnail_count_default;
 		var posts = getPosts();
 		var lastPost = posts[posts.length - 1];
 		var lastId = (lastPost ? Number(lastPost.getAttribute("data-id")) : null );
@@ -4557,7 +4557,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; text-align: right; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
 		'#bbb-notice-container {position: fixed; top: 0.5em; left: 25%; width: 50%;}' +
 		'#bbb-notice {padding: 3px; width: 100%; display: none; position: relative; z-index: 9002; border-radius: 2px; border: 1px solid #000000; background-color: #CCCCCC;}' +
-		'#bbb-notice-msg {margin: 0px 25px 0px 55px; max-height: 200px; overflow: auto;}';
+		'#bbb-notice-msg {margin: 0px 25px 0px 55px; max-height: 200px; overflow: auto;}' +
+		'#bbb-notice-msg .bbb-notice-msg-entry {border-bottom: solid 1px #000000; margin-bottom: 5px; padding-bottom: 5px;}' +
+		'#bbb-notice-msg .bbb-notice-msg-entry:last-child {border-bottom: none 0px; margin-bottom: 0px; padding-bottom: 0px;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
 		if (thumbnail_count && (gLoc === "search" || gLoc === "notes" || gLoc === "favorites")) {
@@ -4574,13 +4576,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var sbsl = status_borders.length;
 		var statusBorderItem;
 
-		styles += 'article.post-preview a, .post-preview div.preview a {display: inline-block}' +
+		styles += 'article.post-preview a.bbb-thumb-link, .post-preview div.preview a.bbb-thumb-link {display: inline-block}' +
 		'article.post-preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin: 0px ' + listingExtraSpace + 'px ' + listingExtraSpace + 'px 0px !important;}' +
-		'article.post-preview.pooled {height: ' + (thumbMaxDim + 40) + 'px !important;}' + // Pool gallery view thumb height adjustment.
+		'article.post-preview.pooled {height: ' + (thumbMaxDim + 60) + 'px !important;}' + // Pool gallery view thumb height adjustment.
 		'#has-parent-relationship-preview article.post-preview, #has-children-relationship-preview article.post-preview {padding: 5px 5px 10px !important; width: auto !important; max-width: ' + thumbMaxDim + 'px !important; margin: 0px !important;}' +
-		'article.post-preview > a {line-height: 0px !important;}' +
+		'article.post-preview a.bbb-thumb-link {line-height: 0px !important;}' +
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
-		'.post-preview div.preview > a {line-height: 0px !important;}' +
+		'.post-preview div.preview a.bbb-thumb-link {line-height: 0px !important;}' +
 		'.post-preview img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
 		'.bbb-custom-tag {border-width: ' + border_width + 'px !important;}' +
 		'article.post-preview:before, .post-preview div.preview:before {margin: ' + totalBorderWidth + 'px !important;}'; // Thumbnail icon overlay position adjustment.
@@ -4645,7 +4647,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (custom_tag_borders) {
 			styles += '.post-preview .bbb-custom-tag img {border-width: 0px !important;}' + // Remove the transparent border for images that get custom tag borders.
-			'article.post-preview a, .post-preview div.preview a {margin: ' + (border_width + customBorderSpacing) + 'px !important;}'; // Align one border images with two border images.
+			'article.post-preview a.bbb-thumb-link, .post-preview div.preview a.bbb-thumb-link {margin: ' + (border_width + customBorderSpacing) + 'px !important;}'; // Align one border images with two border images.
 
 			for (i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
@@ -4680,25 +4682,25 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (blacklist_post_display === "hidden")
 			styles += 'article.post-preview.blacklisted.blacklisted-active {display: inline-block !important;}' +
 			'div.post.post-preview.blacklisted {display: block !important;}' + // Comments.
-			'article.post-preview.blacklisted.blacklisted-active a, div.post.post-preview.blacklisted.blacklisted-active div.preview {visibility: hidden !important;}';
+			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview {visibility: hidden !important;}';
 		else if (blacklist_post_display === "replaced")
 			styles += 'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {display: inline-block !important; background-position: ' + totalBorderWidth + 'px ' + totalBorderWidth + 'px !important; background-repeat: no-repeat !important; background-image: url(' + bbbBlacklistImg + ') !important;}' +
 			'#has-parent-relationship-preview article.post-preview.blacklisted.blacklisted-active, #has-children-relationship-preview article.post-preview.blacklisted.blacklisted-active {background-position: ' + (totalBorderWidth + 5) + 'px ' + (totalBorderWidth + 5) + 'px !important;}' + // Account for relation notice padding.
 			'article.post-preview.blacklisted.blacklisted-active img, div.post.post-preview.blacklisted.blacklisted-active div.preview img {opacity: 0.0 !important; height: 150px !important; width: 150px !important; border-width: 0px !important; padding: 0px !important;}' + // Remove all status border space.
-			'article.post-preview.blacklisted.blacklisted-active a, div.post.post-preview.blacklisted.blacklisted-active div.preview a {padding: 0px !important; margin: ' + totalBorderWidth + 'px !important;}' + // Align no border thumbs with custom/single border thumbs.
-			'article.post-preview.blacklisted.blacklisted-active a.bbb-custom-tag, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-custom-tag {padding: ' + border_spacing + 'px !important; margin: ' + (border_width + customBorderSpacing) + 'px !important;}' +
+			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link {padding: 0px !important; margin: ' + totalBorderWidth + 'px !important;}' + // Align no border thumbs with custom/single border thumbs.
+			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link.bbb-custom-tag, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link.bbb-custom-tag {padding: ' + border_spacing + 'px !important; margin: ' + (border_width + customBorderSpacing) + 'px !important;}' +
 			'div.post.post-preview.blacklisted {display: block !important;}' +
 			'div.post.post-preview.blacklisted.blacklisted-active {display: block !important;}';
 
 		// Blacklist marking.
 		if (blacklist_thumb_mark === "icon") {
 			styles += 'article.post-preview:before, div.post.post-preview div.preview:before {content: none !important;}' + // Disable original Danbooru animated overlay.
-			'article.post-preview.blacklisted a:after, div.post.post-preview.blacklisted div.preview a:after {content:" "; position: absolute; bottom: 0px; right: 0px; height: 20px; width: 20px; line-height: 20px; font-weight: bold; color: #FFFFFF; background: rgba(0, 0, 0, 0.5) url(\'' + bbbBlacklistIcon + '\');}' + // Create blacklist overlay.
-			'article.post-preview[data-tags~="animated"] a:before, article.post-preview[data-file-ext="swf"] a:before, article.post-preview[data-file-ext="webm"] a:before, div.post.post-preview[data-tags~="animated"] div.preview a:before, div.post.post-preview[data-file-ext="swf"] div.preview a:before, div.post.post-preview[data-file-ext="webm"] div.preview a:before {content: "►"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru animated overlay.
-			'article.post-preview.blacklisted a:after, article.post-preview a:before, div.post.post-preview.blacklisted div.preview a:after, div.post.post-preview div.preview a:before {margin: ' + (border_width + border_spacing) + 'px;}' + // Margin applies to posts with no borders or only a status border.
-			'article.post-preview.blacklisted a.bbb-custom-tag:after, article.post-preview a.bbb-custom-tag:before, div.post.post-preview.blacklisted div.preview a.bbb-custom-tag:after, div.post.post-preview div.preview a.bbb-custom-tag:before {margin: ' + border_spacing + 'px;}' + // Margin applies to posts with only a custom border.
-			'article.post-preview.blacklisted.blacklisted-active a:after, article.post-preview.blacklisted.blacklisted-active a:before, div.post.post-preview.blacklisted.blacklisted-active div.preview a:after, div.post.post-preview.blacklisted.blacklisted-active div.preview a:before {content: none;}' + // Don't display when actively blacklisted.
-			'article.post-preview a, div.post.post-preview div.preview a {position: relative;}'; // Allow the overlays to position relative to the link.
+			'article.post-preview.blacklisted a.bbb-thumb-link:after, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after {content:" "; position: absolute; bottom: 0px; right: 0px; height: 20px; width: 20px; line-height: 20px; font-weight: bold; color: #FFFFFF; background: rgba(0, 0, 0, 0.5) url(\'' + bbbBlacklistIcon + '\');}' + // Create blacklist overlay.
+			'article.post-preview[data-tags~="animated"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="swf"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="webm"] a.bbb-thumb-link:before, div.post.post-preview[data-tags~="animated"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="swf"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="webm"] div.preview a.bbb-thumb-link:before {content: "►"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru animated overlay.
+			'article.post-preview.blacklisted a.bbb-thumb-link:after, article.post-preview a.bbb-thumb-link:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after, div.post.post-preview div.preview a.bbb-thumb-link:before {margin: ' + (border_width + border_spacing) + 'px;}' + // Margin applies to posts with no borders or only a status border.
+			'article.post-preview.blacklisted a.bbb-thumb-link.bbb-custom-tag:after, article.post-preview a.bbb-thumb-link.bbb-custom-tag:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link.bbb-custom-tag:after, div.post.post-preview div.preview a.bbb-thumb-link.bbb-custom-tag:before {margin: ' + border_spacing + 'px;}' + // Margin applies to posts with only a custom border.
+			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:after, article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:before, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:after, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:before {content: none;}' + // Don't display when actively blacklisted.
+			'article.post-preview a.bbb-thumb-link, div.post.post-preview div.preview a.bbb-thumb-link {position: relative;}'; // Allow the overlays to position relative to the link.
 
 
 			for (i = 0; i < sbsl; i++) {
@@ -4916,7 +4918,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				if (tagsInput) {
 					search.addEventListener("submit", function() {
-						if (/\blimit:\d+\b/.test(tagsInput.value))
+						if (/\blimit:/.test(tagsInput.value))
 							search.removeChild(limitInput);
 						else if (limitInput.parentNode !== search)
 							search.appendChild(limitInput);
@@ -4926,11 +4928,32 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function getLimitSearch(url) {
-		// Retrieve the limit tag value from the tag search string.
-		var limitTag = decodeURIComponent(getVar("tags", url) || "").match(/\blimit:(\d+)\b/);
+	function getLimit(url) {
+		// Retrieve the current limit value.
+		var queryLimit = getVar("limit", url);
+		var searchLimit = getTagVar("limit", url);
+		var limit;
 
-		return (limitTag ? Number(limitTag[1]) : undefined);
+		if (queryLimit !== undefined) {
+			queryLimit = decodeURIComponent(queryLimit);
+
+			if (queryLimit === "" || !/^\s*\d+/.test(queryLimit)) // No thumbnails show up when the limit is declared but left blank or has no number directly after any potential white space.
+				limit = 0;
+			else // The query limit finds its value in a manner similar to parseInt. Dump leading spaces and grab numbers until an non-numerical character is hit.
+				limit = parseInt(queryLimit, 10);
+		}
+		else if (searchLimit !== undefined) {
+			searchLimit = decodeURIComponent(searchLimit);
+
+			if (searchLimit === "") // No thumbnails show up when the limit is declared but left blank.
+				limit = 0;
+			else if (!bbbIsNum(searchLimit.replace(/\s/g, "")) || searchLimit.indexOf(".") > -1 || Number(searchLimit) < 0) // Non-numerical, negative, and decimal values are ignored.
+				limit = thumbnail_count_default;
+			else
+				limit = Number(searchLimit);
+		}
+
+		return limit;
 	}
 
 	function arrowNav() {
@@ -5058,7 +5081,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function allowUserLimit() {
 		// Allow use of the limit variable if it isn't currently set and we're on the first page.
-		if (thumbnail_count && !/(?:page|limit)=\d/.test(gUrlQuery) && getLimitSearch() === undefined)
+		var page = Number(getVar("page")) || 1; // When set to 0 or undefined, the first page is shown.
+		var limit = getLimit();
+
+		if (thumbnail_count && page === 1 && limit === undefined)
 			return true;
 		else
 			return false;
@@ -5092,6 +5118,34 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return undefined;
 	}
 
+	function potentialHiddenPosts(mode, target) {
+		// Check a normal thumbnail listing for possible hidden posts.
+		var numPosts = getPosts(target).length;
+		var hasPotential = false;
+
+		if (mode === "search" || mode === "notes" || mode === "favorites") {
+			var limit = getLimit();
+			var numDesired;
+			var numExpected;
+
+			numExpected = (limit !== undefined ? limit : thumbnail_count_default);
+			numDesired = (allowUserLimit() ? thumbnail_count : numExpected);
+
+			if (numPosts !== numDesired || numPosts < numExpected)
+				hasPotential = true;
+		}
+		else if (mode === "popular" || mode === "pool") {
+			if (numPosts !== thumbnail_count_default)
+				hasPotential = true;
+		}
+		else if (mode === "comments") {
+			if (numPosts !== 5)
+				hasPotential = true;
+		}
+
+		return hasPotential;
+	}
+
 	function isLoggedIn() {
 		if (getMeta("current-user-id") !== "")
 			return true;
@@ -5101,13 +5155,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function noXML() {
 		// Don't use XML requests on certain pages where it won't do any good.
-		var limit = getVar("limit");
-		var limitTag = getLimitSearch();
+		var limit = getLimit();
 		var page = getVar("page");
 		var result = false;
 
 		if (gLoc === "search" || gLoc === "favorites") {
-			if (limit === 0 || page === "b1" || limitTag === 0)
+			if (limit === 0 || page === "b1")
 				result = true;
 		}
 		else if (gLoc === "notes") {
@@ -5367,6 +5420,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function uniqueIdNum() {
+		// Return a unique ID number for an element.
 		if (!bbb.uId)
 			bbb.uId =  1;
 		else
