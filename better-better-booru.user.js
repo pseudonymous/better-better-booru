@@ -70,7 +70,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <br><br><b>Below Header:</b> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <br><br><b>Post Content:</b> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
-			blacklist_add_bars: newOption("dropdown", "none", "Additional Bars", "Add blacklist bars to the comments, notes, and/or pool listings so that blacklist entries can be toggled as needed.", {txtOptions:["Disabled:none", "Comments:comments", "Notes:notes", "Pools:pool", "Comments & Notes:comments notes", "Comments & Pools:comments pool", "Notes & Pools:notes pool", "All:comments notes pool"]}),
+			blacklist_add_bars: newOption("dropdown", "none", "Additional Bars", "Add blacklist bars to the comments, notes, and/or pool listings so that blacklist entries can be toggled as needed.", {txtOptions:["Disabled:none", "Comments:comments", "Notes:notes", "Pools:pool pool_gallery", "Comments & Notes:comments notes", "Comments & Pools:comments pool pool_gallery", "Notes & Pools:notes pool pool_gallery", "All:comments notes pool pool_gallery"]}),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
 			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted post thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"x\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will display what blacklist entries it matches. Clicking a second time while that display is open will reveal the thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries from the blacklist bar/list will have no effect on posts that have been changed via their individual controls."),
 			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <br><br><b>Removed:</b> The default Danbooru behavior where the posts and the space they take up are completely removed. <br><br><b>Hidden:</b> Post space is preserved, but thumbnails are hidden. <br><br><b>Replaced:</b> Thumbnails are replaced by \"Blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
@@ -158,7 +158,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var blacklist_post_display = bbb.user.blacklist_post_display;
 	var blacklist_thumb_mark = bbb.user.blacklist_thumb_mark;
 	var blacklist_highlight_color = bbb.user.blacklist_highlight_color || "#CCCCCC";
-	var blacklist_add_bars = bbb.user.blacklist_add_bars.indexOf(gLoc) > -1;
+	var blacklist_add_bars = new RegExp("\\b" + gLoc + "\\b").test(bbb.user.blacklist_add_bars);
 	var blacklist_thumb_controls = bbb.user.blacklist_thumb_controls;
 	var blacklist_smart_view = bbb.user.blacklist_smart_view;
 
@@ -168,8 +168,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var border_spacing = bbb.user.border_spacing;
 	var border_width = bbb.user.border_width;
 	var clean_links = bbb.user.clean_links;
-	var autohide_sidebar = bbb.user.autohide_sidebar.indexOf(gLoc) > -1;
-	var fixed_sidebar = bbb.user.fixed_sidebar.indexOf(gLoc) > -1;
+	var autohide_sidebar = new RegExp("\\b" + gLoc + "\\b").test(bbb.user.autohide_sidebar);
+	var fixed_sidebar = new RegExp("\\b" + gLoc + "\\b").test(bbb.user.fixed_sidebar);
 
 	var bypass_api = bbb.user.bypass_api;
 	var manage_cookies = bbb.user.manage_cookies;
@@ -3648,6 +3648,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				target = document.getElementById("a-show");
 				before = (target ? target.getElementsByTagName("section")[0] : undefined);
 			}
+			else if (gLoc === "pool_gallery") {
+				target = document.getElementById("a-gallery");
+				before = (target ? target.getElementsByTagName("section")[0] : undefined);
+			}
 			else if (gLoc === "notes" || gLoc === "comments") {
 				target = document.getElementById("a-index");
 
@@ -3867,10 +3871,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (event.button !== 0 || event.ctrlKey || event.shiftKey)
 					return;
 
+				var target = event.target;
 				var postContainer = element;
 				var blacklistTip = bbb.el.blacklistTip;
 
-				if (postContainer.className.indexOf("blacklisted-active") < 0)
+				if (postContainer.className.indexOf("blacklisted-active") < 0 || (target.tagName === "A" && target.className.indexOf("bbb-thumb-link") < 0)) // If the thumb isn't currently hidden or a link that isn't the thumb link is clicked, allow the link click.
 					return;
 
 				if (blacklistTip.style.display !== "block")
@@ -4720,7 +4725,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			styles += '#bbb-blacklist-tip {background-color: #FFFFFF; border: 1px solid #000000; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); display: none; font-size: 12px; line-height: 14px; padding: 5px; position: absolute; max-width: 420px; width: 420px; overflow: hidden; z-index: 9002;}' +
 			'#bbb-blacklist-tip * {font-size: 12px; line-height: 14px;}' +
 			'#bbb-blacklist-tip ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 15px;}' +
-			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active div.preview, article.post-preview.blacklisted.blacklisted-active *, div.post.post-preview.blacklisted.blacklisted-active div.preview * {cursor: help !important;}' +
+			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active div.preview, article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link {cursor: help !important;}' +
+			'article.post-preview.blacklisted.blacklisted-active a, div.post.post-preview.blacklisted.blacklisted-active div.preview a {cursor: pointer !important;}' +
 			'article.post-preview.blacklisted, div.post.post-preview.blacklisted div.preview {position: relative !important;}' +
 			'article.post-preview.blacklisted:hover .bbb-close-circle, div.post.post-preview.blacklisted:hover div.preview .bbb-close-circle {display: block; position: absolute; top: 0px; right: 0px; z-index: 9002 ; cursor: pointer; background-image: url(\'/images/ui-icons_222222_256x240.png\'); background-repeat: no-repeat; background-color: #FFFFFF; background-position: -32px -192px; width: 16px; height: 16px; overflow: hidden;}' +
 			'article.post-preview.blacklisted.blacklisted-active:hover .bbb-close-circle, div.post.post-preview.blacklisted.blacklisted-active:hover div.preview .bbb-close-circle {display: none;}' +
@@ -4787,7 +4793,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (hide_upload_notice && gLoc === "upload")
 			styles += '#upload-guide-notice {display: none !important;}';
 
-		if (hide_pool_notice && gLoc === "new pool") {
+		if (hide_pool_notice && gLoc === "new_pool") {
 			var poolGuide = document.evaluate('//div[@id="c-new"]/p/a[contains(@href,"/howto:pools")]/..', document, null, 9, null).singleNodeValue;
 
 				if (poolGuide && poolGuide.textContent === "Before creating a pool, read the pool guidelines.")
@@ -4939,7 +4945,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (queryLimit === "" || !/^\s*\d+/.test(queryLimit)) // No thumbnails show up when the limit is declared but left blank or has no number directly after any potential white space.
 				limit = 0;
-			else // The query limit finds its value in a manner similar to parseInt. Dump leading spaces and grab numbers until an non-numerical character is hit.
+			else // The query limit finds its value in a manner similar to parseInt. Dump leading spaces and grab numbers until a non-numerical character is hit.
 				limit = parseInt(queryLimit, 10);
 		}
 		else if (searchLimit !== undefined) {
@@ -5104,12 +5110,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return "popular";
 		else if (/\/pools\/\d+/.test(gUrlPath))
 			return "pool";
+		else if (/\/pools\/gallery/.test(gUrlPath))
+			return "pool_gallery";
 		else if (gUrlPath.indexOf("/favorites") === 0)
 			return "favorites";
 		else if (gUrlPath.indexOf("/uploads/new") === 0)
 			return "upload";
 		else if (gUrlPath.indexOf("/pools/new") === 0)
-			return "new pool";
+			return "new_pool";
 		else if (/\/forum_topics\/\d+/.test(gUrlPath))
 			return "topic";
 		else if (gUrlPath.indexOf("/explore/posts/intro") === 0)
