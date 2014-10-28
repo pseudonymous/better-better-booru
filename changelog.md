@@ -1,5 +1,7 @@
 Changelog
 ----------
+* Version 6.3.2:
+ * Updated to support "ugoira" animation posts with a temporary workaround.
 * Version 6.3.1:
  * Updated to support showing banned posts in the comments section.
 * Version 6.3:
