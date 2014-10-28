@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        6.3.1
+// @version        6.3.2
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          http://*.donmai.us/*
@@ -63,7 +63,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			translationMode: false
 		},
 		options: { // Setting options and data.
-			bbb_version: "6.3.1",
+			bbb_version: "6.3.2",
 			alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
@@ -455,8 +455,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			imgInfo.md5 = md5;
 			imgInfo.file_ext = ext;
 			imgInfo.file_url = "/data/" + md5 + "." + ext;
-			imgInfo.large_file_url = (imgInfo.has_large ? "/data/sample/sample-" + md5 + ".jpg" : "/data/" + md5 + "." + ext);
 			imgInfo.preview_file_url = (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/data/preview/" + md5 + ".jpg");
+
+			if (ext === "zip" && /\bugoira\b/.test(imgInfo.tag_string))
+				imgInfo.large_file_url = "/data/sample/sample-" + md5 + ".webm";
+			else
+				imgInfo.large_file_url = (imgInfo.has_large ? "/data/sample/sample-" + md5 + ".jpg" : "/data/" + md5 + "." + ext);
 		}
 		else if (previewInfo === "/images/download-preview.png")
 			imgInfo.preview_file_url = "/images/download-preview.png";
@@ -826,8 +830,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Create content.
 		if (post.file_ext === "swf") // Create flash object.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
-		else if (post.file_ext === "webm") // Create webm video
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
+		else if (post.file_ext === "webm" || (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string))) // Create webm video
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a></p>';
 		else if (!post.image_height) // Create manual download.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
 		else { // Create image
@@ -2441,6 +2445,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (reason !== "backup")
 						danbNotice("Better Better Booru: You have just been updated from a version of this script that was hosted on Userscripts.org. Before continuing any further, please open your userscript manager and remove any versions of this script older than version 6.3 that may be there.", "perm");
 				case "6.3":
+				case "6.3.1":
 					break;
 			}
 
