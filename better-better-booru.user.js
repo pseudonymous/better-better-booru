@@ -463,8 +463,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					imgInfo.pixiv_ugoira_frame_data = {
 						id: undefined, // Don't have this value.
 						post_id: imgInfo.id,
-						data: JSON.parse(ugoira.getAttribute("data-ugoira-frames").replace(/&quot;/g, "\"")),
-						content_type: ugoira.getAttribute("data-ugoira-content-type").replace(/&quot;|"/gi, "")
+						data: JSON.parse(ugoira.getAttribute("data-ugoira-frames")),
+						content_type: ugoira.getAttribute("data-ugoira-content-type").replace(/"/gi, "")
 					};
 				}
 				else {
@@ -1329,12 +1329,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (ugoira) {
 			// Fix the missing data attributes.
-			ugoira.setAttribute("data-ugoira-content-type", post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;"));
-			ugoira.setAttribute("data-ugoira-frames", JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;"));
+			ugoira.setAttribute("data-ugoira-content-type", post.pixiv_ugoira_frame_data.content_type);
+			ugoira.setAttribute("data-ugoira-frames", JSON.stringify(post.pixiv_ugoira_frame_data.data));
 
-			// Append the neceesary scripts.
+			// Append the necessary scripts.
 			var mainScript = document.createElement("script");
-			mainScript.setAttribute("src", "/assets/ugoira_player.js");
+			mainScript.src = "/assets/ugoira_player.js";
 			mainScript.addEventListener("load", function() {
 				// Wait for the script to load before adding the embedded script that requires it.
 				var ugoiraScript = createUgoiraScript(post);
