@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        6.3.1
+// @version        6.4
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          http://*.donmai.us/*
@@ -65,7 +65,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			translation_mode: false
 		},
 		options: { // Setting options and data.
-			bbb_version: "6.3.1",
+			bbb_version: "6.4",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
@@ -99,7 +99,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			override_account: newOption("checkbox", false, "Override Account Settings", "Allow the \"resize post\", \"load sample first\", and \"blacklisted tags\" settings to override their corresponding account settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
-			post_drag_scroll: newOption("checkbox", false, "Post Drag Scrolling", "While holding down left click on a post image/webm video, mouse movement can be used to scroll the whole page and reposition the image/webm video.<tiphead>Note</tiphead>This option is automatically disabled when translation mode is active."),
+			post_drag_scroll: newOption("checkbox", false, "Post Drag Scrolling", "While holding down left click on a post's content, mouse movement can be used to scroll the whole page and reposition the content.<tiphead>Note</tiphead>This option is automatically disabled when translation mode is active."),
 			post_resize: newOption("checkbox", true, "Resize Post", "Shrink large post content to fit the browser window when initially loading a post.<tiphead>Note</tiphead>When logged in, the account's \"Fit images to window\" setting will override this option."),
 			post_resize_mode: newOption("dropdown", "width", "Resize Mode", "Choose how to shrink large post content to fit the browser window when initially loading a post.", {txtOptions:["Width (Default):width", "Height:height", "Width & Height:all"]}),
 			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"Remove Tag Headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
@@ -320,6 +320,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			fetchJSON(parentUrl, mode, optArg);
 			bbbStatus("posts", "new");
 		}
+		else if (mode === "ugoira") {
+			fetchJSON(gUrl.replace(/\/posts\/(\d+)/, "/posts/$1.json"), "ugoira");
+			bbbStatus("posts", "new");
+		}
 	}
 
 	function fetchJSON(url, mode, optArg, retries) {
@@ -349,6 +353,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							parseComments(xml);
 						else if (mode === "parent" || mode === "child")
 							parseRelations(xml, mode, optArg);
+						else if (mode === "ugoira")
+							fixHiddenUgoira(xml);
 
 						// Update status message.
 						if (mode !== "pool")
@@ -476,7 +482,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		fixPaginator();
 
 		// Fix hidden thumbnails.
-		fixHiddenImgs();
+		fixHiddenThumbs();
 	}
 
 	function parsePost(postInfo) {
@@ -503,7 +509,22 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (post.file_ext === "swf") // Create flash object.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
 		else if (post.file_ext === "webm") // Create webm video
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
+		else if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) { // Create ugoira
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a></p> </div>';
+
+			noteToggleInit();
+
+			if (Danbooru.Ugoira && post.pixiv_ugoira_frame_data) {
+				// Get rid of all the old events handlers that could interfere with the new ugoira.
+				$(Danbooru.Ugoira.player).unbind();
+
+				// Set up the post.
+				ugoiraInit();
+			}
+			else // Fix hidden posts.
+				searchJSON("ugoira");
+		}
 		else if (!post.image_height) // Create manual download.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
 		else { // Create image
@@ -770,7 +791,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Fix hidden thumbnails.
-		fixHiddenImgs();
+		fixHiddenThumbs();
 	}
 
 	/* Functions for XML page info */
@@ -1018,6 +1039,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var img = getId("image", target, "img");
 		var object = imgContainer.getElementsByTagName("object")[0];
 		var webmVid = imgContainer.getElementsByTagName("video")[0];
+		var ugoira = imgContainer.getElementsByTagName("canvas")[0];
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
 		var directLink = getId("image-resize-link", target, "a") || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
 		var twitterInfo = getMeta("twitter:image:src", target);
@@ -1050,7 +1072,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			is_banned: (imgContainer.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
 			image_height: imgHeight || null,
 			image_width: imgWidth || null,
-			is_hidden: (img || object || webmVid ? false : true)
+			is_hidden: (img || object || webmVid || ugoira ? false : true)
 		};
 
 		// Try to extract the file's name and extension.
@@ -1079,12 +1101,39 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			imgInfo.has_large = (imgWidth > 850 && ext !== "swf" && ext !== "webm" ? true : false);
+			var isUgoira = (ugoira || (ext === "zip" && /\bugoira\b/.test(imgInfo.tag_string)));
+
+			if (isUgoira) {
+				if (ugoira) {
+					imgInfo.pixiv_ugoira_frame_data = {
+						id: undefined, // Don't have this value.
+						post_id: imgInfo.id,
+						data: JSON.parse(ugoira.getAttribute("data-ugoira-frames")),
+						content_type: ugoira.getAttribute("data-ugoira-content-type").replace(/"/gi, "")
+					};
+				}
+				else {
+					imgInfo.pixiv_ugoira_frame_data = {
+						id: "", // Don't have this value.
+						post_id: imgInfo.id,
+						data: "",
+						content_type: ""
+					};
+				}
+			}
+
+			imgInfo.has_large = ((imgWidth > 850 && ext !== "swf" && ext !== "webm") || isUgoira ? true : false);
 			imgInfo.md5 = md5;
 			imgInfo.file_ext = ext;
 			imgInfo.file_url = "/data/" + md5 + "." + ext;
-			imgInfo.large_file_url = (imgInfo.has_large ? "/data/sample/sample-" + md5 + ".jpg" : "/data/" + md5 + "." + ext);
 			imgInfo.preview_file_url = (!imgHeight || ext === "swf" ? "/images/download-preview.png" : "/data/preview/" + md5 + ".jpg");
+
+			if (isUgoira)
+				imgInfo.large_file_url = "/data/sample/sample-" + md5 + ".webm";
+			else if (imgInfo.has_large)
+				imgInfo.large_file_url = "/data/sample/sample-" + md5 + ".jpg";
+			else
+				imgInfo.large_file_url = "/data/" + md5 + "." + ext;
 		}
 		else if (previewInfo === "/images/download-preview.png")
 			imgInfo.preview_file_url = "/images/download-preview.png";
@@ -2364,6 +2413,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				case "6.3":
 				case "6.3.1":
+				case "6.3.2":
+				case "6.4":
 					// Copy over settings to their new names.
 					bbb.user.post_drag_scroll = bbb.user.image_drag_scroll;
 					bbb.user.post_resize = bbb.user.image_resize;
@@ -2447,7 +2498,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function createSwapElements(post) {
 		// Create the elements for swapping between the original and sample image.
-		if (!post.has_large)
+		if (!post.has_large || (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)))
 			return;
 
 		// Remove the original notice (it's not always there) and replace it with our own.
@@ -2734,7 +2785,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var swfObj = (imgContainer ? imgContainer.getElementsByTagName("object")[0] : undefined);
 		var swfEmb = (swfObj ? swfObj.getElementsByTagName("embed")[0] : undefined);
 		var webmVid = (imgContainer ? imgContainer.getElementsByTagName("video")[0] : undefined);
-		var target = img || swfEmb || webmVid;
+		var ugoira = (imgContainer ? imgContainer.getElementsByTagName("canvas")[0] : undefined);
+		var ugoiraPanel = document.getElementById("ugoira-control-panel");
+		var ugoiraSlider = document.getElementById("seek-slider");
+		var target = img || swfEmb || webmVid || ugoira;
 
 		if (!target || !imgContainer || !contentDiv)
 			return;
@@ -2787,9 +2841,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (switchMode) {
 			if (currentRatio !== ratio || mode === "swap") {
-				if (img) {
-					img.style.width = targetWidth * ratio + "px";
-					img.style.height = targetHeight * ratio + "px";
+				if (img || ugoira) {
+					target.style.width = targetWidth * ratio + "px";
+					target.style.height = targetHeight * ratio + "px";
+
+					if (ugoiraPanel && ugoiraSlider) {
+						ugoiraPanel.style.width = targetWidth * ratio + "px";
+						ugoiraSlider.style.width = targetWidth * ratio - 81 + "px";
+					}
+
 					Danbooru.Note.Box.scale_all();
 				}
 				else if (swfEmb) {
@@ -3114,7 +3174,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var imgContainer = document.getElementById("image-container");
 		var img = document.getElementById("image");
 		var webmVid = (imgContainer ? imgContainer.getElementsByTagName("video")[0] : undefined);
-		var target = img || webmVid;
+		var ugoira = (imgContainer ? imgContainer.getElementsByTagName("canvas")[0] : undefined);
+		var target = img || webmVid || ugoira;
 
 		if (target) {
 			bbb.drag_scroll.target = target;
@@ -3451,7 +3512,112 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function fixHiddenImgs() {
+	function fixHiddenUgoira(xml) {
+		// Use xml info to fix the missing info for hidden ugoira posts.
+		var post = bbb.post.info;
+		post.pixiv_ugoira_frame_data = xml.pixiv_ugoira_frame_data;
+
+		var imgContainer = document.getElementById("image-container");
+		var ugoira = (imgContainer ? imgContainer.getElementsByTagName("canvas")[0] : undefined);
+
+		if (ugoira) {
+			// Fix the missing data attributes.
+			ugoira.setAttribute("data-ugoira-content-type", post.pixiv_ugoira_frame_data.content_type);
+			ugoira.setAttribute("data-ugoira-frames", JSON.stringify(post.pixiv_ugoira_frame_data.data));
+
+			// Append the necessary script.
+			var mainScript = document.createElement("script");
+			mainScript.src = "/assets/ugoira_player.js";
+			mainScript.addEventListener("load", ugoiraInit, true);  // Wait for this script to load before running the JavaScript that requires it.
+			document.head.appendChild(mainScript);
+		}
+	}
+
+	function ugoiraInit() {
+		// Execute a static copy of Danbooru's embedded JavaScript for setting up the post.
+		var post = bbb.post.info;
+
+		try {
+			Danbooru.Ugoira = {};
+
+			Danbooru.Ugoira.create_player = function() {
+			  var meta_data = {
+				mime_type: post.pixiv_ugoira_frame_data.content_type,
+				frames: post.pixiv_ugoira_frame_data.data
+			  };
+			  var options = {
+				canvas: document.getElementById("image"),
+				source: post.file_url,
+				metadata: meta_data,
+				chunkSize: 300000,
+				loop: true,
+				autoStart: true,
+				debug: false
+			  };
+
+			  this.player = new ZipImagePlayer(options);
+			};
+
+			Danbooru.Ugoira.player = null;
+
+			$(function() {
+			  Danbooru.Ugoira.create_player();
+			  $(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) {
+				$("#ugoira-load-percentage").text(Math.floor(progress * 100));
+			  });
+			  $(Danbooru.Ugoira.player).on("loadingStateChanged", function(event, state) {
+				if (state === 2) {
+				  $("#ugoira-load-progress").remove();
+				  $("#seek-slider").show();
+				}
+			  });
+
+			  var player_manually_paused = false;
+
+			  $("#ugoira-play").click(function(event) {
+				Danbooru.Ugoira.player.play();
+				$(this).hide();
+				$("#ugoira-pause").show();
+				player_manually_paused = false;
+				event.preventDefault();
+			  });
+			  $("#ugoira-pause").click(function(event) {
+				Danbooru.Ugoira.player.pause();
+				$(this).hide();
+				$("#ugoira-play").show();
+				player_manually_paused = true;
+				event.preventDefault();
+			  });
+
+			  $("#seek-slider").slider({
+				min: 0,
+				max: Danbooru.Ugoira.player._frameCount-1,
+				start: function() {
+				  // Need to pause while slider is being dragged or playback speed will bug out
+				  Danbooru.Ugoira.player.pause();
+				},
+				slide: function(event, ui) {
+				  Danbooru.Ugoira.player._frame = ui.value;
+				  Danbooru.Ugoira.player._displayFrame();
+				},
+				stop: function() {
+				  // Resume playback when dragging stops, but only if player was not paused by the user earlier
+				  if (!(player_manually_paused)) {
+					Danbooru.Ugoira.player.play();
+				  }
+				}
+			  });
+			  $(Danbooru.Ugoira.player).on("frame", function(frame, frame_number) {
+				$("#seek-slider").slider("option", "value", frame_number);
+			  });
+			});
+		}
+		catch (error) {
+			danbNotice("Better Better Booru: Unexpected error creating the ugoira post. (Error: " + error.message + ")", "error");
+		}
+	}
+
+	function fixHiddenThumbs() {
 		// Fix hidden thumbnails by fetching the info from a page.
 		var hiddenImgs = bbb.cache.hidden_imgs;
 
@@ -3538,7 +3704,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		if (notice.style.display === "block" && /\S/.test(noticeMsg.textContent)) { // Insert new text at the top if the notice is already open.
-			type = (type > 0 ? 0 : type);
+			type = (type > 0 ? 0 : type); // Change the type to permanent if it was supposed to be temporary.
 			noticeMsg.insertBefore(msg, noticeMsg.children[0]);
 			window.clearTimeout(bbb.timers.bbbNotice);
 		}
@@ -5441,7 +5607,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 } // End of bbbScript.
 
 if (document.body) {
-	if (typeof(Danbooru) === "undefined") { // Load script into the page so it can access Danbooru's Javascript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
+	if (typeof(Danbooru) === "undefined") { // Load script into the page so it can access Danbooru's JavaScript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
 		var script = document.createElement('script');
 		script.type = "text/javascript";
 		script.appendChild(document.createTextNode('(' + bbbScript + ')();'));
