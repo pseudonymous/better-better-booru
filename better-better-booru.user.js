@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        6.3.2
+// @version        6.4
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          http://*.donmai.us/*
@@ -63,7 +63,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			translationMode: false
 		},
 		options: { // Setting options and data.
-			bbb_version: "6.3.2",
+			bbb_version: "6.4",
 			alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Searches:search", "Posts:post", "Searches & Posts:post search"]}),
@@ -753,7 +753,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		target.parentNode.replaceChild(replacement, target);
 
 		// Fix hidden thumbnails.
-		fixHiddenImgs();
+		fixHiddenThumbs();
 
 		// Update status message.
 		bbbStatus("loaded");
@@ -869,8 +869,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				// Get rid of all the old events handlers that could interfere with the new ugoira.
 				$(Danbooru.Ugoira.player).unbind();
 
-				// Run a static version of the ugoira JavaScript for setting up the post.
-				createUgoiraPost();
+				// Set up the post.
+				ugoiraInit();
 			}
 			else
 				searchJSON("ugoira");
@@ -1214,7 +1214,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 		}
 
-		// Setup the notice variables.
+		// Set up the notice variables.
 		if (showPreview) {
 			previewLinkTxt = "&laquo; hide";
 			displayStyle = "block";
@@ -1312,118 +1312,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Fix hidden thumbnails.
-		fixHiddenImgs();
+		fixHiddenThumbs();
 
 		// Update status message:
 		bbbStatus("loaded");
-	}
-
-	function fixHiddenUgoira(xml) {
-		// Use xml info to fix the missing info for hidden ugoira posts.
-		var post = bbb.post.info;
-		post.pixiv_ugoira_frame_data = xml.pixiv_ugoira_frame_data;
-
-		var imgContainer = document.getElementById("image-container");
-		var ugoira = (imgContainer ? imgContainer.getElementsByTagName("canvas")[0] : undefined);
-
-		if (ugoira) {
-			// Fix the missing data attributes.
-			ugoira.setAttribute("data-ugoira-content-type", post.pixiv_ugoira_frame_data.content_type);
-			ugoira.setAttribute("data-ugoira-frames", JSON.stringify(post.pixiv_ugoira_frame_data.data));
-
-			// Append the necessary script.
-			var mainScript = document.createElement("script");
-			mainScript.src = "/assets/ugoira_player.js";
-			mainScript.addEventListener("load", createUgoiraPost, true);  // Wait for this script to load before running the JavaScript that requires it.
-			document.head.appendChild(mainScript);
-		}
-
-		// Update status message.
-		bbbStatus("loaded");
-	}
-
-	function createUgoiraPost() {
-		// Execute a static copy of Danbooru's embedded JavaScript for setting up the post.
-		var post = bbb.post.info;
-
-		try {
-			Danbooru.Ugoira = {};
-
-			Danbooru.Ugoira.create_player = function() {
-			  var meta_data = {
-				mime_type: post.pixiv_ugoira_frame_data.content_type,
-				frames: post.pixiv_ugoira_frame_data.data
-			  };
-			  var options = {
-				canvas: document.getElementById("image"),
-				source: post.file_url,
-				metadata: meta_data,
-				chunkSize: 300000,
-				loop: true,
-				autoStart: true,
-				debug: false
-			  };
-
-			  this.player = new ZipImagePlayer(options);
-			};
-
-			Danbooru.Ugoira.player = null;
-
-			$(function() {
-			  Danbooru.Ugoira.create_player();
-			  $(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) {
-				$("#ugoira-load-percentage").text(Math.floor(progress * 100));
-			  });
-			  $(Danbooru.Ugoira.player).on("loadingStateChanged", function(event, state) {
-				if (state === 2) {
-				  $("#ugoira-load-progress").remove();
-				  $("#seek-slider").show();
-				}
-			  });
-
-			  var player_manually_paused = false;
-
-			  $("#ugoira-play").click(function(event) {
-				Danbooru.Ugoira.player.play();
-				$(this).hide();
-				$("#ugoira-pause").show();
-				player_manually_paused = false;
-				event.preventDefault();
-			  });
-			  $("#ugoira-pause").click(function(event) {
-				Danbooru.Ugoira.player.pause();
-				$(this).hide();
-				$("#ugoira-play").show();
-				player_manually_paused = true;
-				event.preventDefault();
-			  });
-
-			  $("#seek-slider").slider({
-				min: 0,
-				max: Danbooru.Ugoira.player._frameCount-1,
-				start: function() {
-				  // Need to pause while slider is being dragged or playback speed will bug out
-				  Danbooru.Ugoira.player.pause();
-				},
-				slide: function(event, ui) {
-				  Danbooru.Ugoira.player._frame = ui.value;
-				  Danbooru.Ugoira.player._displayFrame();
-				},
-				stop: function() {
-				  // Resume playback when dragging stops, but only if player was not paused by the user earlier
-				  if (!(player_manually_paused)) {
-					Danbooru.Ugoira.player.play();
-				  }
-				}
-			  });
-			  $(Danbooru.Ugoira.player).on("frame", function(frame, frame_number) {
-				$("#seek-slider").slider("option", "value", frame_number);
-			  });
-			});
-		}
-		catch (error) {
-			danbNotice("Better Better Booru: Unexpected error creating the ugoira post. (Error: " + error.message + ")", "error");
-		}
 	}
 
 	function createThumbHTML(post, query) {
@@ -2589,6 +2481,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						danbNotice("Better Better Booru: You have just been updated from a version of this script that was hosted on Userscripts.org. Before continuing any further, please open your userscript manager and remove any versions of this script older than version 6.3 that may be there.", "perm");
 				case "6.3":
 				case "6.3.1":
+				case "6.3.2":
 					break;
 			}
 
@@ -3599,7 +3492,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function fixHiddenImgs() {
+	function fixHiddenThumbs() {
 		// Fix hidden thumbnails by fetching the info from a page.
 		var hiddenImgs = bbb.cache.hidden_imgs;
 
@@ -3611,6 +3504,114 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			fetchPages("/posts/" + hiddenImgs[0], "hidden");
 			bbbStatus("hidden");
+		}
+	}
+
+	function fixHiddenUgoira(xml) {
+		// Use xml info to fix the missing info for hidden ugoira posts.
+		var post = bbb.post.info;
+		post.pixiv_ugoira_frame_data = xml.pixiv_ugoira_frame_data;
+
+		var imgContainer = document.getElementById("image-container");
+		var ugoira = (imgContainer ? imgContainer.getElementsByTagName("canvas")[0] : undefined);
+
+		if (ugoira) {
+			// Fix the missing data attributes.
+			ugoira.setAttribute("data-ugoira-content-type", post.pixiv_ugoira_frame_data.content_type);
+			ugoira.setAttribute("data-ugoira-frames", JSON.stringify(post.pixiv_ugoira_frame_data.data));
+
+			// Append the necessary script.
+			var mainScript = document.createElement("script");
+			mainScript.src = "/assets/ugoira_player.js";
+			mainScript.addEventListener("load", ugoiraInit, true);  // Wait for this script to load before running the JavaScript that requires it.
+			document.head.appendChild(mainScript);
+		}
+
+		// Update status message.
+		bbbStatus("loaded");
+	}
+
+	function ugoiraInit() {
+		// Execute a static copy of Danbooru's embedded JavaScript for setting up the post.
+		var post = bbb.post.info;
+
+		try {
+			Danbooru.Ugoira = {};
+
+			Danbooru.Ugoira.create_player = function() {
+			  var meta_data = {
+				mime_type: post.pixiv_ugoira_frame_data.content_type,
+				frames: post.pixiv_ugoira_frame_data.data
+			  };
+			  var options = {
+				canvas: document.getElementById("image"),
+				source: post.file_url,
+				metadata: meta_data,
+				chunkSize: 300000,
+				loop: true,
+				autoStart: true,
+				debug: false
+			  };
+
+			  this.player = new ZipImagePlayer(options);
+			};
+
+			Danbooru.Ugoira.player = null;
+
+			$(function() {
+			  Danbooru.Ugoira.create_player();
+			  $(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) {
+				$("#ugoira-load-percentage").text(Math.floor(progress * 100));
+			  });
+			  $(Danbooru.Ugoira.player).on("loadingStateChanged", function(event, state) {
+				if (state === 2) {
+				  $("#ugoira-load-progress").remove();
+				  $("#seek-slider").show();
+				}
+			  });
+
+			  var player_manually_paused = false;
+
+			  $("#ugoira-play").click(function(event) {
+				Danbooru.Ugoira.player.play();
+				$(this).hide();
+				$("#ugoira-pause").show();
+				player_manually_paused = false;
+				event.preventDefault();
+			  });
+			  $("#ugoira-pause").click(function(event) {
+				Danbooru.Ugoira.player.pause();
+				$(this).hide();
+				$("#ugoira-play").show();
+				player_manually_paused = true;
+				event.preventDefault();
+			  });
+
+			  $("#seek-slider").slider({
+				min: 0,
+				max: Danbooru.Ugoira.player._frameCount-1,
+				start: function() {
+				  // Need to pause while slider is being dragged or playback speed will bug out
+				  Danbooru.Ugoira.player.pause();
+				},
+				slide: function(event, ui) {
+				  Danbooru.Ugoira.player._frame = ui.value;
+				  Danbooru.Ugoira.player._displayFrame();
+				},
+				stop: function() {
+				  // Resume playback when dragging stops, but only if player was not paused by the user earlier
+				  if (!(player_manually_paused)) {
+					Danbooru.Ugoira.player.play();
+				  }
+				}
+			  });
+			  $(Danbooru.Ugoira.player).on("frame", function(frame, frame_number) {
+				$("#seek-slider").slider("option", "value", frame_number);
+			  });
+			});
+		}
+		catch (error) {
+			danbNotice("Better Better Booru: Unexpected error creating the ugoira post. (Error: " + error.message + ")", "error");
 		}
 	}
 
