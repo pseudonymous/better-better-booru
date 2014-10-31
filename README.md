@@ -14,13 +14,13 @@ Links
 Features<a name="features"></a>
 --------
 * Allows the viewing of hidden/censored tags and automatic control of the number of thumbnails per a page with a basic account or no account.
-* Improved image resizing that works on flash and webm content and also allows resizing by width, height, or both.
+* Improved image resizing that works on flash content and also allows resizing by width, height, or both.
 * Improved blacklist functionality that includes support of wildcards (*), the "or/any" operator (~), and additional metatags (ex: score:&lt;0, etc.).
 * The ability to easily modify status borders to your liking and create your own secondary custom borders that match images based on your criteria.
 * Multiple options for altering post viewing:
  * Alternate image swap - Swap between the sample and original image by clicking the image.
  * Resize image mode - Set the initial automatic resizing of an image to be by width, height, or both.
- * Image drag scrolling - Use click and drag on a post image or webm video to reposition it.
+ * Image drag scrolling - Use click and drag on post content to reposition it.
  * Auto-scroll image - Automatically scroll the post content into view upon browsing a post.
 * Multiple options for altering the sidebar:
  * Search add - Add links to the sidebar tags that allow the easy inclusion or exclusion of additional search tags.

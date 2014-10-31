@@ -1,5 +1,7 @@
 Changelog
 ----------
+* Version 6.4:
+ * Updated to support "ugoira" animation posts in their native format.
 * Version 6.3.2:
  * Updated to support "ugoira" animation posts with a temporary workaround.
 * Version 6.3.1:
