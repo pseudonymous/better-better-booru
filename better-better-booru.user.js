@@ -144,7 +144,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var gUrl = location.href.split("#", 1)[0]; // URL without the anchor
 	var gUrlPath = location.pathname; // URL path only
 	var gUrlQuery = location.search; // URL query string only
-	var gLoc = currentLoc(); // Current location (post = single post, search = posts index, notes = notes index, popular = popular index, pool = single pool, comments = comments page, intro = introduction page)
+	var gLoc = currentLoc(); // Current location
+	var gLocRegex = new RegExp("\\b" + gLoc + "\\b");
 
 	// Script variables.
 	// Global
@@ -158,7 +159,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var blacklist_post_display = bbb.user.blacklist_post_display;
 	var blacklist_thumb_mark = bbb.user.blacklist_thumb_mark;
 	var blacklist_highlight_color = bbb.user.blacklist_highlight_color || "#CCCCCC";
-	var blacklist_add_bars = new RegExp("\\b" + gLoc + "\\b").test(bbb.user.blacklist_add_bars);
+	var blacklist_add_bars = gLocRegex.test(bbb.user.blacklist_add_bars);
 	var blacklist_thumb_controls = bbb.user.blacklist_thumb_controls;
 	var blacklist_smart_view = bbb.user.blacklist_smart_view;
 
@@ -168,8 +169,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var border_spacing = bbb.user.border_spacing;
 	var border_width = bbb.user.border_width;
 	var clean_links = bbb.user.clean_links;
-	var autohide_sidebar = new RegExp("\\b" + gLoc + "\\b").test(bbb.user.autohide_sidebar);
-	var fixed_sidebar = new RegExp("\\b" + gLoc + "\\b").test(bbb.user.fixed_sidebar);
+	var autohide_sidebar = gLocRegex.test(bbb.user.autohide_sidebar);
+	var fixed_sidebar = gLocRegex.test(bbb.user.fixed_sidebar);
 
 	var bypass_api = bbb.user.bypass_api;
 	var manage_cookies = bbb.user.manage_cookies;
@@ -741,7 +742,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted && !forceShowDeleted) || (!show_banned && post.is_banned))
 				continue;
 
-			checkHiddenImg(post);
+			checkHiddenThumbs(post);
 
 			var thumb = createThumbHTML(post, (clean_links ? "" : query)) + " ";
 
@@ -992,8 +993,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				article.setAttribute("data-file-url", post.file_url);
 				article.setAttribute("data-large-file-url", post.large_file_url);
 
-				if (direct_downloads && (gLoc === "search" || gLoc === "pool" || gLoc === "popular" || gLoc === "favorites"))
-					document.getElementById("bbb-ddl-" + hiddenId).href = post.file_url;
+				// Fix ddl.
+				postDDL(article);
 			}
 
 			previewImg.src = post.preview_file_url;
@@ -3277,241 +3278,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	/* Other functions */
-	function modifyPage() {
-		if (noXML())
-			return;
-
-		if (gLoc === "post")
-			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
-		else if (useAPI()) // API only features.
-			searchJSON(gLoc);
-		else // Alternate mode for features.
-			searchPages(gLoc);
-	}
-
-	function formatThumbnails(target) {
-		// Create thumbnail titles and borders.
-		var posts = getPosts(target);
-		var i, il; // Loop variables.
-
-		if (!posts.length)
-			return;
-
-		var searches = bbb.custom_tag.searches;
-
-		// Create and cache border search objects.
-		if (custom_tag_borders && !searches.length) {
-			for (i = 0, il = tag_borders.length; i < il; i++)
-				searches.push(createSearch(tag_borders[i].tags));
-		}
-
-		// Cycle through each post and apply titles and borders.
-		for (i = 0, il = posts.length; i < il; i++) {
-			var post = posts[i];
-			var img = post.getElementsByTagName("img")[0];
-
-			if (!img)
-				continue;
-
-			var link = img.parentNode;
-			var tags = post.getAttribute("data-tags");
-			var user = " user:" + post.getAttribute("data-uploader");
-			var rating = " rating:" + post.getAttribute("data-rating");
-			var score = " score:" + post.getAttribute("data-score");
-			var title = tags + user + rating + score;
-			var id = post.getAttribute("data-id");
-			var hasChildren = (post.getAttribute("data-has-children") === "true" ? true : false);
-			var secondary = [];
-			var secondaryLength = 0;
-			var borderStyle;
-			var styleList = bbb.custom_tag.style_list;
-
-			// Create title.
-			img.title = title;
-
-			// Give the thumbnail link an identifying class.
-			link.className += " bbb-thumb-link";
-
-			// Correct parent status borders on "no active children" posts for logged out users.
-			if (hasChildren && show_deleted && post.className.indexOf("post-status-has-children") < 0)
-				post.className += " post-status-has-children";
-
-			// Secondary custom tag borders.
-			if (custom_tag_borders) {
-				if (typeof(styleList[id]) === "undefined") {
-					for (var j = 0, jl = tag_borders.length; j < jl; j++) {
-						var tagBorderItem = tag_borders[j];
-
-						if (tagBorderItem.is_enabled && thumbSearchMatch(post, searches[j])) {
-							secondary.push([tagBorderItem.border_color, tagBorderItem.border_style]);
-
-							if (secondary.length === 4)
-								break;
-						}
-					}
-
-					secondaryLength = secondary.length;
-
-					if (secondaryLength) {
-						link.className += " bbb-custom-tag";
-
-						if (secondaryLength === 1 || (single_color_borders && secondaryLength > 1))
-							borderStyle = "border: " + border_width + "px " + secondary[0][0] + " " + secondary[0][1] + " !important;";
-						else if (secondaryLength === 2)
-							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[1][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[1][1] + " " + secondary[0][1] + " !important;";
-						else if (secondaryLength === 3)
-							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[2][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[2][1] + " " + secondary[0][1] + " !important;";
-						else if (secondaryLength === 4)
-							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[2][0] + " " + secondary[3][0] + " " + secondary[1][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[2][1] + " " + secondary[3][1] + " " + secondary[1][1] + " !important;";
-
-						link.setAttribute("style", borderStyle);
-						styleList[id] = borderStyle;
-					}
-					else
-						styleList[id] = false;
-				}
-				else if (styleList[id] !== false && post.className.indexOf("bbb-custom-tag") < 0) {
-					link.className += " bbb-custom-tag";
-					link.setAttribute("style", styleList[id]);
-				}
-			}
-		}
-	}
-
-	function formatInfo(post) {
-		// Add information to/alter information in the post object.
-		if (!post)
-			return undefined;
-
-		// Figure out the thumbnail classes.
-		var flags = "";
-		var thumbClass = "";
-
-		if (post.is_deleted) {
-			flags += " deleted";
-			thumbClass += " post-status-deleted";
-		}
-		if (post.is_pending) {
-			flags += " pending";
-			thumbClass += " post-status-pending";
-		}
-		if (post.is_banned)
-			flags += " banned";
-		if (post.is_flagged) {
-			flags += " flagged";
-			thumbClass += " post-status-flagged";
-		}
-		if (post.has_children && (post.has_active_children || show_deleted))
-			thumbClass += " post-status-has-children";
-		if (post.parent_id)
-			thumbClass += " post-status-has-parent";
-
-		// Figure out sample image dimensions and ratio.
-		post.sample_ratio = (post.image_width > 850 ? 850 / post.image_width : 1);
-		post.sample_height = Math.round(post.image_height * post.sample_ratio);
-		post.sample_width = Math.round(post.image_width * post.sample_ratio);
-
-		// Hidden post fixes.
-		post.md5 = post.md5 || "";
-		post.file_ext = post.file_ext || "";
-		post.preview_file_url = post.preview_file_url || bbbHiddenImg;
-		post.large_file_url = post.large_file_url || "";
-		post.file_url = post.file_url || "";
-
-		// Potential null value fixes.
-		post.approver_id = post.approver_id || "";
-		post.parent_id = post.parent_id || "";
-		post.pixiv_id = post.pixiv_id || "";
-
-		post.flags = flags.bbbSpaceClean();
-		post.thumb_class = thumbClass;
-
-		return post;
-	}
-
-	function createThumbHTML(post, query) {
-		// Create a thumbnail HTML string.
-		return '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + query + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
-	}
-
-	function createThumb(post, query) {
-		// Create a thumbnail element. (lazy method <_<)
-		var childSpan = document.createElement("span");
-		childSpan.innerHTML = createThumbHTML(post, query);
-
-		return childSpan.firstChild;
-	}
-
-	function createThumbListing(posts, query, orderedIds) {
-		// Create a listing of thumbnails.
-		var thumb;
-		var thumbs = document.createDocumentFragment();
-		var postHolder = {};
-		var i, il; // Loop variables;
-
-		// Generate thumbnails.
-		for (i = 0, il = posts.length; i < il; i++) {
-			var post = formatInfo(posts[i]);
-
-			// Don't display loli/shota/toddlercon/deleted/banned if the user has opted so and skip to the next image.
-			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted) || (!show_banned && post.is_banned))
-				continue;
-
-			// Check if the post is hidden.
-			checkHiddenImg(post);
-
-			// eek, not so huge line.
-			thumb = createThumb(post, query);
-
-			// Generate output.
-			if (!orderedIds)
-				thumbs.appendChild(thumb);
-			else
-				postHolder[post.id] = thumb;
-		}
-
-		// Place thumbnails in the correct order for pools.
-		if (orderedIds) {
-			for (i = 0, il = orderedIds.length; i < il; i++) {
-				thumb = postHolder[orderedIds[i]];
-
-					if (thumb)
-						thumbs.appendChild(thumb);
-			}
-		}
-
-		return thumbs;
-	}
-
-	function checkHiddenImg(post) {
-		// Alter a hidden image with cache info or queue it for the cache.
-		if (!post.md5) {
-			if (!bbb.cache.stored.history)
-				loadThumbCache();
-
-			var cacheName = bbb.cache.stored.names[post.id];
-
-			if (cacheName) { // Load the thumbnail info from the cache.
-				if (cacheName === "download-preview.png")
-					post.preview_file_url = "/images/download-preview.png";
-				else {
-					var cacheValues = cacheName.split(".");
-					var cacheMd5 = cacheValues[0];
-					var cacheExt = cacheValues[1];
-
-					post.md5 = cacheMd5;
-					post.file_ext = cacheExt;
-					post.preview_file_url = (!post.image_height || cacheExt === "swf" ? "/images/download-preview.png" : "/data/preview/" + cacheMd5 + ".jpg");
-					post.large_file_url = (post.has_large ? "/data/sample/sample-" + cacheMd5 + ".jpg" : "/data/" + cacheName);
-					post.file_url = "/data/" + cacheName;
-				}
-			}
-			else // Queue hidden img for fixing.
-				bbb.cache.hidden_imgs.push(post.id);
-		}
-	}
-
 	function fixHiddenUgoira(xml) {
 		// Use xml info to fix the missing info for hidden ugoira posts.
 		var post = bbb.post.info;
@@ -3613,7 +3379,129 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			});
 		}
 		catch (error) {
-			danbNotice("Better Better Booru: Unexpected error creating the ugoira post. (Error: " + error.message + ")", "error");
+			bbbNotice("Better Better Booru: Unexpected error creating the ugoira post. (Error: " + error.message + ")", "error");
+		}
+	}
+
+	/* Thumbnail functions */
+	function formatThumbnails(target) {
+		// Create thumbnail titles and borders.
+		var posts = getPosts(target);
+		var i, il; // Loop variables.
+
+		if (!posts.length)
+			return;
+
+		var searches = bbb.custom_tag.searches;
+
+		// Create and cache border search objects.
+		if (custom_tag_borders && !searches.length) {
+			for (i = 0, il = tag_borders.length; i < il; i++)
+				searches.push(createSearch(tag_borders[i].tags));
+		}
+
+		// Cycle through each post and apply titles and borders.
+		for (i = 0, il = posts.length; i < il; i++) {
+			var post = posts[i];
+			var img = post.getElementsByTagName("img")[0];
+
+			if (!img)
+				continue;
+
+			var link = img.parentNode;
+			var tags = post.getAttribute("data-tags");
+			var user = " user:" + post.getAttribute("data-uploader");
+			var rating = " rating:" + post.getAttribute("data-rating");
+			var score = " score:" + post.getAttribute("data-score");
+			var title = tags + user + rating + score;
+			var id = post.getAttribute("data-id");
+			var hasChildren = (post.getAttribute("data-has-children") === "true" ? true : false);
+			var secondary = [];
+			var secondaryLength = 0;
+			var borderStyle;
+			var styleList = bbb.custom_tag.style_list;
+
+			// Skip thumbnails that have already been done.
+			if (link.className.indexOf("bbb-thumb-link") > -1)
+				continue;
+
+			// Create title.
+			img.title = title;
+
+			// Give the thumbnail link an identifying class.
+			link.className += " bbb-thumb-link";
+
+			// Correct parent status borders on "no active children" posts for logged out users.
+			if (hasChildren && show_deleted && post.className.indexOf("post-status-has-children") < 0)
+				post.className += " post-status-has-children";
+
+			// Secondary custom tag borders.
+			if (custom_tag_borders) {
+				if (typeof(styleList[id]) === "undefined") {
+					for (var j = 0, jl = tag_borders.length; j < jl; j++) {
+						var tagBorderItem = tag_borders[j];
+
+						if (tagBorderItem.is_enabled && thumbSearchMatch(post, searches[j])) {
+							secondary.push([tagBorderItem.border_color, tagBorderItem.border_style]);
+
+							if (secondary.length === 4)
+								break;
+						}
+					}
+
+					secondaryLength = secondary.length;
+
+					if (secondaryLength) {
+						link.className += " bbb-custom-tag";
+
+						if (secondaryLength === 1 || (single_color_borders && secondaryLength > 1))
+							borderStyle = "border: " + border_width + "px " + secondary[0][0] + " " + secondary[0][1] + " !important;";
+						else if (secondaryLength === 2)
+							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[1][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[1][1] + " " + secondary[0][1] + " !important;";
+						else if (secondaryLength === 3)
+							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[2][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[2][1] + " " + secondary[0][1] + " !important;";
+						else if (secondaryLength === 4)
+							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[2][0] + " " + secondary[3][0] + " " + secondary[1][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[2][1] + " " + secondary[3][1] + " " + secondary[1][1] + " !important;";
+
+						link.setAttribute("style", borderStyle);
+						styleList[id] = borderStyle;
+					}
+					else
+						styleList[id] = false;
+				}
+				else if (styleList[id] !== false && post.className.indexOf("bbb-custom-tag") < 0) {
+					link.className += " bbb-custom-tag";
+					link.setAttribute("style", styleList[id]);
+				}
+			}
+		}
+	}
+
+	function checkHiddenThumbs(post) {
+		// Alter a hidden thumbnails with cache info or queue it for the cache.
+		if (!post.md5) {
+			if (!bbb.cache.stored.history)
+				loadThumbCache();
+
+			var cacheName = bbb.cache.stored.names[post.id];
+
+			if (cacheName) { // Load the thumbnail info from the cache.
+				if (cacheName === "download-preview.png")
+					post.preview_file_url = "/images/download-preview.png";
+				else {
+					var cacheValues = cacheName.split(".");
+					var cacheMd5 = cacheValues[0];
+					var cacheExt = cacheValues[1];
+
+					post.md5 = cacheMd5;
+					post.file_ext = cacheExt;
+					post.preview_file_url = (!post.image_height || cacheExt === "swf" ? "/images/download-preview.png" : "/data/preview/" + cacheMd5 + ".jpg");
+					post.large_file_url = (post.has_large ? "/data/sample/sample-" + cacheMd5 + ".jpg" : "/data/" + cacheName);
+					post.file_url = "/data/" + cacheName;
+				}
+			}
+			else // Queue hidden img for fixing.
+				bbb.cache.hidden_imgs.push(post.id);
 		}
 	}
 
@@ -3629,6 +3517,284 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			searchPages("hidden");
 		}
+	}
+
+	function createThumbHTML(post, query) {
+		// Create a thumbnail HTML string.
+		return '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + query + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
+	}
+
+	function createThumb(post, query) {
+		// Create a thumbnail element. (lazy method <_<)
+		var childSpan = document.createElement("span");
+		childSpan.innerHTML = createThumbHTML(post, query);
+
+		return childSpan.firstChild;
+	}
+
+	function createThumbListing(posts, query, orderedIds) {
+		// Create a listing of thumbnails.
+		var thumb;
+		var thumbs = document.createDocumentFragment();
+		var postHolder = {};
+		var i, il; // Loop variables;
+
+		// Generate thumbnails.
+		for (i = 0, il = posts.length; i < il; i++) {
+			var post = formatInfo(posts[i]);
+
+			// Don't display loli/shota/toddlercon/deleted/banned if the user has opted so and skip to the next image.
+			if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_deleted && post.is_deleted) || (!show_banned && post.is_banned))
+				continue;
+
+			// Check if the post is hidden.
+			checkHiddenThumbs(post);
+
+			// eek, not so huge line.
+			thumb = createThumb(post, query);
+
+			// Generate output.
+			if (!orderedIds)
+				thumbs.appendChild(thumb);
+			else
+				postHolder[post.id] = thumb;
+		}
+
+		// Place thumbnails in the correct order for pools.
+		if (orderedIds) {
+			for (i = 0, il = orderedIds.length; i < il; i++) {
+				thumb = postHolder[orderedIds[i]];
+
+					if (thumb)
+						thumbs.appendChild(thumb);
+			}
+		}
+
+		return thumbs;
+	}
+
+	function loadThumbCache() {
+		// Initialize or load up the thumbnail cache.
+		if (typeof(localStorage.bbb_thumb_cache) !== "undefined")
+			bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+		else {
+			bbb.cache.stored = {history: [], names: {}};
+			localStorage.bbb_thumb_cache = JSON.stringify(bbb.cache.stored);
+		}
+	}
+
+	function updateThumbCache() {
+		// Add the current new thumbnail info to the saved thumbnail information.
+		if (!bbb.cache.current.history.length || !thumb_cache_limit)
+			return;
+
+		loadThumbCache();
+
+		var bcc = bbb.cache.current;
+		var bcs = bbb.cache.stored;
+		var i, il; // Loop variables.
+
+		// Make sure we don't have duplicates in the new info.
+		for (i = 0, il = bcc.history.length; i < il; i++) {
+			if (bcs.names[bcc.history[i]]) {
+				delete bcc.names[bcc.history[i]];
+				bcc.history.splice(i, 1);
+				il--;
+				i--;
+			}
+		}
+
+		// Add the new thumbnail info in.
+		for (i in bcc.names) {
+			if (bcc.names.hasOwnProperty(i)) {
+				bcs.names[i] = bcc.names[i];
+			}
+		}
+
+		bcs.history = bcs.history.concat(bcc.history);
+
+		// Prune the cache if it's larger than the user limit.
+		if (bcs.history.length > thumb_cache_limit) {
+			var removedIds = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
+
+			for (i = 0, il = removedIds.length; i < il; i++)
+				delete bcs.names[removedIds[i]];
+		}
+
+		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
+		bbb.cache.current = {history: [], names: {}};
+	}
+
+	function adjustThumbCache() {
+		// Prune the cache if it's larger than the user limit.
+		loadThumbCache();
+
+		thumb_cache_limit = bbb.user.thumb_cache_limit;
+
+		var bcs = bbb.cache.stored;
+
+		if (bcs.history.length > thumb_cache_limit) {
+			var removedIds = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
+
+			for (var i = 0, il = removedIds.length; i < il; i++)
+				delete bcs.names[removedIds[i]];
+		}
+
+		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
+	}
+
+	function postDDL(target) {
+		// Add direct downloads to thumbnails.
+		if (!direct_downloads || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "favorites"))
+			return;
+
+		var posts = getPosts(target);
+
+		for (var i = 0, il = posts.length; i < il; i++) {
+			var post = posts[i];
+			var postOrigUrl = post.getAttribute("data-file-url") || "";
+			var postSampUrl = post.getAttribute("data-large-file-url") || "";
+			var postUrl = (postSampUrl.indexOf(".webm") > -1 ? postSampUrl : postOrigUrl);
+			var postId = post.getAttribute("data-id");
+			var ddlLink = post.getElementsByClassName("bbb-ddl")[0];
+
+			if (!ddlLink) { // If the direct download doesn't already exist, create it.
+				ddlLink = document.createElement("a");
+				ddlLink.innerHTML = "Direct Download";
+				ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
+				ddlLink.id = "bbb-ddl-" + postId;
+				ddlLink.className = "bbb-ddl";
+				post.appendChild(ddlLink);
+			}
+			else if (ddlLink.href.indexOf("/data/") < 0) // Fix existing links for hidden thumbs.
+				ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
+		}
+	}
+
+	function cleanLinks(target) {
+		// Remove the query portion of thumbnail links.
+		if (!clean_links)
+			return;
+
+		var targetContainer;
+		var links;
+		var link;
+
+		if (target)
+			targetContainer = target;
+		else if (gLoc === "post")
+			targetContainer = document.getElementById("content");
+		else if (gLoc === "pool") {
+			targetContainer = document.getElementById("a-show");
+			targetContainer = (targetContainer ? targetContainer.getElementsByTagName("section")[0] : undefined);
+		}
+		else if (gLoc === "search" || gLoc === "favorites")
+			targetContainer = document.getElementById("posts");
+		else if (gLoc === "intro")
+			targetContainer = document.getElementById("a-intro");
+
+		if (targetContainer) {
+			links = targetContainer.getElementsByTagName("a");
+
+			for (var i = 0, il = links.length; i < il; i++) {
+				link = links[i];
+
+				if (link.parentNode.tagName === "ARTICLE" || link.parentNode.id.indexOf("nav-link-for-pool-") === 0)
+					link.href = link.href.split("?", 1)[0];
+			}
+		}
+	}
+
+	function potentialHiddenPosts(mode, target) {
+		// Check a normal thumbnail listing for possible hidden posts.
+		var numPosts = getPosts(target).length;
+		var hasPotential = false;
+
+		if (mode === "search" || mode === "notes" || mode === "favorites") {
+			var limit = getLimit();
+			var numDesired;
+			var numExpected;
+
+			numExpected = (limit !== undefined ? limit : thumbnail_count_default);
+			numDesired = (allowUserLimit() ? thumbnail_count : numExpected);
+
+			if (numPosts !== numDesired || numPosts < numExpected)
+				hasPotential = true;
+		}
+		else if (mode === "popular" || mode === "pool") {
+			if (numPosts !== thumbnail_count_default)
+				hasPotential = true;
+		}
+		else if (mode === "comments") {
+			if (numPosts !== 5)
+				hasPotential = true;
+		}
+
+		return hasPotential;
+	}
+
+	/* Other functions */
+	function modifyPage() {
+		if (noXML())
+			return;
+
+		if (gLoc === "post")
+			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
+		else if (useAPI()) // API only features.
+			searchJSON(gLoc);
+		else // Alternate mode for features.
+			searchPages(gLoc);
+	}
+
+	function formatInfo(post) {
+		// Add information to/alter information in the post object.
+		if (!post)
+			return undefined;
+
+		// Figure out the thumbnail classes.
+		var flags = "";
+		var thumbClass = "";
+
+		if (post.is_deleted) {
+			flags += " deleted";
+			thumbClass += " post-status-deleted";
+		}
+		if (post.is_pending) {
+			flags += " pending";
+			thumbClass += " post-status-pending";
+		}
+		if (post.is_banned)
+			flags += " banned";
+		if (post.is_flagged) {
+			flags += " flagged";
+			thumbClass += " post-status-flagged";
+		}
+		if (post.has_children && (post.has_active_children || show_deleted))
+			thumbClass += " post-status-has-children";
+		if (post.parent_id)
+			thumbClass += " post-status-has-parent";
+
+		// Figure out sample image dimensions and ratio.
+		post.sample_ratio = (post.image_width > 850 ? 850 / post.image_width : 1);
+		post.sample_height = Math.round(post.image_height * post.sample_ratio);
+		post.sample_width = Math.round(post.image_width * post.sample_ratio);
+
+		// Hidden post fixes.
+		post.md5 = post.md5 || "";
+		post.file_ext = post.file_ext || "";
+		post.preview_file_url = post.preview_file_url || bbbHiddenImg;
+		post.large_file_url = post.large_file_url || "";
+		post.file_url = post.file_url || "";
+
+		// Potential null value fixes.
+		post.approver_id = post.approver_id || "";
+		post.parent_id = post.parent_id || "";
+		post.pixiv_id = post.pixiv_id || "";
+
+		post.flags = flags.bbbSpaceClean();
+		post.thumb_class = thumbClass;
+
+		return post;
 	}
 
 	function fixPaginator(target) {
@@ -4450,76 +4616,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return searches;
 	}
 
-	function loadThumbCache() {
-		// Initialize or load up the thumbnail cache.
-		if (typeof(localStorage.bbb_thumb_cache) !== "undefined")
-			bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
-		else {
-			bbb.cache.stored = {history: [], names: {}};
-			localStorage.bbb_thumb_cache = JSON.stringify(bbb.cache.stored);
-		}
-	}
-
-	function updateThumbCache() {
-		// Add the current new thumbnail info to the saved thumbnail information.
-		if (!bbb.cache.current.history.length || !thumb_cache_limit)
-			return;
-
-		loadThumbCache();
-
-		var bcc = bbb.cache.current;
-		var bcs = bbb.cache.stored;
-		var i, il; // Loop variables.
-
-		// Make sure we don't have duplicates in the new info.
-		for (i = 0, il = bcc.history.length; i < il; i++) {
-			if (bcs.names[bcc.history[i]]) {
-				delete bcc.names[bcc.history[i]];
-				bcc.history.splice(i, 1);
-				il--;
-				i--;
-			}
-		}
-
-		// Add the new thumbnail info in.
-		for (i in bcc.names) {
-			if (bcc.names.hasOwnProperty(i)) {
-				bcs.names[i] = bcc.names[i];
-			}
-		}
-
-		bcs.history = bcs.history.concat(bcc.history);
-
-		// Prune the cache if it's larger than the user limit.
-		if (bcs.history.length > thumb_cache_limit) {
-			var removedIds = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
-
-			for (i = 0, il = removedIds.length; i < il; i++)
-				delete bcs.names[removedIds[i]];
-		}
-
-		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
-		bbb.cache.current = {history: [], names: {}};
-	}
-
-	function adjustThumbCache() {
-		// Prune the cache if it's larger than the user limit.
-		loadThumbCache();
-
-		thumb_cache_limit = bbb.user.thumb_cache_limit;
-
-		var bcs = bbb.cache.stored;
-
-		if (bcs.history.length > thumb_cache_limit) {
-			var removedIds = bcs.history.splice(0, bcs.history.length - thumb_cache_limit);
-
-			for (var i = 0, il = removedIds.length; i < il; i++)
-				delete bcs.names[removedIds[i]];
-		}
-
-		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
-	}
-
 	function trackNew() {
 		var header = document.getElementById("top");
 
@@ -4755,7 +4851,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview div.preview a.bbb-thumb-link {line-height: 0px !important;}' +
 		'.post-preview img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
-		'.bbb-custom-tag {border-width: ' + border_width + 'px !important;}' +
+		'a.bbb-thumb-link.bbb-custom-tag {border-width: ' + border_width + 'px !important;}' +
 		'article.post-preview:before, .post-preview div.preview:before {margin: ' + totalBorderWidth + 'px !important;}'; // Thumbnail icon overlay position adjustment.
 
 		if (custom_status_borders) {
@@ -4817,15 +4913,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		if (custom_tag_borders) {
-			styles += '.post-preview .bbb-custom-tag img {border-width: 0px !important;}' + // Remove the transparent border for images that get custom tag borders.
+			styles += '.post-preview a.bbb-thumb-link.bbb-custom-tag img {border-width: 0px !important;}' + // Remove the transparent border for images that get custom tag borders.
 			'article.post-preview a.bbb-thumb-link, .post-preview div.preview a.bbb-thumb-link {margin: ' + (border_width + customBorderSpacing) + 'px !important;}'; // Align one border images with two border images.
 
 			for (i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
 
 				if (statusBorderItem.is_enabled)
-					styles += '.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag {margin: 0px !important; padding: ' + customBorderSpacing + 'px !important;}' + // Remove margin alignment and add border padding for images that have status and custom tag borders.
-					'.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag img {border-width: ' + border_width + 'px !important;}'; // Override the removal of the transparent border for images that have status borders and custom tag borders.
+					styles += '.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link.bbb-custom-tag {margin: 0px !important; padding: ' + customBorderSpacing + 'px !important;}' + // Remove margin alignment and add border padding for images that have status and custom tag borders.
+					'.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link.bbb-custom-tag img {border-width: ' + border_width + 'px !important;}'; // Override the removal of the transparent border for images that have status borders and custom tag borders.
 			}
 		}
 
@@ -4878,7 +4974,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				statusBorderItem = status_borders[i];
 
 				if (statusBorderItem.is_enabled)
-					styles += 'article.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag:after, article.post-preview.' + statusBorderItem.class_name + ' .bbb-custom-tag:before, div.post.post-preview.' + statusBorderItem.class_name + ' div.preview .bbb-custom-tag:after, div.post.post-preview.' + statusBorderItem.class_name + ' div.preview .bbb-custom-tag:before {margin: ' + (border_width + border_spacing + customBorderSpacing) + 'px !important}'; // Margin applies to posts with a status and custom border.
+					styles += 'article.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link.bbb-custom-tag:after, article.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link.bbb-custom-tag:before, div.post.post-preview.' + statusBorderItem.class_name + ' div.preview a.bbb-thumb-link.bbb-custom-tag:after, div.post.post-preview.' + statusBorderItem.class_name + ' div.preview a.bbb-thumb-link.bbb-custom-tag:before {margin: ' + (border_width + border_spacing + customBorderSpacing) + 'px !important}'; // Margin applies to posts with a status and custom border.
 			}
 		}
 		else if (blacklist_thumb_mark === "highlight")
@@ -5171,40 +5267,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function cleanLinks(target) {
-		// Remove the query portion of thumbnail links.
-		if (!clean_links)
-			return;
-
-		var targetContainer;
-		var links;
-		var link;
-
-		if (target)
-			targetContainer = target;
-		else if (gLoc === "post")
-			targetContainer = document.getElementById("content");
-		else if (gLoc === "pool") {
-			targetContainer = document.getElementById("a-show");
-			targetContainer = (targetContainer ? targetContainer.getElementsByTagName("section")[0] : undefined);
-		}
-		else if (gLoc === "search" || gLoc === "favorites")
-			targetContainer = document.getElementById("posts");
-		else if (gLoc === "intro")
-			targetContainer = document.getElementById("a-intro");
-
-		if (targetContainer) {
-			links = targetContainer.getElementsByTagName("a");
-
-			for (var i = 0, il = links.length; i < il; i++) {
-				link = links[i];
-
-				if (link.parentNode.tagName === "ARTICLE" || link.parentNode.id.indexOf("nav-link-for-pool-") === 0)
-					link.href = link.href.split("?", 1)[0];
-			}
-		}
-	}
-
 	function autohideSidebar() {
 		// Show the sidebar when it gets focus, hide it when it loses focus, and don't allow its links to retain focus.
 		var sidebar = document.getElementById("sidebar");
@@ -5292,34 +5354,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return undefined;
 	}
 
-	function potentialHiddenPosts(mode, target) {
-		// Check a normal thumbnail listing for possible hidden posts.
-		var numPosts = getPosts(target).length;
-		var hasPotential = false;
-
-		if (mode === "search" || mode === "notes" || mode === "favorites") {
-			var limit = getLimit();
-			var numDesired;
-			var numExpected;
-
-			numExpected = (limit !== undefined ? limit : thumbnail_count_default);
-			numDesired = (allowUserLimit() ? thumbnail_count : numExpected);
-
-			if (numPosts !== numDesired || numPosts < numExpected)
-				hasPotential = true;
-		}
-		else if (mode === "popular" || mode === "pool") {
-			if (numPosts !== thumbnail_count_default)
-				hasPotential = true;
-		}
-		else if (mode === "comments") {
-			if (numPosts !== 5)
-				hasPotential = true;
-		}
-
-		return hasPotential;
-	}
-
 	function isLoggedIn() {
 		if (getMeta("current-user-id") !== "")
 			return true;
@@ -5389,29 +5423,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var newTag = getVar("tags", listItem.getElementsByClassName("search-tag")[0].href);
 
 			listItem.innerHTML = '<a href="/posts?tags=-' + newTag + tag + '">-</a> <a href="/posts?tags=' + newTag + tag + '">+</a> ' + listItem.innerHTML;
-		}
-	}
-
-	function postDDL(target) {
-		// Add direct downloads to thumbnails.
-		if (!direct_downloads || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "favorites"))
-			return;
-
-		var posts = getPosts(target);
-
-		for (var i = 0, il = posts.length; i < il; i++) {
-			var post = posts[i];
-			var postUrl = post.getAttribute("data-file-url");
-			var postId = post.getAttribute("data-id");
-
-			if (!post.getElementsByClassName("bbb-ddl").length) { // If the direct download doesn't already exist, create it.
-				var ddlLink = document.createElement("a");
-				ddlLink.innerHTML = "Direct Download";
-				ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
-				ddlLink.id = "bbb-ddl-" + postId;
-				ddlLink.className = "bbb-ddl";
-				post.appendChild(ddlLink);
-			}
 		}
 	}
 
