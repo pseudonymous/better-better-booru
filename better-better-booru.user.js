@@ -512,19 +512,23 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (post.file_ext === "webm") // Create webm video
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
 		else if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) { // Create ugoira
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a></p> </div>';
+			if (load_sample_first && getVar("original") !== "1")
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + appendUrlQuery(gUrl, "original=1") + '">View original</a></p>';
+			else {
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a></p> </div>';
 
-			noteToggleInit();
+				noteToggleInit();
 
-			if (Danbooru.Ugoira && post.pixiv_ugoira_frame_data) {
-				// Get rid of all the old events handlers that could interfere with the new ugoira.
-				$(Danbooru.Ugoira.player).unbind();
+				if (Danbooru.Ugoira && post.pixiv_ugoira_frame_data) {
+					// Get rid of all the old events handlers that could interfere with the new ugoira.
+					$(Danbooru.Ugoira.player).unbind();
 
-				// Set up the post.
-				ugoiraInit();
+					// Set up the post.
+					ugoiraInit();
+				}
+				else // Fix hidden posts.
+					searchJSON("ugoira");
 			}
-			else // Fix hidden posts.
-				searchJSON("ugoira");
 		}
 		else if (!post.image_height) // Create manual download.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
@@ -3379,7 +3383,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			});
 		}
 		catch (error) {
-			bbbNotice("Better Better Booru: Unexpected error creating the ugoira post. (Error: " + error.message + ")", "error");
+			bbbNotice("Unexpected error creating the ugoira post. (Error: " + error.message + ")", "error");
 		}
 	}
 
@@ -3679,6 +3683,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var targetContainer;
 		var links;
 		var link;
+		var linkParent;
 
 		if (target)
 			targetContainer = target;
@@ -3698,8 +3703,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			for (var i = 0, il = links.length; i < il; i++) {
 				link = links[i];
+				linkParent = link.parentNode;
 
-				if (link.parentNode.tagName === "ARTICLE" || link.parentNode.id.indexOf("nav-link-for-pool-") === 0)
+				if (linkParent.tagName === "ARTICLE" || linkParent.id.indexOf("nav-link-for-pool-") === 0)
 					link.href = link.href.split("?", 1)[0];
 			}
 		}
@@ -4105,9 +4111,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Test the image for a match when viewing a post.
 		if (imgContainer) {
-			postId = imgContainer.getAttribute("data-id");
+			var imgId = imgContainer.getAttribute("data-id");
 
-			if (!blacklistSmartViewCheck(postId))
+			if (!blacklistSmartViewCheck(imgId))
 				blacklistTest("imgContainer", imgContainer);
 		}
 
@@ -4850,7 +4856,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'article.post-preview a.bbb-thumb-link {line-height: 0px !important;}' +
 		'.post-preview div.preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview div.preview a.bbb-thumb-link {line-height: 0px !important;}' +
-		'.post-preview img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
+		'.post-preview a.bbb-thumb-link img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
 		'a.bbb-thumb-link.bbb-custom-tag {border-width: ' + border_width + 'px !important;}' +
 		'article.post-preview:before, .post-preview div.preview:before {margin: ' + totalBorderWidth + 'px !important;}'; // Thumbnail icon overlay position adjustment.
 
@@ -4868,35 +4874,35 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				if (single_color_borders) {
 					if (statusBorderItem.is_enabled)
-						activeStatusStyles = '.post-preview.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}' + activeStatusStyles;
+						activeStatusStyles = '.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}' + activeStatusStyles;
 					else
-						styles += '.post-preview.' + statusBorderItem.class_name + ' img {border-color: transparent !important;}'; // Disable status border by resetting it to transparent.
+						styles += '.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link img {border-color: transparent !important;}'; // Disable status border by resetting it to transparent.
 				}
 				else {
 					if (statusBorderItem.is_enabled) {
 						if (statusBorderItem.tags === "parent") {
-							styles += '.post-preview.post-status-has-children img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}'; // Parent only status border.
+							styles += '.post-preview.post-status-has-children a.bbb-thumb-link img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}'; // Parent only status border.
 
 							if (statusBorderInfo.child.is_enabled)
-								styles += '.post-preview.post-status-has-children.post-status-has-parent img {border-color: ' + statusBorderItem.border_color + ' ' + statusBorderInfo.child.border_color + ' ' + statusBorderInfo.child.border_color + ' ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' ' + statusBorderInfo.child.border_style + ' ' + statusBorderInfo.child.border_style + ' ' + statusBorderItem.border_style + ' !important;}'; // Parent and child status border.
+								styles += '.post-preview.post-status-has-children.post-status-has-parent a.bbb-thumb-link img {border-color: ' + statusBorderItem.border_color + ' ' + statusBorderInfo.child.border_color + ' ' + statusBorderInfo.child.border_color + ' ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' ' + statusBorderInfo.child.border_style + ' ' + statusBorderInfo.child.border_style + ' ' + statusBorderItem.border_style + ' !important;}'; // Parent and child status border.
 						}
 						else if (statusBorderItem.tags === "child")
-							styles += '.post-preview.post-status-has-parent img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}'; // Child only status border.
+							styles += '.post-preview.post-status-has-parent a.bbb-thumb-link img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}'; // Child only status border.
 						else {
-							activeStatusStyles = '.post-preview.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged only status border.
+							activeStatusStyles = '.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged only status border.
 
 							if (statusBorderInfo.parent.is_enabled)
-								activeStatusStyles = '.post-preview.post-status-has-children.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderInfo.parent.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderInfo.parent.border_color + ' !important; border-style: ' + statusBorderInfo.parent.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderInfo.parent.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged and parent status border.
+								activeStatusStyles = '.post-preview.post-status-has-children.' + statusBorderItem.class_name + ' a.bbb-thumb-link img {border-color: ' + statusBorderInfo.parent.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderInfo.parent.border_color + ' !important; border-style: ' + statusBorderInfo.parent.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderInfo.parent.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged and parent status border.
 
 							if (statusBorderInfo.child.is_enabled)
-								activeStatusStyles = '.post-preview.post-status-has-parent.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderInfo.child.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderInfo.child.border_color + ' !important; border-style: ' + statusBorderInfo.child.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderInfo.child.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged and child status border.
+								activeStatusStyles = '.post-preview.post-status-has-parent.' + statusBorderItem.class_name + ' a.bbb-thumb-link img {border-color: ' + statusBorderInfo.child.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderInfo.child.border_color + ' !important; border-style: ' + statusBorderInfo.child.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderInfo.child.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged and child status border.
 
 							if (statusBorderInfo.child.is_enabled && statusBorderInfo.parent.is_enabled)
-								activeStatusStyles = '.post-preview.post-status-has-children.post-status-has-parent.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderInfo.parent.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderInfo.child.border_color + ' !important; border-style: ' + statusBorderInfo.parent.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderInfo.child.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged, parent, and child status border.
+								activeStatusStyles = '.post-preview.post-status-has-children.post-status-has-parent.' + statusBorderItem.class_name + ' a.bbb-thumb-link img {border-color: ' + statusBorderInfo.parent.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderItem.border_color + ' ' + statusBorderInfo.child.border_color + ' !important; border-style: ' + statusBorderInfo.parent.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderItem.border_style + ' ' + statusBorderInfo.child.border_style + ' !important;}' + activeStatusStyles; // Deleted/pending/flagged, parent, and child status border.
 						}
 					}
 					else
-						styles += '.post-preview.' + statusBorderItem.class_name + ' img {border-color: transparent !important;}'; // Disable status border by resetting it to transparent.
+						styles += '.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link img {border-color: transparent !important;}'; // Disable status border by resetting it to transparent.
 				}
 			}
 
@@ -4908,7 +4914,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			for (i = defaultStatusBorders.length - 1; i >= 0; i--) {
 				statusBorderItem = defaultStatusBorders[i];
 
-				styles += '.post-preview.' + statusBorderItem.class_name + ' img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}';
+				styles += '.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link img {border-color: ' + statusBorderItem.border_color + ' !important; border-style: ' + statusBorderItem.border_style + ' !important;}';
 			}
 		}
 
@@ -4953,7 +4959,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (blacklist_post_display === "replaced")
 			styles += 'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {display: inline-block !important; background-position: ' + totalBorderWidth + 'px ' + totalBorderWidth + 'px !important; background-repeat: no-repeat !important; background-image: url(' + bbbBlacklistImg + ') !important;}' +
 			'#has-parent-relationship-preview article.post-preview.blacklisted.blacklisted-active, #has-children-relationship-preview article.post-preview.blacklisted.blacklisted-active {background-position: ' + (totalBorderWidth + 5) + 'px ' + (totalBorderWidth + 5) + 'px !important;}' + // Account for relation notice padding.
-			'article.post-preview.blacklisted.blacklisted-active img, div.post.post-preview.blacklisted.blacklisted-active div.preview img {opacity: 0.0 !important; height: 150px !important; width: 150px !important; border-width: 0px !important; padding: 0px !important;}' + // Remove all status border space.
+			'article.post-preview.blacklisted.blacklisted-active  a.bbb-thumb-link img, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link img {opacity: 0.0 !important; height: 150px !important; width: 150px !important; border-width: 0px !important; padding: 0px !important;}' + // Remove all status border space.
 			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link {padding: 0px !important; margin: ' + totalBorderWidth + 'px !important;}' + // Align no border thumbs with custom/single border thumbs.
 			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link.bbb-custom-tag, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link.bbb-custom-tag {padding: ' + border_spacing + 'px !important; margin: ' + (border_width + customBorderSpacing) + 'px !important;}' +
 			'div.post.post-preview.blacklisted {display: block !important;}' +
