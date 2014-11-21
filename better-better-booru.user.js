@@ -122,6 +122,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			status_borders: new Section("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: new Section("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 		},
+		timers: {},
 		user: {} // User settings.
 	};
 
@@ -674,7 +675,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (gLoc === "search") {
 			target = document.getElementById("posts");
 			target = (target ? target.getElementsByTagName("div")[0] : undefined);
-			query = (gUrlQuery.indexOf("tags=") > -1 && !clean_links ? "?tags=" + getVar("tags") : "");
+			query = getVar("tags");
+			query = (query !== undefined && !clean_links ? "?tags=" + query : "");
 		}
 		else if (gLoc === "popular")
 			target = document.getElementById("a-index");
@@ -787,7 +789,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var infoSection = document.getElementById("post-information");
 			var options = document.createElement("section");
 			options.id = "post-options";
-			options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + post.preview_file_url + '">Find similar</a></li></ul>';
+			options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a id="random-post" href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + post.preview_file_url + '">Find similar</a></li></ul>';
 			infoSection.parentNode.insertBefore(options, infoSection.nextElementSibling);
 		}
 
@@ -861,19 +863,23 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (post.file_ext === "webm") // Create webm video
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
 		else if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) { // Create ugoira
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a></p> </div>';
+			if (load_sample_first && getVar("original") !== 1) // Load sample webm version.
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + (gUrl.indexOf("?") > -1 ? gUrl + "&original=1" : gUrl + "?original=1") + '">View original</a></p>';
+			else { // Load original ugoira version.
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a></p> </div>';
 
-			noteToggleInit();
+				noteToggleInit();
 
-			if (Danbooru.Ugoira && post.pixiv_ugoira_frame_data) {
-				// Get rid of all the old events handlers that could interfere with the new ugoira.
-				$(Danbooru.Ugoira.player).unbind();
+				if (Danbooru.Ugoira && post.pixiv_ugoira_frame_data) {
+					// Get rid of all the old events handlers that could interfere with the new ugoira.
+					$(Danbooru.Ugoira.player).unbind();
 
-				// Set up the post.
-				ugoiraInit();
+					// Set up the post.
+					ugoiraInit();
+				}
+				else // Fix hidden posts.
+					searchJSON("ugoira");
 			}
-			else
-				searchJSON("ugoira");
 		}
 		else if (!post.image_height) // Create manual download.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
@@ -2343,11 +2349,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var scrollDivDiff = menu.offsetHeight - scrollDiv.clientHeight;
 
 		scrollDiv.style.maxHeight = viewHeight - scrollDiv.bbbGetPadding().height - scrollDivDiff - 50 + "px"; // Subtract 50 for margins (25 each).
+		bbb.timers.adjustMenu = 0;
 	}
 
 	function adjustMenuTimer() {
-		if (!adjustMenuTimeout && bbb.el.menu.window)
-			var adjustMenuTimeout = window.setTimeout(function() { adjustMenuHeight(); }, 50);
+		if (!bbb.timers.adjustMenu && bbb.el.menu.window)
+			bbb.timers.adjustMenu = window.setTimeout(adjustMenuHeight, 50);
 	}
 
 	function removeMenu() {
@@ -2714,15 +2721,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function resizeImage(mode) {
 		// Custom resize post script.
 		var imgContainer = document.getElementById("image-container");
+		var contentDiv = document.getElementById("content");
 		var img = document.getElementById("image");
 		var swfObj = (imgContainer ? imgContainer.getElementsByTagName("object")[0] : undefined);
 		var swfEmb = (swfObj ? swfObj.getElementsByTagName("embed")[0] : undefined);
 		var webmVid = (imgContainer ? imgContainer.getElementsByTagName("video")[0] : undefined);
+		var ugoira = (imgContainer ? imgContainer.getElementsByTagName("canvas")[0] : undefined);
 		var ugoiraPanel = document.getElementById("ugoira-control-panel");
 		var ugoiraSlider = document.getElementById("seek-slider");
-		var target = img || swfEmb || webmVid;
+		var target = img || swfEmb || webmVid || ugoira;
 
-		if (!target || !imgContainer)
+		if (!target || !imgContainer || !contentDiv)
 			return;
 
 		var currentMode = bbb.post.resize.mode;
@@ -2730,10 +2739,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLinkAll = bbb.el.resizeLinkAll;
 		var resizeLinkWidth = bbb.el.resizeLinkWidth;
 		var resizeLinkHeight = bbb.el.resizeLinkHeight;
-		var availableWidth = imgContainer.clientWidth;
+		var availableWidth = imgContainer.clientWidth || contentDiv.clientWidth - contentDiv.bbbGetPadding().width;
 		var availableHeight = window.innerHeight - 40;
-		var targetCurrentWidth = target.clientWidth;
-		var targetCurrentHeight = target.clientHeight;
+		var targetCurrentWidth = target.clientWidth || parseFloat(target.style.width) || target.getAttribute("width");
+		var targetCurrentHeight = target.clientHeight || parseFloat(target.style.height) || target.getAttribute("height");
 		var targetWidth = (swfEmb || webmVid ? imgContainer.getAttribute("data-width") : img.getAttribute("width")); // Was NOT expecting target.width to return the current width (css style width) and not the width attribute's value here...
 		var targetHeight = (swfEmb || webmVid ? imgContainer.getAttribute("data-height") : img.getAttribute("height"));
 		var tooWide = targetCurrentWidth > availableWidth;
@@ -2773,9 +2782,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (switchMode) {
 			if (currentRatio !== ratio || mode === "swap") {
-				if (img) { // Handle regular images and ugoira animations.
-					img.style.width = targetWidth * ratio + "px";
-					img.style.height = targetHeight * ratio + "px";
+				if (img || ugoira) {
+					target.style.width = targetWidth * ratio + "px";
+					target.style.height = targetHeight * ratio + "px";
 
 					if (ugoiraPanel && ugoiraSlider) {
 						ugoiraPanel.style.width = targetWidth * ratio + "px";
@@ -3147,7 +3156,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return "post";
 		else if (/^\/(?:posts|$)/.test(gUrlPath))
 			return "search";
-		else if (gUrlPath.indexOf("/notes") === 0 && gUrlQuery.indexOf("group_by=note") < 0)
+		else if (/^\/notes\/?$/.test(gUrlPath) && gUrlQuery.indexOf("group_by=note") < 0)
 			return "notes";
 		else if (/^\/comments\/?$/.test(gUrlPath) && gUrlQuery.indexOf("group_by=comment") < 0)
 			return "comments";
@@ -3993,7 +4002,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		var infoSection = document.getElementById("post-information");
 		var infoListItems = (infoSection ? infoSection.getElementsByTagName("li") : null);
-		var infoListItem;
 		var statusListItem;
 		var newStatusContent;
 		var flaggedNotice = document.getElementsByClassName("notice-flagged")[0];
@@ -4007,7 +4015,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (infoListItems) {
 			// Locate the status portion of the information section.
 			for (i = infoListItems.length - 1; i >= 0; i--) {
-				infoListItem = infoListItems[i];
+				var infoListItem = infoListItems[i];
 
 				if (infoListItem.textContent.indexOf("Status:") > -1) {
 					statusListItem = infoListItem;
@@ -4065,24 +4073,24 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var bannedLink = document.getElementById("bbb-banned-link");
 
 			if (flaggedLink)
-				statusLinkEvents(flaggedLink, flaggedNotice, "flaggedTimer");
+				statusLinkEvents(flaggedLink, flaggedNotice);
 			if (appealedLink)
-				statusLinkEvents(appealedLink, appealedNotice, "appealedTimer");
+				statusLinkEvents(appealedLink, appealedNotice);
 			if (pendingLink)
-				statusLinkEvents(pendingLink, pendingNotice, "pendingTimer");
+				statusLinkEvents(pendingLink, pendingNotice);
 			if (deletedLink)
-				statusLinkEvents(deletedLink, deletedNotice, "deletedTimer");
+				statusLinkEvents(deletedLink, deletedNotice);
 			if (bannedLink)
-				statusLinkEvents(bannedLink, bannedNotice, "bannedTimer");
+				statusLinkEvents(bannedLink, bannedNotice);
 		}
 	}
 
-	function statusLinkEvents(link, notice, timer) {
+	function statusLinkEvents(link, notice) {
 		// Attach events to the status links to enable a tooltip style notice.
-		link.addEventListener("click", function(event) {showStatusNotice(event, notice);}, false);
-		link.addEventListener("mouseout", function() {bbb[timer] = window.setTimeout(function() { notice.style.display = "none";}, 200);}, false);
-		notice.addEventListener("mouseover", function() {window.clearTimeout(bbb[timer]);}, false);
-		notice.addEventListener("mouseleave", function() {notice.style.display = "none";}, false);
+		link.addEventListener("click", function(event) { showStatusNotice(event, notice); }, false);
+		link.addEventListener("mouseout", function() { bbb.timers.minNotice = window.setTimeout(function() { notice.style.display = "none"; }, 200); }, false);
+		notice.addEventListener("mouseover", function() { window.clearTimeout(bbb.timers.minNotice); }, false);
+		notice.addEventListener("mouseleave", function() { notice.style.display = "none"; }, false);
 	}
 
 	function showStatusNotice(event, noticeEl) {
@@ -4162,18 +4170,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return false;
 
 		var tags = post.getAttribute("data-tags");
-		var user = " user:" + post.getAttribute("data-uploader").replace(/\s/g, "_").toLowerCase();
+		var flags = post.getAttribute("data-flags") || "active";
 		var rating = " rating:" + post.getAttribute("data-rating");
+		var status = " status:" + (flags === "flagged" ? flags + " active" : flags).replace(/\s/g, " status:");
+		var user = " user:" + post.getAttribute("data-uploader").replace(/\s/g, "_").toLowerCase();
 		var pools = " " + post.getAttribute("data-pools");
 		var score = post.getAttribute("data-score");
 		var favcount = post.getAttribute("data-fav-count");
 		var id = post.getAttribute("data-id");
 		var width = post.getAttribute("data-width");
 		var height = post.getAttribute("data-height");
-		var flags = post.getAttribute("data-flags") || "active";
-		var status = " status:" + (flags === "flagged" ? flags + " active" : flags).replace(/\s/g, " status:");
 		var postInfo = {
-			tags: (tags + rating + status + user + pools).bbbSpacePad(),
+			tags: tags.bbbSpacePad(),
+			metatags:(rating + status + user + pools).bbbSpacePad(),
 			score: Number(score),
 			favcount: Number(favcount),
 			id: Number(id),
@@ -4264,14 +4273,22 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function thumbTagMatch(postInfo, tag) {
 		// Test thumbnail info for a tag match.
+		var targetTags;
+
 		if (typeof(tag) === "string") { // Check regular tags and metatags with string values.
-			if (postInfo.tags.indexOf(tag) > -1)
+			targetTags = (isMetatag(tag) ? postInfo.metatags : postInfo.tags);
+
+			if (targetTags.indexOf(tag) > -1)
 				return true;
 			else
 				return false;
 		}
 		else if (tag instanceof RegExp) { // Check wildcard tags.
-			return tag.test(postInfo.tags);
+			var stringTag = String(tag); // Convert regex to a string and...
+			stringTag = stringTag.substring(2, stringTag.length - 2); // ...remove the leading "/ " and trailing " /" before passing it for testing.
+			targetTags = (isMetatag(stringTag) ? postInfo.metatags : postInfo.tags);
+
+			return tag.test(targetTags);
 		}
 		else if (typeof(tag) === "object") { // Check numeric metatags.
 			var tagsMetaValue = postInfo[tag.tagName];
@@ -4328,10 +4345,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					searchTerm = searchTerm.slice(1);
 				}
 
-				if (searchTerm.length > 0)
-					mode = searchObject[primaryMode][secondaryMode];
-				else
+				if (searchTerm.length < 1) // Stop if there is no actual tag.
 					continue;
+
+				mode = searchObject[primaryMode][secondaryMode];
 
 				if (isNumMetatag(searchTerm)) { // Parse numeric metatags and turn them into objects.
 					var tagArray = searchTerm.split(":");
@@ -4387,7 +4404,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							mode.push(metaObject);
 						}
 					}
-					else if (numSearch.indexOf("..") > -1) { // Greater than or equal to and less than or equal to range. tag:#..#
+					else if (numSearch.indexOf("..") > -1) { // Greater than or equal to and less than or equal to range. (tag:#..#)
 						numArray = numSearch.split("..");
 						greater = parseInt(numArray[0], 10);
 						less = parseInt(numArray[1], 10);
@@ -4431,6 +4448,20 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var tagName = tag.split(":", 1)[0];
 
 			if (tagName === "score" || tagName === "favcount" || tagName === "id" || tagName === "width" || tagName === "height")
+				return true;
+			else
+				return false;
+		}
+	}
+
+	function isMetatag(tag) {
+		// Check if the tag from a search string is a metatag.
+		if (tag.indexOf(":") < 0)
+			return false;
+		else {
+			var tagName = tag.split(":", 1)[0].bbbSpaceClean();
+
+			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating")
 				return true;
 			else
 				return false;
