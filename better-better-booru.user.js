@@ -510,14 +510,24 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (post.file_ext === "swf") // Create flash object.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
 		else if (post.file_ext === "webm") // Create webm video
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
 		else if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) { // Create ugoira
-			if (load_sample_first && getVar("original") !== "1") // Load sample webm version.
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + appendUrlQuery(gUrl, "original=1") + '">View original</a></p>';
-			else { // Load original ugoira version.
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a></p> </div>';
+			var useUgoiraOrig = getVar("original");
 
+			if ((load_sample_first && useUgoiraOrig !== "1") || useUgoiraOrig === "0") { // Load sample webm version.
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + updateUrlQuery(gUrl, "original=1") + '">View original</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p>';
+
+				// Prep the "toggle notes" link.
+				noteToggleLinkInit();
+			}
+			else { // Load original ugoira version.
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a> | <a href="' + updateUrlQuery(gUrl, "original=0") + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
+
+				// Make notes toggle when clicking the ugoira animation.
 				noteToggleInit();
+
+				// Prep the "toggle notes" link. The "toggle notes" link is added here just for consistency's sake.
+				noteToggleLinkInit();
 
 				if (Danbooru.Ugoira && post.pixiv_ugoira_frame_data) {
 					// Get rid of all the old events handlers that could interfere with the new ugoira.
@@ -567,15 +577,22 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Enable drag scrolling.
 		dragScrollInit();
 
-		// Make translation mode work for logged in users.
-		translationModeInit(post);
-
 		// Resize the content if desired.
 		if (post_resize)
 			resizePost(post_resize_mode);
 
-		// Load/reload notes.
-		Danbooru.Note.load_all();
+		if (post.file_ext !== "webm") { // Don't allow note functions on webm videos.
+			if (document.getElementById("image").tagName !== "VIDEO") // Make translation mode work on non-video content.
+				translationModeInit(post);
+			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
+				Danbooru.Note.Edit.show = function() {
+					bbbNotice('Note editing is not allowed while using the webm video sample. Please use the <a href="' + updateUrlQuery(gUrl, "original=1") + '">original</a> ugoira version for note editing.', -1);
+				};
+			}
+
+			// Load/reload notes.
+			Danbooru.Note.load_all();
+		}
 
 		// Auto position the content if desired.
 		autoscrollPost();
@@ -806,7 +823,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			if (allowUserLimit()) {
-				url = appendUrlQuery(gUrl, "limit=" + thumbnail_count);
+				url = updateUrlQuery(gUrl, "limit=" + thumbnail_count);
 
 				fetchPages(url, "thumbnails");
 				bbbStatus("posts", "new");
@@ -816,7 +833,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			url = gUrl;
 
 			if (allowUserLimit())
-				url = appendUrlQuery(url, "limit=" + thumbnail_count);
+				url = updateUrlQuery(url, "limit=" + thumbnail_count);
 
 			fetchPages(url, "paginator");
 		}
@@ -1106,7 +1123,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			var isUgoira = (ugoira || (ext === "zip" && /\bugoira\b/.test(imgInfo.tag_string)));
+			var isUgoira = ugoira || (ext === "zip" && /\bugoira\b/.test(imgInfo.tag_string));
 
 			if (isUgoira) {
 				if (ugoira) {
@@ -2667,22 +2684,30 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}, true);
 	}
 
-	function alternateImageSwap(post) {
-		// Make clicking the image swap between the original and sample image when available.
-		// Make a "Toggle Notes" link in the sidebar options.
-		var before = document.getElementById((isLoggedIn() ? "add-notes-list" : "random-post"));
+	function noteToggleLinkInit() {
+		// Make a "toggle notes" link in the sidebar options or prepare an existing link.
+		var toggleLink = document.getElementById("bbb-note-toggle");
 
-		if (before) {
-			var listNoteToggle = document.createElement("li");
-			listNoteToggle.innerHTML = '<a href="#" id="listnotetoggle">Toggle notes</a>';
-			before.parentNode.insertBefore(listNoteToggle, before);
+		if (!toggleLink) {
+			var before = document.getElementById((isLoggedIn() ? "add-notes-list" : "random-post"));
 
-			document.getElementById("listnotetoggle").addEventListener("click", function(event) {
+			if (before) {
+				var listNoteToggle = document.createElement("li");
+				listNoteToggle.innerHTML = '<a href="#" id="bbb-note-toggle">Toggle notes</a>';
+				before.parentNode.insertBefore(listNoteToggle, before);
+				toggleLink = document.getElementById("bbb-note-toggle");
+			}
+		}
+
+		if (toggleLink) {
+			document.getElementById("bbb-note-toggle").addEventListener("click", function(event) {
 				Danbooru.Note.Box.toggle_all();
 				event.preventDefault();
 			}, false);
 		}
+	}
 
+	function alternateImageSwap(post) {
 		// Override Danbooru's image click handler for toggling notes with a custom one that swaps the image.
 		if (post.has_large) {
 			document.addEventListener("click", function(event) {
@@ -2694,6 +2719,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 			}, true);
 		}
+
+		// Set up the "toggle notes" link since the image won't be used for toggling.
+		noteToggleLinkInit();
 	}
 
 	function createOptionsSection(post) {
@@ -3815,9 +3843,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			if (allowUserLimit()) {
 				// Fix existing paginator with user's custom limit.
 				var pageLinks = paginator.getElementsByTagName("a");
+				var pageLink;
 
-				for (var i = 0, il = pageLinks.length; i < il; i++)
-					pageLinks[i].href = appendUrlQuery(pageLinks[i].href, "&limit=" + thumbnail_count);
+				for (var i = 0, il = pageLinks.length; i < il; i++) {
+					pageLink = pageLinks[i];
+					pageLink.href = updateUrlQuery(pageLink.href, "&limit=" + thumbnail_count);
+				}
 
 				searchPages("paginator");
 			}
@@ -5169,7 +5200,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				linkHref = link.getAttribute("href");
 
 				if (linkHref && (linkHref.indexOf("/posts") === 0 || linkHref === "/" || linkHref === "/notes?group_by=post" || linkHref === "/favorites"))
-						link.href = appendUrlQuery(linkHref, "limit=" + thumbnail_count);
+						link.href = updateUrlQuery(linkHref, "limit=" + thumbnail_count);
 			}
 		}
 
@@ -5551,16 +5582,45 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return regEx.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 	}
 
-	function appendUrlQuery(url) {
-		// Add information to the query portion of a url.
-		var appended = url.split("#", 1)[0];
+	function updateUrlQuery(url) {
+		// Add information to the query portion of a full url.
+		var urlParts = url.split(/[?#]/g, 2);
+		var urlQuery = urlParts[1] || "";
+		var queries = urlQuery.split("&");
+		var query;
+		var queryName;
+		var queryValue;
+		var queryObj = {};
+		var i, il; // Loop variables.
 
-		appended += (appended.indexOf("?") > -1 ? "&" : "?") + arguments[1];
+		for (i = 0, il = queries.length; i < il; i++) {
+			query = queries[i].split("=");
+			queryName = query[0];
+			queryValue = query[1];
 
-		for (var i = 2, il = arguments.length; i < il; i++)
-			appended += "&" + arguments[i];
+			if (queryName)
+				queryObj[queryName] = queryValue;
+		}
 
-		return appended;
+		for (i = 1, il = arguments.length; i < il; i++) {
+			query = arguments[i].split("=");
+			queryName = query[0];
+			queryValue = query[1];
+
+			if (queryName)
+				queryObj[queryName] = queryValue;
+		}
+
+		queries.length = 0;
+
+		for (i in queryObj) {
+			if (queryObj.hasOwnProperty(i))
+				queries.push(i + "="  + queryObj[i]);
+		}
+
+		urlQuery = queries.join("&");
+
+		return urlParts[0] + "?" + urlQuery;
 	}
 
 	Number.prototype.bbbPadDate = function() {
