@@ -253,7 +253,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function searchJSON(mode, optArg) {
 		var numThumbs = getPosts().length;
 
-		if (mode === "search" || mode === "notes") {
+		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			var limitUrl = getVar("limit");
 			var limitSearch = getLimitSearch();
 			var numDesired = 0;
@@ -277,8 +277,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			if (numThumbs !== numDesired || numThumbs < numExpected) {
 				if (mode === "search")
 					fetchJSON(gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit, "search");
-				else
+				else if (mode === "notes")
 					fetchJSON(gUrl.replace(/\/notes\/?(?:\?|$)/, "/notes.json?") + limit, "notes");
+				else if (mode === "favorites")
+					fetchJSON(gUrl.replace(/\/favorites\/?(?:\?|$)/, "/favorites.json?") + limit, "favorites");
 			}
 		}
 		else if (mode === "post")
@@ -321,7 +323,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var xml = JSON.parse(xmlhttp.responseText);
 
-						if (mode === "search" || mode === "popular" || mode === "notes")
+						if (mode === "search" || mode === "popular" || mode === "notes" || mode === "favorites")
 							parseListing(xml);
 						else if (mode === "post")
 							parsePost(xml);
@@ -359,7 +361,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			xmlhttp.send(null);
 
 			// Loading status message.
-			if (mode === "search" || mode === "popular" || mode === "notes" || mode === "post" || mode === "pool" || mode === "parent" || mode === "child" || mode === "ugoira")
+			if (mode === "search" || mode === "popular" || mode === "notes" || mode === "post" || mode === "pool" || mode === "parent" || mode === "child" || mode === "ugoira" || mode === "favorites")
 				bbbStatus("image");
 			else if (mode === "comments")
 				bbbStatus("comment");
@@ -370,14 +372,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Let other functions that don't require the API run. (Alternative to searchJSON)
 		if (mode === "post")
 			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
-		else if (mode === "search" || mode === "notes") {
+		else if (mode === "search" || mode === "notes" || mode === "favorites") {
 			if (allowUserLimit()) {
 				var url = gUrl;
 
-				if (url.indexOf("?") > -1)
-					url += "&limit=" + thumbnail_count;
-				else
-					url += "?limit=" + thumbnail_count;
+				url = updateUrlQuery(gUrl, "limit=" + thumbnail_count);
 
 				fetchPages(url, "thumbnails");
 			}
@@ -607,8 +606,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 									article.setAttribute("data-file-url", post.file_url);
 									article.setAttribute("data-large-file-url", post.large_file_url);
 
-									if (direct_downloads && (gLoc === "search" || gLoc === "pool" || gLoc === "popular"))
-										document.getElementById("bbb-ddl-" + hiddenId).href = post.file_url;
+									if (direct_downloads)
+										postDDL(article);
 								}
 
 								previewImg.src = post.preview_file_url;
@@ -691,6 +690,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			target = document.getElementById("a-index");
 			before = paginator;
 		}
+		else if (gLoc === "favorites") {
+			target = document.getElementById("posts");
+			query = document.getElementById("tags");
+			query = (query && !clean_links ? "?tags=" + query.value : "");
+			before = paginator;
+		}
 
 		if (!target) {
 			danbNotice("Better Better Booru: Thumbnail section could not be located.", "error");
@@ -718,27 +723,38 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			replacement.insertBefore(newThumbs, before);
 
 		// Fix the paginator;
-		if (paginator && (gLoc === "search" || gLoc === "notes")) {
+		if (paginator) {
 			var noPages = paginator.textContent.indexOf("Go back") > -1;
 			var pageUrl = gUrl;
 
-			if (allowUserLimit()) {
-				// Fix existing paginator with user's custom limit.
-				var pageLinks = paginator.getElementsByTagName("a");
+			if (gLoc === "search" || gLoc === "notes") {
+				if (allowUserLimit()) {
+					// Fix existing paginator with user's custom limit.
+					var pageLinks = paginator.getElementsByTagName("a");
+					var pageLink;
 
-				for (var i = 0, il = pageLinks.length; i < il; i++)
-					pageLinks[i].href = pageLinks[i].href + "&limit=" + thumbnail_count;
+					for (var i = 0, il = pageLinks.length; i < il; i++) {
+						pageLink = pageLinks[i];
+						pageLink.href = updateUrlQuery(pageLink.href, "&limit=" + thumbnail_count);
+					}
 
-				// Attempt to fix the paginator by retrieving it from an actual page. Might not work if connections are going slowly.
-				if (pageUrl.indexOf("?") > -1)
-					pageUrl += "&limit=" + thumbnail_count;
-				else
-					pageUrl += "?limit=" + thumbnail_count;
+					pageUrl = updateUrlQuery(pageUrl, "limit=" + thumbnail_count);
 
-				fetchPages(pageUrl, "paginator");
+					fetchPages(pageUrl, "paginator");
+				}
+				else if (noPages)
+					fetchPages(pageUrl, "paginator");
 			}
-			else if (noPages) // Fix the paginator if the post xml and existing page are out of sync.
-				fetchPages(pageUrl, "paginator");
+			else if (gLoc === "favorites") {
+				if (allowUserLimit() || noPages) {
+					paginator.innerHTML = "Loading..."; // Disable the paginator while fixing it.
+
+					if (allowUserLimit())
+						pageUrl = updateUrlQuery(pageUrl, "limit=" + thumbnail_count);
+
+					fetchPages(pageUrl, "paginator");
+				}
+			}
 		}
 
 		// Thumbnail classes and titles.
@@ -784,12 +800,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var newUrl = "";
 		var altTxt = "";
 
-		// Enable the "Resize to window", "Toggle Notes", "Random Post", and "Find similar" options for logged out users.
+		// Enable the "Resize to window", "Toggle notes", "Random post", and "Find similar" options for logged out users.
 		if (!isLoggedIn()) {
 			var infoSection = document.getElementById("post-information");
 			var options = document.createElement("section");
 			options.id = "post-options";
-			options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="listnotetoggle">Toggle notes</a></li>' : '') + '<li><a id="random-post" href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + post.preview_file_url + '">Find similar</a></li></ul>';
+			options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li>' + (alternate_image_swap ? '<li><a href="#" id="bbb-note-toggle">Toggle notes</a></li>' : '') + '<li><a id="random-post" href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + post.preview_file_url + '">Find similar</a></li></ul>';
 			infoSection.parentNode.insertBefore(options, infoSection.nextElementSibling);
 		}
 
@@ -861,14 +877,22 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (post.file_ext === "swf") // Create flash object.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
 		else if (post.file_ext === "webm") // Create webm video
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
 		else if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) { // Create ugoira
-			if (load_sample_first && getVar("original") !== 1) // Load sample webm version.
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + (gUrl.indexOf("?") > -1 ? gUrl + "&original=1" : gUrl + "?original=1") + '">View original</a></p>';
-			else { // Load original ugoira version.
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a></p> </div>';
+			if (load_sample_first && getVar("original") !== 1) { // Load sample webm version.
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + updateUrlQuery(gUrl, "original=1") + '">View original</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p>';
 
+				// Prep the "toggle notes" link.
+				noteToggleLinkInit();
+			}
+			else { // Load original ugoira version.
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a> | <a href="' + updateUrlQuery(gUrl, "original=0") + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
+
+				// Make notes toggle when clicking the ugoira animation.
 				noteToggleInit();
+
+				// Prep the "toggle notes" link. The "toggle notes" link is added here just for consistency's sake.
+				noteToggleLinkInit();
 
 				if (Danbooru.Ugoira && post.pixiv_ugoira_frame_data) {
 					// Get rid of all the old events handlers that could interfere with the new ugoira.
@@ -1023,74 +1047,55 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (!alternate_image_swap) // Make notes toggle when clicking the image.
 				noteToggleInit();
-			else { // Make sample/original images swap when clicking the image.
-				// Make a "Toggle Notes" link in the options bar.
-				if (!document.getElementById("listnotetoggle")) { // For logged in users.
-					var translateOption = document.getElementById("add-notes-list");
-					var listNoteToggle = document.createElement("li");
-
-					if (translateOption) {
-						listNoteToggle.innerHTML = '<a href="#" id="listnotetoggle">Toggle notes</a>';
-						translateOption.parentNode.insertBefore(listNoteToggle, translateOption);
-					}
-				}
-
-				document.getElementById("listnotetoggle").addEventListener("click", function(event) {
-					Danbooru.Note.Box.toggle_all();
-					event.preventDefault();
-				}, false);
-
-				// Make clicking the image swap between the original and sample image when available.
-				if (post.has_large) {
-					document.addEventListener("click", function(event) {
-						if (event.target.id === "image" && event.button === 0 && !bbb.post.translationMode) {
-							if (!bbb.dragscroll.moved)
-								swapImage();
-
-							event.stopPropagation();
-						}
-					}, true);
-				}
-			}
+			else // Make sample/original images swap when clicking the image.
+				alternateImageSwap(post);
 		}
 
 		// Enable drag scrolling.
 		if (image_drag_scroll)
 			dragScrollInit();
 
-		// Make translation mode work.
-		if (!document.getElementById("note-locked-notice")) {
-			var translateLink = document.getElementById("translate");
-
-			// Make the normal toggling work for hidden posts.
-			if (post.is_hidden) {
-				if (translateLink)
-					translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
-
-				document.addEventListener("keydown", function(event) {
-					if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
-						Danbooru.Note.TranslationMode.toggle(event);
-				}, false);
-			}
-
-			// Script translation mode events and tracking used to resolve timing issues.
-			bbb.post.translationMode = Danbooru.Note.TranslationMode.active;
-
-			if (translateLink)
-				translateLink.addEventListener("click", translationModeToggle, false);
-
-			document.addEventListener("keydown", function(event) {
-				if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
-					translationModeToggle();
-			}, false);
-		}
-
 		// Resize the content if desired.
 		if (checkSetting("always-resize-images", "true", image_resize))
 			resizeImage(image_resize_mode);
 
-		// Load/reload notes.
-		Danbooru.Note.load_all();
+		if (post.file_ext !== "webm") { // Don't allow note functions on webm videos.
+			if (document.getElementById("image").tagName !== "VIDEO") { // Make translation mode work on non-video content.
+				if (isLoggedIn() && !document.getElementById("note-locked-notice")) {
+					var translateLink = document.getElementById("translate");
+
+					// Make the normal toggling work for hidden posts.
+					if (post.is_hidden) {
+						if (translateLink)
+							translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
+
+						document.addEventListener("keydown", function(event) {
+							if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
+								Danbooru.Note.TranslationMode.toggle(event);
+						}, false);
+					}
+
+					// Script translation mode events and tracking used to resolve timing issues.
+					bbb.post.translationMode = Danbooru.Note.TranslationMode.active;
+
+					if (translateLink)
+						translateLink.addEventListener("click", translationModeToggle, false);
+
+					document.addEventListener("keydown", function(event) {
+						if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
+							translationModeToggle();
+					}, false);
+				}
+			}
+			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
+				Danbooru.Note.Edit.show = function() {
+					danbNotice('Better Better Booru: Note editing is not allowed while using the webm video sample. Please use the <a href="' + updateUrlQuery(gUrl, "original=1") + '">original</a> ugoira version for note editing.', "error");
+				};
+			}
+
+			// Load/reload notes.
+			Danbooru.Note.load_all();
+		}
 
 		// Auto position the content if desired.
 		if (autoscroll_image)
@@ -2961,7 +2966,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				link = links[i];
 				linkHref = link.getAttribute("href"); // Use getAttribute so that we get the exact value. "link.href" adds in the domain.
 
-				if (linkHref && linkHref.indexOf("/posts?") === 0 && !/(?:page|limit)=/.test(linkHref))
+				if (linkHref && !/(?:page|limit)=/.test(linkHref) && (linkHref.indexOf("/posts?") === 0 || linkHref.indexOf("/favorites?") === 0))
 					link.href = linkHref + "&limit=" + thumbnail_count;
 			}
 		}
@@ -2973,17 +2978,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				link = links[i];
 				linkHref = link.getAttribute("href");
 
-				if (linkHref && (linkHref.indexOf("/posts") === 0 || linkHref === "/" || linkHref ==="/notes?group_by=post")) {
-					if (linkHref.indexOf("?") > -1)
-						link.href = linkHref + "&limit=" + thumbnail_count;
-					else
-						link.href = linkHref + "?limit=" + thumbnail_count;
-				}
+				if (linkHref && (linkHref.indexOf("/posts") === 0 || linkHref === "/" || linkHref ==="/notes?group_by=post" || linkHref === "/favorites"))
+					link.href = updateUrlQuery(linkHref, "limit=" + thumbnail_count);
 			}
 		}
 
 		// Fix the search.
-		if (searchParent && (gLoc === "search" || gLoc === "post" || gLoc === "intro")) {
+		if (searchParent && (gLoc === "search" || gLoc === "post" || gLoc === "intro" || gLoc === "favorites")) {
 			search = searchParent.getElementsByTagName("form")[0];
 
 			if (search) {
@@ -2992,6 +2993,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				limitInput.value = thumbnail_count;
 				limitInput.type = "hidden";
 				search.appendChild(limitInput);
+
+				// Change the form action if on the favorites page. It uses "/favorites", but that just goes to the normal "/posts" search while stripping out the limit.
+				search.action = "/posts";
 
 				// Remove the user's default limit if the user tries to specify a limit value in the tags.
 				tagsInput = document.getElementById("tags");
@@ -3093,7 +3097,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			targetContainer = document.getElementById("a-show");
 			targetContainer = (targetContainer ? targetContainer.getElementsByTagName("section")[0] : undefined);
 		}
-		else if (gLoc === "search")
+		else if (gLoc === "search" || gLoc === "favorites")
 			targetContainer = document.getElementById("posts");
 		else if (gLoc === "intro")
 			targetContainer = document.getElementById("a-intro");
@@ -3164,6 +3168,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return "popular";
 		else if (/\/pools\/\d+/.test(gUrlPath))
 			return "pool";
+		else if (gUrlPath.indexOf("/favorites") === 0)
+			return "favorites";
 		else if (gUrlPath.indexOf("/uploads/new") === 0)
 			return "upload";
 		else if (gUrlPath.indexOf("/pools/new") === 0)
@@ -3209,7 +3215,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var page = getVar("page");
 		var result = false;
 
-		if (gLoc === "search") {
+		if (gLoc === "search" || gLoc === "favorites") {
 			if (limit === 0 || page === "b1" || limitTag === 0)
 				result = true;
 		}
@@ -3682,7 +3688,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#notice {padding-right: 55px !important;}'; // Fix Danbooru notice overlapping text for long messages.
 
 		// Provide a little extra space for listings that allow thumbnail_count.
-		if (thumbnail_count && (gLoc === "search" || gLoc === "notes")) {
+		if (thumbnail_count && (gLoc === "search" || gLoc === "notes" || gLoc === "favorites")) {
 			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
 			'section#content {padding: 0px !important;}';
 		}
@@ -3873,21 +3879,20 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function postDDL(target) {
 		// Add direct downloads to thumbnails.
-		if (gLoc !== "search" && gLoc !== "pool" && gLoc !== "popular")
+		if (gLoc !== "search" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "favorites")
 			return;
 
 		var posts = getPosts(target);
-		var post;
-		var postId;
-		var postUrl;
-		var ddlLink;
 
 		for (var i = 0, il = posts.length; i < il; i++) {
-			post = posts[i];
-			postUrl = post.getAttribute("data-file-url");
-			postId = post.getAttribute("data-id");
+			var post = posts[i];
+			var postOrigUrl = post.getAttribute("data-file-url") || "";
+			var postSampUrl = post.getAttribute("data-large-file-url") || "";
+			var postUrl = (postSampUrl.indexOf(".webm") > -1 ? postSampUrl : postOrigUrl);
+			var postId = post.getAttribute("data-id");
+			var ddlLink = post.getElementsByClassName("bbb-ddl")[0];
 
-			if (!post.getElementsByClassName("bbb-ddl").length) {
+			if (!ddlLink) { // If the direct download doesn't already exist, create it.
 				ddlLink = document.createElement("a");
 				ddlLink.innerHTML = "Direct Download";
 				ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
@@ -3895,6 +3900,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				ddlLink.className = "bbb-ddl";
 				post.appendChild(ddlLink);
 			}
+			else if (ddlLink.href.indexOf("/data/") < 0) // Fix existing links for hidden thumbs.
+				ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
 		}
 	}
 
@@ -4477,6 +4484,47 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return regEx.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 	}
 
+	function updateUrlQuery(url) {
+		// Add information to the query portion of a full url.
+		var urlParts = url.split(/[?#]/g, 2);
+		var urlQuery = urlParts[1] || "";
+		var queries = urlQuery.split("&");
+		var query;
+		var queryName;
+		var queryValue;
+		var queryObj = {};
+		var i, il; // Loop variables.
+
+		for (i = 0, il = queries.length; i < il; i++) {
+			query = queries[i].split("=");
+			queryName = query[0];
+			queryValue = query[1];
+
+			if (queryName)
+				queryObj[queryName] = queryValue;
+		}
+
+		for (i = 1, il = arguments.length; i < il; i++) {
+			query = arguments[i].split("=");
+			queryName = query[0];
+			queryValue = query[1];
+
+			if (queryName)
+				queryObj[queryName] = queryValue;
+		}
+
+		queries.length = 0;
+
+		for (i in queryObj) {
+			if (queryObj.hasOwnProperty(i))
+				queries.push(i + "="  + queryObj[i]);
+		}
+
+		urlQuery = queries.join("&");
+
+		return urlParts[0] + "?" + urlQuery;
+	}
+
 	function bbbStatusInit() {
 		// Insert the status message container and prep the request tracking.
 		var statusDiv = document.createElement("div");
@@ -4662,6 +4710,46 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				event.stopPropagation();
 			}
 		}, true);
+	}
+
+	function noteToggleLinkInit() {
+		// Make a "toggle notes" link in the sidebar options or prepare an existing link.
+		var toggleLink = document.getElementById("bbb-note-toggle");
+
+		if (!toggleLink) {
+			var before = document.getElementById((isLoggedIn() ? "add-notes-list" : "random-post"));
+
+			if (before) {
+				var listNoteToggle = document.createElement("li");
+				listNoteToggle.innerHTML = '<a href="#" id="bbb-note-toggle">Toggle notes</a>';
+				before.parentNode.insertBefore(listNoteToggle, before);
+				toggleLink = document.getElementById("bbb-note-toggle");
+			}
+		}
+
+		if (toggleLink) {
+			document.getElementById("bbb-note-toggle").addEventListener("click", function(event) {
+				Danbooru.Note.Box.toggle_all();
+				event.preventDefault();
+			}, false);
+		}
+	}
+
+	function alternateImageSwap(post) {
+		// Override Danbooru's image click handler for toggling notes with a custom one that swaps the image.
+		if (post.has_large) {
+			document.addEventListener("click", function(event) {
+				if (event.target.id === "image" && event.button === 0 && !bbb.post.translation_mode) {
+					if (!bbb.drag_scroll.moved)
+						swapImage();
+
+					event.stopPropagation();
+				}
+			}, true);
+		}
+
+		// Set up the "toggle notes" link since the image won't be used for toggling.
+		noteToggleLinkInit();
 	}
 
 	function trackNew() {
