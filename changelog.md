@@ -1,5 +1,13 @@
 Changelog
 ----------
+* Version 6.5:
+ * Added support for the favorites listing.
+ * Updated to support Danbooru's ugoira changes with added support for note viewing on the sample webm versions and an additional "view sample" link for switching from the original ugoira versions.
+ * Fixed a potential problem with thumbnails where the "tags" query value would end up set as "undefined".
+ * Fixed the random post hotkey for logged out users.
+ * Fixed an issue with wildcards and metatags for thumbnail matching rules.
+ * Fixed the detection of the notes search as a notes listing.
+ * Fixed post resizing for hidden blacklisted posts.
 * Version 6.4:
  * Updated to support "ugoira" animation posts in their native format.
 * Version 6.3.2:
