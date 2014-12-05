@@ -4742,7 +4742,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (post.has_large) {
 			document.addEventListener("click", function(event) {
 				if (event.target.id === "image" && event.button === 0 && !bbb.post.translation_mode) {
-					if (!bbb.drag_scroll.moved)
+					if (!bbb.dragscroll.moved)
 						swapImage();
 
 					event.stopPropagation();
