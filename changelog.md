@@ -1,5 +1,7 @@
 Changelog
 ----------
+* Version 6.5.1:
+ * Fixed the "alternate image swap" option.
 * Version 6.5:
  * Added support for the favorites listing.
  * Updated to support Danbooru's ugoira changes with added support for note viewing on the sample webm versions and an additional "view sample" link for switching from the original ugoira versions.
