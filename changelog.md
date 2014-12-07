@@ -1,5 +1,7 @@
 Changelog
 ----------
+* Version 6.5.2:
+ * Fixed a conflict between the "alternate image swap" option and translation mode.
 * Version 6.5.1:
  * Fixed the "alternate image swap" option.
 * Version 6.5:
