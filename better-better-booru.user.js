@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        6.4
+// @version        6.5.3
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          http://*.donmai.us/*
@@ -65,7 +65,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			translation_mode: false
 		},
 		options: { // Setting options and data.
-			bbb_version: "6.4",
+			bbb_version: "6.5.3",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
@@ -1062,6 +1062,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var object = imgContainer.getElementsByTagName("object")[0];
 		var webmVid = imgContainer.getElementsByTagName("video")[0];
 		var ugoira = imgContainer.getElementsByTagName("canvas")[0];
+		var other = document.evaluate('.//a[starts-with(@href, "/data/")]', imgContainer, null, 9, null).singleNodeValue;
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
 		var directLink = getId("image-resize-link", target, "a") || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
 		var twitterInfo = getMeta("twitter:image:src", target);
@@ -1094,7 +1095,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			is_banned: (imgContainer.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
 			image_height: imgHeight || null,
 			image_width: imgWidth || null,
-			is_hidden: (img || object || webmVid || ugoira ? false : true)
+			is_hidden: (img || object || webmVid || ugoira || other ? false : true)
 		};
 
 		// Try to extract the file's name and extension.
@@ -2437,6 +2438,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				case "6.3.1":
 				case "6.3.2":
 				case "6.4":
+				case "6.5":
+				case "6.5.1":
+				case "6.5.2":
+				case "6.5.3":
 					// Copy over settings to their new names.
 					bbb.user.post_drag_scroll = bbb.user.image_drag_scroll;
 					bbb.user.post_resize = bbb.user.image_resize;
@@ -2485,7 +2490,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function restoreBackupText() {
 		// Load the backup text provided into the script.
 		var textarea = bbb.el.menu.backupTextarea;
-		var backupString = textarea.value.replace(/\r?\n/g, "").match(/{.+}/);
+		var backupString = textarea.value.replace(/\r?\n/g, "").match(/\{.+\}/);
 
 		if (backupString) {
 			try {
@@ -2520,7 +2525,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function createSwapElements(post) {
 		// Create the elements for swapping between the original and sample image.
-		if (!post.has_large || (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)))
+		if (!post.has_large)
 			return;
 
 		// Remove the original notice (it's not always there) and replace it with our own.
@@ -2912,7 +2917,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLink = bbb.el.resizeLink;
 		var swapLink = bbb.el.swapLink;
 
-		if (!post.has_large)
+		if (!post.has_large || (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)))
 			return;
 
 		if (image_swap_mode === "load") { // Load image and then view mode.
@@ -3339,75 +3344,75 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			Danbooru.Ugoira = {};
 
 			Danbooru.Ugoira.create_player = function() {
-			  var meta_data = {
-				mime_type: post.pixiv_ugoira_frame_data.content_type,
-				frames: post.pixiv_ugoira_frame_data.data
-			  };
-			  var options = {
-				canvas: document.getElementById("image"),
-				source: post.file_url,
-				metadata: meta_data,
-				chunkSize: 300000,
-				loop: true,
-				autoStart: true,
-				debug: false
-			  };
+				var meta_data = {
+					mime_type: post.pixiv_ugoira_frame_data.content_type,
+					frames: post.pixiv_ugoira_frame_data.data
+				};
+				var options = {
+					canvas: document.getElementById("image"),
+					source: post.file_url,
+					metadata: meta_data,
+					chunkSize: 300000,
+					loop: true,
+					autoStart: true,
+					debug: false
+				};
 
-			  this.player = new ZipImagePlayer(options);
+				this.player = new ZipImagePlayer(options);
 			};
 
 			Danbooru.Ugoira.player = null;
 
 			$(function() {
-			  Danbooru.Ugoira.create_player();
-			  $(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) {
-				$("#ugoira-load-percentage").text(Math.floor(progress * 100));
-			  });
-			  $(Danbooru.Ugoira.player).on("loadingStateChanged", function(event, state) {
-				if (state === 2) {
-				  $("#ugoira-load-progress").remove();
-				  $("#seek-slider").show();
-				}
-			  });
+				Danbooru.Ugoira.create_player();
+				$(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) {
+					$("#ugoira-load-percentage").text(Math.floor(progress * 100));
+				});
+				$(Danbooru.Ugoira.player).on("loadingStateChanged", function(event, state) {
+					if (state === 2) {
+						$("#ugoira-load-progress").remove();
+						$("#seek-slider").show();
+					}
+				});
 
-			  var player_manually_paused = false;
+				var player_manually_paused = false;
 
-			  $("#ugoira-play").click(function(event) {
-				Danbooru.Ugoira.player.play();
-				$(this).hide();
-				$("#ugoira-pause").show();
-				player_manually_paused = false;
-				event.preventDefault();
-			  });
-			  $("#ugoira-pause").click(function(event) {
-				Danbooru.Ugoira.player.pause();
-				$(this).hide();
-				$("#ugoira-play").show();
-				player_manually_paused = true;
-				event.preventDefault();
-			  });
-
-			  $("#seek-slider").slider({
-				min: 0,
-				max: Danbooru.Ugoira.player._frameCount-1,
-				start: function() {
-				  // Need to pause while slider is being dragged or playback speed will bug out
-				  Danbooru.Ugoira.player.pause();
-				},
-				slide: function(event, ui) {
-				  Danbooru.Ugoira.player._frame = ui.value;
-				  Danbooru.Ugoira.player._displayFrame();
-				},
-				stop: function() {
-				  // Resume playback when dragging stops, but only if player was not paused by the user earlier
-				  if (!(player_manually_paused)) {
+				$("#ugoira-play").click(function(event) {
 					Danbooru.Ugoira.player.play();
-				  }
-				}
-			  });
-			  $(Danbooru.Ugoira.player).on("frame", function(frame, frame_number) {
-				$("#seek-slider").slider("option", "value", frame_number);
-			  });
+					$(this).hide();
+					$("#ugoira-pause").show();
+					player_manually_paused = false;
+					event.preventDefault();
+				});
+				$("#ugoira-pause").click(function(event) {
+					Danbooru.Ugoira.player.pause();
+					$(this).hide();
+					$("#ugoira-play").show();
+					player_manually_paused = true;
+					event.preventDefault();
+				});
+
+				$("#seek-slider").slider({
+					min: 0,
+					max: Danbooru.Ugoira.player._frameCount-1,
+					start: function() {
+						// Need to pause while slider is being dragged or playback speed will bug out
+						Danbooru.Ugoira.player.pause();
+					},
+					slide: function(event, ui) {
+						Danbooru.Ugoira.player._frame = ui.value;
+						Danbooru.Ugoira.player._displayFrame();
+					},
+					stop: function() {
+						// Resume playback when dragging stops, but only if player was not paused by the user earlier
+						if (!(player_manually_paused)) {
+							Danbooru.Ugoira.player.play();
+						}
+					}
+				});
+				$(Danbooru.Ugoira.player).on("frame", function(frame, frame_number) {
+					$("#seek-slider").slider("option", "value", frame_number);
+				});
 			});
 		}
 		catch (error) {
@@ -4134,10 +4139,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!bbb.blacklist.entries.length)
 			return;
 
-		var blacklistBox = document.getElementById("blacklist-box");
-		var blacklistList = document.getElementById("blacklist-list");
-		var imgContainer = getId("image-container", target);
+		// Retrieve the necessary elements from the target element or current document.
+		var blacklistBox = getId("blacklist-box", target) || document.getElementById("blacklist-box");
+		var blacklistList = getId("blacklist-list", target) || document.getElementById("blacklist-list");
+		var imgContainer = getId("image-container", target, "section");
 		var posts = getPosts(target);
+
 		var i, il; // Loop variables.
 
 		// Test the image for a match when viewing a post.
