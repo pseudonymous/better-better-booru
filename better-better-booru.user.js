@@ -386,16 +386,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function scrapePost(pageEl) {
 		// Retrieve info from the current document or a supplied element containing the html with it.
 		var target = pageEl || document;
-		var imgContainer = getId("image-container", target, "section");
+		var postContent = getPostContent(target);
+		var imgContainer = postContent.container;
 
 		if (!imgContainer)
 			return {};
 
-		var img = getId("image", target, "img");
-		var object = imgContainer.getElementsByTagName("object")[0];
-		var webmVid = imgContainer.getElementsByTagName("video")[0];
-		var ugoira = imgContainer.getElementsByTagName("canvas")[0];
-		var other = document.evaluate('.//a[starts-with(@href, "/data/")]', imgContainer, null, 9, null).singleNodeValue;
+		var postEl = postContent.el;
+		var postTag = (postEl ? postEl.tagName : undefined);
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
 		var directLink = getId("image-resize-link", target, "a") || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
 		var twitterInfo = fetchMeta("twitter:image:src", target);
@@ -415,7 +413,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			id: Number(imgContainer.getAttribute("data-id")),
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
 			has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
-			has_active_children: (img ? (img.getAttribute("data-has-active-children") === "true" ? true : false) : !!target.getElementsByClassName("notice-parent").length),
+			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent").length),
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
 			rating: imgContainer.getAttribute("data-rating"),
 			score: Number(imgContainer.getAttribute("data-score")),
@@ -428,7 +426,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			is_banned: (imgContainer.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
 			image_height: imgHeight || null,
 			image_width: imgWidth || null,
-			is_hidden: (img || object || webmVid || ugoira || other ? false : true)
+			is_hidden: !postEl
 		};
 
 		// Try to extract the file's name and extension.
@@ -457,15 +455,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			var isUgoira = ugoira || (ext === "zip" && /\bugoira\b/.test(imgInfo.tag_string));
+			var isUgoira = postTag === "CANVAS" || (ext === "zip" && /\bugoira\b/.test(imgInfo.tag_string));
 
 			if (isUgoira) {
-				if (ugoira) {
+				if (postTag === "CANVAS") {
 					imgInfo.pixiv_ugoira_frame_data = {
 						id: undefined, // Don't have this value.
 						post_id: imgInfo.id,
-						data: JSON.parse(ugoira.getAttribute("data-ugoira-frames")),
-						content_type: ugoira.getAttribute("data-ugoira-content-type").replace(/"/gi, "")
+						data: JSON.parse(postEl.getAttribute("data-ugoira-frames")),
+						content_type: postEl.getAttribute("data-ugoira-content-type").replace(/"/gi, "")
 					};
 				}
 				else {
@@ -1060,43 +1058,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (checkSetting("always-resize-images", "true", image_resize))
 			resizeImage(image_resize_mode);
 
-		if (post.file_ext !== "webm") { // Don't allow note functions on webm videos.
-			if (document.getElementById("image").tagName !== "VIDEO") { // Make translation mode work on non-video content.
-				if (isLoggedIn() && !document.getElementById("note-locked-notice")) {
-					var translateLink = document.getElementById("translate");
+		// Enable translation mode.
+		translationModeInit();
 
-					// Make the normal toggling work for hidden posts.
-					if (post.is_hidden) {
-						if (translateLink)
-							translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
-
-						document.addEventListener("keydown", function(event) {
-							if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
-								Danbooru.Note.TranslationMode.toggle(event);
-						}, false);
-					}
-
-					// Script translation mode events and tracking used to resolve timing issues.
-					bbb.post.translationMode = Danbooru.Note.TranslationMode.active;
-
-					if (translateLink)
-						translateLink.addEventListener("click", translationModeToggle, false);
-
-					document.addEventListener("keydown", function(event) {
-						if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
-							translationModeToggle();
-					}, false);
-				}
-			}
-			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
-				Danbooru.Note.Edit.show = function() {
-					danbNotice('Better Better Booru: Note editing is not allowed while using the webm video sample. Please use the <a href="' + updateUrlQuery(gUrl, "original=1") + '">original</a> ugoira version for note editing.', "error");
-				};
-			}
-
-			// Load/reload notes.
-			Danbooru.Note.load_all();
-		}
+		// Load/reload notes.
+		Danbooru.Note.load_all();
 
 		// Auto position the content if desired.
 		if (autoscroll_image)
@@ -2240,7 +2206,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		bbb.el.menu.window.addEventListener("click", insertBorder, true);
 	}
 
-	function insertBorder (event) {
+	function insertBorder(event) {
 		// Place either a new or moved border where indicated.
 		var target = event.target;
 		var section = bbb.borderEdit.section;
@@ -2732,18 +2698,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function resizeImage(mode) {
 		// Custom resize post script.
-		var imgContainer = document.getElementById("image-container");
+		var postContent = getPostContent();
+		var imgContainer = postContent.container;
 		var contentDiv = document.getElementById("content");
-		var img = document.getElementById("image");
-		var swfObj = (imgContainer ? imgContainer.getElementsByTagName("object")[0] : undefined);
-		var swfEmb = (swfObj ? swfObj.getElementsByTagName("embed")[0] : undefined);
-		var webmVid = (imgContainer ? imgContainer.getElementsByTagName("video")[0] : undefined);
-		var ugoira = (imgContainer ? imgContainer.getElementsByTagName("canvas")[0] : undefined);
 		var ugoiraPanel = document.getElementById("ugoira-control-panel");
 		var ugoiraSlider = document.getElementById("seek-slider");
-		var target = img || swfEmb || webmVid || ugoira;
+		var target = postContent.el;
+		var targetTag = (target ? target.tagName : undefined);
 
-		if (!target || !imgContainer || !contentDiv)
+		if (!target || !imgContainer || !contentDiv || targetTag === "A")
 			return;
 
 		var currentMode = bbb.post.resize.mode;
@@ -2755,8 +2718,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var availableHeight = window.innerHeight - 40;
 		var targetCurrentWidth = target.clientWidth || parseFloat(target.style.width) || target.getAttribute("width");
 		var targetCurrentHeight = target.clientHeight || parseFloat(target.style.height) || target.getAttribute("height");
-		var targetWidth = (swfEmb || webmVid ? imgContainer.getAttribute("data-width") : img.getAttribute("width")); // Was NOT expecting target.width to return the current width (css style width) and not the width attribute's value here...
-		var targetHeight = (swfEmb || webmVid ? imgContainer.getAttribute("data-height") : img.getAttribute("height"));
+		var useDataDim = targetTag === "EMBED" || targetTag === "VIDEO";
+		var targetWidth = (useDataDim ? imgContainer.getAttribute("data-width") : target.getAttribute("width")); // Was NOT expecting target.width to return the current width (css style width) and not the width attribute's value here...
+		var targetHeight = (useDataDim ? imgContainer.getAttribute("data-height") : target.getAttribute("height"));
 		var tooWide = targetCurrentWidth > availableWidth;
 		var tooTall = targetCurrentHeight > availableHeight;
 		var widthRatio = availableWidth / targetWidth;
@@ -2794,7 +2758,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (switchMode) {
 			if (currentRatio !== ratio || mode === "swap") {
-				if (img || ugoira) {
+				if (targetTag === "IMG" || targetTag === "CANVAS") {
 					target.style.width = targetWidth * ratio + "px";
 					target.style.height = targetHeight * ratio + "px";
 
@@ -2805,13 +2769,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 					Danbooru.Note.Box.scale_all();
 				}
-				else if (swfEmb) {
-					swfObj.height = swfEmb.height = targetHeight * ratio;
-					swfObj.width = swfEmb.width = targetWidth * ratio;
+				else if (targetTag === "EMBED") {
+					var secondaryTarget = postContent.secEl;
+					secondaryTarget.height = target.height = targetHeight * ratio;
+					secondaryTarget.width = target.width = targetWidth * ratio;
 				}
-				else {
-					webmVid.height = targetHeight * ratio;
-					webmVid.width = targetWidth * ratio;
+				else if (targetTag === "VIDEO") {
+					target.height = targetHeight * ratio;
+					target.width = targetWidth * ratio;
 				}
 			}
 
@@ -3143,11 +3108,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function autoscrollImage() {
-		var imgContainer = document.getElementById("image-container");
-		var img = document.getElementById("image");
-		var swfObj = (imgContainer ? imgContainer.getElementsByTagName("object")[0] : undefined);
-		var webmVid = (imgContainer ? imgContainer.getElementsByTagName("video")[0] : undefined);
-		var target = img || swfObj || webmVid;
+		var target = getPostContent().el;
 
 		if (target)
 			target.scrollIntoView();
@@ -3962,6 +3923,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
+	function getPostContent(pageEl) {
+		// Retrieve the post content related elements.
+		var target = pageEl || document;
+		var imgContainer = getId("image-container", target, "section");
+
+		if (!imgContainer)
+			return {};
+
+		var img = getId("image", target, "img");
+		var swfObj = imgContainer.getElementsByTagName("object")[0];
+		var swfEmb = (swfObj ? swfObj.getElementsByTagName("embed")[0] : undefined);
+		var webmVid = imgContainer.getElementsByTagName("video")[0];
+		var ugoira = imgContainer.getElementsByTagName("canvas")[0];
+		var other = document.evaluate('.//a[starts-with(@href, "/data/")]', imgContainer, null, 9, null).singleNodeValue;
+		var element = swfEmb || webmVid || ugoira || img || other;
+		var secondaryEl = swfObj; // Other elements related to the main element. Only applies to flash for now.
+
+		return {container: imgContainer, el: element, secEl: secondaryEl};
+	}
+
 	function getPosts(target) {
 		// Return a list of posts depending on the target supplied.
 		var posts;
@@ -4629,13 +4610,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function dragScrollInit() {
-		var imgContainer = document.getElementById("image-container");
-		var img = document.getElementById("image");
-		var webmVid = (imgContainer ? imgContainer.getElementsByTagName("video")[0] : undefined);
-		var ugoira = (imgContainer ? imgContainer.getElementsByTagName("canvas")[0] : undefined);
-		var target = img || webmVid || ugoira;
+		var target = getPostContent().el;
 
-		if (target) {
+		if (target && (target.tagName === "IMG" || target.tagName === "VIDEO" || target.tagName === "CANVAS")) {
 			bbb.dragscroll.target = target;
 
 			if (!bbb.post.translationMode)
@@ -4739,6 +4716,63 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				Danbooru.Note.Box.toggle_all();
 				event.preventDefault();
 			}, false);
+		}
+	}
+
+	function translationModeInit() {
+		// Set up translation mode.
+		var post = bbb.post.info;
+		var postContent = getPostContent();
+		var postEl = postContent.el;
+		var postTag = (postEl ? postEl.tagName : undefined);
+		var translateLink = document.getElementById("translate");
+
+		if (post.file_ext !== "webm" && post.file_ext !== "swf") { // Don't allow translation functions on webm videos or flash.
+			if (postTag !== "VIDEO") { // Make translation mode work on non-video content.
+				// Allow the translation note functions if the user is logged in and notes aren't locked.
+				if (!isLoggedIn() || document.getElementById("note-locked-notice"))
+					return;
+
+				// Make the normal toggling work for hidden posts.
+				if (post.is_hidden) {
+					if (translateLink)
+						translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
+
+					document.addEventListener("keydown", function(event) {
+						if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
+							Danbooru.Note.TranslationMode.toggle(event);
+					}, false);
+				}
+
+				// Script translation mode events and tracking used to resolve timing issues.
+				bbb.post.translationMode = Danbooru.Note.TranslationMode.active;
+
+				if (translateLink)
+					translateLink.addEventListener("click", translationModeToggle, false);
+
+				document.addEventListener("keydown", function(event) {
+					if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
+						translationModeToggle();
+				}, false);
+			}
+			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
+				Danbooru.Note.TranslationMode.toggle = function(event) {
+					danbNotice('Note editing is not allowed while using the ugoira video sample. Please use the <a href="' + updateUrlQuery(gUrl, "original=1") + '">original</a> ugoira version for note editing.', "error");
+					event.preventDefault();
+				};
+				Danbooru.Note.Edit.show = Danbooru.Note.TranslationMode.toggle;
+
+				if (translateLink)
+					translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
+			}
+		}
+		else if (translateLink) { // If the translate link exists on webm videos or flash, provide a warning.
+			Danbooru.Note.TranslationMode.toggle = function(event) {
+				danbNotice('Note editing is not allowed on flash/video content.', "error");
+				event.preventDefault();
+			};
+			Danbooru.Note.Edit.show = Danbooru.Note.TranslationMode.toggle;
+			translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
 		}
 	}
 
