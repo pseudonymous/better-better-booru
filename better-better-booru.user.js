@@ -61,7 +61,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				mode: "none",
 				ratio: 1
 			},
-			swapped: false,
+			swapped: false, // Whether the post content has been changed between the original and sample versions.
 			translation_mode: false
 		},
 		options: { // Setting options and data.
@@ -2947,57 +2947,66 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function swapImage() {
 		// Initiate the swap between the sample and original image.
 		var post = bbb.post.info;
-		var img = document.getElementById("image");
+		var target = getPostContent().el;
+		var targetTag = (target ? target.tagName : undefined);
 		var bbbLoader = bbb.el.bbbLoader;
 		var resizeStatus = bbb.el.resizeStatus;
 		var resizeLink = bbb.el.resizeLink;
 		var swapLink = bbb.el.swapLink;
 
-		if (!post.has_large || (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)))
+		if (!post.has_large)
 			return;
 
-		if (image_swap_mode === "load") { // Load image and then view mode.
-			if (bbbLoader.src !== "about:blank") { // Messages after cancelling.
-				if (img.src.indexOf("/sample/") < 0)
-					swapImageUpdate(post, "original");
-				else
-					swapImageUpdate(post, "sample");
-
-				bbbLoader.src = "about:blank";
-			}
-			else { // Messages during loading.
-				if (img.src.indexOf("/sample/") < 0) {
-					resizeStatus.innerHTML = "Loading sample image...";
-					resizeLink.innerHTML = "cancel";
-					swapLink.innerHTML = "View sample (cancel)";
-					bbbLoader.src = post.large_file_url;
-				}
-				else {
-					resizeStatus.innerHTML = "Loading original image...";
-					resizeLink.innerHTML = "cancel";
-					swapLink.innerHTML = "View original (cancel)";
-					bbbLoader.src = post.file_url;
-				}
-			}
+		if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) {
+			if (targetTag === "CANVAS")
+				location.href = updateUrlQuery(gUrl, "original=0");
+			else if (targetTag === "VIDEO")
+				location.href = updateUrlQuery(gUrl, "original=1");
 		}
-		else if (image_swap_mode === "view") { // View image while loading mode.
-			if (img.src.indexOf("/sample/") < 0) { // Load the sample image.
-				swapImageUpdate(post, "sample");
-				img.src = "about:blank";
-				img.removeAttribute("src");
-				delayMe(function(){ img.src = post.large_file_url; });
-			}
-			else { // Load the original image.
-				swapImageUpdate(post, "original");
-				img.src = "about:blank";
-				img.removeAttribute("src");
-				delayMe(function(){ img.src = post.file_url; });
-			}
+		else if (targetTag === "IMG") {
+			if (image_swap_mode === "load") { // Load image and then view mode.
+				if (bbbLoader.src !== "about:blank") { // Messages after cancelling.
+					if (target.src.indexOf("/sample/") < 0)
+						swapImageUpdate(post, "original");
+					else
+						swapImageUpdate(post, "sample");
 
-			if (!bbb.post.swapped)
-				delayMe(function(){ resizePost("swap"); });
-			else
-				bbb.post.swapped = true;
+					bbbLoader.src = "about:blank";
+				}
+				else { // Messages during loading.
+					if (target.src.indexOf("/sample/") < 0) {
+						resizeStatus.innerHTML = "Loading sample image...";
+						resizeLink.innerHTML = "cancel";
+						swapLink.innerHTML = "View sample (cancel)";
+						bbbLoader.src = post.large_file_url;
+					}
+					else {
+						resizeStatus.innerHTML = "Loading original image...";
+						resizeLink.innerHTML = "cancel";
+						swapLink.innerHTML = "View original (cancel)";
+						bbbLoader.src = post.file_url;
+					}
+				}
+			}
+			else if (image_swap_mode === "view") { // View image while loading mode.
+				if (target.src.indexOf("/sample/") < 0) { // Load the sample image.
+					swapImageUpdate(post, "sample");
+					target.src = "about:blank";
+					target.removeAttribute("src");
+					delayMe(function(){ target.src = post.large_file_url; });
+				}
+				else { // Load the original image.
+					swapImageUpdate(post, "original");
+					target.src = "about:blank";
+					target.removeAttribute("src");
+					delayMe(function(){ target.src = post.file_url; });
+				}
+
+				if (!bbb.post.swapped)
+					delayMe(function(){ resizePost("swap"); });
+				else
+					bbb.post.swapped = true;
+			}
 		}
 	}
 
@@ -3248,7 +3257,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var target = getPostContent().el;
 		var targetTag = (target ? target.tagName : undefined);
 
-		if (target && (targetTag === "IMG" || targetTag === "VIDEO" || targetTag === "CANVAS")) {
+		if (targetTag === "IMG" || targetTag === "VIDEO" || targetTag === "CANVAS") {
 			bbb.drag_scroll.target = target;
 
 			if (!bbb.post.translation_mode)
