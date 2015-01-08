@@ -923,7 +923,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + sampHeight + '" data-large-width="' + sampWidth + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 
-			var img = bbb.el.img = document.getElementById("image");
+			var img = document.getElementById("image");
 			var bbbLoader = bbb.el.bbbLoader = document.getElementById("bbb-loader");
 
 			// Enable image swapping between the original and sample image.
@@ -2792,43 +2792,52 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function swapImage() {
 		// Initiate the swap between the sample and original image.
 		var post = bbb.post.info;
-		var img = bbb.el.img;
+		var target = getPostContent().el;
+		var targetTag = (target ? target.tagName : undefined);
 		var bbbLoader = bbb.el.bbbLoader;
 		var resizeStatus = bbb.el.resizeStatus;
 		var resizeLink = bbb.el.resizeLink;
 		var swapLink = bbb.el.swapLink;
 		var ratio = (post.image_width > 850 ? 850 / post.image_width : 1);
 
-		if (!post.has_large || (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)))
+		if (!post.has_large)
 			return;
 
-		if (bbbLoader.src !== "about:blank") {
-			if (img.src.indexOf("/sample/") < 0) {
-				resizeStatus.innerHTML = "Viewing original";
-				resizeLink.innerHTML = "view sample";
-				swapLink.innerHTML = "View sample";
-			}
-			else {
-				resizeStatus.innerHTML = "Resized to " + Math.floor(ratio * 100) + "% of original";
-				resizeLink.innerHTML = "view original";
-				swapLink.innerHTML = "View original";
-			}
-
-			bbbLoader.src = "about:blank";
+		if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) {
+			if (targetTag === "CANVAS")
+				location.href = updateUrlQuery(gUrl, "original=0");
+			else if (targetTag === "VIDEO")
+				location.href = updateUrlQuery(gUrl, "original=1");
 		}
-		else {
-			if (img.src.indexOf("/sample/") < 0) {
-				resizeStatus.innerHTML = "Loading sample image...";
-				resizeLink.innerHTML = "cancel";
-				swapLink.innerHTML = "View sample (cancel)";
-				bbbLoader.src = post.large_file_url;
+		else if (targetTag === "IMG") {
+			if (bbbLoader.src !== "about:blank") {
+				if (target.src.indexOf("/sample/") < 0) {
+					resizeStatus.innerHTML = "Viewing original";
+					resizeLink.innerHTML = "view sample";
+					swapLink.innerHTML = "View sample";
+				}
+				else {
+					resizeStatus.innerHTML = "Resized to " + Math.floor(ratio * 100) + "% of original";
+					resizeLink.innerHTML = "view original";
+					swapLink.innerHTML = "View original";
+				}
 
+				bbbLoader.src = "about:blank";
 			}
 			else {
-				resizeStatus.innerHTML = "Loading original image...";
-				resizeLink.innerHTML = "cancel";
-				swapLink.innerHTML = "View original (cancel)";
-				bbbLoader.src = post.file_url;
+				if (target.src.indexOf("/sample/") < 0) {
+					resizeStatus.innerHTML = "Loading sample image...";
+					resizeLink.innerHTML = "cancel";
+					swapLink.innerHTML = "View sample (cancel)";
+					bbbLoader.src = post.large_file_url;
+
+				}
+				else {
+					resizeStatus.innerHTML = "Loading original image...";
+					resizeLink.innerHTML = "cancel";
+					swapLink.innerHTML = "View original (cancel)";
+					bbbLoader.src = post.file_url;
+				}
 			}
 		}
 	}
@@ -4614,7 +4623,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var target = getPostContent().el;
 		var targetTag = (target ? target.tagName : undefined);
 
-		if (target && (targetTag === "IMG" || targetTag === "VIDEO" || targetTag === "CANVAS")) {
+		if (targetTag === "IMG" || targetTag === "VIDEO" || targetTag === "CANVAS") {
 			bbb.dragscroll.target = target;
 
 			if (!bbb.post.translationMode)
