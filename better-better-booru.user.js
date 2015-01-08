@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        6.5.3
+// @version        6.5.4
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          http://*.donmai.us/*
@@ -63,7 +63,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			translationMode: false
 		},
 		options: { // Setting options and data.
-			bbb_version: "6.5.3",
+			bbb_version: "6.5.4",
 			alternate_image_swap: new Option("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: new Option("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: new Option("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for individual posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<br><br><u>Tips</u><br>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
@@ -828,7 +828,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 
 			swapLink.addEventListener("click", function(event) {
-				swapImage();
+				swapPost();
 				event.preventDefault();
 			}, false);
 			swapList.appendChild(swapLink);
@@ -966,7 +966,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				resizeLink.addEventListener("click", function(event) {
 					if (event.button === 0) {
-						swapImage();
+						swapPost();
 						event.preventDefault();
 					}
 				}, false);
@@ -2466,6 +2466,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				case "6.5":
 				case "6.5.1":
 				case "6.5.2":
+				case "6.5.3":
 					break;
 			}
 
@@ -2789,8 +2790,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function swapImage() {
-		// Initiate the swap between the sample and original image.
+	function swapPost() {
+		// Initiate the swap between the sample and original post content.
 		var post = bbb.post.info;
 		var target = getPostContent().el;
 		var targetTag = (target ? target.tagName : undefined);
@@ -2849,7 +2850,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				switch (event.charCode) {
 					case 118: // "v"
 						if (gLoc === "post") {
-							swapImage();
+							swapPost();
 							event.stopPropagation();
 							event.preventDefault();
 						}
@@ -4793,7 +4794,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			document.addEventListener("click", function(event) {
 				if (event.target.id === "image" && event.button === 0 && !bbb.post.translationMode) {
 					if (!bbb.dragscroll.moved)
-						swapImage();
+						swapPost();
 
 					event.stopPropagation();
 				}
