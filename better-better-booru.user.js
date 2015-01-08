@@ -514,6 +514,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) { // Create ugoira
 			var useUgoiraOrig = getVar("original");
 
+			// Get rid of all the old events handlers.
+			if (Danbooru.Ugoira && Danbooru.Ugoira.player)
+				$(Danbooru.Ugoira.player).unbind();
+
 			if ((load_sample_first && useUgoiraOrig !== "1") || useUgoiraOrig === "0") { // Load sample webm version.
 				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + updateUrlQuery(gUrl, "original=1") + '">View original</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p>';
 
@@ -529,13 +533,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				// Prep the "toggle notes" link. The "toggle notes" link is added here just for consistency's sake.
 				noteToggleLinkInit();
 
-				if (Danbooru.Ugoira && post.pixiv_ugoira_frame_data) {
-					// Get rid of all the old events handlers that could interfere with the new ugoira.
-					$(Danbooru.Ugoira.player).unbind();
-
-					// Set up the post.
+				if (post.pixiv_ugoira_frame_data.data) // Set up the post.
 					ugoiraInit();
-				}
 				else // Fix hidden posts.
 					searchJSON("ugoira");
 			}
@@ -3247,8 +3246,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 
 		var target = getPostContent().el;
+		var targetTag = (target ? target.tagName : undefined);
 
-		if (target && (target.tagName === "IMG" || target.tagName === "VIDEO" || target.tagName === "CANVAS")) {
+		if (target && (targetTag === "IMG" || targetTag === "VIDEO" || targetTag === "CANVAS")) {
 			bbb.drag_scroll.target = target;
 
 			if (!bbb.post.translation_mode)
@@ -4088,7 +4088,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Check if there actually are any tags.
-		if (!/[^\s,]/.test(blacklistTags))
+		if (!blacklistTags || !/[^\s,]/.test(blacklistTags))
 			return;
 
 		blacklistTags = blacklistTags.split(",");
