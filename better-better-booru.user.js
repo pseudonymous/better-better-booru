@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name           better_better_booru
-// @namespace      https://greasyfork.org/scripts/3575-better-better-booru
+// @name           better_better_booru_temp
+// @namespace      https://greasyfork.org/scripts/3575-better-better-booru-temp
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
 // @version        6.5.4
@@ -1704,8 +1704,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				itemFrag.appendChild(item);
 				break;
 			default:
-				console.log("Better Better Booru Error: Unexpected object type. Type: " + optionObject.type);
-				break;
+				bbbNotice('Unexpected menu object type for "' + optionObject.label + '". (Type: ' + optionObject.type + ')', -1);
+				return label;
 		}
 		inputSpan.appendChild(itemFrag);
 
@@ -2766,8 +2766,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				};
 				Danbooru.Note.Edit.show = Danbooru.Note.TranslationMode.toggle;
 
-				if (translateLink)
+				if (translateLink) {
+					removeDanbHotkey("n");
+					$(translateLink).unbind();
 					translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
+				}
 			}
 		}
 		else if (translateLink) { // If the translate link exists on webm videos or flash, provide a warning.
@@ -2776,6 +2779,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				event.preventDefault();
 			};
 			Danbooru.Note.Edit.show = Danbooru.Note.TranslationMode.toggle;
+			removeDanbHotkey("n");
+			$(translateLink).unbind();
 			translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
 		}
 	}
@@ -2928,6 +2933,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 				else if (targetTag === "EMBED") {
 					var secondaryTarget = postContent.secEl;
+
 					secondaryTarget.height = target.height = targetHeight * ratio;
 					secondaryTarget.width = target.width = targetWidth * ratio;
 				}
@@ -5209,6 +5215,25 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				event.preventDefault();
 			}
 		}, true);
+	}
+
+	function removeDanbHotkey(key) {
+		// Remove a jQuery hotkey without a namespace from Danbooru.
+		try {
+			var jkp = $._data(document, "events").keypress;
+
+			for (var i = 0, il = jkp.length; i < il; i++) {
+				if (jkp[i].data.keys === key) {
+					jkp[i].namespace = "bbbdiekey";
+					$(document).unbind("keypress.bbbdiekey");
+					i--;
+					il--;
+				}
+			}
+		}
+		catch (error) {
+			return;
+		}
 	}
 
 	function fixLimit() {
