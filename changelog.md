@@ -1,5 +1,11 @@
 Changelog
 ----------
+* Version 6.5.4:
+ * Updated to support the hotkey for swapping between the original and sample on "ugoira" posts.
+ * Fixed the auto-scroll, blacklist, and parent/child notice's hidden thumbnail support on flash posts.
+ * Fixed the "view sample" link on "ugoira" posts for users viewing the original by default.
+ * Fixed the ignoring of a logged in user's account settings for sample/original posts on "ugoira" posts.
+ * Fixed a blacklist error for logged in users with blank blacklists.
 * Version 6.5.3:
  * Fixed the blacklist section so that it properly updates for hidden images.
 * Version 6.5.2:
