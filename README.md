@@ -16,6 +16,7 @@ Features<a name="features"></a>
 * Allows the viewing of hidden/censored tags and automatic control of the number of thumbnails per a page with a basic account or no account.
 * Improved image resizing that works on flash content and also allows resizing by width, height, or both.
 * Improved blacklist functionality that includes support of wildcards (*), the "or/any" operator (~), and additional metatags (ex: score:&lt;0, etc.).
+* Improved ugoira functionality that includes note viewing on sample video versions, an additional "view sample" link for swapping from the original version, and support for swapping between the sample and original with Danbooru's hotkey.
 * The ability to easily modify status borders to your liking and create your own secondary custom borders that match images based on your criteria.
 * Multiple options for altering post viewing:
  * Alternate image swap - Swap between the sample and original image by clicking the image.
