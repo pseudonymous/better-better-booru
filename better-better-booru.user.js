@@ -878,7 +878,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (post.file_ext === "webm") // Create webm video
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
 		else if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) { // Create ugoira
-			if (load_sample_first && getVar("original") !== 1) { // Load sample webm version.
+			var useUgoiraOrig = getVar("original");
+
+			// Get rid of all the old events handlers.
+			if (Danbooru.Ugoira && Danbooru.Ugoira.player)
+				$(Danbooru.Ugoira.player).unbind();
+
+			if ((useSample && useUgoiraOrig !== 1) || useUgoiraOrig === 0) { // Load sample webm version.
 				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + updateUrlQuery(gUrl, "original=1") + '">View original</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p>';
 
 				// Prep the "toggle notes" link.
@@ -893,13 +899,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				// Prep the "toggle notes" link. The "toggle notes" link is added here just for consistency's sake.
 				noteToggleLinkInit();
 
-				if (Danbooru.Ugoira && post.pixiv_ugoira_frame_data) {
-					// Get rid of all the old events handlers that could interfere with the new ugoira.
-					$(Danbooru.Ugoira.player).unbind();
-
-					// Set up the post.
+				if (post.pixiv_ugoira_frame_data.data) // Set up the post.
 					ugoiraInit();
-				}
 				else // Fix hidden posts.
 					searchJSON("ugoira");
 			}
@@ -2551,7 +2552,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Check if there actually are any tags.
-		if (!/[^\s,]/.test(blacklistTags))
+		if (!blacklistTags || !/[^\s,]/.test(blacklistTags))
 			return;
 		else
 			blacklistTags = blacklistTags.split(",");
@@ -4611,8 +4612,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function dragScrollInit() {
 		var target = getPostContent().el;
+		var targetTag = (target ? target.tagName : undefined);
 
-		if (target && (target.tagName === "IMG" || target.tagName === "VIDEO" || target.tagName === "CANVAS")) {
+		if (target && (targetTag === "IMG" || targetTag === "VIDEO" || targetTag === "CANVAS")) {
 			bbb.dragscroll.target = target;
 
 			if (!bbb.post.translationMode)
