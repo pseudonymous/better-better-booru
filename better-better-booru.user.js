@@ -295,19 +295,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 
 				if (timeDiff && timeDiff < 900) // If the cache is less than 15 minutes old, use it.
-					searchJSON("poolsearch", {post_ids: poolCache.join(" ")});
+					searchJSON("pool_search", {post_ids: poolCache.join(" ")});
 				else // Get a new cache.
 					fetchJSON(gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
 
 				bbbStatus("posts", "new");
 			}
 		}
-		else if (mode === "poolsearch") {
+		else if (mode === "pool_search") {
 			var poolIds = optArg.post_ids.split(" ");
 			var page = Number(getVar("page")) || 1;
 			var postIds = poolIds.slice((page - 1) * thumbnail_count_default, page * thumbnail_count_default);
 
-			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "poolsearch", postIds);
+			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "pool_search", postIds);
 		}
 		else if (mode === "comments") {
 			if (potentialHiddenPosts(mode)) {
@@ -346,9 +346,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							var poolId = /\/pools\/(\d+)/.exec(gUrl)[1];
 
 							sessionStorage["pool" + poolId] = new Date().getTime() + " " + xml.post_ids;
-							searchJSON("poolsearch", xml);
+							searchJSON("pool_search", xml);
 						}
-						else if (mode === "poolsearch")
+						else if (mode === "pool_search")
 							parseListing(xml, optArg);
 						else if (mode === "comments")
 							parseComments(xml);
@@ -656,7 +656,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					existingPost.parentNode.insertBefore(childSpan.firstChild, existingPost);
 
 				// Get the comments and image info.
-				searchPages("comments", post.id);
+				searchPages("post_comments", post.id);
 			}
 
 			eci++;
@@ -829,11 +829,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			fetchPages(url, "paginator");
 		}
-		else if (mode === "comments") {
+		else if (mode === "post_comments") {
 			url = "/posts/" + optArg;
 
-			fetchPages(url, "comments", optArg);
-			bbbStatus("comments", "new");
+			fetchPages(url, "post_comments", optArg);
+			bbbStatus("post_comments", "new");
 		}
 		else if (mode === "hidden") {
 			url = "/posts/" + bbb.cache.hidden_imgs[0];
@@ -858,9 +858,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 						if (mode === "paginator")
 							replacePaginator(docEl);
-						else if (mode === "comments") {
+						else if (mode === "post_comments") {
 							replaceComments(docEl, optArg);
-							bbbStatus("comments", "done");
+							bbbStatus("post_comments", "done");
 						}
 						else if (mode === "thumbnails") {
 							replaceThumbnails(docEl);
@@ -888,8 +888,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 								bbbStatus("posts", "error");
 								msg = "Error retrieving post information";
 							}
-							else if (mode === "comments") {
-								bbbStatus("comments", "error");
+							else if (mode === "post_comments") {
+								bbbStatus("post_comments", "error");
 								msg = "Error retrieving comment information";
 							}
 							else if (mode === "paginator")
@@ -3988,7 +3988,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!status) {
 			bbb.status = { // Status messages.
 				msg: {
-					comments: {txt: "Fixing hidden comments... ", count: 0},
+					post_comments: {txt: "Fixing hidden comments... ", count: 0},
 					hidden: {txt: "Fixing hidden thumbnails... ", count: 0, queue: bbb.cache.hidden_imgs}, // Hidden thumbnail message.
 					posts: {txt: "Loading post info... ", count: 0} // General message for XML requests for hidden posts.
 				},
