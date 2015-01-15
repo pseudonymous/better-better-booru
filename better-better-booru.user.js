@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name           better_better_booru
-// @namespace      https://greasyfork.org/scripts/3575-better-better-booru
+// @name           better_better_booru_temp
+// @namespace      https://greasyfork.org/scripts/3575-better-better-booru-temp
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
 // @version        6.5.4
@@ -41,6 +41,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				history: [],
 				names: {}
 			},
+			fixing_active: false,
 			hidden_imgs: [],
 			save_enabled: false,
 			stored: {}
@@ -836,7 +837,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bbbStatus("post_comments", "new");
 		}
 		else if (mode === "hidden") {
-			url = "/posts/" + bbb.cache.hidden_imgs[0];
+			url = "/posts/" + optArg.getAttribute("data-id");
 
 			fetchPages(url, "hidden");
 			bbbStatus("hidden", "new");
@@ -991,12 +992,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function replaceHidden(docEl) {
 		// Fix the hidden image placeholders with information from a post.
-		var hiddenImgs = bbb.cache.hidden_imgs;
-		var hiddenId = hiddenImgs.shift();
+		var hiddenImgs = document.getElementsByClassName("bbb-hidden-thumb");
+		var article = hiddenImgs[0];
+		var previewImg = article.getElementsByTagName("img")[0];
+		var hiddenId = article.getAttribute("data-id");
 		var bcc = bbb.cache.current;
-		var article = document.getElementById("post_" + hiddenId);
 		var post = scrapePost(docEl);
-		var previewImg = document.getElementById("bbb-img-" + hiddenId);
 
 		// Update the thumbnail with the correct information.
 		if (post.preview_file_url) {
@@ -1016,11 +1017,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bcc.history.push(hiddenId);
 			bcc.names[hiddenId] = /[^\/]+$/.exec(post.file_url || post.preview_file_url)[0];
 
+			article.className = article.className.replace(/\s?bbb-hidden-thumb/gi, "");
+
 			// Continue to the next image or finish by updating the cache.
-			if (hiddenImgs.length)
-				fetchPages("/posts/" + hiddenImgs[0], "hidden");
-			else
+			if (hiddenImgs.length) {
+				hiddenId = hiddenImgs[0].getAttribute("data-id");
+				fetchPages("/posts/" + hiddenId, "hidden");
+			}
+			else {
 				updateThumbCache();
+				bbb.cache.fixing_active = false;
+			}
 		}
 		else { // The image information couldn't be found.
 			updateThumbCache();
@@ -2569,7 +2576,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				else if (showResNot === "all")
 					showResNot = "sample";
 
-				bbbNotice("Settings updated. The resized notice will now be hidden when viewing original images. You may change this setting under \"Notices\" in the settings panel.");
+				bbbNotice("Settings updated. The resized notice will now be hidden when viewing original images. You may change this setting under \"Notices\" in the settings panel.", 10);
 			}
 			else { // Sample image.
 				if (showResNot === "sample")
@@ -2577,7 +2584,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				else if (showResNot === "all")
 					showResNot = "original";
 
-				bbbNotice("Settings updated. The resized notice will now be hidden when viewing sample images. You may change this setting under \"Notices\" in the settings panel.");
+				bbbNotice("Settings updated. The resized notice will now be hidden when viewing sample images. You may change this setting under \"Notices\" in the settings panel.", 10);
 			}
 
 			updateSettings("show_resized_notice", showResNot);
@@ -3461,7 +3468,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			});
 		}
 		catch (error) {
-			bbbNotice("Unexpected error creating the ugoira post. (Error: " + error.message + ")", "error");
+			bbbNotice("Unexpected error creating the ugoira post. (Error: " + error.message + ")", -1);
 		}
 	}
 
@@ -3582,28 +3589,29 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					post.file_url = "/data/" + cacheName;
 				}
 			}
-			else // Queue hidden img for fixing.
-				bbb.cache.hidden_imgs.push(post.id);
+			else // Mark hidden img for fixing.
+				post.thumb_class += " bbb-hidden-thumb";
 		}
 	}
 
 	function fixHiddenThumbs() {
 		// Fix hidden thumbnails by fetching the info from a page.
-		var hiddenImgs = bbb.cache.hidden_imgs;
+		var hiddenImgs = document.getElementsByClassName("bbb-hidden-thumb");
 
-		if (hiddenImgs.length) {
+		if (hiddenImgs.length && !bbb.cache.fixing_active) {
 			if (!bbb.cache.save_enabled) {
 				window.addEventListener("beforeunload", updateThumbCache);
 				bbb.cache.save_enabled = true;
 			}
 
-			searchPages("hidden");
+			bbb.cache.fixing_active = true;
+			searchPages("hidden", hiddenImgs[0]);
 		}
 	}
 
 	function createThumbHTML(post, query) {
 		// Create a thumbnail HTML string.
-		return '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + query + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '" id="bbb-img-' + post.id + '"></a></article>';
+		return '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + query + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '"></a></article>';
 	}
 
 	function createThumb(post, query) {
@@ -3989,7 +3997,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bbb.status = { // Status messages.
 				msg: {
 					post_comments: {txt: "Fixing hidden comments... ", count: 0},
-					hidden: {txt: "Fixing hidden thumbnails... ", count: 0, queue: bbb.cache.hidden_imgs}, // Hidden thumbnail message.
+					hidden: {txt: "Fixing hidden thumbnails... ", count: 0, queue: document.getElementsByClassName("bbb-hidden-thumb")}, // Hidden thumbnail message.
 					posts: {txt: "Loading post info... ", count: 0} // General message for XML requests for hidden posts.
 				},
 				count: 0
@@ -4746,7 +4754,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					info.viewed = Number(firstPost.getAttribute("data-id"));
 					info.viewing = 1;
 					saveSettings();
-					bbbNotice("New post tracking initialized. Tracking will start with new posts after the current last image.", 0);
+					bbbNotice("New post tracking initialized. Tracking will start with new posts after the current last image.", 10);
 				}
 			}
 			else if (mode === "redirect") { // Bookmarkable redirect link. (http://danbooru.donmai.us/posts?new_posts=redirect&page=b1)
