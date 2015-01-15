@@ -837,7 +837,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bbbStatus("post_comments", "new");
 		}
 		else if (mode === "hidden") {
-			url = "/posts/" + optArg.getAttribute("data-id");
+			url = "/posts/" + optArg;
 
 			fetchPages(url, "hidden");
 			bbbStatus("hidden", "new");
@@ -3605,7 +3605,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 
 			bbb.cache.fixing_active = true;
-			searchPages("hidden", hiddenImgs[0]);
+			searchPages("hidden", hiddenImgs[0].getAttribute("data-id"));
 		}
 	}
 
