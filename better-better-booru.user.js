@@ -42,7 +42,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				names: {}
 			},
 			fixing_active: false,
-			hidden_imgs: [],
 			save_enabled: false,
 			stored: {}
 		},
@@ -608,7 +607,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var post = formatInfo(posts[i]);
 			var existingPost = existingPosts[eci];
 
-			if (!existingPost || post.id !== Number(existingPost.getAttribute("data-id"))) {
+			if (!existingPost || String(post.id) !== existingPost.getAttribute("data-id")) {
 				if (!/\b(?:loli|shota|toddlercon)\b/.test(post.tag_string) && !post.is_banned) // API post isn't hidden and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
 					continue;
 				else if ((!show_loli && /\bloli\b/.test(post.tag_string)) || (!show_shota && /\bshota\b/.test(post.tag_string)) || (!show_toddlercon && /\btoddlercon\b/.test(post.tag_string)) || (!show_banned && post.is_banned)) { // Skip hidden posts if the user has selected to do so.
@@ -994,13 +993,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Fix the hidden image placeholders with information from a post.
 		var hiddenImgs = document.getElementsByClassName("bbb-hidden-thumb");
 		var article = hiddenImgs[0];
+
+		// Hidden thumbnails no longer exist in the page so stop.
+		if (!article)
+			return;
+
 		var previewImg = article.getElementsByTagName("img")[0];
 		var hiddenId = article.getAttribute("data-id");
 		var bcc = bbb.cache.current;
 		var post = scrapePost(docEl);
 
-		// Update the thumbnail with the correct information.
-		if (post.preview_file_url) {
+		if (String(post.id) !== hiddenId) // Out of sync. Reset.
+			fetchPages("/posts/" + hiddenId, "hidden");
+		else if (post.preview_file_url) { // Update the thumbnail with the correct information.
 			if (post.file_url) {
 				article.setAttribute("data-md5", post.md5);
 				article.setAttribute("data-file-ext", post.file_ext);
