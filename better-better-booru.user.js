@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name           better_better_booru_temp
-// @namespace      https://greasyfork.org/scripts/3575-better-better-booru-temp
+// @name           better_better_booru
+// @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
 // @version        6.5.4
