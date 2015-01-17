@@ -1036,6 +1036,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else { // The image information couldn't be found.
 			updateThumbCache();
+			bbb.cache.fixing_active = false;
 			bbbNotice("Error retrieving thumbnail information.", -1);
 			bbbStatus("hidden", "error");
 		}
