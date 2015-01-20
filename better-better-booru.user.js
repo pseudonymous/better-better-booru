@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name           better_better_booru
-// @namespace      https://greasyfork.org/scripts/3575-better-better-booru
+// @name           better_better_booru_temp
+// @namespace      https://greasyfork.org/scripts/3575-better-better-booru-temp
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
 // @version        6.5.4
@@ -41,7 +41,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				history: [],
 				names: {}
 			},
-			fixing_active: false,
 			save_enabled: false,
 			stored: {}
 		},
@@ -135,7 +134,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 		},
 		timers: {},
-		user: {} // User settings.
+		user: {}, // User settings.
+		xml: {
+			hidden_ready: true,
+			paginator_ready: true,
+			thumbs_ready: true
+		}
 	};
 
 	loadSettings(); // Load user settings.
@@ -262,14 +266,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function searchJSON(mode, optArg) {
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			if (potentialHiddenPosts(mode)) {
-				var limit = (allowUserLimit() ? "&limit=" + thumbnail_count : "");
+				var url = (allowUserLimit() ? updateUrlQuery(gUrl, "limit=" + thumbnail_count) : gUrl);
 
 				if (mode === "search")
-					fetchJSON(gUrl.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?") + limit, "search");
+					fetchJSON(url.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?"), "search");
 				else if (mode === "notes")
-					fetchJSON(gUrl.replace(/\/notes\/?(?:\?|$)/, "/notes.json?") + limit, "notes");
+					fetchJSON(url.replace(/\/notes\/?(?:\?|$)/, "/notes.json?"), "notes");
 				else if (mode === "favorites")
-					fetchJSON(gUrl.replace(/\/favorites\/?(?:\?|$)/, "/favorites.json?") + limit, "favorites");
+					fetchJSON(url.replace(/\/favorites\/?(?:\?|$)/, "/favorites.json?"), "favorites");
 
 				bbbStatus("posts", "new");
 			}
@@ -338,8 +342,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var xml = JSON.parse(xmlhttp.responseText);
 
-						if (mode === "search" || mode === "popular" || mode === "notes" || mode === "favorites")
+						if (mode === "search" || mode === "popular" || mode === "notes" || mode === "favorites") {
+							if (allowUserLimit())
+								history.replaceState({}, "", updateUrlQuery(gUrl, "limit=" + thumbnail_count)); // Update the URL with the limit value.
+
 							parseListing(xml);
+						}
 						else if (mode === "post")
 							parsePost(xml);
 						else if (mode === "pool") {
@@ -863,6 +871,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							bbbStatus("post_comments", "done");
 						}
 						else if (mode === "thumbnails") {
+							history.replaceState({}, "", updateUrlQuery(gUrlQuery, "limit=" + thumbnail_count)); // Update the URL with the limit value.
 							replaceThumbnails(docEl);
 							bbbStatus("posts", "done");
 						}
@@ -1031,12 +1040,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 			else {
 				updateThumbCache();
-				bbb.cache.fixing_active = false;
+				bbb.xml.hidden_ready = true;
 			}
 		}
 		else { // The image information couldn't be found.
 			updateThumbCache();
-			bbb.cache.fixing_active = false;
+			bbb.xml.hidden_ready = true;
 			bbbNotice("Error retrieving thumbnail information.", -1);
 			bbbStatus("hidden", "error");
 		}
@@ -3602,15 +3611,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function fixHiddenThumbs() {
 		// Fix hidden thumbnails by fetching the info from a page.
+		if (!bbb.xml.hidden_ready)
+			return;
+
 		var hiddenImgs = document.getElementsByClassName("bbb-hidden-thumb");
 
-		if (hiddenImgs.length && !bbb.cache.fixing_active) {
+		if (hiddenImgs.length) {
 			if (!bbb.cache.save_enabled) {
 				window.addEventListener("beforeunload", updateThumbCache);
 				bbb.cache.save_enabled = true;
 			}
 
-			bbb.cache.fixing_active = true;
+			bbb.xml.hidden_ready = false;
 			searchPages("hidden", hiddenImgs[0].getAttribute("data-id"));
 		}
 	}
