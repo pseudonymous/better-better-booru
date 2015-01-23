@@ -427,7 +427,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			target = document.getElementById("posts");
 			target = (target ? target.getElementsByTagName("div")[0] : undefined);
 			query = getVar("tags");
-			query = (query !== null && query !== undefined && !clean_links ? "?tags=" + query : "");
+			query = (query && !clean_links ? "?tags=" + query : "");
 		}
 		else if (gLoc === "popular")
 			target = document.getElementById("a-index");
@@ -1279,6 +1279,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var tag;
 		var result;
 
+		// If the tags parameter isn't provided or has no value, the metatag is undefined.
 		if (tags === null || tags === undefined)
 			return undefined;
 
@@ -5340,21 +5341,21 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var searchLimit = getTagVar("limit", url);
 		var limit;
 
-		if (queryLimit !== null && queryLimit !== undefined) {
+		if (queryLimit !== null && queryLimit !== undefined) { // Treat the limit as undefined when the limit parameter is declared with no value.
 			queryLimit = decodeURIComponent(queryLimit);
 
-			if (queryLimit === "" || !/^\s*\d+/.test(queryLimit)) // No thumbnails show up when the limit is declared but left blank or has no number directly after any potential white space.
+			if (queryLimit === "" || !/^\s*\d+/.test(queryLimit)) // No thumbnails show up when the limit is declared with a blank value or has no number directly after any potential white space.
 				limit = 0;
 			else // The query limit finds its value in a manner similar to parseInt. Dump leading spaces and grab numbers until a non-numerical character is hit.
 				limit = parseInt(queryLimit, 10);
 		}
-		else if (searchLimit !== null && searchLimit !== undefined) {
+		else if (searchLimit !== undefined) {
 			searchLimit = decodeURIComponent(searchLimit);
 
 			if (searchLimit === "") // No thumbnails show up when the limit is declared but left blank.
 				limit = 0;
-			else if (!bbbIsNum(searchLimit.replace(/\s/g, "")) || searchLimit.indexOf(".") > -1 || Number(searchLimit) < 0) // Non-numerical, negative, and decimal values are ignored.
-				limit = thumbnail_count_default;
+			else if (!bbbIsNum(searchLimit.replace(/\s/g, "")) || searchLimit.indexOf(".") > -1 || Number(searchLimit) < 0) // Non-numerical, negative, and decimal values are ignored. Treat the limit as undefined.
+				limit = undefined;
 			else
 				limit = Number(searchLimit);
 		}
