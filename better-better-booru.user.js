@@ -341,12 +341,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var xml = JSON.parse(xmlhttp.responseText);
 
-						if (mode === "search" || mode === "popular" || mode === "notes" || mode === "favorites") {
-							if (allowUserLimit())
-								history.replaceState({}, "", updateUrlQuery(location.search, {limit: thumbnail_count})); // Update the URL with the limit value.
-
+						if (mode === "search" || mode === "popular" || mode === "notes" || mode === "favorites")
 							parseListing(xml);
-						}
 						else if (mode === "post")
 							parsePost(xml);
 						else if (mode === "pool") {
@@ -491,6 +487,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Fix hidden thumbnails.
 		fixHiddenThumbs();
+
+		// Update the URL with the limit value.
+		if (allowUserLimit())
+			history.replaceState({}, "", updateUrlQuery(location.search, {limit: thumbnail_count}));
+
 	}
 
 	function parsePost(postInfo) {
@@ -870,7 +871,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							bbbStatus("post_comments", "done");
 						}
 						else if (mode === "thumbnails") {
-							history.replaceState({}, "", updateUrlQuery(location.search, {limit: thumbnail_count})); // Update the URL with the limit value.
 							replaceThumbnails(docEl);
 							bbbStatus("posts", "done");
 						}
@@ -994,6 +994,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			// Replace the current thumbnails.
 			target.parentNode.replaceChild(newContent, target);
+
+			// Update the URL with the limit value.
+			history.replaceState({}, "", updateUrlQuery(location.search, {limit: thumbnail_count}));
 		}
 	}
 
