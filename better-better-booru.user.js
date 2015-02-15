@@ -145,9 +145,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	loadSettings(); // Load user settings.
 
 	// Location variables.
-	var gUrl = location.href.split("#", 1)[0]; // URL without the anchor
-	var gUrlPath = location.pathname; // URL path only
-	var gUrlQuery = location.search; // URL query string only
 	var gLoc = currentLoc(); // Current location
 	var gLocRegex = new RegExp("\\b" + gLoc + "\\b");
 
@@ -264,9 +261,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	/* Functions for XML API info */
 	function searchJSON(mode, optArg) {
+		var url = location.href.split("#", 1)[0];
+		
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			if (potentialHiddenPosts(mode)) {
-				var url = (allowUserLimit() ? updateUrlQuery(gUrl, {limit: thumbnail_count}) : gUrl);
+				url = (allowUserLimit() ? updateUrlQuery(url, {limit: thumbnail_count}) : url);
 
 				if (mode === "search")
 					fetchJSON(url.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?"), "search");
@@ -280,13 +279,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "popular") {
 			if (potentialHiddenPosts(mode)) {
-				fetchJSON(gUrl.replace(/\/popular\/?/, "/popular.json"), "popular");
+				fetchJSON(url.replace(/\/popular\/?/, "/popular.json"), "popular");
 				bbbStatus("posts", "new");
 			}
 		}
 		else if (mode === "pool") {
 			if (potentialHiddenPosts(mode)) {
-				var poolId = /\/pools\/(\d+)/.exec(gUrl)[1];
+				var poolId = /\/pools\/(\d+)/.exec(url)[1];
 				var poolCache = sessionStorage["pool" + poolId];
 				var curTime = new Date().getTime();
 				var cacheTime;
@@ -301,7 +300,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (timeDiff && timeDiff < 900) // If the cache is less than 15 minutes old, use it.
 					searchJSON("pool_search", {post_ids: poolCache.join(" ")});
 				else // Get a new cache.
-					fetchJSON(gUrl.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
+					fetchJSON(url.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
 
 				bbbStatus("posts", "new");
 			}
@@ -315,7 +314,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "comments") {
 			if (potentialHiddenPosts(mode)) {
-				fetchJSON(gUrl.replace(/\/comments\/?/, "/comments.json"), "comments");
+				fetchJSON(url.replace(/\/comments\/?/, "/comments.json"), "comments");
 				bbbStatus("posts", "new");
 			}
 		}
@@ -326,7 +325,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bbbStatus("posts", "new");
 		}
 		else if (mode === "ugoira") {
-			fetchJSON(gUrl.replace(/\/posts\/(\d+)/, "/posts/$1.json"), "ugoira");
+			fetchJSON(url.replace(/\/posts\/(\d+)/, "/posts/$1.json"), "ugoira");
 			bbbStatus("posts", "new");
 		}
 	}
@@ -344,14 +343,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 						if (mode === "search" || mode === "popular" || mode === "notes" || mode === "favorites") {
 							if (allowUserLimit())
-								history.replaceState({}, "", updateUrlQuery(gUrlQuery, {limit: thumbnail_count})); // Update the URL with the limit value.
+								history.replaceState({}, "", updateUrlQuery(location.search, {limit: thumbnail_count})); // Update the URL with the limit value.
 
 							parseListing(xml);
 						}
 						else if (mode === "post")
 							parsePost(xml);
 						else if (mode === "pool") {
-							var poolId = /\/pools\/(\d+)/.exec(gUrl)[1];
+							var poolId = /\/pools\/(\d+)/.exec(location.href)[1];
 
 							sessionStorage["pool" + poolId] = new Date().getTime() + " " + xml.post_ids;
 							searchJSON("pool_search", xml);
@@ -434,7 +433,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (gLoc === "pool") {
 			target = document.getElementById("a-show");
 			target = (target ? target.getElementsByTagName("section")[0] : undefined);
-			query = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(gUrlPath)[1] : "");
+			query = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1] : "");
 			before = paginator;
 			orderedIds = optArg;
 		}
@@ -527,13 +526,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				$(Danbooru.Ugoira.player).unbind();
 
 			if ((load_sample_first && useUgoiraOrig !== "1") || useUgoiraOrig === "0") { // Load sample webm version.
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + updateUrlQuery(gUrl, {original: "1"}) + '">View original</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p>';
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + updateUrlQuery(location.href, {original: "1"}) + '">View original</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p>';
 
 				// Prep the "toggle notes" link.
 				noteToggleLinkInit();
 			}
 			else { // Load original ugoira version.
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a> | <a href="' + updateUrlQuery(gUrl, {original: "0"}) + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a> | <a href="' + updateUrlQuery(location.href, {original: "0"}) + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
 
 				// Make notes toggle when clicking the ugoira animation.
 				noteToggleInit();
@@ -823,14 +822,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			if (allowUserLimit()) {
-				url = updateUrlQuery(gUrl, {limit: thumbnail_count});
+				url = updateUrlQuery(location.href, {limit: thumbnail_count});
 
 				fetchPages(url, "thumbnails");
 				bbbStatus("posts", "new");
 			}
 		}
 		else if (mode === "paginator") {
-			url = gUrl;
+			url = location.href;
 
 			if (allowUserLimit())
 				url = updateUrlQuery(url, {limit: thumbnail_count});
@@ -871,7 +870,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							bbbStatus("post_comments", "done");
 						}
 						else if (mode === "thumbnails") {
-							history.replaceState({}, "", updateUrlQuery(gUrlQuery, {limit: thumbnail_count})); // Update the URL with the limit value.
+							history.replaceState({}, "", updateUrlQuery(location.search, {limit: thumbnail_count})); // Update the URL with the limit value.
 							replaceThumbnails(docEl);
 							bbbStatus("posts", "done");
 						}
@@ -1045,7 +1044,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else { // The image information couldn't be found.
 			updateThumbCache();
-			bbb.xml.hidden_ready = true;
+			bbb.xml.hidden_ready = false;
 			bbbNotice("Error retrieving thumbnail information.", -1);
 			bbbStatus("hidden", "error");
 		}
@@ -1255,7 +1254,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Retrieve a value from a specified/current URL's query string.
 		// Undefined refers to a param that isn't even declared. Null refers to a declared param that hasn't been defined with a value (&test&). An empty string ("") refers to a param that has been defined with nothing (&test=&).
 		if (!url)
-			url = gUrlQuery;
+			url = location.search;
 
 		var result = url.split(new RegExp("[&\?]" + urlVar))[1];
 
@@ -1273,7 +1272,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function getTagVar(urlVar, url) {
 		// Retrieve a metatag's value from the tag portion of a specified/current URL's query string.
 		if (!url)
-			url = gUrlQuery;
+			url = location.search;
 
 		var tags = getVar("tags", url);
 		var tag;
@@ -2788,7 +2787,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
 				Danbooru.Note.TranslationMode.toggle = function(event) {
-					bbbNotice('Note editing is not allowed while using the ugoira video sample. Please use the <a href="' + updateUrlQuery(gUrl, {original: "1"}) + '">original</a> ugoira version for note editing.', -1);
+					bbbNotice('Note editing is not allowed while using the ugoira video sample. Please use the <a href="' + updateUrlQuery(location.href, {original: "1"}) + '">original</a> ugoira version for note editing.', -1);
 					event.preventDefault();
 				};
 				Danbooru.Note.Edit.show = Danbooru.Note.TranslationMode.toggle;
@@ -2993,9 +2992,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) {
 			if (targetTag === "CANVAS")
-				location.href = updateUrlQuery(gUrl, {original: "0"});
+				location.href = updateUrlQuery(location.href, {original: "0"});
 			else if (targetTag === "VIDEO")
-				location.href = updateUrlQuery(gUrl, {original: "1"});
+				location.href = updateUrlQuery(location.href, {original: "1"});
 		}
 		else if (targetTag === "IMG") {
 			if (image_swap_mode === "load") { // Load image and then view mode.
@@ -4790,7 +4789,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				var limitNum = getLimit() || thumbnail_count || thumbnail_count_default;
 				var currentPage = Number(getVar("page")) || 1;
 				var savedPage = Math.ceil((info.viewing - limitNum) / limitNum) + 1;
-				var currentViewed = Number(/id:>(\d+)/.exec(decodeURIComponent(gUrlQuery))[1]);
+				var currentViewed = Number(/id:>(\d+)/.exec(decodeURIComponent(location.search))[1]);
 
 				// Replace the chickens message on the first page with a more specific message.
 				if (!firstPost && currentPage < 2) {
@@ -5465,29 +5464,32 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function currentLoc() {
 		// Test the page URL to find which section of Danbooru the script is running on.
-		if (/\/posts\/\d+/.test(gUrlPath))
+		var path = location.pathname;
+		var query = location.search;
+		
+		if (/\/posts\/\d+/.test(path))
 			return "post";
-		else if (/^\/(?:posts|$)/.test(gUrlPath))
+		else if (/^\/(?:posts|$)/.test(path))
 			return "search";
-		else if (/^\/notes\/?$/.test(gUrlPath) && gUrlQuery.indexOf("group_by=note") < 0)
+		else if (/^\/notes\/?$/.test(path) && query.indexOf("group_by=note") < 0)
 			return "notes";
-		else if (/^\/comments\/?$/.test(gUrlPath) && gUrlQuery.indexOf("group_by=comment") < 0)
+		else if (/^\/comments\/?$/.test(path) && query.indexOf("group_by=comment") < 0)
 			return "comments";
-		else if (gUrlPath.indexOf("/explore/posts/popular") === 0)
+		else if (path.indexOf("/explore/posts/popular") === 0)
 			return "popular";
-		else if (/\/pools\/\d+/.test(gUrlPath))
+		else if (/\/pools\/\d+/.test(path))
 			return "pool";
-		else if (/\/pools\/gallery/.test(gUrlPath))
+		else if (/\/pools\/gallery/.test(path))
 			return "pool_gallery";
-		else if (gUrlPath.indexOf("/favorites") === 0)
+		else if (path.indexOf("/favorites") === 0)
 			return "favorites";
-		else if (gUrlPath.indexOf("/uploads/new") === 0)
+		else if (path.indexOf("/uploads/new") === 0)
 			return "upload";
-		else if (gUrlPath.indexOf("/pools/new") === 0)
+		else if (path.indexOf("/pools/new") === 0)
 			return "new_pool";
-		else if (/\/forum_topics\/\d+/.test(gUrlPath))
+		else if (/\/forum_topics\/\d+/.test(path))
 			return "topic";
-		else if (gUrlPath.indexOf("/explore/posts/intro") === 0)
+		else if (path.indexOf("/explore/posts/intro") === 0)
 			return "intro";
 		else
 			return undefined;
