@@ -262,7 +262,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	/* Functions for XML API info */
 	function searchJSON(mode, optArg) {
 		var url = location.href.split("#", 1)[0];
-		
+
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			if (potentialHiddenPosts(mode)) {
 				url = (allowUserLimit() ? updateUrlQuery(url, {limit: thumbnail_count}) : url);
@@ -5466,7 +5466,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Test the page URL to find which section of Danbooru the script is running on.
 		var path = location.pathname;
 		var query = location.search;
-		
+
 		if (/\/posts\/\d+/.test(path))
 			return "post";
 		else if (/^\/(?:posts|$)/.test(path))
