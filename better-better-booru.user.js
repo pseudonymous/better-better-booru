@@ -390,8 +390,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 								bbbStatus("posts", "error");
 
 								document.getElementById(linkId).addEventListener("click", function(event) {
-									this.style.display = "none";
-									fetchJSON(url, mode, optArg);
+									var notice = bbb.el.notice;
+									var hideTarget = (notice.getElementsByClassName("bbb-notice-msg-entry").length < 2 ? notice : this);
+
+									hideTarget.style.display = "none";
+									searchJSON(mode, optArg);
 									event.preventDefault();
 								}, false);
 							}
@@ -906,9 +909,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							bbbNotice(msg + ' (Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). <a id="' + linkId + '" href="#">Retry</a>', -1);
 
 							document.getElementById(linkId).addEventListener("click", function(event) {
-								this.style.display = "none";
-								fetchPages(url, mode, optArg);
+								var notice = bbb.el.notice;
+								var hideTarget = (notice.getElementsByClassName("bbb-notice-msg-entry").length < 2 ? notice : this);
 
+								hideTarget.style.display = "none";
+								searchPages(mode, optArg);
 								event.preventDefault();
 							}, false);
 						}
@@ -5338,9 +5343,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function getLimit(url) {
-		// Retrieve the current limit value.
+		// Retrieve the current limit value. The query limit overrides the search limit.
+		var queryLimit = getQueryLimit(url);
+		var searchLimit = getSearchLimit(url);
+		var limit = (queryLimit !== undefined ? queryLimit : searchLimit);
+
+		return limit;
+	}
+
+	function getQueryLimit(url) {
 		var queryLimit = getVar("limit", url);
-		var searchLimit = getTagVar("limit", url);
 		var limit;
 
 		if (queryLimit !== null && queryLimit !== undefined) { // Treat the limit as undefined when the limit parameter is declared with no value.
@@ -5351,7 +5363,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			else // The query limit finds its value in a manner similar to parseInt. Dump leading spaces and grab numbers until a non-numerical character is hit.
 				limit = parseInt(queryLimit, 10);
 		}
-		else if (searchLimit !== undefined) {
+
+		return limit;
+	}
+
+	function getSearchLimit(url) {
+		var searchLimit = getTagVar("limit", url);
+		var limit;
+
+		if (searchLimit !== undefined) {
 			searchLimit = decodeURIComponent(searchLimit);
 
 			if (searchLimit === "") // No thumbnails show up when the limit is declared but left blank.
@@ -5455,11 +5475,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function allowUserLimit() {
-		// Allow use of the limit variable if it isn't currently set and we're on the first page.
+		// Allow use of the user limit on the first page if there isn't a search limit and the current limit doesn't equal the user limit.
 		var page = Number(getVar("page")) || 1; // When set to 0 or undefined, the first page is shown.
-		var limit = getLimit();
+		var queryLimit = getQueryLimit();
+		var searchLimit = getSearchLimit();
+		var limit = (queryLimit !== undefined ? queryLimit : searchLimit) || thumbnail_count_default;
 
-		if (thumbnail_count && page === 1 && limit === undefined)
+		if (thumbnail_count && thumbnail_count !== limit && page === 1 && (searchLimit === undefined || queryLimit !== undefined))
 			return true;
 		else
 			return false;
