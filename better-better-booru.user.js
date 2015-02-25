@@ -133,6 +133,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 		},
+		settings: {
+			changed: {}
+		},
 		timers: {},
 		user: {}, // User settings.
 		xml: {
@@ -143,6 +146,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	};
 
 	loadSettings(); // Load user settings.
+
+	// Provide a session ID in order to detect XML requests carrying over from other pages.
+	window.bbbSession = new Date().getTime();
 
 	// Location variables.
 	var gLoc = currentLoc(); // Current location
@@ -330,13 +336,21 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function fetchJSON(url, mode, optArg, retries) {
+	function fetchJSON(url, mode, optArg, session, retries) {
 		// Retrieve JSON.
 		var xmlhttp = new XMLHttpRequest();
 		var xmlRetries = retries || 0;
+		var xmlSession = session || window.bbbSession;
 
 		if (xmlhttp !== null) {
 			xmlhttp.onreadystatechange = function() {
+				// If we end up receiving an xml response form a different page, reject it.
+				if (xmlSession !== window.bbbSession) {
+					xmlhttp.abort();
+					return;
+				}
+
+				// Continue as normal.
 				if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var xml = JSON.parse(xmlhttp.responseText);
@@ -381,7 +395,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						else if (xmlhttp.status !== 0) {
 							if (xmlRetries < 2) {
 								xmlRetries++;
-								fetchJSON(url, mode, optArg, xmlRetries);
+								fetchJSON(url, mode, optArg, xmlSession, xmlRetries);
 							}
 							else {
 								var linkId = uniqueIdNum(); // Create a unique ID.
@@ -390,10 +404,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 								bbbStatus("posts", "error");
 
 								document.getElementById(linkId).addEventListener("click", function(event) {
-									var notice = bbb.el.notice;
-									var hideTarget = (notice.getElementsByClassName("bbb-notice-msg-entry").length < 2 ? notice : this);
-
-									hideTarget.style.display = "none";
+									closeBbbNoticeMsg(event);
 									searchJSON(mode, optArg);
 									event.preventDefault();
 								}, false);
@@ -854,13 +865,21 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function fetchPages(url, mode, optArg, retries) {
+	function fetchPages(url, mode, optArg, session, retries) {
 		// Retrieve an actual page for certain pieces of information.
 		var xmlhttp = new XMLHttpRequest();
 		var xmlRetries = retries || 0;
+		var xmlSession = session || window.bbbSession;
 
 		if (xmlhttp !== null) {
 			xmlhttp.onreadystatechange = function() {
+				// If we end up receiving an xml response form a different page, reject it.
+				if (xmlSession !== window.bbbSession) {
+					xmlhttp.abort();
+					return;
+				}
+
+				// Continue as normal.
 				if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var docEl = document.createElement("html");
@@ -885,7 +904,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					else if (xmlhttp.status !== 0) {
 						if (xmlRetries < 2) {
 							xmlRetries++;
-							fetchPages(url, mode, optArg, xmlRetries);
+							fetchPages(url, mode, optArg, xmlSession, xmlRetries);
 						}
 						else {
 							var linkId = uniqueIdNum(); // Create a unique ID.
@@ -909,10 +928,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							bbbNotice(msg + ' (Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). <a id="' + linkId + '" href="#">Retry</a>', -1);
 
 							document.getElementById(linkId).addEventListener("click", function(event) {
-								var notice = bbb.el.notice;
-								var hideTarget = (notice.getElementsByClassName("bbb-notice-msg-entry").length < 2 ? notice : this);
-
-								hideTarget.style.display = "none";
+								closeBbbNoticeMsg(event);
 								searchPages(mode, optArg);
 								event.preventDefault();
 							}, false);
@@ -1698,6 +1714,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				item.addEventListener("change", function() {
 					var selected = this.value;
 					bbb.user[settingName] = (bbbIsNum(selected) ? Number(selected) : selected);
+					bbb.settings.changed[settingName] = true;
 				}, false);
 				itemFrag.appendChild(item);
 				break;
@@ -1706,7 +1723,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 				item.type = "checkbox";
 				item.checked = userSetting;
-				item.addEventListener("click", function() { bbb.user[settingName] = this.checked; }, false);
+				item.addEventListener("click", function() {
+					bbb.user[settingName] = this.checked;
+					bbb.settings.changed[settingName] = true;
+				}, false);
 				itemFrag.appendChild(item);
 				break;
 			case "text":
@@ -1714,7 +1734,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 				item.type = "text";
 				item.value = userSetting;
-				item.addEventListener("change", function() { bbb.user[settingName] = (optionObject.isTagInput ? this.value.bbbTagClean() : this.value.bbbSpaceClean()); }, false);
+				item.addEventListener("change", function() {
+					bbb.user[settingName] = (optionObject.isTagInput ? this.value.bbbTagClean() : this.value.bbbSpaceClean());
+					bbb.settings.changed[settingName] = true;
+				}, false);
 				itemFrag.appendChild(item);
 
 				if (optionObject.isTagInput) {
@@ -1734,7 +1757,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 				item.type = "text";
 				item.value = userSetting;
-				item.addEventListener("change", function() { bbb.user[settingName] = Number(this.value); }, false);
+				item.addEventListener("change", function() {
+					bbb.user[settingName] = Number(this.value);
+					bbb.settings.changed[settingName] = true;
+				}, false);
 				itemFrag.appendChild(item);
 				break;
 			default:
@@ -2405,12 +2431,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function saveSettings() {
 		// Save the user settings to localStorage after making any necessary checks/adjustments.
-		if (!bbb.user.track_new && bbb.user.track_new_data.viewed) // Reset new post tracking if it's disabled.
+		if (bbb.settings.changed.track_new && !bbb.user.track_new && bbb.user.track_new_data.viewed) // Reset new post tracking if it has been disabled.
 			bbb.user.track_new_data = bbb.options.track_new_data.def;
 
-		if (thumb_cache_limit !== bbb.user.thumb_cache_limit) // Trim down the thumb cache as necessary if the limit has changed.
+		if (bbb.settings.changed.thumb_cache_limit && thumb_cache_limit !== bbb.user.thumb_cache_limit) // Trim down the thumb cache as necessary if the limit has changed.
 			adjustThumbCache();
 
+		if (bbb.settings.changed.thumbnail_count)
+			fixLimit(bbb.user.thumbnail_count);
+
+		bbb.settings.changed = {};
 		localStorage.bbb_settings = JSON.stringify(bbb.user);
 	}
 
@@ -3987,8 +4017,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			noticeMsg = bbb.el.noticeMsg = getId("bbb-notice-msg", notice, "div");
 
-			getId("bbb-notice-close", notice, "div").addEventListener("click", function() {
-				notice.style.display = "none";
+			getId("bbb-notice-close", notice, "div").addEventListener("click", function(event) {
+				closeBbbNotice();
+				event.preventDefault();
 			}, false);
 
 			document.body.appendChild(noticeContainer);
@@ -3997,21 +4028,58 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (notice.style.display === "block" && /\S/.test(noticeMsg.textContent)) { // Insert new text at the top if the notice is already open.
 			type = (type > 0 ? 0 : type); // Change the type to permanent if it was supposed to be temporary.
 			noticeMsg.insertBefore(msg, noticeMsg.children[0]);
-			window.clearTimeout(bbb.timers.bbbNotice);
+			window.clearTimeout(bbb.timers.hideBbbNotice);
 		}
 		else {
 			noticeMsg.innerHTML = "";
 			noticeMsg.appendChild(msg);
 		}
 
+		// Hide the notice after a certain number of seconds.
 		if (type > 0) {
-			bbb.timers.bbbNotice = window.setTimeout(function() {
+			bbb.timers.hideBbbNotice = window.setTimeout(function() {
 				notice.style.display = "none";
-				bbb.timers.bbbNotice = 0;
+				bbb.timers.hideBbbNotice = 0;
 			}, type * 1000);
 		}
 
+		// Don't allow the notice to be closed via clicking for half a second. Prevents accidental message closing.
+		if (bbb.timers.keepBbbNotice)
+			window.clearTimeout(bbb.timers.keepBbbNotice);
+
+		bbb.timers.keepBbbNotice = window.setTimeout(function() {
+			bbb.timers.keepBbbNotice = 0;
+		}, 500);
+
 		notice.style.display = "block";
+	}
+
+	function closeBbbNotice() {
+		// Click handler for closing the notice.
+		var notice = bbb.el.notice;
+
+		if (bbb.timers.keepBbbNotice)
+			return;
+
+		notice.style.display = "none";
+	}
+
+	function closeBbbNoticeMsg(event) {
+		// Click handler for closing the notice message that the clicked element is a child of. Will close the whole notice if there is only one message.
+		var notice = bbb.el.notice;
+		var target = event.target;
+
+		if (notice.getElementsByClassName("bbb-notice-msg-entry").length > 1) {
+			while (target.parentNode && target.className.indexOf("bbb-notice-msg-entry") < 0 && target !== notice)
+				target = target.parentNode;
+		}
+		else
+			target = notice;
+
+		if (target === notice)
+			closeBbbNotice();
+		else
+			target.parentNode.removeChild(target);
 	}
 
 	function bbbStatus(mode, xmlState) {
@@ -4784,7 +4852,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					info.viewed = Number(firstPost.getAttribute("data-id"));
 					info.viewing = 1;
 					saveSettings();
-					bbbNotice("New post tracking initialized. Tracking will start with new posts after the current last image.", 10);
+					bbbNotice("New post tracking initialized. Tracking will start with new posts after the current last image.", 8);
 				}
 			}
 			else if (mode === "redirect") { // Bookmarkable redirect link. (http://danbooru.donmai.us/posts?new_posts=redirect&page=b1)
@@ -5274,19 +5342,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function fixLimit() {
+	function fixLimit(limit) {
 		// Add the limit variable to link URLs that are not thumbnails.
-		if (!thumbnail_count)
+		if (!thumbnail_count && limit === undefined)
 			return;
 
+		var newLimit = (limit === undefined ? thumbnail_count : limit) || undefined;
 		var page = document.getElementById("page");
 		var header = document.getElementById("top");
 		var searchParent = document.getElementById("search-box") || document.getElementById("a-intro");
 		var links;
 		var link;
 		var linkHref;
-		var search;
-		var tagsInput;
 		var i, il; // Loop variables.
 
 		if (page) {
@@ -5296,8 +5363,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				link = links[i];
 				linkHref = link.getAttribute("href"); // Use getAttribute so that we get the exact value. "link.href" adds in the domain.
 
-				if (linkHref && !/(?:page|limit)=/.test(linkHref) && (linkHref.indexOf("/posts?") === 0 || linkHref.indexOf("/favorites?") === 0))
-					link.href = linkHref + "&limit=" + thumbnail_count;
+				if (linkHref && !/page=/.test(linkHref) && (linkHref.indexOf("/posts?") === 0 || linkHref.indexOf("/favorites?") === 0))
+					link.href = updateUrlQuery(linkHref, {limit: newLimit});
 			}
 		}
 
@@ -5308,36 +5375,47 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				link = links[i];
 				linkHref = link.getAttribute("href");
 
-				if (linkHref && (linkHref.indexOf("/posts") === 0 || linkHref === "/" || linkHref === "/notes?group_by=post" || linkHref === "/favorites"))
-						link.href = updateUrlQuery(linkHref, {limit: thumbnail_count});
+				if (linkHref) {
+					linkHref = updateUrlQuery(linkHref, {limit: undefined}); // Strip out the limit so we can test the original URLs.
+
+					if (linkHref.indexOf("/posts") === 0 || linkHref === "/" || linkHref === "/notes?group_by=post" || linkHref === "/favorites")
+						link.href = updateUrlQuery(linkHref, {limit: newLimit});
+
+				}
 			}
 		}
 
 		// Fix the search.
 		if (searchParent && (gLoc === "search" || gLoc === "post" || gLoc === "intro" || gLoc === "favorites")) {
-			search = searchParent.getElementsByTagName("form")[0];
+			var search = searchParent.getElementsByTagName("form")[0];
 
 			if (search) {
-				var limitInput = document.createElement("input");
-				limitInput.name = "limit";
-				limitInput.value = thumbnail_count;
-				limitInput.type = "hidden";
-				search.appendChild(limitInput);
+				var limitInput = bbb.el.limitInput;
 
-				// Change the form action if on the favorites page. It uses "/favorites", but that just goes to the normal "/posts" search while stripping out the limit.
-				search.action = "/posts";
+				if (!limitInput) {
+					limitInput = bbb.el.limitInput = document.createElement("input");
+					limitInput.name = "limit";
+					limitInput.value = newLimit;
+					limitInput.type = "hidden";
+					search.appendChild(limitInput);
 
-				// Remove the user's default limit if the user tries to specify a limit value in the tags.
-				tagsInput = document.getElementById("tags");
+					// Change the form action if on the favorites page. It uses "/favorites", but that just goes to the normal "/posts" search while stripping out the limit.
+					search.action = "/posts";
 
-				if (tagsInput) {
-					search.addEventListener("submit", function() {
-						if (/\blimit:/.test(tagsInput.value))
-							search.removeChild(limitInput);
-						else if (limitInput.parentNode !== search)
-							search.appendChild(limitInput);
-					}, false);
+					// Remove the user's default limit if the user tries to specify a limit value in the tags.
+					var tagsInput = document.getElementById("tags");
+
+					if (tagsInput) {
+						search.addEventListener("submit", function() {
+							if (/\blimit:/.test(tagsInput.value))
+								search.removeChild(limitInput);
+							else if (limitInput.parentNode !== search)
+								search.appendChild(limitInput);
+						}, false);
+					}
 				}
+				else
+					limitInput.value = newLimit || thumbnail_count_default;
 			}
 		}
 	}
@@ -5721,6 +5799,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var queryName;
 		var queryValue;
 		var queryObj = {};
+		var newUrl;
 		var i, il; // Loop variables.
 
 		for (i = 0, il = queries.length; i < il; i++) {
@@ -5756,8 +5835,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		urlQuery = queries.join("&");
+		newUrl = urlParts[0] + (urlQuery ? "?" + urlQuery : "");
 
-		return urlParts[0] + "?" + urlQuery;
+		return newUrl;
 	}
 
 	Number.prototype.bbbPadDate = function() {
