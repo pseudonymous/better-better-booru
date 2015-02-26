@@ -344,14 +344,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (xmlhttp !== null) {
 			xmlhttp.onreadystatechange = function() {
-				// If we end up receiving an xml response form a different page, reject it.
-				if (xmlSession !== window.bbbSession) {
+				if (xmlSession !== window.bbbSession) // If we end up receiving an xml response form a different page, reject it.
 					xmlhttp.abort();
-					return;
-				}
-
-				// Continue as normal.
-				if (xmlhttp.readyState === 4) { // 4 = "loaded"
+				else if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var xml = JSON.parse(xmlhttp.responseText);
 
@@ -873,14 +868,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (xmlhttp !== null) {
 			xmlhttp.onreadystatechange = function() {
-				// If we end up receiving an xml response form a different page, reject it.
-				if (xmlSession !== window.bbbSession) {
+				if (xmlSession !== window.bbbSession) // If we end up receiving an xml response form a different page, reject it.
 					xmlhttp.abort();
-					return;
-				}
-
-				// Continue as normal.
-				if (xmlhttp.readyState === 4) { // 4 = "loaded"
+				else if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var docEl = document.createElement("html");
 
@@ -4025,10 +4015,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			document.body.appendChild(noticeContainer);
 		}
 
+		if (bbb.timers.keepBbbNotice)
+			window.clearTimeout(bbb.timers.keepBbbNotice);
+
 		if (notice.style.display === "block" && /\S/.test(noticeMsg.textContent)) { // Insert new text at the top if the notice is already open.
 			type = (type > 0 ? 0 : type); // Change the type to permanent if it was supposed to be temporary.
 			noticeMsg.insertBefore(msg, noticeMsg.children[0]);
 			window.clearTimeout(bbb.timers.hideBbbNotice);
+
+			// Don't allow the notice to be closed via clicking for half a second. Prevents accidental message closing.
+			bbb.timers.keepBbbNotice = window.setTimeout(function() {
+				bbb.timers.keepBbbNotice = 0;
+			}, 500);
 		}
 		else {
 			noticeMsg.innerHTML = "";
@@ -4042,14 +4040,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				bbb.timers.hideBbbNotice = 0;
 			}, type * 1000);
 		}
-
-		// Don't allow the notice to be closed via clicking for half a second. Prevents accidental message closing.
-		if (bbb.timers.keepBbbNotice)
-			window.clearTimeout(bbb.timers.keepBbbNotice);
-
-		bbb.timers.keepBbbNotice = window.setTimeout(function() {
-			bbb.timers.keepBbbNotice = 0;
-		}, 500);
 
 		notice.style.display = "block";
 	}
