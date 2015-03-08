@@ -165,7 +165,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	var blacklist_post_display = bbb.user.blacklist_post_display;
 	var blacklist_thumb_mark = bbb.user.blacklist_thumb_mark;
-	var blacklist_highlight_color = bbb.user.blacklist_highlight_color || "#CCCCCC";
+	var blacklist_highlight_color = bbb.user.blacklist_highlight_color;
 	var blacklist_add_bars = gLocRegex.test(bbb.user.blacklist_add_bars);
 	var blacklist_thumb_controls = bbb.user.blacklist_thumb_controls;
 	var blacklist_smart_view = bbb.user.blacklist_smart_view;
@@ -2427,8 +2427,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (bbb.settings.changed.thumb_cache_limit && thumb_cache_limit !== bbb.user.thumb_cache_limit) // Trim down the thumb cache as necessary if the limit has changed.
 			adjustThumbCache();
 
-		if (bbb.settings.changed.thumbnail_count)
+		if (bbb.settings.changed.thumbnail_count) // Update the link limit values if the user has changed the value.
 			fixLimit(bbb.user.thumbnail_count);
+
+		if (bbb.settings.changed.blacklist_highlight_color && bbb.user.blacklist_highlight_color === "") // Use the default highlight color if the field is left blank.
+			bbb.user.blacklist_highlight_color = "#CCCCCC";
 
 		bbb.settings.changed = {};
 		localStorage.bbb_settings = JSON.stringify(bbb.user);
@@ -5365,13 +5368,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				link = links[i];
 				linkHref = link.getAttribute("href");
 
-				if (linkHref) {
-					linkHref = updateUrlQuery(linkHref, {limit: undefined}); // Strip out the limit so we can test the original URLs.
-
-					if (linkHref.indexOf("/posts") === 0 || linkHref === "/" || linkHref === "/notes?group_by=post" || linkHref === "/favorites")
-						link.href = updateUrlQuery(linkHref, {limit: newLimit});
-
-				}
+				if (linkHref && (linkHref.indexOf("limit=") > -1 || linkHref.indexOf("/posts") === 0 || linkHref === "/" || linkHref === "/notes?group_by=post" || linkHref === "/favorites"))
+					link.href = updateUrlQuery(linkHref, {limit: newLimit});
 			}
 		}
 
