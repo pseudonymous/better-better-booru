@@ -138,10 +138,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		},
 		timers: {},
 		user: {}, // User settings.
-		xml: {
-			hidden_ready: true,
-			paginator_ready: true,
-			thumbs_ready: true
+		xml: { // Active xml requests. False when completed/inactive.
+			hidden: false,
+			paginator: false,
+			thumbs: false
 		}
 	};
 
@@ -388,7 +388,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							bbbStatus("posts", "error");
 						}
 						else if (xmlhttp.status !== 0) {
-							if (xmlRetries < 2) {
+							if (xmlRetries < 1) {
 								xmlRetries++;
 								fetchJSON(url, mode, optArg, xmlSession, xmlRetries);
 							}
@@ -500,7 +500,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Update the URL with the limit value.
 		if (allowUserLimit())
 			history.replaceState({}, "", updateUrlQuery(location.search, {limit: thumbnail_count}));
-
 	}
 
 	function parsePost(postInfo) {
@@ -830,7 +829,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Let other functions that don't require the API run (alternative to searchJSON) and retrieve various pages for info.
 		var url;
 
-		if (mode === "search" || mode === "notes" || mode === "favorites") {
+		if (mode === "search" || mode === "notes" || mode === "favorites" || mode === "thumbnails") {
 			if (allowUserLimit()) {
 				url = updateUrlQuery(location.href, {limit: thumbnail_count});
 
@@ -855,6 +854,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (mode === "hidden") {
 			url = "/posts/" + optArg;
 
+			bbb.xml.hidden = true;
 			fetchPages(url, "hidden");
 			bbbStatus("hidden", "new");
 		}
@@ -892,7 +892,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						}
 					}
 					else if (xmlhttp.status !== 0) {
-						if (xmlRetries < 2) {
+						if (xmlRetries < 1) {
 							xmlRetries++;
 							fetchPages(url, mode, optArg, xmlSession, xmlRetries);
 						}
@@ -1053,12 +1053,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 			else {
 				updateThumbCache();
-				bbb.xml.hidden_ready = true;
+				bbb.xml.hidden = false;
 			}
 		}
 		else { // The image information couldn't be found.
 			updateThumbCache();
-			bbb.xml.hidden_ready = false;
 			bbbNotice("Error retrieving thumbnail information.", -1);
 			bbbStatus("hidden", "error");
 		}
@@ -2154,7 +2153,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			expl: expl // Explanation.
 		};
 
-
 		if (optPropObject) { // Additional properties provided in the form of an object.
 			for (var i in optPropObject) {
 				if (optPropObject.hasOwnProperty(i))
@@ -2450,6 +2448,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				settingPath = settingPath[setting[j]];
 
 			settingPath[setting[j]] = value;
+			bbb.settings.changed[setting[j]] = true;
 		}
 
 		saveSettings();
@@ -3646,7 +3645,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function fixHiddenThumbs() {
 		// Fix hidden thumbnails by fetching the info from a page.
-		if (!bbb.xml.hidden_ready)
+		if (bbb.xml.hidden === true)
 			return;
 
 		var hiddenImgs = document.getElementsByClassName("bbb-hidden-thumb");
@@ -3657,7 +3656,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				bbb.cache.save_enabled = true;
 			}
 
-			bbb.xml.hidden_ready = false;
 			searchPages("hidden", hiddenImgs[0].getAttribute("data-id"));
 		}
 	}
@@ -5156,7 +5154,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'article.post-preview.blacklisted a.bbb-thumb-link.bbb-custom-tag:after, article.post-preview a.bbb-thumb-link.bbb-custom-tag:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link.bbb-custom-tag:after, div.post.post-preview div.preview a.bbb-thumb-link.bbb-custom-tag:before {margin: ' + border_spacing + 'px;}' + // Margin applies to posts with only a custom border.
 			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:after, article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:before, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:after, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:before {content: none;}' + // Don't display when actively blacklisted.
 			'article.post-preview a.bbb-thumb-link, div.post.post-preview div.preview a.bbb-thumb-link {position: relative;}'; // Allow the overlays to position relative to the link.
-
 
 			for (i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
