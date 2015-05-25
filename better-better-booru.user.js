@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name           better_better_booru
-// @namespace      https://greasyfork.org/scripts/3575-better-better-booru
+// @name           better_better_booru_temp
+// @namespace      https://greasyfork.org/scripts/3575-better-better-booru-temp
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
 // @version        6.5.4
@@ -25,6 +25,95 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	// If Danbooru's JS isn't available, assume we're somewhere this script isn't needed and stop.
 	if (typeof(Danbooru) === "undefined")
 		return;
+
+	/* Helper Prototypes */
+	// Don't get hoisted so they should be declared at the top to simplify things.
+	String.prototype.bbbSpacePad = function() {
+		// Add a leading and trailing space.
+		var text = this;
+		return (text.length ? " " + text + " " : text);
+	};
+
+	String.prototype.bbbSpaceClean = function() {
+		// Remove leading, trailing, and multiple spaces.
+		return this.replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
+	};
+
+	String.prototype.bbbTagClean = function() {
+		// Remove extra commas along with leading, trailing, and multiple spaces.
+		return this.replace(/[\s,]*,[\s,]*/g, ", ").replace(/[\s,]+$|^[\s,]+/g, "").replace(/\s+/g, " ");
+	};
+
+	Element.prototype.bbbGetPadding = function() {
+		// Get all the padding measurements of an element including the total width and height.
+		if (window.getComputedStyle) {
+			var computed = window.getComputedStyle(this, null);
+			var paddingLeft = parseFloat(computed.paddingLeft);
+			var paddingRight = parseFloat(computed.paddingRight);
+			var paddingTop = parseFloat(computed.paddingTop);
+			var paddingBottom = parseFloat(computed.paddingBottom);
+			var paddingHeight = paddingTop + paddingBottom;
+			var paddingWidth = paddingLeft + paddingRight;
+			return {width: paddingWidth, height: paddingHeight, top: paddingTop, bottom: paddingBottom, left: paddingLeft, right: paddingRight};
+		}
+	};
+
+	Element.prototype.bbbHasClass = function() {
+		// Test an element for one or more classes.
+		var className = this.className;
+		var hasClass = true;
+
+		for (var i = 0, il = arguments.length; i < il; i++) {
+			var classString = arguments[i];
+			var regEx = new RegExp("(^|\\s)" + escapeRegEx(classString) + "($|\\s)");
+
+			if (!regEx.test(className)) {
+				hasClass = false;
+				break;
+			}
+		}
+
+		return hasClass;
+	};
+
+	Element.prototype.bbbAddClass = function() {
+		// Add one or more classes to an element.
+		var className = this.className;
+
+		for (var i = 0, il = arguments.length; i < il; i++) {
+			var classString = arguments[i];
+
+			if (!this.bbbHasClass(classString))
+				className = className + " " + classString;
+		}
+
+		this.className = className.bbbSpaceClean();
+	};
+
+	Element.prototype.bbbRemoveClass = function() {
+		// Remove one or more classes from an element.
+		var className = this.className;
+
+		for (var i = 0, il = arguments.length; i < il; i++) {
+			var classString = arguments[i];
+			var regEx = new RegExp("(?:^|\\s)" + escapeRegEx(classString) + "(?=(?:$|\\s))", "gi");
+
+			className = className.replace(regEx, "");
+		}
+
+		this.className = className.bbbSpaceClean();
+	};
+
+	Element.prototype.bbbWatchNodes = function(func) {
+		var observer = window.MutationObserver || window.WebKitMutationObserver;
+
+		if (observer) {
+			observer = new observer(func);
+			observer.observe(this, {childList: true, subtree: true});
+		}
+		else
+			this.addEventListener("DOMNodeInserted", func, false);
+	};
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
@@ -54,6 +143,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		el: { // Script elements.
 			menu: {} // Menu elements.
 		},
+		endless: {
+			append_page: false,
+			enabled: false,
+			fill_first_page: false,
+			last_paginator: undefined,
+			new_paginator: undefined,
+			no_thumb_count: 0,
+			pages: [],
+			paginator_space: 0,
+			paused: false,
+			posts: {}
+		},
 		post: { // Post content info and status.
 			info: {}, // Post information object.
 			resize: {
@@ -71,7 +172,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <br><br><b>Below Header:</b> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <br><br><b>Post Content:</b> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
 			blacklist_add_bars: newOption("dropdown", "none", "Additional Bars", "Add blacklist bars to the comments, notes, and/or pool listings so that blacklist entries can be toggled as needed.", {txtOptions:["Disabled:none", "Comments:comments", "Notes:notes", "Pools:pool pool_gallery", "Comments & Notes:comments notes", "Comments & Pools:comments pool pool_gallery", "Notes & Pools:notes pool pool_gallery", "All:comments notes pool pool_gallery"]}),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
-			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted post thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"x\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will display what blacklist entries it matches. Clicking a second time while that display is open will reveal the thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries from the blacklist bar/list will have no effect on posts that have been changed via their individual controls."),
+			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted post thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"x\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
 			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <br><br><b>Removed:</b> The default Danbooru behavior where the posts and the space they take up are completely removed. <br><br><b>Hidden:</b> Post space is preserved, but thumbnails are hidden. <br><br><b>Replaced:</b> Thumbnails are replaced by \"Blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
 			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <br><br><b>Highlight:</b> Change the background color of blacklisted thumbnails. <br><br><b>Icon Overlay:</b> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
@@ -83,7 +184,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			custom_tag_borders: newOption("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to posts with specific tags."),
 			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, and popular listings."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
-			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar always visible for favorites and/or search listings by fixing it to the side of the window when it would normally scroll out of view. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window, the \"search tag scrollbars\" option may be needed to make all sidebar content viewable.", {txtOptions:["Disabled:none", "Favorites:favorites", "Searches:search", "Favorites & Searches:favorites search"]}),
+			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar always visible for favorites and/or search listings by fixing it to the side of the window when it would not normally be visible. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window, the \"search tag scrollbars\" option may be needed to make all sidebar content viewable.", {txtOptions:["Disabled:none", "Favorites:favorites", "Searches:search", "Favorites & Searches:favorites search"]}),
+			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages and set how it starts up on each page.<br><br><b>Disabled:</b> Don't allow any features.<br><br><b>Off:</b> Start up with all features off. <br><br><b>On:</b> Start up with all features on.<br><br><b>Paused:</b> Start up with all features on, but do not append new pages until the \"Load More\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"Endless\" link next to the \"Listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
+			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and fill the blank spots with them.<tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
+			endless_fixed_paginator: newOption("dropdown", "disabled", "Fixed Paginator", "Make the paginator always visible by fixing it to the bottom of the window when it would not normally be visible.<br><br><b>Disabled:</b> Don't modify the paginator at all.<br><br><b>Enabled:</b> Allow the paginator to fix itself to the bottom of the window.<br><br><b>Minimal:</b> Allow the paginator to fix itself to the bottom of the window and make it smaller by removing most of the blank space within it.", {txtOptions:["Disabled:disabled", "Enabled:enabled", "Minimal:minimal"]}),
+			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
+			endless_preload: newOption("checkbox", false, "Preload Next Page", "Start loading the next page as soon as possible.<tiphead>Note</tiphead>A preloaded page will not be appended until the scroll limit is reached."),
+			endless_remove_dup: newOption("checkbox", false, "Remove Duplicates", "When appending new pages, remove posts that already exist in the listing from the new page.<tiphead>Note</tiphead>Duplicate posts are caused by the addition of new posts to the beginning of a listing or changes to the order of the posts."),
+			endless_scroll_limit: newOption("dropdown", 500, "Scroll Limit", "Set the minimum amount of pixels that a page can have left to vertically scroll before it starts appending the next page.", {numList:[0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
+			endless_separator: newOption("dropdown", "none", "Page Separator", "Distinguish pages from each other by marking them with a separator.<br><br><b>Marker:</b> Place a thumbnail sized marker before the first thumbnail of each page.<br><br><b>Divider:</b> Completely separate pages by placing a horizontal line between them.", {txtOptions:["None:none", "Marker:marker", "Divider:divider"]}),
+			endless_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling endless pages on and off, the mode it's toggled to will override the default and persist across other pages in the same tab until it is closed."),
 			hide_ban_notice: newOption("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 			hide_comment_notice: newOption("checkbox", false, "Hide Comment Guide Notice", "Hide the Danbooru comment guide notice."),
 			hide_pool_notice: newOption("checkbox", false, "Hide Pool Guide Notice", "Hide the Danbooru pool guide notice."),
@@ -97,8 +207,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"Default image width\" setting will override this option."),
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
-			override_account: newOption("checkbox", false, "Override Account Settings", "Allow the \"resize post\", \"load sample first\", and \"blacklisted tags\" settings to override their corresponding account settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
+			override_account: newOption("checkbox", false, "Override Account Settings", "Allow the \"resize post\", \"load sample first\", and \"blacklist\" settings to override their corresponding account settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
 			post_drag_scroll: newOption("checkbox", false, "Post Drag Scrolling", "While holding down left click on a post's content, mouse movement can be used to scroll the whole page and reposition the content.<tiphead>Note</tiphead>This option is automatically disabled when translation mode is active."),
+			post_link_new_window: newOption("dropdown", "none", "New Tab/Window", "Force post links in the search, pool, popular, favorites, and notes listings to open in a new tab/window during normal and/or endless page browsing.<tiphead>Note</tiphead>Whether the post opens in a new tab or window depends upon your browser configuration.", {txtOptions:["Disabled:disabled", "Endless:endless", "Normal:normal", "Always:endless normal"]}),
 			post_resize: newOption("checkbox", true, "Resize Post", "Shrink large post content to fit the browser window when initially loading a post.<tiphead>Note</tiphead>When logged in, the account's \"Fit images to window\" setting will override this option."),
 			post_resize_mode: newOption("dropdown", "width", "Resize Mode", "Choose how to shrink large post content to fit the browser window when initially loading a post.", {txtOptions:["Width (Default):width", "Height:height", "Width & Height:all"]}),
 			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"Remove Tag Headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
@@ -122,11 +233,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		},
 		sections: { // Setting sections and ordering.
 			blacklist_options: newSection("general", ["blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
-			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count"], "Post Browsing"),
+			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "post_link_new_window"], "Post Browsing"),
+			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_fixed_paginator", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar"], "Tag Sidebar"),
-			control: newSection("general", ["alternate_image_swap", "image_swap_mode", "post_resize_mode", "post_drag_scroll", "autoscroll_post"], "Post Control"),
-			logged_out: newSection("general", ["post_resize", "load_sample_first"], "Logged Out Settings"),
+			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post"], "Post Control"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add"], "Misc."),
 			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "override_account", "thumb_cache_limit"], "Script Settings"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
@@ -138,7 +249,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		},
 		timers: {},
 		user: {}, // User settings.
-		xml: { // Active xml requests. False when completed/inactive.
+		xml: { // Active xml requests. False when successfully completed or not yet used. True when incomplete due to being in progress or an error.
+			endless: false,
 			hidden: false,
 			paginator: false,
 			thumbs: false
@@ -151,7 +263,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	window.bbbSession = new Date().getTime();
 
 	// Location variables.
-	var gLoc = currentLoc(); // Current location
+	var gLoc = danbLoc(); // Current location
 	var gLocRegex = new RegExp("\\b" + gLoc + "\\b");
 
 	// Script variables.
@@ -162,6 +274,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var show_banned = bbb.user.show_banned;
 	var show_deleted = bbb.user.show_deleted;
 	var direct_downloads = bbb.user.direct_downloads;
+	var post_link_new_window = bbb.user.post_link_new_window;
 
 	var blacklist_post_display = bbb.user.blacklist_post_display;
 	var blacklist_thumb_mark = bbb.user.blacklist_thumb_mark;
@@ -216,6 +329,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var autoscroll_post = bbb.user.autoscroll_post;
 	var image_swap_mode = bbb.user.image_swap_mode;
 
+	// Endless
+	var endless_default = bbb.user.endless_default;
+	var endless_fill = bbb.user.endless_fill;
+	var endless_fixed_paginator = bbb.user.endless_fixed_paginator;
+	var endless_pause_interval = bbb.user.endless_pause_interval;
+	var endless_preload = bbb.user.endless_preload;
+	var endless_remove_dup = bbb.user.endless_remove_dup;
+	var endless_scroll_limit = bbb.user.endless_scroll_limit;
+	var endless_separator = bbb.user.endless_separator;
+	var endless_session_toggle = bbb.user.endless_session_toggle;
+
 	// Stored data
 	var status_borders = bbb.user.status_borders;
 	var tag_borders = bbb.user.tag_borders;
@@ -253,6 +377,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	modifyPage();
 
+	endlessInit();
+
+	postLinkNewWindowInit();
+
 	cleanLinks();
 
 	postDDL();
@@ -268,10 +396,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	/* Functions for XML API info */
 	function searchJSON(mode, optArg) {
 		var url = location.href.split("#", 1)[0];
+		var poolCache;
+		var poolIds;
+		var postIds;
+		var page;
 
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			if (potentialHiddenPosts(mode)) {
-				url = (allowUserLimit() ? updateUrlQuery(url, {limit: thumbnail_count}) : url);
+				url = (allowUserLimit() ? updateURLQuery(url, {limit: thumbnail_count}) : url);
+				bbb.xml.thumbs = true;
 
 				if (mode === "search")
 					fetchJSON(url.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?"), "search");
@@ -285,38 +418,57 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "popular") {
 			if (potentialHiddenPosts(mode)) {
+				bbb.xml.thumbs = true;
+
 				fetchJSON(url.replace(/\/popular\/?/, "/popular.json"), "popular");
 				bbbStatus("posts", "new");
 			}
 		}
 		else if (mode === "pool") {
 			if (potentialHiddenPosts(mode)) {
-				var poolId = /\/pools\/(\d+)/.exec(url)[1];
-				var poolCache = sessionStorage["pool" + poolId];
-				var curTime = new Date().getTime();
-				var cacheTime;
-				var timeDiff;
+				poolCache = getPoolCache();
+				bbb.xml.thumbs = true;
 
-				if (poolCache) {
-					poolCache = poolCache.split(" ");
-					cacheTime = poolCache.shift();
-					timeDiff = (curTime - cacheTime) / 1000; // Cache age in seconds.
-				}
-
-				if (timeDiff && timeDiff < 900) // If the cache is less than 15 minutes old, use it.
-					searchJSON("pool_search", {post_ids: poolCache.join(" ")});
+				if (poolCache)
+					searchJSON("pool_search", {post_ids: poolCache});
 				else // Get a new cache.
-					fetchJSON(url.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool");
+					fetchJSON(url.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool_cache", "pool_search");
 
 				bbbStatus("posts", "new");
 			}
 		}
 		else if (mode === "pool_search") {
-			var poolIds = optArg.post_ids.split(" ");
-			var page = Number(getVar("page")) || 1;
-			var postIds = poolIds.slice((page - 1) * thumbnail_count_default, page * thumbnail_count_default);
+			page = Number(getVar("page")) || 1;
+			poolIds = optArg.post_ids.split(" ");
+			postIds = poolIds.slice((page - 1) * thumbnail_count_default, page * thumbnail_count_default);
 
 			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "pool_search", postIds);
+		}
+		else if (mode === "endless") {
+			bbb.xml.endless = true;
+
+			if (gLoc === "pool") {
+				poolCache = getPoolCache();
+
+				if (poolCache)
+					searchJSON("endless_pool_search", {post_ids: poolCache});
+				else // Get a new cache.
+					fetchJSON(url.replace(/\/pools\/(\d+)/, "/pools/$1.json"), "pool_cache", "endless_pool_search");
+			}
+			else {
+				url = endlessNexURL().replace(/(\?)|$/, ".json$1");
+
+				fetchJSON(url, "endless");
+			}
+
+			bbbStatus("posts", "new");
+		}
+		else if (mode === "endless_pool_search") {
+			poolIds = optArg.post_ids.split(" ");
+			page = Number(getVar("page", endlessNexURL())); // If a pool gets over 1000 pages, I have no idea what happens for regular users. Biggest pool is currently around 400 pages so we won't worry about that for the time being.
+			postIds = poolIds.slice((page - 1) * thumbnail_count_default, page * thumbnail_count_default);
+
+			fetchJSON("/posts.json?tags=status:any+id:" + postIds.join(","), "endless", postIds);
 		}
 		else if (mode === "comments") {
 			if (potentialHiddenPosts(mode)) {
@@ -344,24 +496,31 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (xmlhttp !== null) {
 			xmlhttp.onreadystatechange = function() {
-				if (xmlSession !== window.bbbSession) // If we end up receiving an xml response form a different page, reject it.
+				if (xmlSession !== window.bbbSession) // If we end up receiving an xml response from a different page, reject it.
 					xmlhttp.abort();
 				else if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var xml = JSON.parse(xmlhttp.responseText);
 
-						if (mode === "search" || mode === "popular" || mode === "notes" || mode === "favorites")
-							parseListing(xml);
+						// Update status message.
+						if (mode === "search" || mode === "popular" || mode === "notes" || mode === "favorites" || mode === "pool_search") {
+							bbb.xml.thumbs = false;
+
+							parseListing(xml, optArg);
+						}
 						else if (mode === "post")
 							parsePost(xml);
-						else if (mode === "pool") {
+						else if (mode === "pool_cache") {
 							var poolId = /\/pools\/(\d+)/.exec(location.href)[1];
 
-							sessionStorage["pool" + poolId] = new Date().getTime() + " " + xml.post_ids;
-							searchJSON("pool_search", xml);
+							sessionStorage["bbbpool" + poolId] = new Date().getTime() + " " + xml.post_ids;
+							searchJSON(optArg, xml);
 						}
-						else if (mode === "pool_search")
-							parseListing(xml, optArg);
+						else if (mode === "endless") {
+							bbb.xml.endless = false;
+
+							endlessXMLJSONHandler(xml, optArg);
+						}
 						else if (mode === "comments")
 							parseComments(xml);
 						else if (mode === "parent" || mode === "child")
@@ -369,8 +528,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						else if (mode === "ugoira")
 							fixHiddenUgoira(xml);
 
-						// Update status message.
-						if (mode !== "pool")
+						if (mode !== "pool_cache")
 							bbbStatus("posts", "done");
 					}
 					else {
@@ -395,7 +553,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							else {
 								var linkId = uniqueIdNum(); // Create a unique ID.
 
-								bbbNotice('Error retrieving post information (Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). <a id="' + linkId + '" href="#">Retry</a>', -1);
+								bbbNotice('Error retrieving post information (JSON Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
 								bbbStatus("posts", "error");
 
 								document.getElementById(linkId).addEventListener("click", function(event) {
@@ -416,57 +574,28 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function parseListing(xml, optArg) {
 		// Use JSON results for thumbnail listings.
 		var posts = xml;
-		var query = "";
-		var target;
-		var before;
-		var orderedIds;
-		var paginator = document.getElementsByClassName("paginator")[0];
+		var thumbContainer = getThumbContainer(gLoc);
+		var orderedIds = (gLoc === "pool" ? optArg : undefined);
+		var paginator = getPaginator();
+		var before = getThumbSibling(gLoc);
 
-		// If no posts, do nothing.
 		if (!posts.length)
 			return;
 
-		// Determine where the thumbnails are.
-		if (gLoc === "search") {
-			target = document.getElementById("posts");
-			target = (target ? target.getElementsByTagName("div")[0] : undefined);
-			query = getVar("tags");
-			query = (query && !clean_links ? "?tags=" + query : "");
-		}
-		else if (gLoc === "popular")
-			target = document.getElementById("a-index");
-		else if (gLoc === "pool") {
-			target = document.getElementById("a-show");
-			target = (target ? target.getElementsByTagName("section")[0] : undefined);
-			query = (!clean_links ? "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1] : "");
-			before = paginator;
-			orderedIds = optArg;
-		}
-		else if (gLoc === "notes") {
-			target = document.getElementById("a-index");
-			before = paginator;
-		}
-		else if (gLoc === "favorites") {
-			target = document.getElementById("posts");
-			query = document.getElementById("tags");
-			query = (query && !clean_links ? "?tags=" + query.value : "");
-			before = paginator;
-		}
-
-		if (!target) {
+		if (!thumbContainer) {
 			bbbNotice("Thumbnail section could not be located.", -1);
 			return;
 		}
 
 		// Thumb preparation.
-		var newThumbs = createThumbListing(posts, query, orderedIds);
+		var newThumbs = createThumbListing(posts, orderedIds);
 
 		// New thumbnail container preparation.
-		var replacement = target.cloneNode(false);
+		var replacement = thumbContainer.cloneNode(false);
 		var childIndex = 0;
 
-		while (target.children[childIndex]) {
-			var child = target.children[childIndex];
+		while (thumbContainer.children[childIndex]) {
+			var child = thumbContainer.children[childIndex];
 
 			if (child.tagName !== "ARTICLE")
 				replacement.appendChild(child);
@@ -479,17 +608,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else
 			replacement.insertBefore(newThumbs, before);
 
-		// Thumbnail classes and titles.
-		formatThumbnails(replacement);
-
-		// Blacklist.
-		blacklistUpdate(replacement);
-
-		// Direct downloads.
-		postDDL(replacement);
+		// Prepare thumbnails.
+		prepThumbnails(replacement);
 
 		// Replace results with new results.
-		target.parentNode.replaceChild(replacement, target);
+		thumbContainer.parentNode.replaceChild(replacement, thumbContainer);
 
 		// Fix the paginator. The paginator isn't always in the replacement, so run this on the whole page after the replacement is inserted.
 		fixPaginator();
@@ -499,7 +622,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Update the URL with the limit value.
 		if (allowUserLimit())
-			history.replaceState({}, "", updateUrlQuery(location.search, {limit: thumbnail_count}));
+			history.replaceState({}, "", updateURLQuery(location.search, {limit: thumbnail_count}));
 	}
 
 	function parsePost(postInfo) {
@@ -535,13 +658,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				$(Danbooru.Ugoira.player).unbind();
 
 			if ((load_sample_first && useUgoiraOrig !== "1") || useUgoiraOrig === "0") { // Load sample webm version.
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + updateUrlQuery(location.href, {original: "1"}) + '">View original</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p>';
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.large_file_url + '" height="' + post.image_height + '" width="' + post.image_width + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '"></video> <p><a href="' + post.large_file_url + '">Save this video (right click and save)</a> | <a href="' + updateURLQuery(location.href, {original: "1"}) + '">View original</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p>';
 
 				// Prep the "toggle notes" link.
 				noteToggleLinkInit();
 			}
 			else { // Load original ugoira version.
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a> | <a href="' + updateUrlQuery(location.href, {original: "0"}) + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a> | <a href="' + updateURLQuery(location.href, {original: "0"}) + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
 
 				// Make notes toggle when clicking the ugoira animation.
 				noteToggleInit();
@@ -667,7 +790,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				childSpan.innerHTML = '<div id="post_' + post.id + '" class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-approver-id="' + post.approver_id + '" data-fav-count="' + post.fav_count + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.preview_file_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
-					document.getElementById("a-index").insertBefore(childSpan.firstChild, document.getElementsByClassName("paginator")[0]);
+					document.getElementById("a-index").insertBefore(childSpan.firstChild, getPaginator());
 				else // Insert new post before the post that should follow it.
 					existingPost.parentNode.insertBefore(childSpan.firstChild, existingPost);
 
@@ -783,8 +906,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		thumbDiv.innerHTML = thumbs;
 
-		// Highlight the post we're one.
-		getId("post_" + activePost.id, thumbDiv, "article").className += " current-post";
+		// Highlight the post we're on.
+		getId("post_" + activePost.id, thumbDiv, "article").bbbAddClass("current-post");
 
 		// Make the show/hide links work.
 		previewLink.addEventListener("click", function(event) {
@@ -824,6 +947,38 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		fixHiddenThumbs();
 	}
 
+	function fixHiddenUgoira(xml) {
+		// Use xml info to fix the missing info for hidden ugoira posts.
+		var post = bbb.post.info;
+		post.pixiv_ugoira_frame_data = xml.pixiv_ugoira_frame_data;
+
+		var imgContainer = document.getElementById("image-container");
+		var ugoira = (imgContainer ? imgContainer.getElementsByTagName("canvas")[0] : undefined);
+
+		if (ugoira) {
+			// Fix the missing data attributes.
+			ugoira.setAttribute("data-ugoira-content-type", post.pixiv_ugoira_frame_data.content_type);
+			ugoira.setAttribute("data-ugoira-frames", JSON.stringify(post.pixiv_ugoira_frame_data.data));
+
+			// Append the necessary script.
+			var mainScript = document.createElement("script");
+			mainScript.src = "/assets/ugoira_player.js";
+			mainScript.addEventListener("load", ugoiraInit, true); // Wait for this script to load before running the JavaScript that requires it.
+			document.head.appendChild(mainScript);
+		}
+	}
+
+	function endlessXMLJSONHandler(xml, optArg) {
+		// Create a thumbnail listing from JSON results and pass it to the queue.
+		var orderedIds = optArg;
+		var posts = createThumbListing(xml, orderedIds);
+		var newPage = document.createElement("div");
+		newPage.className = "bbb-endless-page";
+
+		newPage.appendChild(posts);
+		endlessQueuePage(newPage);
+	}
+
 	/* Functions for XML page info */
 	function searchPages(mode, optArg) {
 		// Let other functions that don't require the API run (alternative to searchJSON) and retrieve various pages for info.
@@ -831,17 +986,23 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (mode === "search" || mode === "notes" || mode === "favorites" || mode === "thumbnails") {
 			if (allowUserLimit()) {
-				url = updateUrlQuery(location.href, {limit: thumbnail_count});
+				url = updateURLQuery(location.href, {limit: thumbnail_count});
+				bbb.xml.thumbs = true;
 
 				fetchPages(url, "thumbnails");
 				bbbStatus("posts", "new");
 			}
 		}
-		else if (mode === "paginator") {
-			url = location.href;
+		else if (mode === "endless") {
+			url = endlessNexURL();
+			bbb.xml.endless = true;
 
-			if (allowUserLimit())
-				url = updateUrlQuery(url, {limit: thumbnail_count});
+			fetchPages(url, "endless");
+			bbbStatus("posts", "new");
+		}
+		else if (mode === "paginator") {
+			url = (allowUserLimit() ? updateURLQuery(location.href, {limit: thumbnail_count}) : location.href);
+			bbb.xml.paginator = true;
 
 			fetchPages(url, "paginator");
 		}
@@ -853,8 +1014,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "hidden") {
 			url = "/posts/" + optArg;
-
 			bbb.xml.hidden = true;
+
 			fetchPages(url, "hidden");
 			bbbStatus("hidden", "new");
 		}
@@ -876,19 +1037,32 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 						docEl.innerHTML = xmlhttp.responseText;
 
-						if (mode === "paginator")
+						if (mode === "paginator") {
+							bbb.xml.paginator = false;
+
 							replacePaginator(docEl);
+						}
 						else if (mode === "post_comments") {
 							replaceComments(docEl, optArg);
 							bbbStatus("post_comments", "done");
 						}
 						else if (mode === "thumbnails") {
+							bbb.xml.thumbs = false;
+
 							replaceThumbnails(docEl);
 							bbbStatus("posts", "done");
 						}
 						else if (mode === "hidden") {
+							bbb.xml.hidden = false;
+
 							replaceHidden(docEl);
 							bbbStatus("hidden", "done");
+						}
+						else if (mode === "endless") {
+							bbb.xml.endless = false;
+
+							endlessXMLPageHandler(docEl);
+							bbbStatus("posts", "done");
 						}
 					}
 					else if (xmlhttp.status !== 0) {
@@ -901,21 +1075,21 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							var msg;
 
 							if (mode === "hidden") {
-								bbbStatus("hidden", "error");
 								msg = "Error retrieving hidden thumbnails";
+								bbbStatus("hidden", "error");
 							}
-							else if (mode === "thumbnails") {
-								bbbStatus("posts", "error");
+							else if (mode === "thumbnails" || mode === "endless") {
 								msg = "Error retrieving post information";
+								bbbStatus("posts", "error");
 							}
 							else if (mode === "post_comments") {
-								bbbStatus("post_comments", "error");
 								msg = "Error retrieving comment information";
+								bbbStatus("post_comments", "error");
 							}
 							else if (mode === "paginator")
 								msg = "Error updating paginator";
 
-							bbbNotice(msg + ' (Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). <a id="' + linkId + '" href="#">Retry</a>', -1);
+							bbbNotice(msg + ' (HTML Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
 
 							document.getElementById(linkId).addEventListener("click", function(event) {
 								closeBbbNoticeMsg(event);
@@ -933,8 +1107,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function replacePaginator(docEl) {
 		// Replace the paginator with a new one.
-		var target = document.getElementsByClassName("paginator")[0];
-		var newContent = docEl.getElementsByClassName("paginator")[0];
+		var target = getPaginator();
+		var newContent = getPaginator(docEl);
 
 		if (target && newContent)
 			target.parentNode.replaceChild(newContent, target);
@@ -985,30 +1159,53 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function replaceThumbnails(docEl) {
 		// Replace the thumbnails and paginator with new ones.
-		var divId = (gLoc !== "notes" ? "posts" : "a-index");
-		var paginator = docEl.getElementsByClassName("paginator")[0];
-		var target = document.getElementById(divId);
-		var newContent = (paginator ? paginator.parentNode : null);
+		var thumbContainer = getThumbContainer(gLoc);
+		var paginator = getPaginator();
+		var before = getThumbSibling(gLoc);
 
-		if (newContent) {
-			// Thumbnail classes and titles.
-			formatThumbnails(newContent);
-
-			// Blacklist.
-			blacklistUpdate(newContent);
-
-			// Clean links.
-			cleanLinks(newContent);
-
-			// Direct downloads.
-			postDDL(newContent);
-
-			// Replace the current thumbnails.
-			target.parentNode.replaceChild(newContent, target);
-
-			// Update the URL with the limit value.
-			history.replaceState({}, "", updateUrlQuery(location.search, {limit: thumbnail_count}));
+		if (!thumbContainer) {
+			bbbNotice("Thumbnail section could not be located.", -1);
+			return;
 		}
+
+		// Thumb preparation.
+		var newThumbs = document.createDocumentFragment();
+		var newPosts = getPosts(docEl);
+		var newPaginator = getPaginator(docEl);
+
+		while (newPosts[0])
+			newThumbs.appendChild(newPosts[0]);
+
+		// New thumbnail container preparation.
+		var replacement = thumbContainer.cloneNode(false);
+		var childIndex = 0;
+
+		while (thumbContainer.children[childIndex]) {
+			var child = thumbContainer.children[childIndex];
+
+			if (child.tagName !== "ARTICLE")
+				replacement.appendChild(child);
+			else
+				childIndex++;
+		}
+
+		if (!before)
+			replacement.appendChild(newThumbs);
+		else
+			replacement.insertBefore(newThumbs, before);
+
+		// Prepare thumbnails.
+		prepThumbnails(replacement);
+
+		// Replace results with new results.
+		thumbContainer.parentNode.replaceChild(replacement, thumbContainer);
+
+		// Replace paginator with new paginator.
+		paginator.parentNode.replaceChild(newPaginator, paginator);
+
+		// Update the URL with the limit value.
+		if (allowUserLimit())
+			history.replaceState({}, "", updateURLQuery(location.search, {limit: thumbnail_count}));
 	}
 
 	function replaceHidden(docEl) {
@@ -1026,7 +1223,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var post = scrapePost(docEl);
 
 		if (String(post.id) !== hiddenId) // Out of sync. Reset.
-			fetchPages("/posts/" + hiddenId, "hidden");
+			searchPages("hidden", hiddenId);
 		else if (post.preview_file_url) { // Update the thumbnail with the correct information.
 			if (post.file_url) {
 				article.setAttribute("data-md5", post.md5);
@@ -1044,22 +1241,40 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bcc.history.push(hiddenId);
 			bcc.names[hiddenId] = /[^\/]+$/.exec(post.file_url || post.preview_file_url)[0];
 
-			article.className = article.className.replace(/\s?bbb-hidden-thumb/gi, "");
+			article.bbbRemoveClass("bbb-hidden-thumb");
 
 			// Continue to the next image or finish by updating the cache.
 			if (hiddenImgs.length) {
 				hiddenId = hiddenImgs[0].getAttribute("data-id");
-				fetchPages("/posts/" + hiddenId, "hidden");
+				searchPages("hidden", hiddenId);
 			}
-			else {
+			else
 				updateThumbCache();
-				bbb.xml.hidden = false;
-			}
 		}
 		else { // The image information couldn't be found.
+			bbb.xml.hidden = true; // Flag the XML as active to signal a problem and disable further attempts.
+
 			updateThumbCache();
 			bbbNotice("Error retrieving thumbnail information.", -1);
 			bbbStatus("hidden", "error");
+		}
+	}
+
+	function endlessXMLPageHandler(docEl) {
+		// Take thumbnails from a page and pass them to the queue or retrieve hidden posts as necessary.
+		bbb.endless.new_paginator = getPaginator(docEl);
+
+		if (potentialHiddenPosts(gLoc, docEl) && useAPI())
+			searchJSON("endless");
+		else {
+			var posts = getPosts(docEl);
+			var newPage = document.createElement("div");
+			newPage.className = "bbb-endless-page";
+
+			while (posts[0])
+				newPage.appendChild(posts[0]);
+
+			endlessQueuePage(newPage);
 		}
 	}
 
@@ -1229,19 +1444,112 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function getPosts(target) {
-		// Return a list of posts depending on the target supplied.
-		var posts;
-
+		// Return a list of posts depending from the document or a specific element.
 		if (!target || target === document) // All posts in the document.
-			posts = document.getElementsByClassName("post-preview");
+			return document.getElementsByClassName("post-preview");
 		else if (target instanceof Element) { // All posts in a specific element.
-			if (target.className.indexOf("post-preview") < 0)
-				posts = target.getElementsByClassName("post-preview");
+			if (!target.bbbHasClass("post-preview"))
+				return target.getElementsByClassName("post-preview");
 			else // Single specific post.
-				posts = [target];
+				return [target];
 		}
 
-		return posts || [];
+		return [];
+	}
+
+	function getPaginator(target) {
+		// Return the paginator of the document or a specific element.
+		if (!target || target === document) // All posts in the document.
+			return document.getElementsByClassName("paginator")[0];
+		else if (target instanceof Element) { // All posts in a specific element.
+			if (!target.bbbHasClass("paginator"))
+				return target.getElementsByClassName("paginator")[0];
+			else // Single specific post.
+				return target;
+		}
+
+		return undefined;
+	}
+
+	function getThumbContainer(mode, pageEl) {
+		// Retrieve the element that contains the thumbnails.
+		var target = pageEl || document;
+		var container;
+
+		if (mode === "search") {
+			container = getId("posts", target);
+			container = (container ? container.getElementsByTagName("div")[0] : undefined);
+		}
+		else if (mode === "popular" || mode === "notes")
+			container = getId("a-index", target);
+		else if (mode === "pool") {
+			container = getId("a-show", target);
+			container = (container ? container.getElementsByTagName("section")[0] : undefined);
+		}
+		else if (mode === "favorites")
+			container = getId("posts", target);
+
+		// Can't always depend on the first post so it's used as a fallback.
+		if (!container) {
+			var posts = getPosts(target);
+			var firstPost = posts[0];
+
+			if (firstPost)
+				container = firstPost.parentNode;
+		}
+
+		return container;
+	}
+
+	function getThumbSibling(mode, pageEl) {
+		// If it exists, retrieve the element that thumbnails should be added before.
+		var sibling;
+
+		var posts = getPosts(pageEl);
+		var numPosts = posts.length;
+		var lastPost = (numPosts ? posts[numPosts - 1] : undefined);
+		var lastPostParent = (lastPost ? lastPost.parentNode : undefined);
+		var thumbContainer = getThumbContainer(mode, pageEl);
+		var lastPostEl = (lastPostParent && lastPostParent !== thumbContainer && lastPostParent.parentNode === thumbContainer ? lastPostParent : lastPost);
+
+		if (lastPostEl) {
+			var contChildren = thumbContainer.children;
+
+			for (var i = contChildren.length - 1; i >= 0; i--) {
+				if (contChildren[i] === lastPostEl) {
+					sibling = contChildren[i + 1];
+					break;
+				}
+			}
+		}
+		else if (mode === "pool" || mode === "notes" || mode === "favorites") {
+			var paginator = getPaginator(pageEl);
+			var contDiv = getId("bbb-endless-load-div", pageEl, "div");
+
+			sibling = contDiv || paginator;
+
+		}
+
+		return sibling;
+	}
+
+	function getPaginatorNextURL(pageEl) {
+		// Retrieve the next page's URL from the paginator.
+		var paginator = getPaginator(pageEl);
+
+		if (paginator) {
+			var paginatorLinks = paginator.getElementsByTagName("a");
+
+			for (var i = paginatorLinks.length - 1; i >= 0; i--) {
+				var paginatorLink = paginatorLinks[i];
+
+				if (paginatorLink.rel.toLowerCase() === "next" && paginatorLink.href) {
+					return paginatorLink.href;
+				}
+			}
+		}
+
+		return undefined;
 	}
 
 	function getMeta(meta, pageEl) {
@@ -1249,7 +1557,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var target = pageEl || document;
 		var metaTags = target.getElementsByTagName("meta");
 
-		for (var i = 1, il = metaTags.length; i < il; i++) {
+		for (var i = 0, il = metaTags.length; i < il; i++) {
 			var tag = metaTags[i];
 
 			if (tag.name === meta || tag.property === meta) {
@@ -1297,7 +1605,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		tags = tags.split(/\+|%20/g);
 
-		for (var i = 0, tl = tags.length; i < tl; i++) {
+		for (var i = 0, il = tags.length; i < il; i++) {
 			tag = decodeURIComponent(tags[i]);
 
 			if (tag.indexOf(urlVar + ":") === 0)
@@ -1317,6 +1625,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 		}
 
+		var menuItems = menu.getElementsByTagName("li");
+		var numMenuItems = menu.getElementsByTagName("li").length;
+		var moreItem = menuItems[numMenuItems - 1];
+
+		for (var i = numMenuItems - 1; i >= 0; i--) {
+			var menuLink = menuItems[i];
+
+			if (menuLink.textContent.indexOf("More") > -1) {
+				moreItem = menuLink;
+				break;
+			}
+		}
+
 		var link = document.createElement("a");
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
@@ -1332,8 +1653,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var item = document.createElement("li");
 		item.appendChild(link);
 
-		var menuItems = menu.getElementsByTagName("li");
-		menu.insertBefore(item, menuItems[menuItems.length - 1]);
+		menu.insertBefore(item, moreItem);
 
 		window.addEventListener("resize", adjustMenuTimer, false);
 	}
@@ -1418,8 +1738,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		generalPage.bbbSection(bbb.sections.browse);
 		generalPage.bbbSection(bbb.sections.control);
+		generalPage.bbbSection(bbb.sections.endless);
 		generalPage.bbbSection(bbb.sections.misc);
-		generalPage.bbbSection(bbb.sections.logged_out);
 
 		var blacklistPage = bbb.el.menu.blacklistPage = document.createElement("div");
 		blacklistPage.className = "bbb-page";
@@ -2209,7 +2529,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		for (var i = 0, il = borderElements.length; i < il; i++) {
 			var borderElement = borderElements[i];
 
-			borderElement.className = borderElement.className.replace(/\s?bbb-no-highlight/gi, "");
+			borderElement.bbbRemoveClass("bbb-no-highlight");
 			borderElement.setAttribute("data-bbb-index", i);
 		}
 	}
@@ -2239,10 +2559,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var section = borderElement.parentNode;
 		var index = Number(borderElement.getAttribute("data-bbb-index"));
 
-		borderElement.className += " bbb-no-highlight";
-		borderElement.nextSibling.className += " bbb-no-highlight";
+		borderElement.bbbAddClass("bbb-no-highlight");
+		borderElement.nextSibling.bbbAddClass("bbb-no-highlight");
 		bbb.borderEdit = {mode: "move", settings: borderSettings, section: section, index: index, element: borderElement};
-		section.className += " bbb-insert-highlight";
+		section.bbbAddClass("bbb-insert-highlight");
 		bbb.el.menu.window.addEventListener("click", insertBorder, true);
 	}
 
@@ -2251,7 +2571,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var section = borderElement.parentNode;
 
 		bbb.borderEdit = {mode: "new", settings: borderSettings, section: section};
-		section.className += " bbb-insert-highlight";
+		section.bbbAddClass("bbb-insert-highlight");
 		bbb.el.menu.window.addEventListener("click", insertBorder, true);
 	}
 
@@ -2291,11 +2611,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		resetBorderElements(section);
-		section.className = section.className.replace(/\s?bbb-insert-highlight/gi, "");
+		section.bbbRemoveClass("bbb-insert-highlight");
 		bbb.el.menu.window.removeEventListener("click", insertBorder, true);
 	}
 
-	function showTip(event, text, styleString) {
+	function showTip(event, content, styleString) {
 		var x = event.clientX;
 		var y = event.clientY;
 		var tip = bbb.el.menu.tip;
@@ -2303,7 +2623,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (styleString)
 			tip.setAttribute("style", styleString);
 
-		formatTip(event, tip, text, x, y);
+		formatTip(event, tip, content, x, y);
 	}
 
 	function hideTip() {
@@ -2333,10 +2653,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (tab === activeTab)
 			return;
 
-		activeTab.className = activeTab.className.replace(/\s?bbb-active-tab/g, "");
+		activeTab.bbbRemoveClass("bbb-active-tab");
 		bbb.el.menu[activeTab.name + "Page"].style.display = "none";
 		bbb.el.menu.scrollDiv.scrollTop = 0;
-		tab.className += " bbb-active-tab";
+		tab.bbbAddClass("bbb-active-tab");
 		bbb.el.menu[tab.name + "Page"].style.display = "block";
 	}
 
@@ -2817,7 +3137,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
 				Danbooru.Note.TranslationMode.toggle = function(event) {
-					bbbNotice('Note editing is not allowed while using the ugoira video sample. Please use the <a href="' + updateUrlQuery(location.href, {original: "1"}) + '">original</a> ugoira version for note editing.', -1);
+					bbbNotice('Note editing is not allowed while using the ugoira video sample. Please use the <a href="' + updateURLQuery(location.href, {original: "1"}) + '">original</a> ugoira version for note editing.', -1);
 					event.preventDefault();
 				};
 				Danbooru.Note.Edit.show = Danbooru.Note.TranslationMode.toggle;
@@ -3022,9 +3342,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (post.file_ext === "zip" && /\bugoira\b/.test(post.tag_string)) {
 			if (targetTag === "CANVAS")
-				location.href = updateUrlQuery(location.href, {original: "0"});
+				location.href = updateURLQuery(location.href, {original: "0"});
 			else if (targetTag === "VIDEO")
-				location.href = updateUrlQuery(location.href, {original: "1"});
+				location.href = updateURLQuery(location.href, {original: "1"});
 		}
 		else if (targetTag === "IMG") {
 			if (image_swap_mode === "load") { // Load image and then view mode.
@@ -3180,13 +3500,43 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function removeTagHeaders() {
 		// Remove the "copyright", "characters", and "artist" headers in the post sidebar.
-		if (!remove_tag_headers || gLoc !== "post")
-			return;
-
 		var tagList = document.getElementById("tag-list");
 
-		if (tagList)
-			tagList.innerHTML = tagList.innerHTML.replace(/<\/ul>.+?<ul>/g, "").replace(/<h2>.+?<\/h2>/, "<h1>Tags</h1>");
+		if (!tagList || !remove_tag_headers || gLoc !== "post")
+			return;
+
+		var tagHolder = document.createDocumentFragment();
+		var childIndex = 0;
+		var mainList;
+
+		while (tagList.children[childIndex]) {
+			var header = tagList.children[childIndex];
+			var list = tagList.children[childIndex + 1];
+
+			if (header.tagName === "H2" && list) {
+				tagList.removeChild(header);
+				tagList.removeChild(list);
+
+				while (list.children[0])
+					tagHolder.appendChild(list.children[0]);
+			}
+			else if (header.tagName === "H1" && list) {
+				mainList = list;
+				childIndex += 2;
+			}
+		}
+
+		if (mainList)
+			mainList.insertBefore(tagHolder, mainList.firstChild);
+		else {
+			var newHeader = document.createElement("h1");
+			newHeader.innerHTML = "Tags";
+			tagList.appendChild(newHeader);
+
+			var newList = document.createElement("ul");
+			newList.appendChild(tagHolder);
+			tagList.appendChild(newList);
+		}
 	}
 
 	function postTagTitles() {
@@ -3416,27 +3766,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function fixHiddenUgoira(xml) {
-		// Use xml info to fix the missing info for hidden ugoira posts.
-		var post = bbb.post.info;
-		post.pixiv_ugoira_frame_data = xml.pixiv_ugoira_frame_data;
-
-		var imgContainer = document.getElementById("image-container");
-		var ugoira = (imgContainer ? imgContainer.getElementsByTagName("canvas")[0] : undefined);
-
-		if (ugoira) {
-			// Fix the missing data attributes.
-			ugoira.setAttribute("data-ugoira-content-type", post.pixiv_ugoira_frame_data.content_type);
-			ugoira.setAttribute("data-ugoira-frames", JSON.stringify(post.pixiv_ugoira_frame_data.data));
-
-			// Append the necessary script.
-			var mainScript = document.createElement("script");
-			mainScript.src = "/assets/ugoira_player.js";
-			mainScript.addEventListener("load", ugoiraInit, true); // Wait for this script to load before running the JavaScript that requires it.
-			document.head.appendChild(mainScript);
-		}
-	}
-
 	function ugoiraInit() {
 		// Execute a static copy of Danbooru's embedded JavaScript for setting up the post.
 		var post = bbb.post.info;
@@ -3560,18 +3889,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var styleList = bbb.custom_tag.style_list;
 
 			// Skip thumbnails that have already been done.
-			if (link.className.indexOf("bbb-thumb-link") > -1)
+			if (link.bbbHasClass("bbb-thumb-link"))
 				continue;
 
 			// Create title.
 			img.title = title;
 
 			// Give the thumbnail link an identifying class.
-			link.className += " bbb-thumb-link";
+			link.bbbAddClass("bbb-thumb-link");
 
 			// Correct parent status borders on "no active children" posts for logged out users.
-			if (hasChildren && show_deleted && post.className.indexOf("post-status-has-children") < 0)
-				post.className += " post-status-has-children";
+			if (hasChildren && show_deleted)
+				post.bbbAddClass("post-status-has-children");
 
 			// Secondary custom tag borders.
 			if (custom_tag_borders) {
@@ -3590,7 +3919,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					secondaryLength = secondary.length;
 
 					if (secondaryLength) {
-						link.className += " bbb-custom-tag";
+						link.bbbAddClass("bbb-custom-tag");
 
 						if (secondaryLength === 1 || (single_color_borders && secondaryLength > 1))
 							borderStyle = "border: " + border_width + "px " + secondary[0][0] + " " + secondary[0][1] + " !important;";
@@ -3607,12 +3936,27 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					else
 						styleList[id] = false;
 				}
-				else if (styleList[id] !== false && post.className.indexOf("bbb-custom-tag") < 0) {
-					link.className += " bbb-custom-tag";
+				else if (styleList[id] !== false && !post.bbbHasClass("bbb-custom-tag")) { // Post is already tested, but needs to be set up again.
+					link.bbbAddClass("bbb-custom-tag");
 					link.setAttribute("style", styleList[id]);
 				}
 			}
 		}
+	}
+
+	function prepThumbnails(target) {
+		// Take new thumbnails and apply the necessary functions for preparing them.
+		// Thumbnail classes and titles.
+		formatThumbnails(target);
+
+		// Clean links.
+		cleanLinks(target);
+
+		// Blacklist.
+		blacklistUpdate(target);
+
+		// Direct downloads.
+		postDDL(target);
 	}
 
 	function checkHiddenThumbs(post) {
@@ -3645,7 +3989,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function fixHiddenThumbs() {
 		// Fix hidden thumbnails by fetching the info from a page.
-		if (bbb.xml.hidden === true)
+		if (bbb.xml.hidden)
 			return;
 
 		var hiddenImgs = document.getElementsByClassName("bbb-hidden-thumb");
@@ -3673,11 +4017,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return childSpan.firstChild;
 	}
 
-	function createThumbListing(posts, query, orderedIds) {
+	function createThumbListing(posts, orderedIds) {
 		// Create a listing of thumbnails.
-		var thumb;
 		var thumbs = document.createDocumentFragment();
 		var postHolder = {};
+		var query = getThumbQuery();
+		var thumb;
 		var i, il; // Loop variables;
 
 		// Generate thumbnails.
@@ -3784,6 +4129,44 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
 	}
 
+	function getPoolCache() {
+		// Retrieve the cached list of post IDs used for the pool thumbnails.
+		var poolId = /\/pools\/(\d+)/.exec(location.href)[1];
+		var poolCache = sessionStorage["bbbpool" + poolId];
+		var curTime = new Date().getTime();
+		var cacheTime;
+		var timeDiff;
+
+		if (poolCache) {
+			poolCache = poolCache.split(" ");
+			cacheTime = poolCache.shift();
+			timeDiff = (curTime - cacheTime) / 1000; // Cache age in seconds.
+		}
+
+		if (!poolCache || (timeDiff && timeDiff > 900))
+			return undefined;
+		else
+			return poolCache.join(" ");
+	}
+
+	function getThumbQuery() {
+		// Return the thumbnail URL query value.
+		var query = "";
+
+		if (gLoc === "search") {
+			query = getVar("tags");
+			query = (query ? "?tags=" + query : "");
+		}
+		else if (gLoc === "pool")
+			query = "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1];
+		else if (gLoc === "favorites") {
+			query = document.getElementById("tags");
+			query = (query ? "?tags=" + query.value : "");
+		}
+
+		return query;
+	}
+
 	function postDDL(target) {
 		// Add direct downloads to thumbnails.
 		if (!direct_downloads || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "favorites"))
@@ -3851,7 +4234,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function potentialHiddenPosts(mode, target) {
 		// Check a normal thumbnail listing for possible hidden posts.
 		var numPosts = getPosts(target).length;
-		var hasPotential = false;
+		var noResults = noResultsPage(target);
 
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			var limit = getLimit();
@@ -3861,19 +4244,977 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			numExpected = (limit !== undefined ? limit : thumbnail_count_default);
 			numDesired = (allowUserLimit() ? thumbnail_count : numExpected);
 
-			if (numPosts !== numDesired || numPosts < numExpected)
-				hasPotential = true;
+			if (!noResults && (numPosts !== numDesired || numPosts < numExpected))
+				return true;
 		}
 		else if (mode === "popular" || mode === "pool") {
-			if (numPosts !== thumbnail_count_default)
-				hasPotential = true;
+			if (!noResults && numPosts !== thumbnail_count_default)
+				return true;
 		}
 		else if (mode === "comments") {
 			if (numPosts !== 5)
-				hasPotential = true;
+				return true;
 		}
 
-		return hasPotential;
+		return false;
+	}
+
+	/* Endless Page functions */
+	function endlessToggle() {
+		// Toggle endless pages on and off.
+		if (endless_default === "disabled")
+			return;
+
+		if (bbb.endless.enabled) {
+			endlessDisable();
+			bbbNotice("Endless pages disabled", 2);
+		}
+		else {
+			endlessEnable();
+			bbbNotice("Endless pages enabled", 2);
+		}
+
+		// Change the default for the duration of the session if necessary.
+		if (endless_session_toggle) {
+			var onValue = (endless_default !== "off" ? endless_default : "on");
+			var newDefault = (bbb.endless.enabled ? onValue : "off");
+
+			sessionStorage.bbb_endless_default = newDefault;
+		}
+	}
+
+	function endlessEnable() {
+		// Turn on endless pages.
+		if (endless_default === "disabled" || noXML())
+			return;
+
+		bbb.endless.enabled = true;
+
+		// Check on the paginator.
+		endlessFixedCheck();
+
+		// Add the body class to trigger certain stylesheet rules.
+		document.body.bbbAddClass("bbb-endless-enabled");
+
+		// Check on the next page status.
+		if (bbb.endless.append_page)
+			endlessQueueCheck();
+		else
+			endlessCheck();
+
+		// Add the listener for detecting the amount of scroll left.
+		window.addEventListener("scroll", endlessCheck, false);
+	}
+
+	function endlessDisable() {
+		// Turn off endless pages.
+		bbb.endless.enabled = false;
+		bbb.endless.append_page = false;
+		document.body.bbbRemoveClass("bbb-endless-enabled");
+
+		// Remove the listener for detecting the amount of scroll left.
+		window.removeEventListener("scroll", endlessCheck, false);
+	}
+
+	function endlessInit() {
+		// Set up and start endless pages.
+		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites"))
+			return;
+
+		// Add the endless link to the menu.
+		var menu = document.getElementById("top");
+		menu = (menu ? menu.getElementsByTagName("menu")[1] : undefined);
+
+		if (menu) {
+			var menuItems = menu.getElementsByTagName("li");
+			var numMenuItems = menu.getElementsByTagName("li").length;
+			var listingItemSibling = menuItems[0];
+
+			for (var i = 0; i < numMenuItems; i++) {
+				var menuLink = menuItems[i];
+				var nextLink = menuItems[i + 1];
+
+				if (menuLink.textContent.indexOf("Listing") > -1) {
+					if (nextLink)
+						listingItemSibling = nextLink;
+					else
+						listingItemSibling = menuLink;
+
+					break;
+				}
+			}
+
+			var link = document.createElement("a");
+			link.href = "#";
+			link.innerHTML = "Endless";
+			link.addEventListener("click", function(event) {
+				endlessToggle();
+				event.preventDefault();
+			}, false);
+
+			var item = document.createElement("li");
+			item.appendChild(link);
+
+			menu.insertBefore(item, listingItemSibling);
+		}
+
+		// Set up the load more button.
+		var paginator = getPaginator();
+
+		if (paginator) {
+			var paginatorParent = paginator.parentNode;
+
+			var buttonDiv = document.createElement("div");
+			buttonDiv.id = "bbb-endless-load-div";
+
+			var buttonCenterAssist = document.createElement("div");
+			buttonCenterAssist.id = "bbb-endless-load-center";
+			buttonDiv.appendChild(buttonCenterAssist);
+
+			var loadButton = bbb.el.endlessLoadButton = document.createElement("a");
+			loadButton.innerHTML = "Load More";
+			loadButton.href = "#";
+			loadButton.id = "bbb-endless-load-button";
+			loadButton.style.display = "none";
+			loadButton.addEventListener("click", function(event) {
+				loadButton.style.display = "none";
+				loadButton.blur();
+				bbb.endless.paused = false;
+				bbb.endless.append_page = true;
+				endlessQueueCheck();
+				event.preventDefault();
+			}, false);
+			buttonCenterAssist.appendChild(loadButton);
+
+			paginatorParent.insertBefore(buttonDiv, paginator);
+		}
+
+		// Set up the fixed paginator.
+		endlessFixedPaginator();
+
+		// Check the session default or original default value to see if endless pages should be enabled.
+		var sessionDefault = sessionStorage.bbb_endless_default;
+
+		if (endless_session_toggle && sessionDefault) {
+			if (sessionDefault === "on")
+				endlessEnable();
+			else if (sessionDefault === "paused") {
+				endless_default = "paused";
+				endlessEnable();
+			}
+		}
+		else if (endless_default !== "off")
+			endlessEnable();
+	}
+
+	function endlessObjectInit() {
+		// Initialize the values for the first XML request. Runs separately from endlessInit since it requires the initial page being finalized.
+		var posts = getPosts();
+		var numPosts = posts.length;
+
+		// Prep the first paginator.
+		bbb.endless.last_paginator = getPaginator();
+
+		// If we're already on the last page, don't continue.
+		if (endlessLastPage())
+			return;
+
+		// Note the posts that already exist.
+		if (endless_remove_dup) {
+			for (var i = 0; i < numPosts; i++) {
+				var post = posts[i];
+
+				bbb.endless.posts[post.id] = post;
+			}
+		}
+
+		// Create a special "page" for filling out the first page.
+		if (endless_fill) {
+			var limit = getLimit() || thumbnail_count_default;
+
+			if (numPosts < limit) {
+				var newPageObject = {
+					page: document.createElement("span"),
+					page_num: [(getVar("page") || "1")],
+					paginator: bbb.endless.last_paginator,
+					ready: false
+				};
+
+				bbb.endless.fill_first_page = true;
+				bbb.endless.pages.push(newPageObject);
+			}
+		}
+	}
+
+	function endlessCheck() {
+		// Check whether the current document is ready for a page to be appended.
+		if (bbb.endless.append_page || !bbb.endless.enabled || bbb.timers.scrollCheck) // Don't check if the script is ready, disabled, delayed, or waiting to be told to continue.
+			return;
+
+		// Check whether a user is looking at the "posts tab" and not the "wiki tab" in the main search listing.
+		var postsDiv = (gLoc === "search" ? document.getElementById("posts") : undefined);
+		var postsVisible = (!postsDiv || postsDiv.style.display !== "none");
+
+		if (bbb.xml.thumbs || bbb.xml.paginator || !postsVisible) { // Delay the check until the page is completely ready.
+			bbb.timers.scrollCheck = window.setTimeout( function() {
+				bbb.timers.scrollCheck = 0;
+
+				endlessCheck();
+			}, 250);
+		}
+		else { // Check the amount of space left to scroll and attempt to add a page if we're far enough down.
+			var scrolled = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+			var viewHeight = document.documentElement.clientHeight;
+			var docHeight = document.documentElement.offsetHeight;
+
+			if (docHeight <= viewHeight + scrolled + endless_scroll_limit)
+				bbb.endless.append_page = true;
+
+			if (!bbb.endless.last_paginator)
+				endlessObjectInit();
+
+			endlessPause();
+
+			endlessQueueCheck();
+		}
+	}
+
+	function endlessQueueCheck() {
+		// Check the page queue and append or request a page.
+		if (!bbb.endless.enabled || bbb.endless.paused)
+			return;
+
+		if (bbb.endless.append_page || bbb.endless.fill_first_page) {
+			if (endlessPageReady())
+				endlessAppendPage();
+			else
+				endlessRequestPage();
+		}
+		else if (endless_preload && !endlessPageReady())
+			endlessRequestPage();
+	}
+
+	function endlessRequestPage() {
+		// Start an XML request for a new page.
+		if (bbb.xml.endless || endlessLastPage()) // Retrieve pages one at a time for as long as they exist.
+			return;
+
+		searchPages("endless");
+	}
+
+	function endlessQueuePage(newPage) {
+		// Take some thumbnails from a page and work them into the queue.
+		var limit = getLimit() || thumbnail_count_default;
+		var pageNum = getVar("page", endlessNexURL());
+		var paginator = bbb.endless.last_paginator = bbb.endless.new_paginator;
+		var badPaginator = (paginator.textContent.indexOf("Go back") > -1); // Sometimes the paginator sends us to a page with no results.
+		var lastPage = endlessLastPage() || badPaginator;
+		var posts = getPosts(newPage);
+
+		bbb.endless.new_paginator = undefined;
+
+		// Remove duplicates.
+		if (endless_remove_dup) {
+			for (var i = 0; i < posts.length; i++) {
+				var post = posts[i];
+				var postId = post.id;
+
+				if (bbb.endless.posts[postId]) {
+					newPage.removeChild(post);
+					i--;
+				}
+				else
+					bbb.endless.posts[postId] = post;
+			}
+		}
+
+		// Fill up existing page objects with thumbnails.
+		var lastPageObject = bbb.endless.pages[bbb.endless.pages.length - 1];
+
+		if (endless_fill && lastPageObject && !lastPageObject.ready) {
+			if (badPaginator) // Paginator isn't accurate. Ignore this page's number and paginator.
+				lastPageObject.ready = true;
+			else {
+				var lastQueuePage = lastPageObject.page;
+				var lastQueuePosts = getPosts(lastQueuePage);
+				var fillLimit = (bbb.endless.fill_first_page ? limit - getPosts().length : limit);
+
+				while (!lastPageObject.ready && posts[0]) {
+					lastQueuePage.appendChild(posts[0]);
+
+					if (lastQueuePosts.length === fillLimit)
+						lastPageObject.ready = true;
+				}
+
+				// If there are no more posts and pages, mark the last page as ready.
+				if (!lastPageObject.ready && !posts[0] && lastPage)
+					lastPageObject.ready = true;
+
+				// Make sure the displayed paginator is always the one from the last retrieved page to have all of it's thumbnails used so the user doesn't click to the next page and skip queued thumbnails that haven't been displayed yet.
+				if (!posts[0])
+					lastPageObject.paginator = paginator;
+
+				lastPageObject.page_num.push(pageNum);
+			}
+		}
+
+		// Queue up a new page object.
+		var numNewPosts = posts.length;
+
+		if (numNewPosts > 0 || (!endless_fill && !badPaginator) || (endless_fill && !bbb.endless.pages.length && !lastPage)) { // Queue the page if: 1) There are thumbnails. 2) It's normal mode and not a "no results" page. 3) It's fill mode and there is no object to work with for future pages.
+			var newPageObject = {
+				page: newPage,
+				page_num: [pageNum],
+				paginator: paginator,
+				ready: (!endless_fill || numNewPosts === limit || lastPage ? true : false)
+			};
+
+			bbb.endless.pages.push(newPageObject);
+
+			if (bbb.endless.no_thumb_count < 10)
+				bbb.endless.no_thumb_count = 0;
+		}
+		else if (!badPaginator)
+			bbb.endless.no_thumb_count++;
+
+		// Get rid of the load more button for special circumstances where the paginator isn't accurate.
+		if (lastPage && !bbb.endless.pages.length)
+			bbb.el.endlessLoadButton.style.display = "none";
+
+		// Warn the user if this is a listing full of hidden posts.
+		if (bbb.endless.no_thumb_count === 10) {
+			bbbNotice("There have been no or very few thumbnails detected in the last 10 retrieved pages. Using endless pages with fill mode on this search could potentially be very slow or stall out completely. If you would like to continue, you may click the \"Load More\" button near the bottom of the page.", -1);
+			endlessPause(true);
+		}
+		else
+			endlessQueueCheck();
+	}
+
+	function endlessAppendPage() {
+		// Prep the first queued page object and add it to the document.
+		var firstPageObject = bbb.endless.pages.shift();
+		var page = firstPageObject.page;
+		var newPaginator = firstPageObject.paginator;
+		var thumbContainer = getThumbContainer(gLoc);
+		var curPaginator = getPaginator();
+		var before = getThumbSibling(gLoc);
+
+		// Prepare thumbnails.
+		prepThumbnails(page);
+
+		// Page separators.
+		var pageNum = firstPageObject.page_num;
+		var numPageNum = pageNum.length;
+		var firstNum = pageNum[0];
+		var lastNum = (numPageNum > 1 ? pageNum[numPageNum - 1] : undefined);
+
+		if (endless_separator === "divider") {
+			var divider = document.createElement("div");
+			divider.className = "bbb-endless-divider";
+
+			var dividerLink = document.createElement("div");
+			dividerLink.className = "bbb-endless-divider-link";
+			divider.appendChild(dividerLink);
+
+			dividerLink.innerHTML = '<a href="' + updateURLQuery(location.href, {page: firstNum}) + '">Page ' + firstNum + '</a>' + (lastNum ? ' ~ <a href="' + updateURLQuery(location.href, {page: lastNum}) + '">Page ' + lastNum + '</a>' : '');
+
+			if (!bbb.endless.fill_first_page)
+				page.insertBefore(divider, page.firstChild);
+			else if (lastNum) // Only add the divider for filling the first page when there are actual posts added.
+				thumbContainer.insertBefore(divider, (getPosts()[0] || before));
+		}
+		else if (endless_separator === "marker") {
+			var marker = document.createElement("div");
+			marker.className = "bbb-endless-marker";
+
+			var markerLink = document.createElement("div");
+			markerLink.className = "bbb-endless-marker-link";
+			marker.appendChild(markerLink);
+
+			markerLink.innerHTML = '<a href="' + updateURLQuery(location.href, {page: firstNum}) + '">Page ' + firstNum + '</a>' + (lastNum ? '<br/>~<br/><a href="' + updateURLQuery(location.href, {page: lastNum}) + '">Page ' + lastNum + '</a>' : '');
+
+			if (!bbb.endless.fill_first_page)
+				page.insertBefore(marker, page.firstChild);
+			else if (lastNum) // Only add the marker for filling the first page when there are actual posts added.
+				thumbContainer.insertBefore(marker, (getPosts()[0] || before));
+		}
+
+		// Add the new page.
+		if (!before)
+			thumbContainer.appendChild(page);
+		else
+			thumbContainer.insertBefore(page, before);
+
+		// Replace the paginator.
+		if (curPaginator && newPaginator)
+			curPaginator.parentNode.replaceChild(newPaginator, curPaginator);
+
+		// Fix hidden thumbnails.
+		fixHiddenThumbs();
+		bbbStatus("hidden", "new"); // Update status message with new amount.
+
+		// New post tracking link fix.
+		if (getVar("new_posts") === "list")
+			bbb.el.trackNewMarkLink.innerHTML = "Mark pages 1-" + firstNum + " viewed";
+
+		if (!bbb.endless.fill_first_page)
+			bbb.endless.append_page = false;
+		else {
+			bbb.endless.fill_first_page = false;
+			endlessQueueCheck();
+		}
+
+		endlessCheck();
+	}
+
+	function endlessNexURL() {
+		// Get the URL of the next new page.
+		return getPaginatorNextURL(bbb.endless.last_paginator);
+	}
+
+	function endlessPageReady() {
+		// Check if the first queued page object is ready to be appended.
+		var firstPageObject = bbb.endless.pages[0];
+
+		return (firstPageObject && firstPageObject.ready);
+	}
+
+	function endlessLastPage() {
+		// Check if there isn't a next page.
+		return (!endlessNexURL() || noResultsPage());
+	}
+
+	function endlessPause(forcePause) {
+		// Pause endless pages so that it can't add any more pages.
+		if (bbb.endless.paused || (endlessLastPage() && !bbb.endless.pages.length))
+			return;
+
+		var numPages = document.getElementsByClassName("bbb-endless-page").length + 1;
+
+		if (numPages % endless_pause_interval === 0 || (endless_default === "paused" && numPages === 1) || forcePause) {
+			bbb.endless.paused = true;
+			bbb.endless.append_page = false;
+			bbb.el.endlessLoadButton.style.display = "inline-block";
+		}
+	}
+
+	function endlessFixedPaginator() {
+		// Set up the fixed paginator.
+		if (endless_fixed_paginator === "disabled" || document.getElementById("bbb-fixed-paginator-style")) // Don't run if disabled or if everything has already been prepared.
+			return;
+
+		var paginator = getPaginator();
+		var paginatorMenu = (paginator ? paginator.getElementsByTagName("menu")[0] : undefined);
+		var paginatorLink = (paginatorMenu ? paginatorMenu.getElementsByTagName("a")[0] : undefined);
+
+		if (!paginatorLink)
+			return;
+
+		// Get all our measurements.
+		var docRect = document.documentElement.getBoundingClientRect();
+		var docWidth = docRect.width;
+		var docBottom = docRect.bottom;
+
+		var paginatorRect = paginator.getBoundingClientRect();
+		var paginatorLeft = paginatorRect.left;
+		var paginatorRight = docWidth - paginatorRect.right;
+		var paginatorHeight = paginatorRect.height;
+
+		var menuRect = paginatorMenu.getBoundingClientRect();
+		var menuBottom = menuRect.bottom;
+
+		var linkRect = paginatorLink.getBoundingClientRect();
+		var linkBottom = linkRect.bottom;
+
+		var paginatorMargAdjust = (paginatorLeft - paginatorRight) / 2;
+		var menuBottomAdjust = linkBottom - menuBottom;
+
+		var paginatorSpacer = document.createElement("div"); // Prevents the document height form changing when the paginator is fixed to the bottom of the window.
+		paginatorSpacer.id = "bbb-endless-fixed-spacer";
+
+		var paginatorSibling = paginator.nextElementSibling;
+
+		if (paginatorSibling)
+			paginator.parentNode.insertBefore(paginatorSpacer, paginatorSibling);
+		else
+			paginator.parentNode.appendChild(paginatorSpacer);
+
+		// Create the css for the fixed paginator separately from the main one since it needs to know what the page's final layout will be with the main css applied.
+		var style = document.createElement("style");
+		style.type = "text/css";
+		style.id = "bbb-fixed-paginator-style";
+		style.innerHTML = '.bbb-endless-enabled.bbb-endless-fixed .paginator {position: fixed; padding: 0px; margin: 0px; bottom: 0px; left: 50%; margin-left: ' + paginatorMargAdjust + 'px;}' +
+		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu {position: relative; left: -50%; padding: ' + menuBottomAdjust + 'px 0px; background-color: #FFFFFF;}' +
+		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:first-child {padding-left: 0px;}' +
+		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:first-child a {margin-left: 0px;}' +
+		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:last-child {padding-right: 0px;}' +
+		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:last-child a {margin-right: 0px;}' +
+		'#bbb-endless-fixed-spacer {display: none; height: ' + paginatorHeight + 'px; clear: both; width: 100%;}' +
+		'.bbb-endless-enabled.bbb-endless-fixed #bbb-endless-fixed-spacer {display: block;}';
+
+		if (endless_fixed_paginator === "minimal") {
+			style.innerHTML += '.bbb-endless-enabled.bbb-endless-fixed .paginator menu {padding: 3px 0px;}' +
+			'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li a, .bbb-endless-enabled.bbb-endless-fixed .paginator menu li span {padding: 2px; margin: 0px 2px 0px 0px;}' +
+			'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li {padding: 0px;}' +
+			'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li a {border-color: #CCCCCC;}';
+		}
+
+		document.getElementsByTagName("head")[0].appendChild(style);
+
+		bbb.endless.paginator_space = docBottom - linkBottom; // Store the amount of space between the bottom of the page and the paginator.
+
+		window.addEventListener("scroll", endlessFixedCheck, false);
+		window.addEventListener("resize", endlessFixedCheck, false);
+		paginator.parentNode.bbbWatchNodes(endlessFixedCheck);
+
+		endlessFixedCheck();
+	}
+
+	function endlessFixedCheck() {
+		// Check if the paginator needs to be in its default position or fixed to the window.
+		if (!bbb.endless.enabled || !bbb.endless.paginator_space)
+			return;
+
+		var docHeight = document.documentElement.scrollHeight;
+		var scrolled = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+		var viewHeight = document.documentElement.clientHeight;
+
+		if (viewHeight + scrolled < docHeight - bbb.endless.paginator_space)
+			document.body.bbbAddClass("bbb-endless-fixed");
+		else
+			document.body.bbbRemoveClass("bbb-endless-fixed");
+	}
+
+	/* Blacklist Functions */
+	function blacklistInit() {
+		// Reset the blacklist with the account settings when logged in or script settings when logged out/using the override.
+		var blacklistTags = (useAccount() ? getMeta("blacklisted-tags") : script_blacklisted_tags);
+		var blacklistBox = document.getElementById("blacklist-box");
+		var blacklistList = document.getElementById("blacklist-list");
+		var blacklistedPosts = document.getElementsByClassName("blacklisted");
+
+		// Reset sidebar blacklist.
+		if (blacklistBox && blacklistList) {
+			blacklistBox.style.display = "none";
+			blacklistList.innerHTML = "";
+		}
+		else if (blacklist_add_bars) {
+			var target;
+			var before;
+
+			if (gLoc === "pool") {
+				target = document.getElementById("a-show");
+				before = (target ? target.getElementsByTagName("section")[0] : undefined);
+			}
+			else if (gLoc === "pool_gallery") {
+				target = document.getElementById("a-gallery");
+				before = (target ? target.getElementsByTagName("section")[0] : undefined);
+			}
+			else if (gLoc === "notes" || gLoc === "comments") {
+				target = document.getElementById("a-index");
+
+				if (target)
+					before = getPosts(target)[0] || getPaginator(target);
+			}
+
+			if (target && before && before.parentNode === target) {
+				blacklistBox = document.createElement("div");
+				blacklistBox.id = "blacklist-box";
+				blacklistBox.className = "bbb-blacklist-box";
+				blacklistBox.style.display = "none";
+				blacklistBox.innerHTML = '<strong>Blacklisted: </strong> <ul id="blacklist-list"> </ul>';
+
+				blacklistList = getId("blacklist-list", blacklistBox, "ul");
+
+				target.insertBefore(blacklistBox, before);
+			}
+		}
+
+		// Reset any blacklist info.
+		if (bbb.blacklist.entries.length) {
+			delete bbb.blacklist;
+			bbb.blacklist = {entries: [], match_list: {}};
+		}
+
+		// Reset any blacklisted thumbnails.
+		while (blacklistedPosts[0]) {
+			var blacklistedPost = blacklistedPosts[0];
+			blacklistedPost.bbbRemoveClass("blacklisted", "blacklisted-active");
+		}
+
+		// Check if there actually are any tags.
+		if (!blacklistTags || !/[^\s,]/.test(blacklistTags))
+			return;
+
+		blacklistTags = blacklistTags.split(",");
+
+		// Create the blacklist section.
+		for (var i = 0, il = blacklistTags.length; i < il; i++) {
+			var blacklistTag = blacklistTags[i].bbbSpaceClean();
+			var blacklistSearch = createSearch(blacklistTag);
+
+			if (blacklistSearch.length) {
+				var newEntry = {active: true, tags:blacklistTag, search:blacklistSearch, matches: [], index: i};
+
+				bbb.blacklist.entries.push(newEntry);
+
+				if (blacklistList) {
+					var blacklistItem = document.createElement("li");
+					blacklistItem.title = blacklistTag;
+					blacklistItem.style.display = "none";
+
+					var blacklistLink = document.createElement("a");
+					blacklistLink.innerHTML = (blacklistTag.length < 21 ? blacklistTag + " " : blacklistTag.substring(0, 20).bbbSpaceClean() + "... ");
+					blacklistLink.className = "bbb-blacklist-entry-" + i;
+					blacklistLink.setAttribute("data-bbb-blacklist-entry", i);
+					blacklistLink.addEventListener("click", blacklistLinkToggle, false);
+					blacklistItem.appendChild(blacklistLink);
+
+					var blacklistCount = document.createElement("span");
+					blacklistCount.innerHTML = "0";
+					blacklistItem.appendChild(blacklistCount);
+
+					blacklistList.appendChild(blacklistItem);
+				}
+			}
+		}
+
+		// Test all posts on the page for a match and set up the initial blacklist.
+		blacklistUpdate();
+	}
+
+	function blacklistLinkToggle(event) {
+		// Event listener function for blacklist entry toggle links.
+		if (event.button !== 0)
+			return;
+
+		var link = event.target;
+		var entryNumber = Number(link.getAttribute("data-bbb-blacklist-entry"));
+		var entry = bbb.blacklist.entries[entryNumber];
+		var matches = entry.matches;
+		var links = document.getElementsByClassName("bbb-blacklist-entry-" + entryNumber);
+		var post;
+		var el;
+		var i, il; // Loop variables.
+
+		if (entry.active) {
+			entry.active = false;
+
+			for (i = 0, il = links.length; i < il; i++)
+				links[i].bbbAddClass("blacklisted-active");
+
+			for (i = 0, il = matches.length; i < il; i++) {
+				post = matches[i];
+				el = document.getElementById(post.elId);
+				bbb.blacklist.match_list[post.id].count--;
+
+				if (!bbb.blacklist.match_list[post.id].count && bbb.blacklist.smart_view.override[post.id] !== false)
+					el.bbbRemoveClass("blacklisted-active");
+			}
+		}
+		else {
+			entry.active = true;
+
+			for (i = 0, il = links.length; i < il; i++)
+				links[i].bbbRemoveClass("blacklisted-active");
+
+			for (i = 0, il = matches.length; i < il; i++) {
+				post = matches[i];
+				el = document.getElementById(post.elId);
+				bbb.blacklist.match_list[post.id].count++;
+
+				if (bbb.blacklist.smart_view.override[post.id] !== true)
+					el.bbbAddClass("blacklisted-active");
+			}
+		}
+
+		event.preventDefault();
+	}
+
+	function blacklistUpdate(target) {
+		// Update the blacklists without resetting everything.
+		if (!bbb.blacklist.entries.length)
+			return;
+
+		// Retrieve the necessary elements from the target element or current document.
+		var blacklistBox = getId("blacklist-box", target) || document.getElementById("blacklist-box");
+		var blacklistList = getId("blacklist-list", target) || document.getElementById("blacklist-list");
+		var imgContainer = getId("image-container", target, "section");
+		var posts = getPosts(target);
+
+		var i, il; // Loop variables.
+
+		// Test the image for a match when viewing a post.
+		if (imgContainer) {
+			var imgId = imgContainer.getAttribute("data-id");
+
+			if (!blacklistSmartViewCheck(imgId))
+				blacklistTest("imgContainer", imgContainer);
+		}
+
+		// Search the posts for matches.
+		for (i = 0, il = posts.length; i < il; i++) {
+			var post = posts[i];
+			var postId = post.getAttribute("data-id");
+
+			blacklistTest(postId, post);
+		}
+
+		// Update the blacklist sidebar section match counts and display any blacklist items that have a match.
+		if (blacklistBox && blacklistList) {
+			for (i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
+				var entryLength = bbb.blacklist.entries[i].matches.length;
+				var item = blacklistList.getElementsByTagName("li")[i];
+
+				if (entryLength) {
+					blacklistBox.style.display = "block";
+					item.style.display = "";
+					item.getElementsByTagName("span")[0].innerHTML = entryLength;
+				}
+			}
+		}
+	}
+
+	function blacklistTest(matchId, element) {
+		// Test a post/image for a blacklist match and use the provided ID to store its info.
+		var matchList = bbb.blacklist.match_list[matchId];
+
+		if (typeof(matchList) === "undefined") { // Post hasn't been tested yet.
+			matchList = bbb.blacklist.match_list[matchId] = {count: undefined, matches: []};
+
+			for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
+				var entry = bbb.blacklist.entries[i];
+
+				if (thumbSearchMatch(element, entry.search)) {
+					element.bbbAddClass("blacklisted");
+
+					if (entry.active) {
+						element.bbbAddClass("blacklisted-active");
+						matchList.count = ++matchList.count || 1;
+					}
+					else
+						matchList.count = matchList.count || 0;
+
+					matchList.matches.push(entry);
+					entry.matches.push({id:matchId, elId:element.id});
+				}
+			}
+
+			if (matchList.count === undefined) // No match.
+				matchList.count = false;
+			else if (element.id !== "image-container") { // Match found so prepare the thumbnail.
+				if (blacklist_thumb_controls)
+					blacklistPostControl(element, matchList);
+
+				if (blacklist_smart_view)
+					blacklistSmartView(element);
+			}
+
+		}
+		else if (matchList.count !== false && !element.bbbHasClass("blacklisted")) { // Post is already tested, but needs to be set up again.
+			if (matchList.count > 0 && bbb.blacklist.smart_view.override[matchId] !== true)
+				element.bbbAddClass("blacklisted", "blacklisted-active");
+			else
+				element.bbbAddClass("blacklisted");
+
+			if (element.id !== "image-container") {
+				if (blacklist_thumb_controls)
+					blacklistPostControl(element, matchList);
+
+				if (blacklist_smart_view)
+					blacklistSmartView(element);
+			}
+		}
+	}
+
+	function blacklistPostControl(element, matchList) {
+		// Add the blacklist post controls to a thumbnail.
+		var target = (gLoc === "comments" ? element.getElementsByClassName("preview")[0] : element );
+		var id = element.getAttribute("data-id");
+		var tip = bbb.el.blacklistTip;
+
+		if (!tip) { // Create the tip if it doesn't exist.
+			tip = bbb.el.blacklistTip = document.createElement("div");
+			tip.id = "bbb-blacklist-tip";
+			document.body.appendChild(tip);
+		}
+
+		if (target) {
+			// Set up the tip events listeners for hiding and displaying it.
+			target.addEventListener("click", function(event) {
+				if (event.button !== 0 || event.ctrlKey || event.shiftKey)
+					return;
+
+				var target = event.target;
+				var postContainer = element;
+				var blacklistTip = bbb.el.blacklistTip;
+
+				if (!postContainer.bbbHasClass("blacklisted-active") || (target.tagName === "A" && !target.bbbHasClass("bbb-thumb-link"))) // If the thumb isn't currently hidden or a link that isn't the thumb link is clicked, allow the link click.
+					return;
+
+				if (blacklistTip.style.display !== "block") {
+					var matchEntries = matchList.matches;
+					var tipContent = document.createDocumentFragment();
+
+					var header = document.createElement("b");
+					header.innerHTML = "Blacklist Matches:";
+					tipContent.appendChild(header);
+
+					var list = document.createElement("ul");
+					tipContent.appendChild(list);
+
+					for (var i = 0, il = matchEntries.length; i < il; i++) {
+						var matchEntry = matchEntries[i];
+						var entryIndex = matchEntry.index;
+						var blacklistTag = matchEntry.tags;
+
+						var blacklistItem = document.createElement("li");
+						blacklistItem.title = blacklistTag;
+
+						var blacklistLink = document.createElement("a");
+						blacklistLink.href = "#";
+						blacklistLink.className = "bbb-blacklist-entry-" + entryIndex + (matchEntry.active ? "" : " blacklisted-active");
+						blacklistLink.setAttribute("data-bbb-blacklist-entry", entryIndex);
+						blacklistLink.innerHTML = (blacklistTag.length < 51 ? blacklistTag + " " : blacklistTag.substring(0, 50).bbbSpaceClean() + "...");
+						blacklistLink.addEventListener("click", blacklistLinkToggle, false);
+						blacklistItem.appendChild(blacklistLink);
+
+						list.appendChild(blacklistItem);
+					}
+
+					var viewLinkDiv = document.createElement("div");
+					viewLinkDiv.style.marginTop = "1em";
+					viewLinkDiv.style.textAlign = "center";
+					viewLinkDiv.innerHTML = '<a class="bbb-post-link" id="bbb-blacklist-view-link" href="/posts/' + id + '">View post</a>';
+					tipContent.appendChild(viewLinkDiv);
+
+					if (blacklist_smart_view) {
+						var viewLink = getId("bbb-blacklist-view-link", viewLinkDiv, "a");
+
+						if (viewLink) {
+							viewLink.addEventListener("click", function(event) {
+								if (event.button === 0)
+									blacklistSmartViewUpdate(element);
+							}, false);
+						}
+					}
+
+					blacklistShowTip(event, tipContent);
+				}
+				else {
+					blacklistHideTip();
+					postContainer.bbbRemoveClass("blacklisted-active");
+					bbb.blacklist.smart_view.override[id] = true;
+				}
+
+				event.preventDefault();
+				event.stopPropagation();
+			}, true);
+			target.addEventListener("mouseleave", function() { bbb.timers.blacklistTip = window.setTimeout(blacklistHideTip, 100); }, false);
+			tip.addEventListener("mouseover", function() { window.clearTimeout(bbb.timers.blacklistTip); }, false);
+			tip.addEventListener("mouseleave", blacklistHideTip, false);
+
+			// Add the hide button.
+			var hide = document.createElement("span");
+			hide.className = "bbb-close-circle";
+			hide.addEventListener("click", function(event) {
+				if (event.button === 0) {
+					element.bbbAddClass("blacklisted-active");
+					bbb.blacklist.smart_view.override[id] = false;
+				}
+			}, false);
+			target.appendChild(hide);
+		}
+	}
+
+	function blacklistShowTip(event, content) {
+		// Display the blacklist control tip.
+		var x = event.pageX;
+		var y = event.pageY;
+		var tip = bbb.el.blacklistTip;
+
+		formatTip(event, tip, content, x, y);
+	}
+
+	function blacklistHideTip() {
+		// Reset the blacklist control tip to hidden.
+		var tip = bbb.el.blacklistTip;
+
+		if (tip)
+			tip.removeAttribute("style");
+	}
+
+	function blacklistSmartView(element) {
+		// Set up the smart view event listeners.
+		var img = element.getElementsByTagName("img")[0];
+		var link = (img ? img.parentNode : undefined);
+
+		if (!link)
+			return;
+
+		// Normal left click support.
+		link.addEventListener("click", function(event) {
+			if (event.button === 0)
+				blacklistSmartViewUpdate(element);
+		}, false);
+
+		// Right and middle button click support.
+		link.addEventListener("mousedown", function(event) {
+			if (event.button === 1)
+				bbb.blacklist.smart_view.middle_target = link;
+		}, false);
+		link.addEventListener("mouseup", function(event) {
+			if (event.button === 1 && bbb.blacklist.smart_view.middle_target === link)
+				blacklistSmartViewUpdate(element);
+			else if (event.button === 2)
+				blacklistSmartViewUpdate(element);
+		}, false);
+	}
+
+	function blacklistSmartViewUpdate(element) {
+		// Update the blacklisted thumbnail info in the smart view object.
+		var time = new Date().getTime();
+		var id = element.getAttribute("data-id");
+		var smartView;
+
+		if (typeof(localStorage.bbb_smart_view) === "undefined") // Initialize the object if it doesn't exist.
+			smartView = {last: time};
+		else {
+			smartView = JSON.parse(localStorage.bbb_smart_view);
+
+			if (time - smartView.last > 60000) // Reset the object if it hasn't been changed within a minute.
+				smartView = {last: time};
+			else
+				smartView.last = time; // Adjust the object.
+		}
+
+		if (!element.bbbHasClass("blacklisted-active"))
+			smartView[id] = time;
+		else
+			delete smartView[id];
+
+		localStorage.bbb_smart_view = JSON.stringify(smartView);
+	}
+
+	function blacklistSmartViewCheck(id) {
+		// Check whether to display the post during the blacklist init.
+		if (!blacklist_smart_view || typeof(localStorage.bbb_smart_view) === "undefined")
+			return false;
+		else {
+			var smartView = JSON.parse(localStorage.bbb_smart_view);
+			var time = new Date().getTime();
+
+			if (time - smartView.last > 60000) { // Delete the ids if the object hasn't been changed within a minute.
+				localStorage.removeItem("bbb_smart_view");
+				return false;
+			}
+			else if (!smartView[id]) // Return false if the id isn't found.
+				return false;
+			else if (time - smartView[id] > 60000) // Return false if the click is over a minute ago.
+				return false;
+		}
+
+		return true;
 	}
 
 	/* Other functions */
@@ -3941,7 +5282,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function fixPaginator(target) {
-		var paginator = (target || document).getElementsByClassName("paginator")[0];
+		var paginator = getPaginator(target);
 
 		if (!paginator)
 			return;
@@ -3956,7 +5297,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				for (var i = 0, il = pageLinks.length; i < il; i++) {
 					pageLink = pageLinks[i];
-					pageLink.href = updateUrlQuery(pageLink.href, {limit: thumbnail_count});
+					pageLink.href = updateURLQuery(pageLink.href, {limit: thumbnail_count});
 				}
 
 				searchPages("paginator");
@@ -4020,9 +5361,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			window.clearTimeout(bbb.timers.keepBbbNotice);
 
 		if (notice.style.display === "block" && /\S/.test(noticeMsg.textContent)) { // Insert new text at the top if the notice is already open.
-			type = (type > 0 ? 0 : type); // Change the type to permanent if it was supposed to be temporary.
 			noticeMsg.insertBefore(msg, noticeMsg.children[0]);
-			window.clearTimeout(bbb.timers.hideBbbNotice);
 
 			// Don't allow the notice to be closed via clicking for half a second. Prevents accidental message closing.
 			bbb.timers.keepBbbNotice = window.setTimeout(function() {
@@ -4036,9 +5375,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Hide the notice after a certain number of seconds.
 		if (type > 0) {
-			bbb.timers.hideBbbNotice = window.setTimeout(function() {
-				notice.style.display = "none";
-				bbb.timers.hideBbbNotice = 0;
+			window.setTimeout(function() {
+				closeBbbNoticeMsg(msg);
 			}, type * 1000);
 		}
 
@@ -4055,14 +5393,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		notice.style.display = "none";
 	}
 
-	function closeBbbNoticeMsg(event) {
-		// Click handler for closing the notice message that the clicked element is a child of. Will close the whole notice if there is only one message.
+	function closeBbbNoticeMsg(eventOrElement) {
+		// Closes the provided notice message or uses the provided event to act as a click handler for closing the notice message that the clicked element is a child of. Will close the whole notice if there is only one message.
 		var notice = bbb.el.notice;
-		var target = event.target;
+		var target = eventOrElement.target || eventOrElement;
 
 		if (notice.getElementsByClassName("bbb-notice-msg-entry").length > 1) {
-			while (target.parentNode && target.className.indexOf("bbb-notice-msg-entry") < 0 && target !== notice)
-				target = target.parentNode;
+			if (!target.bbbHasClass("bbb-notice-msg-entry")) {
+				while (target.parentNode && !target.bbbHasClass("bbb-notice-msg-entry") && target !== notice)
+					target = target.parentNode;
+			}
 		}
 		else
 			target = notice;
@@ -4117,7 +5457,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var msg = bbb.status.msg[mode];
 		var newCount = 0;
 
-		if (msg.queue) { // If the xml requests are queued, use the xmlState as the current remaining value.
+		if (msg.queue) { // If the xml requests are queued, use the queue length as the current remaining value.
 			newCount = (xmlState === "error" ? 0 : msg.queue.length);
 			bbb.status.count += newCount - msg.count;
 			msg.count = newCount;
@@ -4142,388 +5482,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			status.style.display = "block";
 		else // If requests are done, hide the notice.
 			status.style.display = "none";
-	}
-
-	function blacklistInit() {
-		// Reset the blacklist with the account settings when logged in or script settings when logged out/using the override.
-		var blacklistTags = (useAccount() ? getMeta("blacklisted-tags") : script_blacklisted_tags);
-		var blacklistBox = document.getElementById("blacklist-box");
-		var blacklistList = document.getElementById("blacklist-list");
-		var blacklistedPosts = document.getElementsByClassName("blacklisted");
-
-		// Reset sidebar blacklist.
-		if (blacklistBox && blacklistList) {
-			blacklistBox.style.display = "none";
-			blacklistList.innerHTML = "";
-		}
-		else if (blacklist_add_bars) {
-			var target;
-			var before;
-
-			if (gLoc === "pool") {
-				target = document.getElementById("a-show");
-				before = (target ? target.getElementsByTagName("section")[0] : undefined);
-			}
-			else if (gLoc === "pool_gallery") {
-				target = document.getElementById("a-gallery");
-				before = (target ? target.getElementsByTagName("section")[0] : undefined);
-			}
-			else if (gLoc === "notes" || gLoc === "comments") {
-				target = document.getElementById("a-index");
-
-				if (target)
-					before = getPosts(target)[0] || target.getElementsByClassName("paginator")[0];
-			}
-
-			if (target && before && before.parentNode === target) {
-				blacklistBox = document.createElement("div");
-				blacklistBox.id = "blacklist-box";
-				blacklistBox.className = "bbb-blacklist-box";
-				blacklistBox.style.display = "none";
-				blacklistBox.innerHTML = '<strong>Blacklisted: </strong> <ul id="blacklist-list"> </ul>';
-
-				blacklistList = getId("blacklist-list", blacklistBox, "ul");
-
-				target.insertBefore(blacklistBox, before);
-			}
-		}
-
-		// Reset any blacklist info.
-		if (bbb.blacklist.entries.length) {
-			delete bbb.blacklist;
-			bbb.blacklist = {entries: [], match_list: {}};
-		}
-
-		// Reset any blacklisted thumbnails.
-		while (blacklistedPosts[0]) {
-			var blacklistedPost = blacklistedPosts[0];
-			blacklistedPost.className = blacklistedPost.className.replace(/\s?blacklisted(-active)?/ig, "");
-		}
-
-		// Check if there actually are any tags.
-		if (!blacklistTags || !/[^\s,]/.test(blacklistTags))
-			return;
-
-		blacklistTags = blacklistTags.split(",");
-
-		// Create the blacklist section.
-		for (var i = 0, il = blacklistTags.length; i < il; i++) {
-			var blacklistTag = blacklistTags[i].bbbSpaceClean();
-			var blacklistSearch = createSearch(blacklistTag);
-
-			if (blacklistSearch.length) {
-				var newEntry = {active: true, tags:blacklistTag, search:blacklistSearch, matches: []};
-
-				bbb.blacklist.entries.push(newEntry);
-
-				if (blacklistList) {
-					var blacklistItem = document.createElement("li");
-					blacklistItem.title = blacklistTag;
-					blacklistItem.style.display = "none";
-
-					var blacklistLink = document.createElement("a");
-					blacklistLink.innerHTML = (blacklistTag.length < 21 ? blacklistTag + " " : blacklistTag.substring(0, 20).bbbSpaceClean() + "... ");
-					blacklistLink.addEventListener("click", function(entry) {
-						return function(event) {
-							if (event.button === 0) {
-								var matches = entry.matches;
-								var link = this;
-								var post;
-								var el;
-								var i, il; // Loop variables.
-
-								if (entry.active) {
-									entry.active = false;
-									link.className = "blacklisted-active";
-
-									for (i = 0, il = matches.length; i < il; i++) {
-										post = matches[i];
-										el = document.getElementById(post.elId);
-										bbb.blacklist.match_list[post.id].count--;
-
-										if (!bbb.blacklist.match_list[post.id].count && bbb.blacklist.smart_view.override[post.id] !== false)
-											el.className = el.className.replace(/\s?blacklisted-active/ig, "");
-									}
-								}
-								else {
-									entry.active = true;
-									link.className = "";
-
-									for (i = 0, il = matches.length; i < il; i++) {
-										post = matches[i];
-										el = document.getElementById(post.elId);
-										bbb.blacklist.match_list[post.id].count++;
-
-										if (bbb.blacklist.smart_view.override[post.id] !== true)
-											el.className += " blacklisted-active";
-									}
-								}
-							}
-						};
-					}(newEntry), false);
-					blacklistItem.appendChild(blacklistLink);
-
-					var blacklistCount = document.createElement("span");
-					blacklistCount.innerHTML = "0";
-					blacklistItem.appendChild(blacklistCount);
-
-					blacklistList.appendChild(blacklistItem);
-				}
-			}
-		}
-
-		// Test all posts on the page for a match and set up the initial blacklist.
-		blacklistUpdate();
-	}
-
-	function blacklistUpdate(target) {
-		// Update the blacklists without resetting everything.
-		if (!bbb.blacklist.entries.length)
-			return;
-
-		// Retrieve the necessary elements from the target element or current document.
-		var blacklistBox = getId("blacklist-box", target) || document.getElementById("blacklist-box");
-		var blacklistList = getId("blacklist-list", target) || document.getElementById("blacklist-list");
-		var imgContainer = getId("image-container", target, "section");
-		var posts = getPosts(target);
-
-		var i, il; // Loop variables.
-
-		// Test the image for a match when viewing a post.
-		if (imgContainer) {
-			var imgId = imgContainer.getAttribute("data-id");
-
-			if (!blacklistSmartViewCheck(imgId))
-				blacklistTest("imgContainer", imgContainer);
-		}
-
-		// Search the posts for matches.
-		for (i = 0, il = posts.length; i < il; i++) {
-			var post = posts[i];
-			var postId = post.getAttribute("data-id");
-
-			blacklistTest(postId, post);
-		}
-
-		// Update the blacklist sidebar section match counts and display any blacklist items that have a match.
-		if (blacklistBox && blacklistList) {
-			for (i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
-				var entryLength = bbb.blacklist.entries[i].matches.length;
-				var item = blacklistList.getElementsByTagName("li")[i];
-
-				if (entryLength) {
-					blacklistBox.style.display = "block";
-					item.style.display = "";
-					item.getElementsByTagName("span")[0].innerHTML = entryLength;
-				}
-			}
-		}
-	}
-
-	function blacklistTest(matchId, element) {
-		// Test a post/image for a blacklist match and use the provided ID to store its info.
-		var matchList = bbb.blacklist.match_list[matchId];
-
-		if (typeof(matchList) === "undefined") { // Post hasn't been tested yet.
-			matchList = bbb.blacklist.match_list[matchId] = {count: undefined, matches: []};
-
-			for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
-				var entry = bbb.blacklist.entries[i];
-
-				if (thumbSearchMatch(element, entry.search)) {
-					if (element.className.indexOf("blacklisted") < 0)
-						element.className += " blacklisted";
-
-					if (entry.active) {
-						if (element.className.indexOf("blacklisted-active") < 0)
-							element.className += " blacklisted-active";
-
-						matchList.count = ++matchList.count || 1;
-					}
-					else
-						matchList.count = matchList.count || 0;
-
-					matchList.matches.push(entry.tags);
-					entry.matches.push({id:matchId, elId:element.id});
-				}
-			}
-
-			if (matchList.count === undefined) // No match.
-				matchList.count = false;
-			else if (element.id !== "image-container") { // Match found so prepare the thumbnail.
-				if (blacklist_thumb_controls)
-					blacklistPostControl(element, matchList);
-
-				if (blacklist_smart_view)
-					blacklistSmartView(element);
-			}
-
-		}
-		else if (matchList.count !== false && element.className.indexOf("blacklisted") < 0) { // Post is already tested, but needs to be set up again.
-			element.className += (matchList.count > 0 && bbb.blacklist.smart_view.override[matchId] !== true ? " blacklisted blacklisted-active" : " blacklisted");
-
-			if (element.id !== "image-container") {
-				if (blacklist_thumb_controls)
-					blacklistPostControl(element, matchList);
-
-				if (blacklist_smart_view)
-					blacklistSmartView(element);
-			}
-		}
-	}
-
-	function blacklistPostControl(element, matchList) {
-		var target = (gLoc === "comments" ? element.getElementsByClassName("preview")[0] : element );
-		var id = element.getAttribute("data-id");
-		var tip = bbb.el.blacklistTip;
-
-		if (!tip) { // Create the tip if it doesn't exist.
-			tip = bbb.el.blacklistTip = document.createElement("div");
-			tip.id = "bbb-blacklist-tip";
-			document.body.appendChild(tip);
-		}
-
-		if (target) {
-			// Set up the tip events listeners for hiding and displaying it.
-			target.addEventListener("click", function(event) {
-				if (event.button !== 0 || event.ctrlKey || event.shiftKey)
-					return;
-
-				var target = event.target;
-				var postContainer = element;
-				var blacklistTip = bbb.el.blacklistTip;
-
-				if (postContainer.className.indexOf("blacklisted-active") < 0 || (target.tagName === "A" && target.className.indexOf("bbb-thumb-link") < 0)) // If the thumb isn't currently hidden or a link that isn't the thumb link is clicked, allow the link click.
-					return;
-
-				if (blacklistTip.style.display !== "block")
-					blacklistShowTip(event, '<b>Blacklist Matches:</b><ul><li>' + matchList.matches.join('</li><li>') + '</li></ul><div style="margin-top: 1em; text-align: center;"><a href="/posts/' + id + '">View post</a></div>', element);
-				else {
-					blacklistHideTip();
-					postContainer.className = postContainer.className.replace(/\s?blacklisted-active/ig, "");
-					bbb.blacklist.smart_view.override[id] = true;
-				}
-
-				event.preventDefault();
-				event.stopPropagation();
-			}, true);
-			target.addEventListener("mouseleave", function() { bbb.timers.blacklistTip = window.setTimeout(blacklistHideTip, 100); }, false);
-			tip.addEventListener("mouseover", function() { window.clearTimeout(bbb.timers.blacklistTip); }, false);
-			tip.addEventListener("mouseleave", blacklistHideTip, false);
-
-			// Add the hide button.
-			var hide = document.createElement("span");
-			hide.className = "bbb-close-circle";
-			hide.addEventListener("click", function(event) {
-				if (event.button === 0) {
-					element.className += " blacklisted-active";
-					bbb.blacklist.smart_view.override[id] = false;
-				}
-			}, false);
-			target.appendChild(hide);
-		}
-	}
-
-	function blacklistShowTip(event, text, element) {
-		// Display the blacklist control tip.
-		var x = event.pageX;
-		var y = event.pageY;
-		var tip = bbb.el.blacklistTip;
-
-		formatTip(event, tip, text, x, y);
-
-		if (blacklist_smart_view) {
-			var viewLink = tip.getElementsByTagName("a")[0];
-
-			if (viewLink) {
-				viewLink.addEventListener("click", function(event) {
-					if (event.button === 0)
-						blacklistSmartViewUpdate(element);
-				}, false);
-			}
-		}
-	}
-
-	function blacklistHideTip() {
-		var tip = bbb.el.blacklistTip;
-
-		if (tip)
-			tip.removeAttribute("style");
-	}
-
-	function blacklistSmartView(element) {
-		// Set up the smart view event listeners.
-		var img = element.getElementsByTagName("img")[0];
-		var link = (img ? img.parentNode : undefined);
-
-		if (!link)
-			return;
-
-		// Normal left click support.
-		link.addEventListener("click", function(event) {
-			if (event.button === 0)
-				blacklistSmartViewUpdate(element);
-		}, false);
-
-		// Right and middle button click support.
-		link.addEventListener("mousedown", function(event) {
-			if (event.button === 1)
-				bbb.blacklist.smart_view.middle_target = link;
-		}, false);
-		link.addEventListener("mouseup", function(event) {
-			if (event.button === 1 && bbb.blacklist.smart_view.middle_target === link)
-				blacklistSmartViewUpdate(element);
-			else if (event.button === 2)
-				blacklistSmartViewUpdate(element);
-		}, false);
-	}
-
-	function blacklistSmartViewUpdate(element) {
-		// Update the blacklisted thumbnail info in the smart view object.
-		var time = new Date().getTime();
-		var id = element.getAttribute("data-id");
-		var smartView;
-
-		if (typeof(localStorage.bbb_smart_view) === "undefined") // Initialize the object if it doesn't exist.
-			smartView = {last: time};
-		else {
-			smartView = JSON.parse(localStorage.bbb_smart_view);
-
-			if (time - smartView.last > 60000) // Reset the object if it hasn't been changed within a minute.
-				smartView = {last: time};
-			else
-				smartView.last = time; // Adjust the object.
-		}
-
-		if (element.className.indexOf("blacklisted-active") < 0)
-			smartView[id] = time;
-		else
-			delete smartView[id];
-
-		localStorage.bbb_smart_view = JSON.stringify(smartView);
-	}
-
-	function blacklistSmartViewCheck(id) {
-		// Check whether to display the post during the blacklist init.
-		var match = true;
-
-		if (!blacklist_smart_view || typeof(localStorage.bbb_smart_view) === "undefined")
-			match = false;
-		else {
-			var smartView = JSON.parse(localStorage.bbb_smart_view);
-			var time = new Date().getTime();
-
-			if (time - smartView.last > 60000) { // Delete the ids if the object hasn't been changed within a minute.
-				localStorage.removeItem("bbb_smart_view");
-				match = false;
-			}
-			else if (!smartView[id]) // Return false if the id isn't found.
-				match = false;
-			else if (time - smartView[id] > 60000) // Return false if the click is over a minute ago.
-				match = false;
-		}
-
-		return match;
 	}
 
 	function thumbSearchMatch(post, searchArray) {
@@ -4814,20 +5772,37 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Insert new posts link.
 		if (activeMenu && activeMenu.textContent === "Posts" && secondMenu) {
 			var menuItems = secondMenu.getElementsByTagName("li");
-			var menuItem = document.createElement("li");
-			var trackLink = document.createElement("a");
-			trackLink.innerHTML = "New";
-			trackLink.href = "/posts?new_posts=redirect&page=b1";
-			trackLink.onclick = "return false";
-			menuItem.appendChild(trackLink);
-			secondMenu.insertBefore(menuItem, menuItems[1]);
+			var numMenuItems = secondMenu.getElementsByTagName("li").length;
+			var listingItemSibling = menuItems[0];
 
-			trackLink.addEventListener("click", function(event) {
+			for (var i = 0; i < numMenuItems; i++) {
+				var menuLink = menuItems[i];
+				var nextLink = menuItems[i + 1];
+
+				if (menuLink.textContent.indexOf("Listing") > -1) {
+					if (nextLink)
+						listingItemSibling = nextLink;
+					else
+						listingItemSibling = menuLink;
+
+					break;
+				}
+			}
+
+			var link = document.createElement("a");
+			link.href = "/posts?new_posts=redirect&page=b1";
+			link.innerHTML = "New";
+			link.addEventListener("click", function(event) {
 				if (event.button === 0) {
 					trackNewLoad();
 					event.preventDefault();
 				}
 			}, false);
+
+			var item = document.createElement("li");
+			item.appendChild(link);
+
+			secondMenu.insertBefore(item, listingItemSibling);
 		}
 
 		if (gLoc === "search") {
@@ -4873,7 +5848,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				// Modify new post searches with a mark as viewed link.
 				if (postSections) {
 					var markSection = document.createElement("li");
-					var markLink = document.createElement("a");
+					var markLink = bbb.el.trackNewMarkLink = document.createElement("a");
 					markLink.innerHTML = (currentPage > 1 ? "Mark pages 1-" + currentPage + " viewed" : "Mark page 1 viewed");
 					markLink.href = "#";
 					markSection.appendChild(markLink);
@@ -5111,10 +6086,30 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 		}
 
+		// Endless
+		styles += '.bbb-endless-enabled .paginator {padding: 3em 0px 0px;}' +
+		'#bbb-endless-load-div {display: none; width: 100%; height: 0px; overflow: visible; clear: both; text-align: center;}' +
+		'.bbb-endless-enabled #bbb-endless-load-div {display: block;}' +
+		'#bbb-endless-load-center {position: absolute; display: inline-block;}' +
+		'#bbb-endless-load-button {position: relative; left: -50%; border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px; margin-top: 3px;}';
+
+		if (endless_separator === "divider") {
+			styles += '.bbb-endless-page {display: block; clear: both;}' +
+			'.bbb-endless-divider {display: block; border: 1px solid #CCCCCC; height: 0px; margin: 15px 0px; width: 100%; float: left;}' +
+			'.bbb-endless-divider-link {position: relative; top: -16px; display: inline-block; height: 32px; margin-left: 5%; padding: 0px 5px; font-size: 14px; font-weight: bold; line-height: 32px; background-color: #FFFFFF; color: #CCCCCC;}';
+		}
+		else if (endless_separator === "marker") {
+			styles += '.bbb-endless-page {display: inline;}' +
+			'.bbb-endless-marker {display: block; border: 1px solid #CCCCCC; height: 148px; width: 148px; line-height: 148px; margin: ' + totalBorderWidth + 'px ' + (totalBorderWidth + listingExtraSpace) + 'px ' + (totalBorderWidth + listingExtraSpace) + 'px ' + totalBorderWidth + 'px; text-align: center; float: left;}' +
+			'.bbb-endless-marker-link {display: inline-block; font-size: 14px; font-weight: bold; line-height: 14px; vertical-align: middle; color: #CCCCCC;}';
+		}
+		else if (endless_separator === "none")
+			styles += '.bbb-endless-page {display: inline;}';
+
 		// Hide sidebar.
 		if (autohide_sidebar) {
 			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
-			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -280px !important; overflow-y: hidden !important; padding: 0px 20px !important; top: 0px !important; z-index: 2001 !important;}' +
+			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -285px !important; overflow-y: hidden !important; padding: 0px 25px !important; top: 0px !important; z-index: 2001 !important;}' +
 			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; left: 0px !important; overflow-y: auto !important; padding: 0px 15px !important;}' +
 			'section#content {margin-left: 0px !important;}' +
 			'.ui-autocomplete {z-index: 2002 !important;}';
@@ -5171,6 +6166,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (blacklist_thumb_controls) {
 			styles += '#bbb-blacklist-tip {background-color: #FFFFFF; border: 1px solid #000000; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); display: none; font-size: 12px; line-height: 14px; padding: 5px; position: absolute; max-width: 420px; width: 420px; overflow: hidden; z-index: 9002;}' +
 			'#bbb-blacklist-tip * {font-size: 12px; line-height: 14px;}' +
+			'#bbb-blacklist-tip .blacklisted-active {text-decoration: line-through; font-weight: normal;}' +
 			'#bbb-blacklist-tip ul {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 15px;}' +
 			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active div.preview, article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link {cursor: help !important;}' +
 			'article.post-preview.blacklisted.blacklisted-active a, div.post.post-preview.blacklisted.blacklisted-active div.preview a {cursor: pointer !important;}' +
@@ -5251,7 +6247,38 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		document.getElementsByTagName("head")[0].appendChild(customStyles);
 	}
 
-	function formatTip(event, element, text, x, y) {
+	function postLinkNewWindowInit() {
+		// Set up the new window event listener.
+		if (post_link_new_window === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "popular"))
+			return;
+
+		document.addEventListener("click", postLinkNewWindow, false);
+	}
+
+	function postLinkNewWindow(event) {
+		// Make thumbnail clicks open in a new tab/window.
+		if (event.button !== 0 || event.ctrlKey || event.shiftKey)
+			return;
+
+		if ((bbb.endless.enabled && post_link_new_window.indexOf("endless") < 0) || (!bbb.endless.enabled && post_link_new_window.indexOf("normal") < 0))
+			return;
+
+		var target = event.target;
+		var url;
+
+		if (target.tagName === "IMG" && target.parentNode)
+			url = target.parentNode.href;
+		else if (target.tagName === "A" && target.bbbHasClass("bbb-post-link"))
+			url = target.href;
+
+
+		if (url && /\/posts\/\d+/.test(url)) {
+			window.open(url);
+			event.preventDefault();
+		}
+	}
+
+	function formatTip(event, element, content, x, y) {
 		// Position + resize the tip and display it.
 		var tip = element;
 		var windowX = event.clientX;
@@ -5259,7 +6286,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var topOffset = 0;
 		var leftOffset = 0;
 
-		tip.innerHTML = text;
+		if (typeof(content) === "string")
+			tip.innerHTML = content;
+		else {
+			tip.innerHTML = "";
+			tip.appendChild(content);
+		}
+
 		tip.style.visibility = "hidden";
 		tip.style.display = "block";
 
@@ -5298,6 +6331,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var match = false;
 
 			switch (event.keyCode) {
+				case 69: // "e"
+					if (gLoc === "search" || gLoc === "pool" || gLoc === "notes" || gLoc === "favorites") {
+						match = true;
+						endlessToggle();
+					}
+					break;
 				case 86: // "v"
 					if (gLoc === "post") {
 						match = true;
@@ -5354,7 +6393,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				linkHref = link.getAttribute("href"); // Use getAttribute so that we get the exact value. "link.href" adds in the domain.
 
 				if (linkHref && !/page=/.test(linkHref) && (linkHref.indexOf("/posts?") === 0 || linkHref.indexOf("/favorites?") === 0))
-					link.href = updateUrlQuery(linkHref, {limit: newLimit});
+					link.href = updateURLQuery(linkHref, {limit: newLimit});
 			}
 		}
 
@@ -5366,7 +6405,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				linkHref = link.getAttribute("href");
 
 				if (linkHref && (linkHref.indexOf("limit=") > -1 || linkHref.indexOf("/posts") === 0 || linkHref === "/" || linkHref === "/notes?group_by=post" || linkHref === "/favorites"))
-					link.href = updateUrlQuery(linkHref, {limit: newLimit});
+					link.href = updateURLQuery(linkHref, {limit: newLimit});
 			}
 		}
 
@@ -5406,7 +6445,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function getLimit(url) {
-		// Retrieve the current limit value. The query limit overrides the search limit.
+		// Retrieve the current specified limit value. The query limit overrides the search limit.
 		var queryLimit = getQueryLimit(url);
 		var searchLimit = getSearchLimit(url);
 		var limit = (queryLimit !== undefined ? queryLimit : searchLimit);
@@ -5415,42 +6454,45 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function getQueryLimit(url) {
+		// Retrieve the limit from a URL's query portion. Always use the default for certain areas where the limit is not allowed.
 		var queryLimit = getVar("limit", url);
-		var limit;
+		var loc = danbLoc(url);
 
-		if (queryLimit !== null && queryLimit !== undefined) { // Treat the limit as undefined when the limit parameter is declared with no value.
+		if (loc === "pool" || loc === "popular") // Any specified limit doesn't matter for the pool and popular listings.
+			return thumbnail_count_default;
+		else if (queryLimit !== null && queryLimit !== undefined) { // Treat the limit as undefined when the limit parameter is declared with no value.
 			queryLimit = decodeURIComponent(queryLimit);
 
 			if (queryLimit === "" || !/^\s*\d+/.test(queryLimit)) // No thumbnails show up when the limit is declared with a blank value or has no number directly after any potential white space.
-				limit = 0;
+				return 0;
 			else // The query limit finds its value in a manner similar to parseInt. Dump leading spaces and grab numbers until a non-numerical character is hit.
-				limit = parseInt(queryLimit, 10);
+				return parseInt(queryLimit, 10);
 		}
 
-		return limit;
+		return undefined;
 	}
 
 	function getSearchLimit(url) {
+		// Retrieve the limit from the search/limit tag used in a search.
 		var searchLimit = getTagVar("limit", url);
-		var limit;
 
 		if (searchLimit !== undefined) {
 			searchLimit = decodeURIComponent(searchLimit);
 
 			if (searchLimit === "") // No thumbnails show up when the limit is declared but left blank.
-				limit = 0;
+				return 0;
 			else if (!bbbIsNum(searchLimit.replace(/\s/g, "")) || searchLimit.indexOf(".") > -1 || Number(searchLimit) < 0) // Non-numerical, negative, and decimal values are ignored. Treat the limit as undefined.
-				limit = undefined;
+				return undefined;
 			else
-				limit = Number(searchLimit);
+				return Number(searchLimit);
 		}
 
-		return limit;
+		return undefined;
 	}
 
 	function arrowNav() {
 		// Bind the arrow keys to Danbooru's page navigation.
-		var paginator = document.getElementsByClassName("paginator")[0];
+		var paginator = getPaginator();
 
 		if (!arrow_nav || (!paginator && gLoc !== "popular")) // If the paginator exists, arrow navigation should be applicable.
 			return;
@@ -5505,10 +6547,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				target.blur();
 		}, false);
 		sidebar.addEventListener("focus", function() {
-			sidebar.className += " bbb-sidebar-show";
+			sidebar.bbbAddClass("bbb-sidebar-show");
 		}, true);
 		sidebar.addEventListener("blur", function() {
-			sidebar.className = sidebar.className.replace(/\s?bbb-sidebar-show/gi, "");
+			sidebar.bbbRemoveClass("bbb-sidebar-show");
 		}, true);
 	}
 
@@ -5538,22 +6580,45 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function allowUserLimit() {
-		// Allow use of the user limit on the first page if there isn't a search limit and the current limit doesn't equal the user limit.
+		// Allow use of the user thumbnail limit on the first page if there isn't a search limit and the current limit doesn't equal the user limit.
 		var page = Number(getVar("page")) || 1; // When set to 0 or undefined, the first page is shown.
 		var queryLimit = getQueryLimit();
 		var searchLimit = getSearchLimit();
 		var limit = (queryLimit !== undefined ? queryLimit : searchLimit) || thumbnail_count_default;
+		var allowedLoc = (gLoc === "search" || gLoc === "notes" || gLoc === "favorites");
 
-		if (thumbnail_count && thumbnail_count !== limit && page === 1 && (searchLimit === undefined || queryLimit !== undefined))
+		if (allowedLoc && thumbnail_count && thumbnail_count !== limit && page === 1 && (searchLimit === undefined || queryLimit !== undefined))
 			return true;
 		else
 			return false;
 	}
 
-	function currentLoc() {
-		// Test the page URL to find which section of Danbooru the script is running on.
-		var path = location.pathname;
-		var query = location.search;
+	function noResultsPage(pageEl) {
+		// Check whether a page has zero results on it.
+		var target = pageEl || document.body;
+		var numPosts = getPosts(target).length;
+		var thumbContainer = getThumbContainer(gLoc, target) || target;
+		var thumbContainerText = (thumbContainer ? thumbContainer.textContent : "");
+
+		if (!numPosts && thumbContainerText.indexOf("Nobody here but us chickens") > -1)
+			return true;
+		else
+			return false;
+	}
+
+	function danbLoc(url) {
+		// Test a URL to find which section of Danbooru the script is running on.
+		var target;
+
+		if (url) {
+			target = document.createElement("a");
+			target.href = url;
+		}
+		else
+			target = location;
+
+		var path = target.pathname;
+		var query = target.search;
 
 		if (/\/posts\/\d+/.test(path))
 			return "post";
@@ -5593,23 +6658,31 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function noXML() {
 		// Don't use XML requests on certain pages where it won't do any good.
 		var limit = getLimit();
-		var page = getVar("page");
-		var result = false;
+		var pageNum = getVar("page");
+		var page = document.getElementById("page") || document.body;
+		var pageText = (page ? page.textContent : "");
+		var paginator = getPaginator();
 
-		if (gLoc === "search" || gLoc === "favorites") {
-			if (limit === 0 || page === "b1")
-				result = true;
+		if (!paginator && (pageText.indexOf("canceling statement due to statement timeout") > -1 || pageText.indexOf("You cannot search for more than") > -1))
+			return true;
+		else if (gLoc === "search" || gLoc === "favorites") {
+			if (limit === 0 || pageNum === "b1" || noResultsPage())
+				return true;
 		}
 		else if (gLoc === "notes") {
-			if (limit === 0)
-				result = true;
+			if (limit === 0 || noResultsPage())
+				return true;
 		}
 		else if (gLoc === "comments") {
-			if (page === "b1")
-				result = true;
+			if (pageNum === "b1" || noResultsPage())
+				return true;
+		}
+		else if (gLoc === "pool") {
+			if (noResultsPage())
+				return true;
 		}
 
-		return result;
+		return false;
 	}
 
 	function useAPI() {
@@ -5703,36 +6776,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return scrollDiff;
 	}
 
-	Element.prototype.bbbGetPadding = function() {
-		// Get all the padding measurements of an element including the total width and height.
-		if (window.getComputedStyle) {
-			var computed = window.getComputedStyle(this, null);
-			var paddingLeft = parseFloat(computed.paddingLeft);
-			var paddingRight = parseFloat(computed.paddingRight);
-			var paddingTop = parseFloat(computed.paddingTop);
-			var paddingBottom = parseFloat(computed.paddingBottom);
-			var paddingHeight = paddingTop + paddingBottom;
-			var paddingWidth = paddingLeft + paddingRight;
-			return {width: paddingWidth, height: paddingHeight, top: paddingTop, bottom: paddingBottom, left: paddingLeft, right: paddingRight};
-		}
-	};
-
-	String.prototype.bbbSpacePad = function() {
-		// Add a leading and trailing space.
-		var text = this;
-		return (text.length ? " " + text + " " : text);
-	};
-
-	String.prototype.bbbSpaceClean = function() {
-		// Remove leading, trailing, and multiple spaces.
-		return this.replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
-	};
-
-	String.prototype.bbbTagClean = function() {
-		// Remove extra commas along with leading, trailing, and multiple spaces.
-		return this.replace(/[\s,]*,[\s,]*/g, ", ").replace(/[\s,]+$|^[\s,]+/g, "").replace(/\s+/g, " ");
-	};
-
 	function bbbIsNum(value) {
 		return /^-?\d+(\.\d+)?$/.test(value);
 	}
@@ -5774,7 +6817,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return regEx.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 	}
 
-	function updateUrlQuery(url, newQueries) {
+	function updateURLQuery(url, newQueries) {
 		// Update the query portion of a URL. If a param isn't declared, it will be added. If it is, it will be updated.
 		// Assigning undefined to a param that exists will remove it. Assigning null to a param that exists will completely remove its value. Assigning null to a new param will leave it with no assigned value.
 		var urlParts = url.split(/[?#]/g, 2);
@@ -5825,25 +6868,25 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return newUrl;
 	}
 
-	Number.prototype.bbbPadDate = function() {
+	function bbbPadDate(number) {
 		// Adds a leading "0" to single digit date/time values.
-		var numString = String(this);
+		var numString = String(number);
 
 		if (numString.length === 1)
 			numString = "0" + numString;
 
 		return numString;
-	};
+	}
 
 	function timestamp(format) {
 		// Returns a simple timestamp based on the format string provided. String placeholders: y = year, m = month, d = day, hh = hours, mm = minutes, ss = seconds
 		var time = new Date();
 		var year = time.getFullYear();
-		var month = (time.getMonth() + 1).bbbPadDate();
-		var day = time.getDate().bbbPadDate();
-		var hours = time.getHours().bbbPadDate();
-		var minutes = time.getMinutes().bbbPadDate();
-		var seconds = time.getSeconds().bbbPadDate();
+		var month = bbbPadDate(time.getMonth() + 1);
+		var day = bbbPadDate(time.getDate());
+		var hours = bbbPadDate(time.getHours());
+		var minutes = bbbPadDate(time.getMinutes());
+		var seconds = bbbPadDate(time.getSeconds());
 		var stamp = format.replace("hh", hours).replace("mm", minutes).replace("ss", seconds).replace("y", year).replace("m", month).replace("d", day);
 
 		return stamp;
