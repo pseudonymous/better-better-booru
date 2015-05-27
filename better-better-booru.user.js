@@ -576,7 +576,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var posts = xml;
 		var thumbContainer = getThumbContainer(gLoc);
 		var orderedIds = (gLoc === "pool" ? optArg : undefined);
-		var paginator = getPaginator();
 		var before = getThumbSibling(gLoc);
 
 		if (!posts.length)
@@ -4716,6 +4715,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var docBottom = docRect.bottom;
 
 		var paginatorRect = paginator.getBoundingClientRect();
+		var paginatorBottom = paginatorRect.bottom;
 		var paginatorLeft = paginatorRect.left;
 		var paginatorRight = docWidth - paginatorRect.right;
 		var paginatorHeight = paginatorRect.height;
@@ -4746,9 +4746,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		style.innerHTML = '.bbb-endless-enabled.bbb-endless-fixed .paginator {position: fixed; padding: 0px; margin: 0px; bottom: 0px; left: 50%; margin-left: ' + paginatorMargAdjust + 'px;}' +
 		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu {position: relative; left: -50%; padding: ' + menuBottomAdjust + 'px 0px; background-color: #FFFFFF;}' +
 		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:first-child {padding-left: 0px;}' +
-		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:first-child a {margin-left: 0px;}' +
+		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:first-child > * {margin-left: 0px;}' +
 		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:last-child {padding-right: 0px;}' +
-		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:last-child a {margin-right: 0px;}' +
+		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:last-child > * {margin-right: 0px;}' +
 		'#bbb-endless-fixed-spacer {display: none; height: ' + paginatorHeight + 'px; clear: both; width: 100%;}' +
 		'.bbb-endless-enabled.bbb-endless-fixed #bbb-endless-fixed-spacer {display: block;}';
 
@@ -4761,7 +4761,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		document.getElementsByTagName("head")[0].appendChild(style);
 
-		bbb.endless.paginator_space = docBottom - linkBottom; // Store the amount of space between the bottom of the page and the paginator.
+		bbb.endless.paginator_space = docBottom - paginatorBottom - menuBottomAdjust; // Store the amount of space between the bottom of the page and the paginator.
 
 		window.addEventListener("scroll", endlessFixedCheck, false);
 		window.addEventListener("resize", endlessFixedCheck, false);
