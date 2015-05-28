@@ -180,6 +180,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			border_width: newOption("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3", "4:4", "5:5"]}),
 			bypass_api: newOption("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
 			clean_links: newOption("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<tiphead>Note</tiphead>Enabling this option will disable Danbooru's search navigation and active pool detection for posts."),
+			comment_score: newOption("checkbox", false, "Comment Scores", "Make comment scores visible by adding them as direct links to their respective comments."),
 			custom_status_borders: newOption("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail borders for deleted, flagged, pending, parent, and child images."),
 			custom_tag_borders: newOption("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to posts with specific tags."),
 			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, and popular listings."),
@@ -191,7 +192,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
 			endless_preload: newOption("checkbox", false, "Preload Next Page", "Start loading the next page as soon as possible.<tiphead>Note</tiphead>A preloaded page will not be appended until the scroll limit is reached."),
 			endless_remove_dup: newOption("checkbox", false, "Remove Duplicates", "When appending new pages, remove posts that already exist in the listing from the new page.<tiphead>Note</tiphead>Duplicate posts are caused by the addition of new posts to the beginning of a listing or changes to the order of the posts."),
-			endless_scroll_limit: newOption("dropdown", 500, "Scroll Limit", "Set the minimum amount of pixels that a page can have left to vertically scroll before it starts appending the next page.", {numList:[0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
+			endless_scroll_limit: newOption("dropdown", 500, "Scroll Limit", "Set the minimum amount of pixels that the window can have left to vertically scroll before it starts appending the next page.", {numList:[0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			endless_separator: newOption("dropdown", "none", "Page Separator", "Distinguish pages from each other by marking them with a separator.<br><br><b>Marker:</b> Place a thumbnail sized marker before the first thumbnail of each page.<br><br><b>Divider:</b> Completely separate pages by placing a horizontal line between them.", {txtOptions:["None:none", "Marker:marker", "Divider:divider"]}),
 			endless_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling endless pages on and off, the mode it's toggled to will override the default and persist across other pages in the same tab until it is closed."),
 			hide_ban_notice: newOption("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
@@ -238,7 +239,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar"], "Tag Sidebar"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post"], "Post Control"),
-			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add"], "Misc."),
+			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "comment_score"], "Misc."),
 			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "override_account", "thumb_cache_limit"], "Script Settings"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
@@ -289,6 +290,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var border_spacing = bbb.user.border_spacing;
 	var border_width = bbb.user.border_width;
 	var clean_links = bbb.user.clean_links;
+	var comment_score = bbb.user.comment_score;
 	var autohide_sidebar = gLocRegex.test(bbb.user.autohide_sidebar);
 	var fixed_sidebar = gLocRegex.test(bbb.user.fixed_sidebar);
 
@@ -380,6 +382,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	endlessInit();
 
 	postLinkNewWindowInit();
+
+	commentScoreInit();
 
 	cleanLinks();
 
@@ -1446,28 +1450,20 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Return a list of posts depending from the document or a specific element.
 		if (!target || target === document) // All posts in the document.
 			return document.getElementsByClassName("post-preview");
-		else if (target instanceof Element) { // All posts in a specific element.
-			if (!target.bbbHasClass("post-preview"))
-				return target.getElementsByClassName("post-preview");
-			else // Single specific post.
-				return [target];
-		}
-
-		return [];
+		else if (!target.bbbHasClass("post-preview")) // All posts in a specific element.
+			return target.getElementsByClassName("post-preview");
+		else // Single specific post.
+			return [target];
 	}
 
 	function getPaginator(target) {
 		// Return the paginator of the document or a specific element.
-		if (!target || target === document) // All posts in the document.
+		if (!target || target === document) // Paginator in the document.
 			return document.getElementsByClassName("paginator")[0];
-		else if (target instanceof Element) { // All posts in a specific element.
-			if (!target.bbbHasClass("paginator"))
-				return target.getElementsByClassName("paginator")[0];
-			else // Single specific post.
-				return target;
-		}
-
-		return undefined;
+		else if (!target.bbbHasClass("paginator")) // Paginator in a specific element.
+			return target.getElementsByClassName("paginator")[0];
+		else // Single specific paginator.
+			return target;
 	}
 
 	function getThumbContainer(mode, pageEl) {
@@ -1502,13 +1498,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function getThumbSibling(mode, pageEl) {
 		// If it exists, retrieve the element that thumbnails should be added before.
+		var target = pageEl || document;
 		var sibling;
 
-		var posts = getPosts(pageEl);
+		var posts = getPosts(target);
 		var numPosts = posts.length;
 		var lastPost = (numPosts ? posts[numPosts - 1] : undefined);
 		var lastPostParent = (lastPost ? lastPost.parentNode : undefined);
-		var thumbContainer = getThumbContainer(mode, pageEl);
+		var thumbContainer = getThumbContainer(mode, target);
 		var lastPostEl = (lastPostParent && lastPostParent !== thumbContainer && lastPostParent.parentNode === thumbContainer ? lastPostParent : lastPost);
 
 		if (lastPostEl) {
@@ -1522,8 +1519,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 		}
 		else if (mode === "pool" || mode === "notes" || mode === "favorites") {
-			var paginator = getPaginator(pageEl);
-			var contDiv = getId("bbb-endless-load-div", pageEl, "div");
+			var paginator = getPaginator(target);
+			var contDiv = getId("bbb-endless-load-div", target, "div");
 
 			sibling = contDiv || paginator;
 
@@ -1532,9 +1529,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return sibling;
 	}
 
-	function getPaginatorNextURL(pageEl) {
+	function getPaginatorNextURL(target) {
 		// Retrieve the next page's URL from the paginator.
-		var paginator = getPaginator(pageEl);
+		var paginator = getPaginator(target);
 
 		if (paginator) {
 			var paginatorLinks = paginator.getElementsByTagName("a");
@@ -1652,7 +1649,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var item = document.createElement("li");
 		item.appendChild(link);
 
-		menu.insertBefore(item, moreItem);
+		if (moreItem)
+			menu.insertBefore(item, moreItem);
+		else
+			menu.appendChild(item);
 
 		window.addEventListener("resize", adjustMenuTimer, false);
 	}
@@ -4327,7 +4327,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (menu) {
 			var menuItems = menu.getElementsByTagName("li");
 			var numMenuItems = menu.getElementsByTagName("li").length;
-			var listingItemSibling = menuItems[0];
+			var listingItemSibling = menuItems[1];
 
 			for (var i = 0; i < numMenuItems; i++) {
 				var menuLink = menuItems[i];
@@ -4337,7 +4337,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (nextLink)
 						listingItemSibling = nextLink;
 					else
-						listingItemSibling = menuLink;
+						listingItemSibling = undefined;
 
 					break;
 				}
@@ -4354,7 +4354,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var item = document.createElement("li");
 			item.appendChild(link);
 
-			menu.insertBefore(item, listingItemSibling);
+			if (listingItemSibling)
+				menu.insertBefore(item, listingItemSibling);
+			else
+				menu.appendChild(item);
 		}
 
 		// Set up the load more button.
@@ -5029,7 +5032,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function blacklistPostControl(element, matchList) {
 		// Add the blacklist post controls to a thumbnail.
-		var target = (gLoc === "comments" ? element.getElementsByClassName("preview")[0] : element );
+		var target = (gLoc === "comments" || gLoc === "comment_search" || gLoc === "comment" ? element.getElementsByClassName("preview")[0] : element ); // Thumbnails with comments are special cases.
 		var id = element.getAttribute("data-id");
 		var tip = bbb.el.blacklistTip;
 
@@ -5773,7 +5776,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (activeMenu && activeMenu.textContent === "Posts" && secondMenu) {
 			var menuItems = secondMenu.getElementsByTagName("li");
 			var numMenuItems = secondMenu.getElementsByTagName("li").length;
-			var listingItemSibling = menuItems[0];
+			var listingItemSibling = menuItems[1];
 
 			for (var i = 0; i < numMenuItems; i++) {
 				var menuLink = menuItems[i];
@@ -5783,7 +5786,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (nextLink)
 						listingItemSibling = nextLink;
 					else
-						listingItemSibling = menuLink;
+						listingItemSibling = undefined;
 
 					break;
 				}
@@ -5802,7 +5805,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var item = document.createElement("li");
 			item.appendChild(link);
 
-			secondMenu.insertBefore(item, listingItemSibling);
+			if (listingItemSibling)
+				secondMenu.insertBefore(item, listingItemSibling);
+			else
+				secondMenu.appendChild(item);
 		}
 
 		if (gLoc === "search") {
@@ -6247,6 +6253,75 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		document.getElementsByTagName("head")[0].appendChild(customStyles);
 	}
 
+	function commentScoreInit() {
+		// Set up the initial comment scores and get ready to handle new comments.
+		if (!comment_score || (gLoc !== "comments" && gLoc !== "comment_search" && gLoc !== "comment" && gLoc !== "post"))
+			return;
+
+		var paginator = getPaginator();
+		var watchedNode = (paginator ? paginator.parentNode : document.body);
+
+		watchedNode.bbbWatchNodes(commentScore);
+
+		commentScore();
+	}
+
+	function commentScore() {
+		// Add score links to comments that link directly to that comment.
+		var comments = document.getElementsByClassName("comment");
+		var scoredComments = document.getElementsByClassName("bbb-comment-score");
+
+		// If all the comments are scored, just stop.
+		if (comments.length === scoredComments.length)
+			return;
+
+		for (var i = 0, il = comments.length; i < il; i++) {
+			var comment = comments[i];
+
+			// Skip if the comment is already scored.
+			if (comment.getElementsByClassName("bbb-comment-score").length)
+				continue;
+
+			var score = comment.getAttribute("data-score");
+			var commentId = comment.getAttribute("data-comment-id");
+			var content = comment.getElementsByClassName("content")[0];
+			var menu = (content ? content.getElementsByTagName("menu")[0] : undefined);
+
+			if (content && !menu) {
+				menu = document.createElement("menu");
+				content.appendChild(menu);
+			}
+
+			var menuItems = menu.getElementsByTagName("li");
+			var listingItemSibling = menuItems[1];
+
+			for (var j = 0, jl = menuItems.length; j < jl; j++) {
+				var menuItem = menuItems[j];
+				var nextItem = menuItems[j + 1];
+
+				if (menuItem.textContent.indexOf("Reply") > -1) {
+					if (nextItem)
+						listingItemSibling = nextItem;
+					else
+						listingItemSibling = undefined;
+				}
+			}
+
+			var scoreItem = document.createElement("li");
+			scoreItem.className = "bbb-comment-score";
+
+			var scoreLink = document.createElement("a");
+			scoreLink.innerHTML = "Score: " + score;
+			scoreLink.href = "/comments/" + commentId;
+			scoreItem.appendChild(scoreLink);
+
+			if (listingItemSibling)
+				menu.insertBefore(scoreItem, listingItemSibling);
+			else
+				menu.appendChild(scoreItem);
+		}
+	}
+
 	function postLinkNewWindowInit() {
 		// Set up the new window event listener.
 		if (post_link_new_window === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "popular"))
@@ -6626,8 +6701,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return "search";
 		else if (/^\/notes\/?$/.test(path) && query.indexOf("group_by=note") < 0)
 			return "notes";
-		else if (/^\/comments\/?$/.test(path) && query.indexOf("group_by=comment") < 0)
-			return "comments";
+		else if (/^\/comments\/?$/.test(path)) {
+			if (query.indexOf("group_by=comment") < 0)
+				return "comments";
+			else // This may need to be more specific in the future.
+				return "comment_search";
+		}
+		else if (/^\/comments\/\d+$/.test(path))
+			return "comment";
 		else if (path.indexOf("/explore/posts/popular") === 0)
 			return "popular";
 		else if (/\/pools\/\d+/.test(path))
