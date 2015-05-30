@@ -169,13 +169,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
-			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <br><br><b>Below Header:</b> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <br><br><b>Post Content:</b> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
+			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
 			blacklist_add_bars: newOption("dropdown", "none", "Additional Bars", "Add blacklist bars to the comments, notes, and/or pool listings so that blacklist entries can be toggled as needed.", {txtOptions:["Disabled:none", "Comments:comments", "Notes:notes", "Pools:pool pool_gallery", "Comments & Notes:comments notes", "Comments & Pools:comments pool pool_gallery", "Notes & Pools:notes pool pool_gallery", "All:comments notes pool pool_gallery"]}),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
 			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted post thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"x\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
-			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <br><br><b>Removed:</b> The default Danbooru behavior where the posts and the space they take up are completely removed. <br><br><b>Hidden:</b> Post space is preserved, but thumbnails are hidden. <br><br><b>Replaced:</b> Thumbnails are replaced by \"Blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
+			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> The default Danbooru behavior where the posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"Blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
-			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <br><br><b>Highlight:</b> Change the background color of blacklisted thumbnails. <br><br><b>Icon Overlay:</b> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
+			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <tipdesc>Highlight:</tipdesc> Change the background color of blacklisted thumbnails. <tipdesc>Icon Overlay:</tipdesc> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
 			border_spacing: newOption("dropdown", 0, "Border Spacing", "Set the amount of blank space between a border and thumbnail and between a custom tag border and status border. <tiphead>Note</tiphead>Even when set to 0, status borders and custom tag borders will always have a minimum value of 1 between them. <tiphead>Tip</tiphead>Use this option if you often have trouble distinguishing a border from the thumbnail image.", {txtOptions:["0 (Default):0", "1:1", "2:2", "3:3"]}),
 			border_width: newOption("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3", "4:4", "5:5"]}),
 			bypass_api: newOption("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
@@ -186,14 +186,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, and popular listings."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
 			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar always visible for favorites and/or search listings by fixing it to the side of the window when it would not normally be visible. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window, the \"search tag scrollbars\" option may be needed to make all sidebar content viewable.", {txtOptions:["Disabled:none", "Favorites:favorites", "Searches:search", "Favorites & Searches:favorites search"]}),
-			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages and set how it starts up on each page.<br><br><b>Disabled:</b> Don't allow any features.<br><br><b>Off:</b> Start up with all features off. <br><br><b>On:</b> Start up with all features on.<br><br><b>Paused:</b> Start up with all features on, but do not append new pages until the \"Load More\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"Endless\" link next to the \"Listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
+			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages and set how it starts up on each page.<tipdesc>Disabled:</tipdesc> Don't allow any features.<tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"Load More\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"Endless\" link next to the \"Listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
 			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and fill the blank spots with them.<tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
-			endless_fixed_paginator: newOption("dropdown", "disabled", "Fixed Paginator", "Make the paginator always visible by fixing it to the bottom of the window when it would not normally be visible.<br><br><b>Disabled:</b> Don't modify the paginator at all.<br><br><b>Enabled:</b> Allow the paginator to fix itself to the bottom of the window.<br><br><b>Minimal:</b> Allow the paginator to fix itself to the bottom of the window and make it smaller by removing most of the blank space within it.", {txtOptions:["Disabled:disabled", "Enabled:enabled", "Minimal:minimal"]}),
+			endless_fixed_paginator: newOption("dropdown", "disabled", "Fixed Paginator", "Make the paginator always visible by fixing it to the bottom of the window when it would not normally be visible.<tipdesc>Disabled:</tipdesc> Don't modify the paginator at all.<tipdesc>Fixed:</tipdesc> Allow the paginator to fix itself to the bottom of the window.<tipdesc>Minimal:</tipdesc> Allow the paginator to fix itself to the bottom of the window and make it smaller by removing most of the blank space within it.", {txtOptions:["Disabled:disabled", "Fixed:fixed", "Minimal:minimal"]}),
 			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
 			endless_preload: newOption("checkbox", false, "Preload Next Page", "Start loading the next page as soon as possible.<tiphead>Note</tiphead>A preloaded page will not be appended until the scroll limit is reached."),
 			endless_remove_dup: newOption("checkbox", false, "Remove Duplicates", "When appending new pages, remove posts that already exist in the listing from the new page.<tiphead>Note</tiphead>Duplicate posts are caused by the addition of new posts to the beginning of a listing or changes to the order of the posts."),
 			endless_scroll_limit: newOption("dropdown", 500, "Scroll Limit", "Set the minimum amount of pixels that the window can have left to vertically scroll before it starts appending the next page.", {numList:[0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
-			endless_separator: newOption("dropdown", "none", "Page Separator", "Distinguish pages from each other by marking them with a separator.<br><br><b>Marker:</b> Place a thumbnail sized marker before the first thumbnail of each page.<br><br><b>Divider:</b> Completely separate pages by placing a horizontal line between them.", {txtOptions:["None:none", "Marker:marker", "Divider:divider"]}),
+			endless_separator: newOption("dropdown", "none", "Page Separator", "Distinguish pages from each other by marking them with a separator.<tipdesc>Marker:</tipdesc> Place a thumbnail sized marker before the first thumbnail of each page.<tipdesc>Divider:</tipdesc> Completely separate pages by placing a horizontal line between them.", {txtOptions:["None:none", "Marker:marker", "Divider:divider"]}),
 			endless_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling endless pages on and off, the mode it's toggled to will override the default and persist across other pages in the same tab until it is closed."),
 			hide_ban_notice: newOption("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 			hide_comment_notice: newOption("checkbox", false, "Hide Comment Guide Notice", "Hide the Danbooru comment guide notice."),
@@ -203,7 +203,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			hide_tos_notice: newOption("checkbox", false, "Hide TOS Notice", "Hide the Danbooru terms of service agreement notice."),
 			hide_upgrade_notice: newOption("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
 			hide_upload_notice: newOption("checkbox", false, "Hide Upload Guide Notice", "Hide the Danbooru upload guide notice."),
-			image_swap_mode: newOption("dropdown", "load", "Image Swap Mode", "Set how swapping between the sample and original image is done.<br><br><b>Load First:</b> Display the image being swapped in after it has finished downloading. <br><br><b>View While Loading:</b> Immediately display the image being swapped in while it is downloading.", {txtOptions:["Load First (Default):load", "View While Loading:view"]}),
+			image_swap_mode: newOption("dropdown", "load", "Image Swap Mode", "Set how swapping between the sample and original image is done.<tipdesc>Load First:</tipdesc> Display the image being swapped in after it has finished downloading. <tipdesc>View While Loading:</tipdesc> Immediately display the image being swapped in while it is downloading.", {txtOptions:["Load First (Default):load", "View While Loading:view"]}),
 			search_tag_scrollbars: newOption("dropdown", 0, "Search Tag Scrollbars", "Limit the length of the sidebar tag list for the search listing by restricting it to a set height in pixels. When the list exceeds the set height, a scrollbar will be added to allow the rest of the list to be viewed.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"Default image width\" setting will override this option."),
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
@@ -225,6 +225,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			show_shota: newOption("checkbox", false, "Show Shota", "Display shota posts in the search, pool, popular, favorites, comments, and notes listings."),
 			show_toddlercon: newOption("checkbox", false, "Show Toddlercon", "Display toddlercon posts in the search, pool, popular, favorites, comments, and notes listings."),
 			single_color_borders: newOption("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
+			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score(&#x2605;), favorite count(&#x2665;), and rating (S, Q, or E) for a post with its thumbnails.<tipdesc>Disabled:</tipdesc> Display thumbnails without extra information. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
 			thumbnail_count: newOption("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search, favorites, and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
 			track_new: newOption("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<tiphead>Note</tiphead>While browsing the new posts, the current page of posts is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the posts where browsing was left off at.<tiphead>Tip</tiphead>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
@@ -234,7 +235,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		},
 		sections: { // Setting sections and ordering.
 			blacklist_options: newSection("general", ["blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
-			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "post_link_new_window"], "Post Browsing"),
+			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_fixed_paginator", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar"], "Tag Sidebar"),
@@ -291,6 +292,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var border_width = bbb.user.border_width;
 	var clean_links = bbb.user.clean_links;
 	var comment_score = bbb.user.comment_score;
+	var thumb_info = bbb.user.thumb_info;
 	var autohide_sidebar = gLocRegex.test(bbb.user.autohide_sidebar);
 	var fixed_sidebar = gLocRegex.test(bbb.user.fixed_sidebar);
 
@@ -364,6 +366,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		fixedSidebar();
 
 	delayMe(blacklistInit);
+
+	thumbInfo();
 
 	searchAdd();
 
@@ -792,6 +796,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				childSpan.innerHTML = '<div id="post_' + post.id + '" class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-approver-id="' + post.approver_id + '" data-fav-count="' + post.fav_count + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.preview_file_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
+				// Prepare thumbnails.
+				prepThumbnails(childSpan);
+
 				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
 					document.getElementById("a-index").insertBefore(childSpan.firstChild, getPaginator());
 				else // Insert new post before the post that should follow it.
@@ -807,12 +814,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// If we don't have the expected number of posts, the API info and page are too out of sync.
 		if (existingPosts.length !== expectedPosts)
 			bbbNotice("Loading of hidden post(s) failed. Please refresh.", -1);
-
-		// Thumbnail classes and titles.
-		formatThumbnails();
-
-		// Blacklist.
-		blacklistUpdate();
 	}
 
 	function parseRelations(xml, mode, parentId) {
@@ -928,11 +929,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			event.preventDefault();
 		}, false);
 
-		// Thumbnail classes and titles.
-		formatThumbnails(newNotice);
-
-		// Blacklist.
-		blacklistUpdate(newNotice);
+		// Prepare thumbnails.
+		prepThumbnails(newNotice);
 
 		// Replace/add the notice.
 		if (target)
@@ -2171,7 +2169,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		helpButton.href = "#";
 		helpButton.innerHTML = "Help";
 		helpButton.className = "bbb-border-button";
-		helpButton.bbbSetTip("<b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<br><br><b>Status/Tags:</b> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating rules.<br><br><b>Color:</b> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<br><br><b>Style:</b> Set how the border looks. Please note that double only works with a border width of 3 or higher.<br><br><b>Move:</b> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<br><br><b>Preview:</b> Display a preview of the border's current settings.<br><br><b>Delete:</b> Remove the border and its settings.<br><br><b>New:</b> Create a new border.");
+		helpButton.bbbSetTip("<b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<tipdesc>Status/Tags:</tipdesc> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating rules.<tipdesc>Color:</tipdesc> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<tipdesc>Style:</tipdesc> Set how the border looks. Please note that double only works with a border width of 3 or higher.<tipdesc>Move:</tipdesc> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<tipdesc>Preview:</tipdesc> Display a preview of the border's current settings.<tipdesc>Delete:</tipdesc> Remove the border and its settings.<tipdesc>New:</tipdesc> Create a new border.");
 		editSpan.appendChild(helpButton);
 
 		var borderSettingsDiv = document.createElement("div");
@@ -3948,6 +3946,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Thumbnail classes and titles.
 		formatThumbnails(target);
 
+		// Thumbnail info.
+		thumbInfo(target);
+
 		// Clean links.
 		cleanLinks(target);
 
@@ -5032,7 +5033,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function blacklistPostControl(element, matchList) {
 		// Add the blacklist post controls to a thumbnail.
-		var target = (gLoc === "comments" || gLoc === "comment_search" || gLoc === "comment" ? element.getElementsByClassName("preview")[0] : element ); // Thumbnails with comments are special cases.
+		var target = element.getElementsByClassName("preview")[0] || element;
 		var id = element.getAttribute("data-id");
 		var tip = bbb.el.blacklistTip;
 
@@ -5988,6 +5989,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 420px; width: 420px; overflow: hidden; z-index: 9002; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);}' +
 		'#bbb-expl * {font-size: 12px;}' +
 		'#bbb-expl tiphead {display: block; font-weight: bold; text-decoration: underline; font-size: 13px; margin-top: 12px;}' +
+		'#bbb-expl tipdesc {display: inline; font-weight: bold;}' +
+		'#bbb-expl tipdesc:before {content: "\\A0"; display: block; height: 12px; clear: both;}' + // Simulate a double line break.
 		'#bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; text-align: right; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
 		'#bbb-notice-container {position: fixed; top: 0.5em; left: 25%; width: 50%;}' +
 		'#bbb-notice {padding: 3px; width: 100%; display: none; position: relative; z-index: 9002; border-radius: 2px; border: 1px solid #000000; background-color: #CCCCCC;}' +
@@ -6001,12 +6004,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'section#content {padding: 0px !important;}';
 		}
 
-		// Border setup.
+		// Calculate some dimensions.
 		var totalBorderWidth = (custom_tag_borders ? border_width * 2 + (border_spacing * 2 || 1) : border_width + border_spacing);
 		var thumbMaxDim = 150 + totalBorderWidth * 2;
 		var listingExtraSpace = (14 - totalBorderWidth * 2 > 2 ? 14 - totalBorderWidth * 2 : 2);
 		var commentExtraSpace = 34 - totalBorderWidth * 2;
 		var customBorderSpacing = (border_spacing || 1);
+
+		// Border setup.
 		var sbsl = status_borders.length;
 		var statusBorderItem;
 
@@ -6092,6 +6097,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 		}
 
+		// Thumbnail info.
+		var thumbInfoStyle = "height: 18px; font-size: 14px; line-height: 18px; text-align: center;";
+
+		if (thumb_info === "below") {
+			styles += '.bbb-thumb-info-parent .bbb-thumb-info {display: block;' + thumbInfoStyle + '}' +
+			'article.post-preview.bbb-thumb-info-parent, .post-preview div.preview.bbb-thumb-info-parent {height: ' + (thumbMaxDim + 18) + 'px !important;}'; // Adjust thumbnail height space to allocate for the info.
+		}
+		else if (thumb_info === "hover") {
+			styles += '.bbb-thumb-info-parent .bbb-thumb-info {display: none; position: relative; bottom: 18px; background-color: rgba(255, 255, 255, 0.9);' + thumbInfoStyle + '}' +
+			'.bbb-thumb-info-parent:hover .bbb-thumb-info {display: block;}' +
+			'#has-children-relationship-preview article.post-preview.bbb-thumb-info-parent, #has-parent-relationship-preview article.post-preview.bbb-thumb-info-parent {min-width: 130px !important;}'; // Give parent/child notice thumbs a minimum width to prevent element shifting upon hover.
+		}
+
 		// Endless
 		styles += '.bbb-endless-enabled .paginator {padding: 3em 0px 0px;}' +
 		'#bbb-endless-load-div {display: none; width: 100%; height: 0px; overflow: visible; clear: both; text-align: center;}' +
@@ -6149,8 +6167,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Blacklist marking.
 		if (blacklist_thumb_mark === "icon") {
 			styles += 'article.post-preview:before, div.post.post-preview div.preview:before {content: none !important;}' + // Disable original Danbooru animated overlay.
-			'article.post-preview.blacklisted a.bbb-thumb-link:after, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after {content: " "; position: absolute; bottom: 0px; right: 0px; height: 20px; width: 20px; line-height: 20px; font-weight: bold; color: #FFFFFF; background: rgba(0, 0, 0, 0.5) url(\'' + bbbBlacklistIcon + '\');}' + // Create blacklist overlay.
-			'article.post-preview[data-tags~="animated"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="swf"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="webm"] a.bbb-thumb-link:before, div.post.post-preview[data-tags~="animated"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="swf"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="webm"] div.preview a.bbb-thumb-link:before {content: "►"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru animated overlay.
+			'article.post-preview.blacklisted a.bbb-thumb-link:after, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after {content: "\\A0"; position: absolute; bottom: 0px; right: 0px; height: 20px; width: 20px; line-height: 20px; font-weight: bold; color: #FFFFFF; background: rgba(0, 0, 0, 0.5) url(\'' + bbbBlacklistIcon + '\');}' + // Create blacklist overlay.
+			'article.post-preview[data-tags~="animated"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="swf"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="webm"] a.bbb-thumb-link:before, div.post.post-preview[data-tags~="animated"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="swf"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="webm"] div.preview a.bbb-thumb-link:before {content: "\\25BA"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru animated overlay.
 			'article.post-preview.blacklisted a.bbb-thumb-link:after, article.post-preview a.bbb-thumb-link:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after, div.post.post-preview div.preview a.bbb-thumb-link:before {margin: ' + (border_width + border_spacing) + 'px;}' + // Margin applies to posts with no borders or only a status border.
 			'article.post-preview.blacklisted a.bbb-thumb-link.bbb-custom-tag:after, article.post-preview a.bbb-thumb-link.bbb-custom-tag:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link.bbb-custom-tag:after, div.post.post-preview div.preview a.bbb-thumb-link.bbb-custom-tag:before {margin: ' + border_spacing + 'px;}' + // Margin applies to posts with only a custom border.
 			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:after, article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:before, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:after, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:before {content: none;}' + // Don't display when actively blacklisted.
@@ -6319,6 +6337,49 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				menu.insertBefore(scoreItem, listingItemSibling);
 			else
 				menu.appendChild(scoreItem);
+		}
+	}
+
+	function thumbInfo(target) {
+		// Add score, favorite count, and rating info to thumbnails.
+		var posts = getPosts(target);
+
+		if (thumb_info === "disabled" || !posts.length)
+			return;
+
+		for (var i = 0, il = posts.length; i < il; i++) {
+			var post = posts[i];
+
+			// Skip thumbnails that already have the info added.
+			if (post.getElementsByClassName("bbb-thumb-info").length)
+				continue;
+
+			var score = Number(post.getAttribute("data-score"));
+			var favCount = post.getAttribute("data-fav-count");
+			var rating = post.getAttribute("data-rating").toUpperCase();
+
+			if (gLoc === "comments") { // Add favorites info to the existing info in the comments listing.
+				var firstInfo = post.getElementsByClassName("info")[0];
+				var infoParent = (firstInfo ? firstInfo.parentNode : undefined);
+
+				if (infoParent) {
+					var favSpan = document.createElement("span");
+					favSpan.className = "info bbb-thumb-info";
+					favSpan.innerHTML = '<strong>Favorites</strong> ' + favCount;
+					infoParent.appendChild(favSpan);
+				}
+			}
+			else { // Add extra information inside of the thumbnail's parent element.
+				var thumbEl = post.getElementsByClassName("preview")[0] || post;
+				thumbEl.bbbAddClass("bbb-thumb-info-parent");
+
+				score = (score < 0 ? '<span style="color: #CC0000;">' + score + '</span>' : score);
+
+				var infoDiv = document.createElement("div");
+				infoDiv.className = "bbb-thumb-info";
+				infoDiv.innerHTML = "&#x2605;" + score + "&nbsp;&nbsp;&nbsp;&#x2665;" + favCount + "&nbsp;&nbsp;&nbsp;&nbsp;" + rating;
+				thumbEl.appendChild(infoDiv);
+			}
 		}
 	}
 
@@ -6521,9 +6582,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function getLimit(url) {
 		// Retrieve the current specified limit value. The query limit overrides the search limit.
-		var queryLimit = getQueryLimit(url);
-		var searchLimit = getSearchLimit(url);
-		var limit = (queryLimit !== undefined ? queryLimit : searchLimit);
+		var loc = danbLoc(url);
+		var limit;
+
+		if (loc === "pool" || loc === "popular") // Any specified limit doesn't matter for the pool and popular listings.
+			limit = thumbnail_count_default;
+		else {
+			var queryLimit = getQueryLimit(url);
+			var searchLimit = getSearchLimit(url);
+
+			limit = (queryLimit !== undefined ? queryLimit : searchLimit);
+		}
 
 		return limit;
 	}
@@ -6531,11 +6600,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function getQueryLimit(url) {
 		// Retrieve the limit from a URL's query portion. Always use the default for certain areas where the limit is not allowed.
 		var queryLimit = getVar("limit", url);
-		var loc = danbLoc(url);
 
-		if (loc === "pool" || loc === "popular") // Any specified limit doesn't matter for the pool and popular listings.
-			return thumbnail_count_default;
-		else if (queryLimit !== null && queryLimit !== undefined) { // Treat the limit as undefined when the limit parameter is declared with no value.
+		if (queryLimit !== null && queryLimit !== undefined) { // Treat the limit as undefined when the limit parameter is declared with no value.
 			queryLimit = decodeURIComponent(queryLimit);
 
 			if (queryLimit === "" || !/^\s*\d+/.test(queryLimit)) // No thumbnails show up when the limit is declared with a blank value or has no number directly after any potential white space.
@@ -6707,7 +6773,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			else // This may need to be more specific in the future.
 				return "comment_search";
 		}
-		else if (/^\/comments\/\d+$/.test(path))
+		else if (/\/comments\/\d+/.test(path))
 			return "comment";
 		else if (path.indexOf("/explore/posts/popular") === 0)
 			return "popular";
