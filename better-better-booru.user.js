@@ -6880,7 +6880,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var subTag = document.createElement("a");
 			subTag.href = "/posts?tags=-" + tagString + curTagString;
 			subTag.innerHTML = "-";
-			subTag.style.display = "inline-block";
 			tagFrag.appendChild(subTag);
 
 			var subSpace = document.createTextNode(" ");
@@ -6889,7 +6888,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var addTag = document.createElement("a");
 			addTag.href = "/posts?tags=" + tagString + curTagString;
 			addTag.innerHTML = "+";
-			addTag.style.display = "inline-block";
 			tagFrag.appendChild(addTag);
 
 			var addSpace = document.createTextNode(" ");
