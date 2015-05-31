@@ -369,9 +369,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	thumbInfo();
 
-	searchAdd();
-
 	removeTagHeaders();
+
+	searchAdd();
 
 	minimizeStatusNotices();
 
@@ -6015,7 +6015,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var sbsl = status_borders.length;
 		var statusBorderItem;
 
-		styles += 'article.post-preview a.bbb-thumb-link, .post-preview div.preview a.bbb-thumb-link {display: inline-block}' +
+		styles += 'article.post-preview a.bbb-thumb-link, .post-preview div.preview a.bbb-thumb-link {display: inline-block !important;}' +
 		'article.post-preview {height: ' + thumbMaxDim + 'px !important; width: ' + thumbMaxDim + 'px !important; margin: 0px ' + listingExtraSpace + 'px ' + listingExtraSpace + 'px 0px !important;}' +
 		'article.post-preview.pooled {height: ' + (thumbMaxDim + 60) + 'px !important;}' + // Pool gallery view thumb height adjustment.
 		'#has-parent-relationship-preview article.post-preview, #has-children-relationship-preview article.post-preview {padding: 5px 5px 10px !important; width: auto !important; max-width: ' + thumbMaxDim + 'px !important; margin: 0px !important;}' +
@@ -6086,7 +6086,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (custom_tag_borders) {
 			styles += '.post-preview a.bbb-thumb-link.bbb-custom-tag img {border-width: 0px !important;}' + // Remove the transparent border for images that get custom tag borders.
-			'article.post-preview a.bbb-thumb-link, .post-preview div.preview a.bbb-thumb-link {margin: ' + (border_width + customBorderSpacing) + 'px !important;}'; // Align one border images with two border images.
+			'article.post-preview a.bbb-thumb-link, .post-preview div.preview a.bbb-thumb-link {margin-top: ' + (border_width + customBorderSpacing) + 'px !important;}'; // Align one border images with two border images.
 
 			for (i = 0; i < sbsl; i++) {
 				statusBorderItem = status_borders[i];
@@ -6107,7 +6107,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (thumb_info === "hover") {
 			styles += '.bbb-thumb-info-parent .bbb-thumb-info {display: none; position: relative; bottom: 18px; background-color: rgba(255, 255, 255, 0.9);' + thumbInfoStyle + '}' +
 			'.bbb-thumb-info-parent:hover .bbb-thumb-info {display: block;}' +
-			'#has-children-relationship-preview article.post-preview.bbb-thumb-info-parent, #has-parent-relationship-preview article.post-preview.bbb-thumb-info-parent {min-width: 130px !important;}'; // Give parent/child notice thumbs a minimum width to prevent element shifting upon hover.
+			'#has-children-relationship-preview article.post-preview.bbb-thumb-info-parent, #has-parent-relationship-preview article.post-preview.bbb-thumb-info-parent {min-width: 130px !important;}' + // Give parent/child notice thumbs a minimum width to prevent element shifting upon hover.
+			'.bbb-thumb-info-parent:hover .bbb-thumb-info.bbb-thumb-info-short {bottom: 0px;}' + // Short thumbnails get no overlapping.
+			'.bbb-thumb-info-parent.blacklisted-active .bbb-thumb-info.bbb-thumb-info-short {bottom: 18px;}'; // Actively blacklisted short thumbnails get overlapping.
 		}
 
 		// Endless
@@ -6357,6 +6359,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var score = Number(post.getAttribute("data-score"));
 			var favCount = post.getAttribute("data-fav-count");
 			var rating = post.getAttribute("data-rating").toUpperCase();
+			var width = Number(post.getAttribute("data-width"));
+			var height = Number(post.getAttribute("data-height"));
+			var tooShort = (150 / width * height < 30); // Short thumbnails will need the info div position adjusted.
 
 			if (gLoc === "comments") { // Add favorites info to the existing info in the comments listing.
 				var firstInfo = post.getElementsByClassName("info")[0];
@@ -6376,7 +6381,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				score = (score < 0 ? '<span style="color: #CC0000;">' + score + '</span>' : score);
 
 				var infoDiv = document.createElement("div");
-				infoDiv.className = "bbb-thumb-info";
+				infoDiv.className = "bbb-thumb-info" + (tooShort ? " bbb-thumb-info-short" : "");
 				infoDiv.innerHTML = "&#x2605;" + score + "&nbsp;&nbsp;&nbsp;&#x2665;" + favCount + "&nbsp;&nbsp;&nbsp;&nbsp;" + rating;
 				thumbEl.appendChild(infoDiv);
 			}
@@ -6857,21 +6862,40 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function searchAdd() {
 		// Add + and - links to the sidebar tag list for modifying searches.
-		var where = document.getElementById("tag-box") || document.getElementById("tag-list");
+		var tagList = document.getElementById("tag-box") || document.getElementById("tag-list");
 
-		if (!search_add || (gLoc !== "search" && gLoc !== "post") || !where)
+		if (!search_add || !tagList || (gLoc !== "search" && gLoc !== "post"))
 			return;
 
-		where = where.getElementsByTagName("li");
+		var tagItems = tagList.getElementsByTagName("li");
+		var curTag = getVar("tags");
+		var curTagString = (curTag ? "+" + curTag : "");
 
-		var tag = getVar("tags");
-		tag = (tag ? "+" + tag : "");
+		for (var i = 0, il = tagItems.length; i < il; i++) {
+			var tagItem = tagItems[i];
+			var tagLink = tagItem.getElementsByClassName("search-tag")[0];
+			var tagString = getVar("tags", tagLink.href);
+			var tagFrag = document.createDocumentFragment();
 
-		for (var i = 0, il = where.length; i < il; i++) {
-			var listItem = where[i];
-			var newTag = getVar("tags", listItem.getElementsByClassName("search-tag")[0].href);
+			var subTag = document.createElement("a");
+			subTag.href = "/posts?tags=-" + tagString + curTagString;
+			subTag.innerHTML = "-";
+			subTag.style.display = "inline-block";
+			tagFrag.appendChild(subTag);
 
-			listItem.innerHTML = '<a href="/posts?tags=-' + newTag + tag + '">-</a> <a href="/posts?tags=' + newTag + tag + '">+</a> ' + listItem.innerHTML;
+			var subSpace = document.createTextNode(" ");
+			tagFrag.appendChild(subSpace);
+
+			var addTag = document.createElement("a");
+			addTag.href = "/posts?tags=" + tagString + curTagString;
+			addTag.innerHTML = "+";
+			addTag.style.display = "inline-block";
+			tagFrag.appendChild(addTag);
+
+			var addSpace = document.createTextNode(" ");
+			tagFrag.appendChild(addSpace);
+
+			tagItem.insertBefore(tagFrag, tagItem.firstChild);
 		}
 	}
 
