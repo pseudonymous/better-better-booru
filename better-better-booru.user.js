@@ -96,7 +96,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		for (var i = 0, il = arguments.length; i < il; i++) {
 			var classString = arguments[i];
-			var regEx = new RegExp("(?:^|\\s)" + escapeRegEx(classString) + "(?=(?:$|\\s))", "gi");
+			var regEx = new RegExp("(?:^|\\s)" + escapeRegEx(classString) + "(?=$|\\s)", "gi");
 
 			className = className.replace(regEx, "");
 		}
@@ -7221,7 +7221,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			for (i in activeLinks) {
 				if (activeLinks.hasOwnProperty(i)) {
-					var activeRegEx = new RegExp("(?:^|\\s)[-~]*" + escapeRegEx(i) + "($|\\s)", "gi");
+					var activeRegEx = new RegExp("(?:^|\\s)[-~]*" + escapeRegEx(i) + "(?:$|\\s)", "gi");
 
 					if (!activeRegEx.test(value))
 						activeLinks[i].innerHTML = "&raquo;";
@@ -7258,7 +7258,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var linkType = link.innerHTML;
 		var input = document.getElementById("tags");
 		var inputValue = input.value;
-		var tagRegEx = new RegExp("(^|\\s)[-~]*" + escapeRegEx(tag) + "($|\\s)", "gi");
+		var tagRegEx = new RegExp("(^|\\s)[-~]*" + escapeRegEx(tag) + "(?=$|\\s)", "gi");
 		var angleQuotes = String.fromCharCode(187);
 		var enDash = String.fromCharCode(8211);
 
@@ -7281,7 +7281,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				link.innerHTML = "&ndash;";
 
 				if (tagRegEx.test(inputValue))
-					input.value = inputValue.replace(tagRegEx, "$1-" + tag + "$2").bbbSpaceClean();
+					input.value = inputValue.replace(tagRegEx, "$1-" + tag).bbbSpaceClean();
 				else
 					input.value = (inputValue + " -" + tag).bbbSpaceClean();
 				break;
@@ -7289,7 +7289,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				link.innerHTML = "~";
 
 				if (tagRegEx.test(inputValue))
-					input.value = inputValue.replace(tagRegEx, "$1~" + tag + "$2").bbbSpaceClean();
+					input.value = inputValue.replace(tagRegEx, "$1~" + tag).bbbSpaceClean();
 				else
 					input.value = (inputValue + " ~" + tag).bbbSpaceClean();
 				break;
@@ -7297,7 +7297,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				link.innerHTML = angleQuotes;
 
 				if (tagRegEx.test(inputValue))
-					input.value = inputValue.replace(tagRegEx, "$1$2").bbbSpaceClean();
+					input.value = inputValue.replace(tagRegEx, "$1").bbbSpaceClean();
 				break;
 		}
 
