@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name           better_better_booru
-// @namespace      https://greasyfork.org/scripts/3575-better-better-booru
+// @name           better_better_booru_temp
+// @namespace      https://greasyfork.org/scripts/3575-better-better-booru-temp
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
 // @version        6.5.4
@@ -65,7 +65,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		for (var i = 0, il = arguments.length; i < il; i++) {
 			var classString = arguments[i];
-			var regEx = new RegExp("(^|\\s)" + escapeRegEx(classString) + "($|\\s)");
+			var regEx = new RegExp("(?:^|\\s)" + escapeRegEx(classString) + "(?:$|\\s)", "i");
 
 			if (!regEx.test(className)) {
 				hasClass = false;
@@ -155,6 +155,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			paused: false,
 			posts: {}
 		},
+		fixed_sidebar: {
+			content: undefined,
+			left: undefined,
+			sidebar: undefined,
+			top: undefined
+		},
 		post: { // Post content info and status.
 			info: {}, // Post information object.
 			resize: {
@@ -166,8 +172,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		},
 		options: { // Setting options and data.
 			bbb_version: "6.5.4",
-			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. Notes can be toggled by using the link in the sidebar options section."),
-			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. Has no effect on individual posts."),
+			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
+			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's keyboard shortcut for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
 			blacklist_add_bars: newOption("dropdown", "none", "Additional Bars", "Add blacklist bars to the comments, notes, and/or pool listings so that blacklist entries can be toggled as needed.", {txtOptions:["Disabled:none", "Comments:comments", "Notes:notes", "Pools:pool pool_gallery", "Comments & Notes:comments notes", "Comments & Pools:comments pool pool_gallery", "Notes & Pools:notes pool pool_gallery", "All:comments notes pool pool_gallery"]}),
@@ -180,15 +186,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			border_width: newOption("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3", "4:4", "5:5"]}),
 			bypass_api: newOption("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
 			clean_links: newOption("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<tiphead>Note</tiphead>Enabling this option will disable Danbooru's search navigation and active pool detection for posts."),
+			collapse_sidebar: newOption("checkbox", false, "Collapsible Sidebar", "Allow sections in the sidebar to be expanded and collapsed via clicking their header titles.<tiphead>Note</tiphead>Sections can be set to default to expanded or collapsed by right clicking their titles."),
 			comment_score: newOption("checkbox", false, "Comment Scores", "Make comment scores visible by adding them as direct links to their respective comments."),
 			custom_status_borders: newOption("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail borders for deleted, flagged, pending, parent, and child images."),
 			custom_tag_borders: newOption("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to posts with specific tags."),
 			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, and popular listings."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
-			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar always visible for favorites and/or search listings by fixing it to the side of the window when it would not normally be visible. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window, the \"search tag scrollbars\" option may be needed to make all sidebar content viewable.", {txtOptions:["Disabled:none", "Favorites:favorites", "Searches:search", "Favorites & Searches:favorites search"]}),
-			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages and set how it starts up on each page.<tipdesc>Disabled:</tipdesc> Don't allow any features.<tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"Load More\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"Endless\" link next to the \"Listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
-			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and fill the blank spots with them.<tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
-			endless_fixed_paginator: newOption("dropdown", "disabled", "Fixed Paginator", "Make the paginator always visible by fixing it to the bottom of the window when it would not normally be visible.<tipdesc>Disabled:</tipdesc> Don't modify the paginator at all.<tipdesc>Fixed:</tipdesc> Allow the paginator to fix itself to the bottom of the window.<tipdesc>Minimal:</tipdesc> Allow the paginator to fix itself to the bottom of the window and make it smaller by removing most of the blank space within it.", {txtOptions:["Disabled:disabled", "Fixed:fixed", "Minimal:minimal"]}),
+			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar never completely vertically scroll out of view for posts, favorites listings, and/or searches by fixing it to the top or bottom of the window when it would normally start scrolling out of view. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window and the Danbooru location being modified, the \"tag scrollbars\", \"collapsible sidebar\", and/or \"remove tag headers\"  options may be needed for best results.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
+			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages and set how it starts up on each page. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"Load More\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"Endless\" link next to the \"Listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
+			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and add them to the new page until the desired number of thumbnails is reached. <tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
+			endless_fixed_paginator: newOption("dropdown", "disabled", "Fixed Paginator", "Make the paginator always visible by fixing it to the bottom of the window when it would not normally be visible. <tipdesc>Fixed:</tipdesc> Allow the paginator to fix itself to the bottom of the window.<tipdesc>Minimal:</tipdesc> Allow the paginator to fix itself to the bottom of the window and make it smaller by removing most of the blank space within it.", {txtOptions:["Disabled:disabled", "Fixed:fixed", "Minimal:minimal"]}),
 			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
 			endless_preload: newOption("checkbox", false, "Preload Next Page", "Start loading the next page as soon as possible.<tiphead>Note</tiphead>A preloaded page will not be appended until the scroll limit is reached."),
 			endless_remove_dup: newOption("checkbox", false, "Remove Duplicates", "When appending new pages, remove posts that already exist in the listing from the new page.<tiphead>Note</tiphead>Duplicate posts are caused by the addition of new posts to the beginning of a listing or changes to the order of the posts."),
@@ -205,19 +212,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			hide_upload_notice: newOption("checkbox", false, "Hide Upload Guide Notice", "Hide the Danbooru upload guide notice."),
 			image_swap_mode: newOption("dropdown", "load", "Image Swap Mode", "Set how swapping between the sample and original image is done.<tipdesc>Load First:</tipdesc> Display the image being swapped in after it has finished downloading. <tipdesc>View While Loading:</tipdesc> Immediately display the image being swapped in while it is downloading.", {txtOptions:["Load First (Default):load", "View While Loading:view"]}),
 			search_tag_scrollbars: newOption("dropdown", 0, "Search Tag Scrollbars", "Limit the length of the sidebar tag list for the search listing by restricting it to a set height in pixels. When the list exceeds the set height, a scrollbar will be added to allow the rest of the list to be viewed.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
-			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"Default image width\" setting will override this option."),
+			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option."),
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			override_account: newOption("checkbox", false, "Override Account Settings", "Allow the \"resize post\", \"load sample first\", and \"blacklist\" settings to override their corresponding account settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
 			post_drag_scroll: newOption("checkbox", false, "Post Drag Scrolling", "While holding down left click on a post's content, mouse movement can be used to scroll the whole page and reposition the content.<tiphead>Note</tiphead>This option is automatically disabled when translation mode is active."),
 			post_link_new_window: newOption("dropdown", "none", "New Tab/Window", "Force post links in the search, pool, popular, favorites, and notes listings to open in a new tab/window during normal and/or endless page browsing.<tiphead>Note</tiphead>Whether the post opens in a new tab or window depends upon your browser configuration.", {txtOptions:["Disabled:disabled", "Endless:endless", "Normal:normal", "Always:endless normal"]}),
-			post_resize: newOption("checkbox", true, "Resize Post", "Shrink large post content to fit the browser window when initially loading a post.<tiphead>Note</tiphead>When logged in, the account's \"Fit images to window\" setting will override this option."),
+			post_resize: newOption("checkbox", true, "Resize Post", "Shrink large post content to fit the browser window when initially loading a post.<tiphead>Note</tiphead>When logged in, the account's \"fit images to window\" setting will override this option."),
 			post_resize_mode: newOption("dropdown", "width", "Resize Mode", "Choose how to shrink large post content to fit the browser window when initially loading a post.", {txtOptions:["Width (Default):width", "Height:height", "Width & Height:all"]}),
-			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"Remove Tag Headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
+			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"remove tag headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			post_tag_titles: newOption("checkbox", false, "Post Tag Titles", "Change the page titles for posts to a full list of the post tags."),
 			remove_tag_headers: newOption("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
 			script_blacklisted_tags: "",
-			search_add: newOption("checkbox", true, "Search Add", "Add + and - links to the sidebar tag list that modify the current search by adding or excluding additional search terms."),
+			search_add: newOption("dropdown", "disabled", "Search Add", "Modify the sidebar tag list by adding, removing, or replacing links in the sidebar tag list that modify the current search's tags. <tipdesc>Remove:</tipdesc> Remove any preexisting \"+\" and \"&ndash;\" links. <tipdesc>Link:</tipdesc> Add \"+\" and \"&ndash;\" links to modified versions of the current search that include or exclude their respective tags. <tipdesc>Toggle:</tipdesc> Add toggle links that modify the search box with their respective tags. Clicking a toggle link will switch between a tag being included (+), excluded (&ndash;), potentially included among other tags (~), and removed (&raquo;). Right clicking a toggle link will immediately remove its tag. If a tag already exists in the search box or gets entered/removed through alternative means, the toggle link will automatically update to reflect the tag's current status. <tiphead>Note</tiphead>The remove option is intended for users above the basic user level that want to remove the links. For users that can't normally see the links and do not wish to see them, this setting should be set to disabled.", {txtOptions:["Disabled:disabled", "Remove:remove", "Link:link", "Toggle:toggle"]}),
 			show_banned: newOption("checkbox", false, "Show Banned", "Display all banned posts in the search, pool, popular, favorites, comments, and notes listings."),
 			show_deleted: newOption("checkbox", false, "Show Deleted", "Display all deleted posts in the search, pool, popular, favorites, and notes listings. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"deleted post filter\" set to no and \"show deleted children\" set to yes in order to function properly and minimize connections to Danbooru."),
 			show_loli: newOption("checkbox", false, "Show Loli", "Display loli posts in the search, pool, popular, favorites, comments, and notes listings."),
@@ -225,20 +232,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			show_shota: newOption("checkbox", false, "Show Shota", "Display shota posts in the search, pool, popular, favorites, comments, and notes listings."),
 			show_toddlercon: newOption("checkbox", false, "Show Toddlercon", "Display toddlercon posts in the search, pool, popular, favorites, comments, and notes listings."),
 			single_color_borders: newOption("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
-			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score(&#x2605;), favorite count(&#x2665;), and rating (S, Q, or E) for a post with its thumbnails.<tipdesc>Disabled:</tipdesc> Display thumbnails without extra information. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
+			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score(&#x2605;), favorite count(&hearts;), and rating (S, Q, or E) for a post with its thumbnails. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
 			thumbnail_count: newOption("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search, favorites, and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
 			track_new: newOption("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<tiphead>Note</tiphead>While browsing the new posts, the current page of posts is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the posts where browsing was left off at.<tiphead>Tip</tiphead>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"], ["status:banned", true, "#000000", "solid"]),
 			thumb_cache_limit: newOption("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<tiphead>Note</tiphead>No actual thumbnails are cached. Only filename information used to speed up the display of hidden thumbnails is stored. Every 1000 entries is approximately equal to 0.1 megabytes of space.", {txtOptions:["Disabled:0"], numList:[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000,20000,21000,22000,23000,24000,25000,26000,27000,28000,29000,30000]}),
-			track_new_data: {viewed:0, viewing:1}
+			collapse_sidebar_data: {post: {}, thumb: {}},
+			track_new_data: {viewed: 0, viewing: 1}
+		},
+		search_add: {
+			active_links: {},
+			links: {},
+			old: ""
 		},
 		sections: { // Setting sections and ordering.
 			blacklist_options: newSection("general", ["blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_fixed_paginator", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
-			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar"], "Tag Sidebar"),
+			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post"], "Post Control"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "comment_score"], "Misc."),
 			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "override_account", "thumb_cache_limit"], "Script Settings"),
@@ -295,6 +308,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var thumb_info = bbb.user.thumb_info;
 	var autohide_sidebar = gLocRegex.test(bbb.user.autohide_sidebar);
 	var fixed_sidebar = gLocRegex.test(bbb.user.fixed_sidebar);
+	var collapse_sidebar = bbb.user.collapse_sidebar;
 
 	var bypass_api = bbb.user.bypass_api;
 	var manage_cookies = bbb.user.manage_cookies;
@@ -347,6 +361,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	// Stored data
 	var status_borders = bbb.user.status_borders;
 	var tag_borders = bbb.user.tag_borders;
+	var collapse_sidebar_data = bbb.user.collapse_sidebar_data;
 	var track_new_data = bbb.user.track_new_data;
 	var script_blacklisted_tags = bbb.user.script_blacklisted_tags;
 
@@ -358,14 +373,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	/* "INIT" */
 	customCSS(); // Contains the portions related to notices.
 
-	delayMe(formatThumbnails);
+	delayMe(formatThumbnails); // Delayed to allow Danbooru to run first.
 
-	if (autohide_sidebar)
-		autohideSidebar();
-	else if (fixed_sidebar)
-		fixedSidebar();
-
-	delayMe(blacklistInit);
+	delayMe(blacklistInit); // Delayed to allow Danbooru to run first.
 
 	thumbInfo();
 
@@ -383,7 +393,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	modifyPage();
 
-	endlessInit();
+	if (autohide_sidebar)
+		autohideSidebar();
+	else if (fixed_sidebar)
+		delayMe(fixedSidebar); // Delayed to allow Danbooru layout to finalize.
+
+	collapseSidebar();
+
+	delayMe(endlessInit); // Delayed to allow Danbooru layout to finalize.
 
 	postLinkNewWindowInit();
 
@@ -1614,10 +1631,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var menu = document.getElementById("top");
 		menu = (menu ? menu.getElementsByTagName("menu")[0] : undefined);
 
-		if (!menu) {
-			bbbNotice("The settings panel link could not be created.", -1);
+		if (!menu)
 			return;
-		}
 
 		var menuItems = menu.getElementsByTagName("li");
 		var numMenuItems = menu.getElementsByTagName("li").length;
@@ -1636,10 +1651,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
 		link.addEventListener("click", function(event) {
-			if (!bbb.el.menu.window) {
-				loadSettings();
-				createMenu();
-			}
+			createMenu();
 
 			event.preventDefault();
 		}, false);
@@ -1656,6 +1668,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function createMenu() {
+		if (bbb.el.menu.window)
+			return;
+
+		loadSettings();
+
 		var menu = bbb.el.menu.window = document.createElement("div");
 		menu.id = "bbb_menu";
 		menu.style.visibility = "hidden";
@@ -2827,14 +2844,24 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				case "6.5.3":
 				case "6.5.4":
 					// Copy over settings to their new names.
-					bbb.user.post_drag_scroll = bbb.user.image_drag_scroll;
-					bbb.user.post_resize = bbb.user.image_resize;
-					bbb.user.post_resize_mode = bbb.user.image_resize_mode;
-					bbb.user.post_tag_scrollbars = bbb.user.tag_scrollbars;
+					if (bbb.user.image_drag_scroll)
+						bbb.user.post_drag_scroll = bbb.user.image_drag_scroll;
+
+					if (bbb.user.image_resize)
+						bbb.user.post_resize = bbb.user.image_resize;
+
+					if (bbb.user.image_resize_mode)
+						bbb.user.post_resize_mode = bbb.user.image_resize_mode;
+
+					if (bbb.user.tag_scrollbars)
+						bbb.user.post_tag_scrollbars = bbb.user.tag_scrollbars;
 
 					// Convert old settings.
 					if (bbb.user.autoscroll_image)
 						bbb.user.autoscroll_post = "post";
+
+					if (bbb.user.search_add)
+						bbb.user.search_add = "link";
 
 					break;
 			}
@@ -3103,6 +3130,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postEl = postContent.el;
 		var postTag = (postEl ? postEl.tagName : undefined);
 		var translateLink = document.getElementById("translate");
+		var togglefunction;
 
 		if (post.file_ext !== "webm" && post.file_ext !== "swf") { // Don't allow translation functions on webm videos or flash.
 			if (postTag !== "VIDEO") { // Make translation mode work on non-video content.
@@ -3133,28 +3161,27 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}, false);
 			}
 			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
-				Danbooru.Note.TranslationMode.toggle = function(event) {
+				togglefunction = function(event) {
 					bbbNotice('Note editing is not allowed while using the ugoira video sample. Please use the <a href="' + updateURLQuery(location.href, {original: "1"}) + '">original</a> ugoira version for note editing.', -1);
 					event.preventDefault();
 				};
-				Danbooru.Note.Edit.show = Danbooru.Note.TranslationMode.toggle;
 
-				if (translateLink) {
-					removeDanbHotkey("n");
-					$(translateLink).unbind();
-					translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
-				}
+				Danbooru.Note.TranslationMode.toggle = togglefunction;
+				Danbooru.Note.Edit.show = togglefunction;
+
+				if (translateLink)
+					translateLink.addEventListener("click", togglefunction, false);
 			}
 		}
 		else if (translateLink) { // If the translate link exists on webm videos or flash, provide a warning.
-			Danbooru.Note.TranslationMode.toggle = function(event) {
+			togglefunction = function(event) {
 				bbbNotice('Note editing is not allowed on flash/video content.', -1);
 				event.preventDefault();
 			};
-			Danbooru.Note.Edit.show = Danbooru.Note.TranslationMode.toggle;
-			removeDanbHotkey("n");
-			$(translateLink).unbind();
-			translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
+
+			Danbooru.Note.TranslationMode.toggle = togglefunction;
+			Danbooru.Note.Edit.show = togglefunction;
+			translateLink.addEventListener("click", togglefunction, false);
 		}
 	}
 
@@ -3672,6 +3699,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (!bbb.post.translation_mode)
 				dragScrollEnable();
+
+			// Disable click behavior when dragging the video around.
+			if (targetTag === "VIDEO") {
+				document.body.addEventListener("click", function(event) {
+					if (event.button === 0 && event.target.id === "image" && bbb.drag_scroll.moved)
+						event.preventDefault();
+				}, true);
+			}
 		}
 	}
 
@@ -3729,7 +3764,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function disableEvent(event) {
 		event.preventDefault();
-		event.stopPropagation();
 	}
 
 	function translationModeToggle() {
@@ -4153,18 +4187,29 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Return the thumbnail URL query value.
 		var query = "";
 
-		if (gLoc === "search") {
-			query = getVar("tags");
+		if (gLoc === "search" || gLoc === "favorites") {
+			query = getCurTags();
 			query = (query ? "?tags=" + query : "");
 		}
 		else if (gLoc === "pool")
 			query = "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1];
-		else if (gLoc === "favorites") {
-			query = document.getElementById("tags");
-			query = (query ? "?tags=" + query.value : "");
-		}
 
 		return query;
+	}
+
+	function getCurTags() {
+		// Retrieve the current search tags for URL use.
+		var tags;
+
+		if (gLoc === "search") {
+			tags = getVar("tags") || "";
+		}
+		else if (gLoc === "favorites") {
+			tags = document.getElementById("tags");
+			tags = (tags ? tags.getAttribute("value").replace("fav:", "ordfav:").bbbSpaceClean() : ""); // Use getAttribute to avoid potential user changes to the input.
+		}
+
+		return tags;
 	}
 
 	function postDDL(target) {
@@ -4767,9 +4812,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		bbb.endless.paginator_space = docBottom - paginatorBottom - menuBottomAdjust; // Store the amount of space between the bottom of the page and the paginator.
 
+		document.body.bbbWatchNodes(endlessFixedCheck);
+		document.body.addEventListener("click", endlessFixedCheck, false);
 		window.addEventListener("scroll", endlessFixedCheck, false);
 		window.addEventListener("resize", endlessFixedCheck, false);
-		paginator.parentNode.bbbWatchNodes(endlessFixedCheck);
 
 		endlessFixedCheck();
 	}
@@ -4841,10 +4887,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Reset any blacklisted thumbnails.
-		while (blacklistedPosts[0]) {
-			var blacklistedPost = blacklistedPosts[0];
-			blacklistedPost.bbbRemoveClass("blacklisted", "blacklisted-active");
-		}
+		while (blacklistedPosts[0])
+			blacklistedPosts[0].bbbRemoveClass("blacklisted", "blacklisted-active");
 
 		// Check if there actually are any tags.
 		if (!blacklistTags || !/[^\s,]/.test(blacklistTags))
@@ -4868,7 +4912,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					blacklistItem.style.display = "none";
 
 					var blacklistLink = document.createElement("a");
-					blacklistLink.innerHTML = (blacklistTag.length < 21 ? blacklistTag + " " : blacklistTag.substring(0, 20).bbbSpaceClean() + "... ");
+					blacklistLink.innerHTML = (blacklistTag.length < 19 ? blacklistTag + " " : blacklistTag.substring(0, 18).bbbSpaceClean() + "... ");
 					blacklistLink.className = "bbb-blacklist-entry-" + i;
 					blacklistLink.setAttribute("data-bbb-blacklist-entry", i);
 					blacklistLink.addEventListener("click", blacklistLinkToggle, false);
@@ -5061,7 +5105,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					var tipContent = document.createDocumentFragment();
 
 					var header = document.createElement("b");
-					header.innerHTML = "Blacklist Matches:";
+					header.innerHTML = "Blacklist Matches";
 					tipContent.appendChild(header);
 
 					var list = document.createElement("ul");
@@ -5929,7 +5973,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			saveSettings();
 
 			bbbNotice("Posts marked as viewed. Please wait while the pages are updated.", 0);
-			location.href = "/posts?new_posts=list&tags=order:id_asc+id:>" + bbb.user.track_new_data.viewed + "&page=1&limit=" + limitNum;
+			location.href = "/posts?new_posts=list&tags=order:id_asc+id:>" + info.viewed + "&page=1&limit=" + limitNum;
 		}
 	}
 
@@ -6141,6 +6185,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'.ui-autocomplete {z-index: 2002 !important;}';
 		}
 
+		if (collapse_sidebar) {
+			styles += '#sidebar ul.bbb-collapsed-sidebar, #sidebar form.bbb-collapsed-sidebar {display: block !important; height: 0px !important; margin: 0px !important; padding: 0px !important; overflow: hidden !important;}' + // Hide the element without changing the display to "none" since that interferes with some of Danbooru's JS.
+			'#sidebar h1, #sidebar h2 {display: inline-block !important;}'; // Inline-block is possible here due to not using display in the previous rule.
+		}
+
 		// Additional blacklist bars.
 		if (blacklist_add_bars)
 			styles += '#blacklist-box.bbb-blacklist-box {margin-bottom: 1em;}' +
@@ -6202,14 +6251,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'article.post-preview.blacklisted .bbb-close-circle, div.post.post-preview.blacklisted div.preview .bbb-close-circle {display: none;}';
 		}
 
+		if (search_add === "remove")
+			styles += '.search-inc-tag, .search-exl-tag {display: none !important;}';
+
 		if (direct_downloads)
-			styles += ".bbb-ddl {display: none !important;}";
+			styles += '.bbb-ddl {display: none !important;}';
 
 		if (post_tag_scrollbars)
-			styles += "#tag-list ul {max-height: " + post_tag_scrollbars + "px !important; overflow-y: auto !important; font-size: 87.5% !important;}";
+			styles += '#tag-list ul {max-height: ' + post_tag_scrollbars + 'px !important; overflow-y: auto !important; font-size: 87.5% !important;}';
 
 		if (search_tag_scrollbars)
-			styles += "#tag-box ul {max-height: " + search_tag_scrollbars + "px !important; overflow-y: auto !important; font-size: 87.5% !important; margin-right: 2px !important;}";
+			styles += '#tag-box ul {max-height: ' + search_tag_scrollbars + 'px !important; overflow-y: auto !important; font-size: 87.5% !important; margin-right: 2px !important;}';
 
 		if (hide_tos_notice && document.getElementById("tos-notice")) {
 			styles += '#tos-notice {display: none !important;}';
@@ -6382,7 +6434,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				var infoDiv = document.createElement("div");
 				infoDiv.className = "bbb-thumb-info" + (tooShort ? " bbb-thumb-info-short" : "");
-				infoDiv.innerHTML = "&#x2605;" + score + "&nbsp;&nbsp;&nbsp;&#x2665;" + favCount + "&nbsp;&nbsp;&nbsp;&nbsp;" + rating;
+				infoDiv.innerHTML = "&#x2605;" + score + "&nbsp;&nbsp;&nbsp;&hearts;" + favCount + "&nbsp;&nbsp;&nbsp;&nbsp;" + rating;
 				thumbEl.appendChild(infoDiv);
 			}
 		}
@@ -6472,6 +6524,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var match = false;
 
 			switch (event.keyCode) {
+				case 66: // "b"
+					match = true;
+					createMenu();
+					break;
 				case 69: // "e"
 					if (gLoc === "search" || gLoc === "pool" || gLoc === "notes" || gLoc === "favorites") {
 						match = true;
@@ -6491,25 +6547,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				event.preventDefault();
 			}
 		}, true);
-	}
-
-	function removeDanbHotkey(key) {
-		// Remove a jQuery hotkey without a namespace from Danbooru.
-		try {
-			var jkp = $._data(document, "events").keypress;
-
-			for (var i = 0, il = jkp.length; i < il; i++) {
-				if (jkp[i].data.keys === key) {
-					jkp[i].namespace = "bbbdiekey";
-					$(document).unbind("keypress.bbbdiekey");
-					i--;
-					il--;
-				}
-			}
-		}
-		catch (error) {
-			return;
-		}
 	}
 
 	function fixLimit(limit) {
@@ -6701,28 +6738,175 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function fixedSidebar() {
-		// Fix the scrollbar to the side of the window when it would normally scroll out of view.
-		var sidebar = document.getElementById("sidebar");
+		// Fix the scrollbar to the top/bottom of the window when it would normally scroll out of view.
+		var sidebar = bbb.fixed_sidebar.sidebar = document.getElementById("sidebar");
+		var content = bbb.fixed_sidebar.content = document.getElementById("content");
+		var comments = document.getElementById("comments");
 
-		if (!sidebar)
+		if (!sidebar || !content || (gLoc === "post" && !comments))
 			return;
 
 		var docRect = document.documentElement.getBoundingClientRect();
 		var sidebarRect = sidebar.getBoundingClientRect();
-		var sidebarTop = sidebarRect.top - docRect.top;
-		var sidebarLeft = sidebarRect.left - docRect.left;
+		var sidebarTop = bbb.fixed_sidebar.top = sidebarRect.top - docRect.top;
+		var sidebarLeft = bbb.fixed_sidebar.left = sidebarRect.left - docRect.left;
+		var sidebarHeight = sidebarRect.height;
 
-		sidebar.style.top = "0px";
-		sidebar.style.left = sidebarLeft + "px";
+		content.style.minHeight = sidebarHeight - 1 + "px";
 
-		window.addEventListener("scroll", function() {
-			var scrolled = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+		if (comments)
+			comments.style.overflow = "auto"; // Force the contained float elements to affect the dimensions.
 
-			if (scrolled > sidebarTop)
+		fixedSidebarAdjust();
+		document.body.bbbWatchNodes(fixedSidebarAdjust);
+		document.body.addEventListener("click", fixedSidebarAdjust, false);
+		window.addEventListener("scroll", fixedSidebarAdjust, false);
+		window.addEventListener("resize", fixedSidebarAdjust, false);
+	}
+
+	function fixedSidebarAdjust() {
+		// Event handler for adjusting the sidebar position.
+		var sidebar = bbb.fixed_sidebar.sidebar;
+		var content = bbb.fixed_sidebar.content;
+		var sidebarTop = bbb.fixed_sidebar.top;
+		var sidebarLeft = bbb.fixed_sidebar.left;
+		var verScrolled = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+		var horScrolled = window.payeXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+		var sidebarHeight = sidebar.clientHeight; // Height can potentially change (blacklist update, etc.) so always recalculate it.
+		var contentHeight = content.clientHeight;
+		var viewHeight = document.documentElement.clientHeight;
+		var sidebarBottom = sidebarTop + sidebarHeight;
+		var contentBottom = sidebarTop + contentHeight;
+		var viewportBottom = verScrolled + viewHeight;
+
+		if (contentHeight < sidebarHeight) // Don't fix to window if there's no space for it to scroll.
+			sidebar.style.position = "static";
+		else if (sidebarHeight < viewHeight) { // Fix to the top of the window if not too tall and far enough down.
+			if (contentBottom < verScrolled + sidebarHeight) {
+				sidebar.style.position = "absolute";
+				sidebar.style.bottom = viewHeight - contentBottom + "px";
+				sidebar.style.top = "auto";
+			}
+			else if (sidebarTop < verScrolled ) {
 				sidebar.style.position = "fixed";
+				sidebar.style.bottom = "auto";
+				sidebar.style.top = "0px";
+			}
 			else
 				sidebar.style.position = "static";
-		}, false);
+		}
+		else { // If too tall, fix the sidebar bottom to the viewport bottom to avoid putting part of the sidebar permanently beyond reach.
+			if (viewportBottom > contentBottom) {
+				sidebar.style.position = "absolute";
+				sidebar.style.bottom = viewHeight - contentBottom + "px";
+				sidebar.style.top = "auto";
+			}
+			else if (sidebarTop > verScrolled || sidebarTop > viewportBottom - sidebarHeight)
+				sidebar.style.position = "static";
+			else if (sidebarBottom < viewportBottom) {
+				sidebar.style.position = "fixed";
+				sidebar.style.bottom = "0px";
+				sidebar.style.top = "auto";
+			}
+		}
+
+		// Maintain horizontal position in the document.
+		if (horScrolled && sidebar.style.position !== "absolute")
+			sidebar.style.left = (sidebarLeft - horScrolled) + "px";
+		else
+			sidebar.style.left = sidebarLeft + "px";
+	}
+
+	function collapseSidebar() {
+		// Allow clicking on headers to collapse and expand their respective sections.
+		var sidebar = document.getElementById("sidebar");
+
+		if (!collapse_sidebar || !sidebar)
+			return;
+
+		var dataLoc = (gLoc === "post" ? "post" : "thumb");
+		var data = collapse_sidebar_data[dataLoc];
+		var tagTypes = ["h1", "h2"]; // Tags that will be allowed to toggle.
+		var nameList = " ";
+		var removedOld = false;
+		var i, il; // Loop variables.
+
+		// Grab the desired tags and turn them into toggle elements for their section.
+		for (i = 0, il = tagTypes.length; i < il; i++) {
+			var tags = sidebar.getElementsByTagName(tagTypes[i]);
+
+			for (var j = 0, jl = tags.length; j < jl; j++) {
+				var tag = tags[j];
+				var name = tag.textContent.bbbSpaceClean().replace(" ", "_");
+				var collapse = data[name];
+				var sibling = tag.nextElementSibling;
+				nameList += name + " ";
+
+				tag.addEventListener("click", collapseSidebarToggle, false);
+				tag.addEventListener("mouseup", collapseSidebarDefaultToggle.bind(null, name), false);
+				tag.addEventListener("contextmenu", disableEvent, false);
+
+				if (collapse && sibling)
+					sibling.bbbAddClass("bbb-collapsed-sidebar");
+			}
+		}
+
+		// Clean up potential old section names.
+		for (i in data) {
+			if (data.hasOwnProperty(i)) {
+				if (nameList.indexOf(i.bbbSpacePad()) < 0) {
+					removedOld = true;
+					delete data[i];
+				}
+			}
+		}
+
+		if (removedOld) {
+			loadSettings();
+			bbb.user.collapse_sidebar_data[dataLoc] = data;
+			saveSettings();
+		}
+	}
+
+	function collapseSidebarToggle(event) {
+		// Collapse/expand a sidebar section.
+		var target = event.target;
+		var sibling = target.nextElementSibling;
+
+		if (event.button !== 0 || !sibling)
+			return;
+
+		if (sibling.bbbHasClass("bbb-collapsed-sidebar"))
+			sibling.bbbRemoveClass("bbb-collapsed-sidebar");
+		else
+			sibling.bbbAddClass("bbb-collapsed-sidebar");
+
+		event.preventDefault();
+	}
+
+	function collapseSidebarDefaultToggle(name, event) {
+		// Make a sidebar section expand/collapse by default.
+		if (event.button !== 2)
+			return;
+
+		var dataLoc = (gLoc === "post" ? "post" : "thumb");
+		var data = collapse_sidebar_data[dataLoc];
+		var collapse = data[name];
+
+		loadSettings();
+
+		if (collapse) {
+			delete bbb.user.collapse_sidebar_data[dataLoc][name];
+			delete data[name];
+		}
+		else
+			bbb.user.collapse_sidebar_data[dataLoc][name] = data[name] = true;
+
+		saveSettings();
+
+		bbbNotice("The \"" + name + "\" section will now " + (!collapse ? "collapse" : "expand") + " by default.", 3);
+
+		event.preventDefault();
 	}
 
 	function allowUserLimit() {
@@ -6812,10 +6996,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var limit = getLimit();
 		var pageNum = getVar("page");
 		var page = document.getElementById("page") || document.body;
-		var pageText = (page ? page.textContent : "");
+		var pageText = (page ? page.textContent.toLowerCase() : "");
 		var paginator = getPaginator();
 
-		if (!paginator && (pageText.indexOf("canceling statement due to statement timeout") > -1 || pageText.indexOf("You cannot search for more than") > -1))
+		if (!paginator && (pageText.indexOf("canceling statement due to statement timeout") > -1 || pageText.indexOf("you cannot search for more than") > -1 || pageText.indexOf("that record was not found") > -1))
 			return true;
 		else if (gLoc === "search" || gLoc === "favorites") {
 			if (limit === 0 || pageNum === "b1" || noResultsPage())
@@ -6861,14 +7045,61 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function searchAdd() {
+		// Choose the appropriate search link option to run.
+		if (search_add === "disabled" || (gLoc !== "search" && gLoc !== "post" && gLoc !== "favorites"))
+			return;
+
+		searchAddRemove();
+
+		if (search_add === "link")
+			searchAddLink();
+		else if (search_add === "toggle")
+			searchAddToggleLink();
+	}
+
+	function searchAddRemove() {
+		// Completely remove existing + and - tag links along with the whitespace after them.
+		var tagList = document.getElementById("tag-box") || document.getElementById("tag-list");
+
+		if (!tagList)
+			return;
+
+		var addLinks = tagList.getElementsByClassName("search-inc-tag");
+		var subLinks = tagList.getElementsByClassName("search-exl-tag");
+		var blankRegEx = /^\s*$/;
+
+		while (addLinks[0]) {
+			var addLink = addLinks[0];
+			var addSibling = addLink.nextSibling;
+			var addParent = addSibling.parentNode;
+
+			if (addSibling && addSibling.nodeType === 3 && blankRegEx.test(addSibling.nodeValue))
+				addParent.removeChild(addSibling);
+
+			addParent.removeChild(addLink);
+		}
+
+		while (subLinks[0]) {
+			var subLink = subLinks[0];
+			var subSibling = subLink.nextSibling;
+			var subParent = subSibling.parentNode;
+
+			if (subSibling && subSibling.nodeType === 3 && blankRegEx.test(subSibling.nodeValue))
+				subParent.removeChild(subSibling);
+
+			subParent.removeChild(subLink);
+		}
+	}
+
+	function searchAddLink() {
 		// Add + and - links to the sidebar tag list for modifying searches.
 		var tagList = document.getElementById("tag-box") || document.getElementById("tag-list");
 
-		if (!search_add || !tagList || (gLoc !== "search" && gLoc !== "post"))
+		if (!tagList)
 			return;
 
 		var tagItems = tagList.getElementsByTagName("li");
-		var curTag = getVar("tags");
+		var curTag = getCurTags();
 		var curTagString = (curTag ? "+" + curTag : "");
 
 		for (var i = 0, il = tagItems.length; i < il; i++) {
@@ -6877,24 +7108,200 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var tagString = getVar("tags", tagLink.href);
 			var tagFrag = document.createDocumentFragment();
 
-			var subTag = document.createElement("a");
-			subTag.href = "/posts?tags=-" + tagString + curTagString;
-			subTag.innerHTML = "-";
-			tagFrag.appendChild(subTag);
-
-			var subSpace = document.createTextNode(" ");
-			tagFrag.appendChild(subSpace);
-
 			var addTag = document.createElement("a");
 			addTag.href = "/posts?tags=" + tagString + curTagString;
 			addTag.innerHTML = "+";
+			addTag.className = "search-inc-tag";
 			tagFrag.appendChild(addTag);
 
 			var addSpace = document.createTextNode(" ");
 			tagFrag.appendChild(addSpace);
 
-			tagItem.insertBefore(tagFrag, tagItem.firstChild);
+			var subTag = document.createElement("a");
+			subTag.href = "/posts?tags=-" + tagString + curTagString;
+			subTag.innerHTML = "&ndash;";
+			subTag.className = "search-exl-tag";
+			tagFrag.appendChild(subTag);
+
+			var subSpace = document.createTextNode(" ");
+			tagFrag.appendChild(subSpace);
+
+			tagItem.insertBefore(tagFrag, tagLink);
 		}
+	}
+
+	function searchAddToggleLink() {
+		// Add toggle links to the sidebar tag list for modifying the search box value.
+		var tagList = document.getElementById("tag-box") || document.getElementById("tag-list");
+
+		if (!tagList)
+			return;
+
+		var tagItems = tagList.getElementsByTagName("li");
+		var firstItem = tagItems[0];
+		var toggleWidth;
+
+		// Find a set width for the toggle link.
+		if (firstItem) {
+			var testItem = document.createElement("li");
+			testItem.className = "category-0";
+			testItem.style.height = "0px";
+			testItem.style.visibility = "hidden";
+
+			var testLink = document.createElement("a");
+			testLink.href = "#";
+			testLink.style.display = "inline-block";
+			testItem.appendChild(testLink);
+
+			firstItem.parentNode.appendChild(testItem);
+
+			testLink.innerHTML = "-";
+			var subWidth = testLink.clientWidth;
+
+			testLink.innerHTML = "+";
+			var addWidth = testLink.clientWidth;
+
+			testLink.innerHTML = "~";
+			var orWidth = testLink.clientWidth;
+
+			toggleWidth = Math.max(subWidth, addWidth, orWidth);
+
+			firstItem.parentNode.removeChild(testItem);
+		}
+
+		// Create and insert the toggle links.
+		for (var i = 0, il = tagItems.length; i < il; i++) {
+			var tagItem = tagItems[i];
+			var tagLink = tagItem.getElementsByClassName("search-tag")[0];
+			var tagString = decodeURIComponent(getVar("tags", tagLink.href));
+			var tagFrag = document.createDocumentFragment();
+			var tagFunc = searchAddToggle.bind(null, tagString);
+
+			var toggleTag = document.createElement("a");
+			toggleTag.href = "/posts?tags=" + tagString;
+			toggleTag.innerHTML = "&raquo;";
+			toggleTag.style.display = "inline-block";
+			toggleTag.style.textAlign = "center";
+			toggleTag.style.width = toggleWidth + "px";
+			toggleTag.addEventListener("click", tagFunc, false);
+			toggleTag.addEventListener("mouseup", tagFunc, false);
+			toggleTag.addEventListener("contextmenu", disableEvent, false);
+			tagFrag.appendChild(toggleTag);
+
+			var toggleSpace = document.createTextNode(" ");
+			tagFrag.appendChild(toggleSpace);
+
+			tagItem.insertBefore(tagFrag, tagLink);
+			bbb.search_add.links[tagString] = toggleTag;
+		}
+
+		// Watch various actions on the search box.
+		var tagsInput = document.getElementById("tags");
+
+		if (tagsInput && (gLoc === "search" || gLoc === "post" || gLoc === "intro" || gLoc === "favorites")) {
+			searchAddToggleWatch();
+			tagsInput.addEventListener("input", searchAddToggleWatch, false);
+			tagsInput.addEventListener("keyup", searchAddToggleWatch, false);
+			tagsInput.addEventListener("cut", searchAddToggleWatch, false);
+			tagsInput.addEventListener("paste", searchAddToggleWatch, false);
+			tagsInput.addEventListener("change", searchAddToggleWatch, false);
+		}
+	}
+
+	function searchAddToggleWatch(event) {
+		// Watch the search box value, test it upon changes, and update the tag links accordingly.
+		var input = (event ? event.target : document.getElementById("tags"));
+		var value = input.value;
+		var oldValue = bbb.search_add.old;
+		var i, il; // Loop variables.
+
+		if (oldValue !== value) {
+			var tags = value.toLowerCase().bbbSpaceClean().split(/\s+/);
+			var activeLinks = bbb.search_add.active_links;
+
+			for (i in activeLinks) {
+				if (activeLinks.hasOwnProperty(i)) {
+					var activeRegEx = new RegExp("(?:^|\\s)[-~]*" + escapeRegEx(i) + "($|\\s)", "gi");
+
+					if (!activeRegEx.test(value))
+						activeLinks[i].innerHTML = "&raquo;";
+				}
+			}
+
+			for (i = 0, il = tags.length; i < il; i++) {
+				var tag = tags[i];
+				var tagChar = tag.charAt(0);
+				var tagType = "+";
+
+				if (tagChar === "-" || tagChar === "~") {
+					tagType = (tagChar === "-" ? "&ndash;" : tagChar);
+					tag = tag.slice(1);
+				}
+
+				var tagLink = bbb.search_add.links[tag];
+
+				if (tagLink) {
+					bbb.search_add.links[tag].innerHTML = tagType;
+					bbb.search_add.active_links[tag] = tagLink;
+				}
+			}
+
+			bbb.search_add.old = value;
+		}
+	}
+
+	function searchAddToggle(tag, event) {
+		// Modify the search box value based upon the tag link clicked and the tag's current state.
+		var link = event.target;
+		var button = event.button;
+		var type = event.type;
+		var linkType = link.innerHTML;
+		var input = document.getElementById("tags");
+		var inputValue = input.value;
+		var tagRegEx = new RegExp("(^|\\s)[-~]*" + escapeRegEx(tag) + "($|\\s)", "gi");
+		var angleQuotes = String.fromCharCode(187);
+		var enDash = String.fromCharCode(8211);
+
+		if (button === 2) // Immediately remove the tag upon a right click.
+			linkType = "~";
+		else if (button !== 0 || (type === "mouseup" && button !== 2) || (type === "click" && button !== 0))
+			return;
+
+		// Each case changes the tag's toggle link display and updates the search box.
+		switch (linkType) {
+			case angleQuotes: // Tag currently not present.
+				link.innerHTML = "+";
+
+				if (tagRegEx.test(inputValue))
+					input.value = inputValue.replace(tagRegEx, tag).bbbSpaceClean();
+				else
+					input.value = (inputValue + " " + tag).bbbSpaceClean();
+				break;
+			case "+": // Tag currently included.
+				link.innerHTML = "&ndash;";
+
+				if (tagRegEx.test(inputValue))
+					input.value = inputValue.replace(tagRegEx, "$1-" + tag + "$2").bbbSpaceClean();
+				else
+					input.value = (inputValue + " -" + tag).bbbSpaceClean();
+				break;
+			case enDash: // Tag currently excluded.
+				link.innerHTML = "~";
+
+				if (tagRegEx.test(inputValue))
+					input.value = inputValue.replace(tagRegEx, "$1~" + tag + "$2").bbbSpaceClean();
+				else
+					input.value = (inputValue + " ~" + tag).bbbSpaceClean();
+				break;
+			case "~": // Tag currently included with other tags.
+				link.innerHTML = angleQuotes;
+
+				if (tagRegEx.test(inputValue))
+					input.value = inputValue.replace(tagRegEx, "$1$2").bbbSpaceClean();
+				break;
+		}
+
+		event.preventDefault();
 	}
 
 	function getCookie() {
