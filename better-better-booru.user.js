@@ -161,6 +161,24 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			sidebar: undefined,
 			top: undefined
 		},
+		hotkeys: {
+			other: { // Hotkeys for misc locations.
+				66: createMenu, // B
+				69: endlessToggle // E
+			},
+			post: { // Post hotkeys.
+				49: function() { resizePost("all"); }, // 1
+				50: function() { resizePost("width"); }, // 2
+				51: function() { resizePost("height"); }, // 3
+				52: function() { resizePost("none"); }, // 4
+				66: createMenu, // B
+				78: function(event) { // N
+					Danbooru.Note.TranslationMode.toggle(event);
+					translationModeToggle();
+				},
+				86: swapPost // V
+			}
+		},
 		post: { // Post content info and status.
 			info: {}, // Post information object.
 			resize: {
@@ -192,8 +210,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			custom_tag_borders: newOption("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to posts with specific tags."),
 			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, and popular listings."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
-			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar never completely vertically scroll out of view for posts, favorites listings, and/or searches by fixing it to the top or bottom of the window when it would normally start scrolling out of view. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window and the Danbooru location being modified, the \"tag scrollbars\", \"collapsible sidebar\", and/or \"remove tag headers\"  options may be needed for best results.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
-			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages and set how it starts up on each page. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"Load More\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"Endless\" link next to the \"Listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
+			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, and notes listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"Load More\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
 			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and add them to the new page until the desired number of thumbnails is reached. <tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
 			endless_fixed_paginator: newOption("dropdown", "disabled", "Fixed Paginator", "Make the paginator always visible by fixing it to the bottom of the window when it would not normally be visible. <tipdesc>Fixed:</tipdesc> Allow the paginator to fix itself to the bottom of the window.<tipdesc>Minimal:</tipdesc> Allow the paginator to fix itself to the bottom of the window and make it smaller by removing most of the blank space within it.", {txtOptions:["Disabled:disabled", "Fixed:fixed", "Minimal:minimal"]}),
 			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
@@ -202,6 +219,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			endless_scroll_limit: newOption("dropdown", 500, "Scroll Limit", "Set the minimum amount of pixels that the window can have left to vertically scroll before it starts appending the next page.", {numList:[0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			endless_separator: newOption("dropdown", "none", "Page Separator", "Distinguish pages from each other by marking them with a separator.<tipdesc>Marker:</tipdesc> Place a thumbnail sized marker before the first thumbnail of each page.<tipdesc>Divider:</tipdesc> Completely separate pages by placing a horizontal line between them.", {txtOptions:["None:none", "Marker:marker", "Divider:divider"]}),
 			endless_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling endless pages on and off, the mode it's toggled to will override the default and persist across other pages in the same tab until it is closed."),
+			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar never completely vertically scroll out of view for posts, favorites listings, and/or searches by fixing it to the top or bottom of the window when it would normally start scrolling out of view. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window and the Danbooru location being modified, the \"tag scrollbars\", \"collapsible sidebar\", and/or \"remove tag headers\" options may be needed for best results.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			hide_ban_notice: newOption("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 			hide_comment_notice: newOption("checkbox", false, "Hide Comment Guide Notice", "Hide the Danbooru comment guide notice."),
 			hide_pool_notice: newOption("checkbox", false, "Hide Pool Guide Notice", "Hide the Danbooru pool guide notice."),
@@ -217,7 +235,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			override_account: newOption("checkbox", false, "Override Account Settings", "Allow the \"resize post\", \"load sample first\", and \"blacklist\" settings to override their corresponding account settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
 			post_drag_scroll: newOption("checkbox", false, "Post Drag Scrolling", "While holding down left click on a post's content, mouse movement can be used to scroll the whole page and reposition the content.<tiphead>Note</tiphead>This option is automatically disabled when translation mode is active."),
-			post_link_new_window: newOption("dropdown", "none", "New Tab/Window", "Force post links in the search, pool, popular, favorites, and notes listings to open in a new tab/window during normal and/or endless page browsing.<tiphead>Note</tiphead>Whether the post opens in a new tab or window depends upon your browser configuration.", {txtOptions:["Disabled:disabled", "Endless:endless", "Normal:normal", "Always:endless normal"]}),
+			post_link_new_window: newOption("dropdown", "none", "New Tab/Window", "Force post links in the search, pool, popular, favorites, and notes listings to open in a new tab/window during normal and/or endless page browsing. <tiphead>Notes</tiphead>Holding down the control key while clicking a post link will open the post in the current tab/window.<br><br>Whether the post opens in a new tab or a new window depends upon your browser configuration. <tiphead>Tip</tiphead>This option can be useful as a \"safety net\" to keep accidental left clicks from disrupting endless page browsing.", {txtOptions:["Disabled:disabled", "Endless:endless", "Normal:normal", "Always:endless normal"]}),
 			post_resize: newOption("checkbox", true, "Resize Post", "Shrink large post content to fit the browser window when initially loading a post.<tiphead>Note</tiphead>When logged in, the account's \"fit images to window\" setting will override this option."),
 			post_resize_mode: newOption("dropdown", "width", "Resize Mode", "Choose how to shrink large post content to fit the browser window when initially loading a post.", {txtOptions:["Width (Default):width", "Height:height", "Width & Height:all"]}),
 			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"remove tag headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
@@ -234,7 +252,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			single_color_borders: newOption("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
 			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score(&#x2605;), favorite count(&hearts;), and rating (S, Q, or E) for a post with its thumbnails. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
 			thumbnail_count: newOption("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search, favorites, and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
-			track_new: newOption("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<tiphead>Note</tiphead>While browsing the new posts, the current page of posts is also tracked. If the new post listing is left, clicking the \"New\" link later on will attempt to pull up the posts where browsing was left off at.<tiphead>Tip</tiphead>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
+			track_new: newOption("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<tiphead>Note</tiphead>While browsing the new posts, the current page of posts is also tracked. If the new post listing is left, clicking the \"new\" link later on will attempt to pull up the posts where browsing was left off at.<tiphead>Tip</tiphead>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"], ["status:banned", true, "#000000", "solid"]),
 			thumb_cache_limit: newOption("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<tiphead>Note</tiphead>No actual thumbnails are cached. Only filename information used to speed up the display of hidden thumbnails is stored. Every 1000 entries is approximately equal to 0.1 megabytes of space.", {txtOptions:["Disabled:0"], numList:[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000,20000,21000,22000,23000,24000,25000,26000,27000,28000,29000,30000]}),
@@ -402,7 +420,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	delayMe(endlessInit); // Delayed to allow Danbooru layout to finalize.
 
-	postLinkNewWindowInit();
+	postLinkNewWindow();
 
 	commentScoreInit();
 
@@ -905,8 +923,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		childSpan.innerHTML = '<div class="ui-corner-all ui-state-highlight notice ' + classes + '"> ' + msg + ' (<a href="/wiki_pages?title=help%3Apost_relationships">learn more</a>) <a href="#" id="' + previewLinkId + '">' + previewLinkTxt + '</a> <div id="' + previewId + '" style="display: ' + displayStyle + ';"> </div> </div>';
 
 		var newNotice = childSpan.firstChild;
-		var thumbDiv = getId(previewId, newNotice, "div");
-		var previewLink = getId(previewLinkId, newNotice, "a");
+		var thumbDiv = getId(previewId, newNotice);
+		var previewLink = getId(previewLinkId, newNotice);
 
 		// Create the thumbnails.
 		for (i = numPosts - 1; i >= 0; i--) {
@@ -928,7 +946,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		thumbDiv.innerHTML = thumbs;
 
 		// Highlight the post we're on.
-		getId("post_" + activePost.id, thumbDiv, "article").bbbAddClass("current-post");
+		getId("post_" + activePost.id, thumbDiv).bbbAddClass("current-post");
 
 		// Make the show/hide links work.
 		previewLink.addEventListener("click", function(event) {
@@ -1321,7 +1339,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postEl = postContent.el;
 		var postTag = (postEl ? postEl.tagName : undefined);
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
-		var directLink = getId("image-resize-link", target, "a") || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
+		var directLink = getId("image-resize-link", target) || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
 		var twitterInfo = getMeta("twitter:image:src", target);
 		var previewInfo = getMeta("og:image", target);
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
@@ -1348,7 +1366,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			uploader_name: imgContainer.getAttribute("data-uploader"),
 			is_deleted: (getMeta("post-is-deleted", target) === "false" ? false : true),
 			is_flagged: (getMeta("post-is-flagged", target) === "false" ? false : true),
-			is_pending: (getId("pending-approval-notice", target, "div") ? true : false),
+			is_pending: (getId("pending-approval-notice", target) ? true : false),
 			is_banned: (imgContainer.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
 			image_height: imgHeight || null,
 			image_width: imgWidth || null,
@@ -1421,22 +1439,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return imgInfo;
 	}
 
-	function getId(elId, target, elType) {
+	function getId(elId, target) {
 		// Retrieve an element by ID from either the current document or an element containing it.
 		if (!target || target === document)
 			return document.getElementById(elId);
 		else if (target.id === elId)
 			return target;
-		else {
-			var els = target.getElementsByTagName((elType ? elType : "*"));
-
-			for (var i = 0, il = els.length; i < il; i++) {
-				var el = els[i];
-
-				if (el.id === elId)
-					return el;
-			}
-		}
+		else
+			return target.querySelector("#" + elId);
 
 		return null;
 	}
@@ -1444,12 +1454,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function getPostContent(pageEl) {
 		// Retrieve the post content related elements.
 		var target = pageEl || document;
-		var imgContainer = getId("image-container", target, "section");
+		var imgContainer = getId("image-container", target);
 
 		if (!imgContainer)
 			return {};
 
-		var img = getId("image", target, "img");
+		var img = getId("image", target);
 		var swfObj = imgContainer.getElementsByTagName("object")[0];
 		var swfEmb = (swfObj ? swfObj.getElementsByTagName("embed")[0] : undefined);
 		var webmVid = imgContainer.getElementsByTagName("video")[0];
@@ -1535,7 +1545,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "pool" || mode === "notes" || mode === "favorites") {
 			var paginator = getPaginator(target);
-			var contDiv = getId("bbb-endless-load-div", target, "div");
+			var contDiv = getId("bbb-endless-load-div", target);
 
 			sibling = contDiv || paginator;
 
@@ -1789,6 +1799,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		scrollDiv.appendChild(helpPage);
 
 		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br>Multiple match rules can be applied by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
 
@@ -2954,9 +2965,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		bbbResizeNotice.style.display = "none";
 		bbbResizeNotice.innerHTML = '<span id="bbb-resize-status"></span> (<a href="" id="bbb-resize-link"></a>)<span style="display: block;" class="close-button ui-icon ui-icon-closethick" id="close-resize-notice"></span>';
 
-		var resizeStatus = bbb.el.resizeStatus = getId("bbb-resize-status", bbbResizeNotice, "span");
-		var resizeLink = bbb.el.resizeLink = getId("bbb-resize-link", bbbResizeNotice, "a");
-		var closeResizeNotice = bbb.el.closeResizeNotice = getId("close-resize-notice", bbbResizeNotice, "span");
+		var resizeStatus = bbb.el.resizeStatus = getId("bbb-resize-status", bbbResizeNotice);
+		var resizeLink = bbb.el.resizeLink = getId("bbb-resize-link", bbbResizeNotice);
+		var closeResizeNotice = bbb.el.closeResizeNotice = getId("close-resize-notice", bbbResizeNotice);
 
 		closeResizeNotice.addEventListener("click", function() {
 			var showResNot = bbb.user.show_resized_notice;
@@ -3138,15 +3149,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (!isLoggedIn() || document.getElementById("note-locked-notice"))
 					return;
 
-				// Make the normal toggling work for hidden posts.
+				// Make the link toggling work for hidden posts.
 				if (post.is_hidden) {
 					if (translateLink)
 						translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
-
-					document.addEventListener("keydown", function(event) {
-						if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
-							Danbooru.Note.TranslationMode.toggle(event);
-					}, false);
 				}
 
 				// Script translation mode events and tracking used to resolve timing issues.
@@ -3154,11 +3160,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				if (translateLink)
 					translateLink.addEventListener("click", translationModeToggle, false);
-
-				document.addEventListener("keydown", function(event) {
-					if (event.keyCode === 78 && document.activeElement.type !== "text" && document.activeElement.type !== "textarea")
-						translationModeToggle();
-				}, false);
 			}
 			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
 				togglefunction = function(event) {
@@ -3171,6 +3172,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				if (translateLink)
 					translateLink.addEventListener("click", togglefunction, false);
+
+				// Override the hotkey for "N".
+				createHotkey("78", togglefunction);
 			}
 		}
 		else if (translateLink) { // If the translate link exists on webm videos or flash, provide a warning.
@@ -3182,6 +3186,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			Danbooru.Note.TranslationMode.toggle = togglefunction;
 			Danbooru.Note.Edit.show = togglefunction;
 			translateLink.addEventListener("click", togglefunction, false);
+			createHotkey("78", togglefunction); // Override the hotkey for "N".
 		}
 	}
 
@@ -3292,11 +3297,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var ratio = 1;
 		var linkWeight = {all: "normal", width: "normal", height: "normal"};
 
-		if (mode === "swap") { // The image is being swapped between the original and sample image so everything needs to be reset.
+		if (mode === "swap") { // The image is being swapped between the original and sample image so everything needs to be reset. Ignore the current mode.
 			switchMode = true;
 			imgMode = "none";
 		}
-		else if (mode === currentMode || (mode === "width" && widthRatio >= 1) || (mode === "height" && heightRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) { // Cases where resizing is being toggled off or isn't needed.
+		else if (mode === currentMode || mode === "none" || (mode === "width" && widthRatio >= 1) || (mode === "height" && heightRatio >= 1) || (mode === "all" && widthRatio >= 1 && heightRatio >= 1)) { // Cases where resizing is being toggled off or isn't needed.
 			if (currentMode !== "none") { // No need to do anything if the content is already at the original dimensions.
 				switchMode = true;
 				imgMode = "none";
@@ -3702,7 +3707,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			// Disable click behavior when dragging the video around.
 			if (targetTag === "VIDEO") {
-				document.body.addEventListener("click", function(event) {
+				document.addEventListener("click", function(event) {
 					if (event.button === 0 && event.target.id === "image" && bbb.drag_scroll.moved)
 						event.preventDefault();
 				}, true);
@@ -4307,16 +4312,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	/* Endless Page functions */
 	function endlessToggle() {
 		// Toggle endless pages on and off.
-		if (endless_default === "disabled")
+		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites"))
 			return;
 
 		if (bbb.endless.enabled) {
 			endlessDisable();
-			bbbNotice("Endless pages disabled", 2);
+			bbbNotice("Endless pages disabled.", 2);
 		}
 		else {
 			endlessEnable();
-			bbbNotice("Endless pages enabled", 2);
+			bbbNotice("Endless pages enabled.", 2);
 		}
 
 		// Change the default for the duration of the session if necessary.
@@ -4813,7 +4818,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		bbb.endless.paginator_space = docBottom - paginatorBottom - menuBottomAdjust; // Store the amount of space between the bottom of the page and the paginator.
 
 		document.body.bbbWatchNodes(endlessFixedCheck);
-		document.body.addEventListener("click", endlessFixedCheck, false);
+		document.addEventListener("click", endlessFixedCheck, false);
 		window.addEventListener("scroll", endlessFixedCheck, false);
 		window.addEventListener("resize", endlessFixedCheck, false);
 
@@ -4874,7 +4879,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				blacklistBox.style.display = "none";
 				blacklistBox.innerHTML = '<strong>Blacklisted: </strong> <ul id="blacklist-list"> </ul>';
 
-				blacklistList = getId("blacklist-list", blacklistBox, "ul");
+				blacklistList = getId("blacklist-list", blacklistBox);
 
 				target.insertBefore(blacklistBox, before);
 			}
@@ -4987,7 +4992,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Retrieve the necessary elements from the target element or current document.
 		var blacklistBox = getId("blacklist-box", target) || document.getElementById("blacklist-box");
 		var blacklistList = getId("blacklist-list", target) || document.getElementById("blacklist-list");
-		var imgContainer = getId("image-container", target, "section");
+		var imgContainer = getId("image-container", target);
 		var posts = getPosts(target);
 
 		var i, il; // Loop variables.
@@ -5090,7 +5095,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (target) {
 			// Set up the tip events listeners for hiding and displaying it.
 			target.addEventListener("click", function(event) {
-				if (event.button !== 0 || event.ctrlKey || event.shiftKey)
+				if (event.button !== 0 || event.ctrlKey || event.shiftKey || event.altKey)
 					return;
 
 				var target = event.target;
@@ -5137,7 +5142,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					tipContent.appendChild(viewLinkDiv);
 
 					if (blacklist_smart_view) {
-						var viewLink = getId("bbb-blacklist-view-link", viewLinkDiv, "a");
+						var viewLink = getId("bbb-blacklist-view-link", viewLinkDiv);
 
 						if (viewLink) {
 							viewLink.addEventListener("click", function(event) {
@@ -5395,9 +5400,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			notice.innerHTML = '<div style="position:absolute; left: 3px; font-weight: bold;">BBB:</div><div id="bbb-notice-msg"></div><div style="position: absolute; top: 3px; right: 3px; cursor: pointer;" class="close-button ui-icon ui-icon-closethick" id="bbb-notice-close"></div>';
 			noticeContainer.appendChild(notice);
 
-			noticeMsg = bbb.el.noticeMsg = getId("bbb-notice-msg", notice, "div");
+			noticeMsg = bbb.el.noticeMsg = getId("bbb-notice-msg", notice);
 
-			getId("bbb-notice-close", notice, "div").addEventListener("click", function(event) {
+			getId("bbb-notice-close", notice).addEventListener("click", function(event) {
 				closeBbbNotice();
 				event.preventDefault();
 			}, false);
@@ -6179,8 +6184,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Hide sidebar.
 		if (autohide_sidebar) {
 			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
-			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -285px !important; overflow-y: hidden !important; padding: 0px 25px !important; top: 0px !important; z-index: 2001 !important;}' +
-			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; left: 0px !important; overflow-y: auto !important; padding: 0px 15px !important;}' +
+			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -285px !important; opacity: 0 !important; overflow: hidden !important; padding: 0px 25px !important; top: 0px !important; z-index: 2001 !important;}' +
+			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; left: 0px !important; opacity: 1 !important; overflow-y: auto !important; padding: 0px 15px !important;}' +
 			'section#content {margin-left: 0px !important;}' +
 			'.ui-autocomplete {z-index: 2002 !important;}';
 		}
@@ -6440,35 +6445,35 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function postLinkNewWindowInit() {
-		// Set up the new window event listener.
+	function postLinkNewWindow() {
+		// Make thumbnail clicks open in a new tab/window.
 		if (post_link_new_window === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "popular"))
 			return;
 
-		document.addEventListener("click", postLinkNewWindow, false);
-	}
+		document.addEventListener("click", function(event) {
+			if (event.button !== 0 || event.shiftKey || event.altKey)
+				return;
 
-	function postLinkNewWindow(event) {
-		// Make thumbnail clicks open in a new tab/window.
-		if (event.button !== 0 || event.ctrlKey || event.shiftKey)
-			return;
+			if ((bbb.endless.enabled && post_link_new_window.indexOf("endless") < 0) || (!bbb.endless.enabled && post_link_new_window.indexOf("normal") < 0))
+				return;
 
-		if ((bbb.endless.enabled && post_link_new_window.indexOf("endless") < 0) || (!bbb.endless.enabled && post_link_new_window.indexOf("normal") < 0))
-			return;
+			var target = event.target;
+			var url;
 
-		var target = event.target;
-		var url;
+			if (target.tagName === "IMG" && target.parentNode)
+				url = target.parentNode.href;
+			else if (target.tagName === "A" && target.bbbHasClass("bbb-post-link"))
+				url = target.href;
 
-		if (target.tagName === "IMG" && target.parentNode)
-			url = target.parentNode.href;
-		else if (target.tagName === "A" && target.bbbHasClass("bbb-post-link"))
-			url = target.href;
+			if (url && /\/posts\/\d+/.test(url)) {
+				if (event.ctrlKey)
+					location.href = url;
+				else
+					window.open(url);
 
-
-		if (url && /\/posts\/\d+/.test(url)) {
-			window.open(url);
-			event.preventDefault();
-		}
+				event.preventDefault();
+			}
+		}, false);
 	}
 
 	function formatTip(event, element, content, x, y) {
@@ -6516,37 +6521,63 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function bbbHotkeys() {
-		// Create hotkeys or override Danbooru's existing ones.
+		// Handle keydown events not taking place in text inputs and check if they're a hotkey.
 		document.addEventListener("keydown", function(event) {
-			if (document.activeElement.type === "text" || document.activeElement.type === "textarea" || event.ctrlKey || event.shiftKey)
+			var active = document.activeElement;
+			var activeTag = active.tagName;
+			var activeType = active.type;
+
+			if (activeTag === "SELECT" || activeTag === "TEXTAREA" || activeTag === "INPUT" && (activeType === "text" || activeType === "password"))
 				return;
 
-			var match = false;
+			var loc = (gLoc === "post" ? "post" : "other");
+			var hotkeyCode = createHotkeyCode(event);
+			var action = bbb.hotkeys[loc][hotkeyCode];
 
-			switch (event.keyCode) {
-				case 66: // "b"
-					match = true;
-					createMenu();
-					break;
-				case 69: // "e"
-					if (gLoc === "search" || gLoc === "pool" || gLoc === "notes" || gLoc === "favorites") {
-						match = true;
-						endlessToggle();
-					}
-					break;
-				case 86: // "v"
-					if (gLoc === "post") {
-						match = true;
-						swapPost();
-					}
-					break;
-			}
-
-			if (match) {
+			if (action) {
+				action(event); // The event object will always be the first argument passed to the provided function (previously declared or anonymous).
 				event.stopPropagation();
 				event.preventDefault();
 			}
 		}, true);
+	}
+
+	function createHotkeyCode(event) {
+		// Take a keyboard event and create a code for its key combination.
+		// Examples: s49 = Shift + "1", a50 = Alt + "2", cs51 = Control + Shift + "3"
+		// Alt, control, meta, and shift abbreviations should be alphabetical. Keycode numbers: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode
+		var hotkeycode = "";
+
+		if (event.altKey)
+			hotkeycode += "a";
+
+		if (event.ctrlKey)
+			hotkeycode += "c";
+
+		if (event.metaKey)
+			hotkeycode += "m";
+
+		if (event.shiftKey)
+			hotkeycode += "s";
+
+		if (event.keyCode)
+			hotkeycode += event.keyCode;
+
+		return hotkeycode || undefined;
+	}
+
+	function createHotkey(hotkeyCode, func) {
+		// Create hotkeys or override Danbooru's existing ones. Creating a hotkey for a hotkey that already exists will replace it.
+		var loc = (gLoc === "post" ? "post" : "other");
+
+		bbb.hotkeys[loc][hotkeyCode] = func;
+	}
+
+	function removeHotkey(hotkeyCode) {
+		// Remove a hotkey.
+		var loc = (gLoc === "post" ? "post" : "other");
+
+		delete bbb.hotkeys[loc][hotkeyCode];
 	}
 
 	function fixLimit(limit) {
@@ -6680,24 +6711,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!arrow_nav || (!paginator && gLoc !== "popular")) // If the paginator exists, arrow navigation should be applicable.
 			return;
 
-		document.addEventListener("keydown", function(event) {
-			if (document.activeElement.type === "text" || document.activeElement.type === "textarea")
-				return;
-
-			var match = true;
-
-			if (event.keyCode === 37) // Left arrow
-				danbooruNav("prev");
-			else if (event.keyCode === 39) // Right arrow
-				danbooruNav("next");
-			else
-				match = false;
-
-			if (match) {
-				event.stopPropagation();
-				event.preventDefault();
-			}
-		}, false);
+		// Create the hotkeys for the left and right arrows.
+		createHotkey("37", function() { danbooruNav("prev"); });
+		createHotkey("39", function() { danbooruNav("next"); });
 	}
 
 	function danbooruNav(dir) {
@@ -6753,18 +6769,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var sidebarHeight = sidebarRect.height;
 
 		content.style.minHeight = sidebarHeight - 1 + "px";
+		sidebar.style.overflow = "hidden"; // There are some cases where text overflows.
 
 		if (comments)
 			comments.style.overflow = "auto"; // Force the contained float elements to affect the dimensions.
 
-		fixedSidebarAdjust();
-		document.body.bbbWatchNodes(fixedSidebarAdjust);
-		document.body.addEventListener("click", fixedSidebarAdjust, false);
-		window.addEventListener("scroll", fixedSidebarAdjust, false);
-		window.addEventListener("resize", fixedSidebarAdjust, false);
+		fixedSidebarCheck();
+		document.body.bbbWatchNodes(fixedSidebarCheck);
+		document.addEventListener("click", fixedSidebarCheck, false);
+		window.addEventListener("scroll", fixedSidebarCheck, false);
+		window.addEventListener("resize", fixedSidebarCheck, false);
 	}
 
-	function fixedSidebarAdjust() {
+	function fixedSidebarCheck() {
 		// Event handler for adjusting the sidebar position.
 		var sidebar = bbb.fixed_sidebar.sidebar;
 		var content = bbb.fixed_sidebar.content;
@@ -6779,7 +6796,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var contentBottom = sidebarTop + contentHeight;
 		var viewportBottom = verScrolled + viewHeight;
 
-		if (contentHeight < sidebarHeight) // Don't fix to window if there's no space for it to scroll.
+		if (sidebarHeight > contentHeight) // Don't fix to window if there's no space for it to scroll.
 			sidebar.style.position = "static";
 		else if (sidebarHeight < viewHeight) { // Fix to the top of the window if not too tall and far enough down.
 			if (contentBottom < verScrolled + sidebarHeight) {
