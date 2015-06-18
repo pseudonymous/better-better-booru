@@ -60,48 +60,58 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	Element.prototype.bbbHasClass = function() {
 		// Test an element for one or more classes.
-		var className = this.className;
-		var hasClass = true;
+		var spacedClassName = this.className.bbbSpacePad();
+		var hasClass = false;
 
 		for (var i = 0, il = arguments.length; i < il; i++) {
 			var classString = arguments[i];
-			var regEx = new RegExp("(?:^|\\s)" + escapeRegEx(classString) + "(?:$|\\s)", "i");
+			var classArray = classString.bbbSpaceClean().split(" ");
+			hasClass = true;
 
-			if (!regEx.test(className)) {
-				hasClass = false;
-				break;
+			for (var j = 0, jl = classArray.length; j < jl; j++) {
+				var spacedClass = classArray[j].bbbSpacePad();
+
+				if (spacedClassName.indexOf(spacedClass) < 0) {
+					hasClass = false;
+					break;
+				}
 			}
+
+			if (hasClass)
+				return hasClass;
 		}
 
 		return hasClass;
 	};
 
-	Element.prototype.bbbAddClass = function() {
+	Element.prototype.bbbAddClass = function(classString) {
 		// Add one or more classes to an element.
 		var className = this.className;
+		var classArray = classString.bbbSpaceClean().split(" ");
 
-		for (var i = 0, il = arguments.length; i < il; i++) {
-			var classString = arguments[i];
+		for (var i = 0, il = classArray.length; i < il; i++) {
+			var aClass = classArray[i];
 
-			if (!this.bbbHasClass(classString))
-				className = className + " " + classString;
+			if (!this.bbbHasClass(aClass))
+				className = className + " " + aClass;
 		}
 
 		this.className = className.bbbSpaceClean();
 	};
 
-	Element.prototype.bbbRemoveClass = function() {
+	Element.prototype.bbbRemoveClass = function(classString) {
 		// Remove one or more classes from an element.
-		var className = this.className;
+		var spacedClassName = this.className.bbbSpacePad();
+		var classArray = classString.bbbSpaceClean().split(" ");
 
-		for (var i = 0, il = arguments.length; i < il; i++) {
-			var classString = arguments[i];
-			var regEx = new RegExp("(?:^|\\s)" + escapeRegEx(classString) + "(?=$|\\s)", "gi");
+		for (var i = 0, il = classArray.length; i < il; i++) {
+			var spacedClass = classArray[i].bbbSpacePad();
 
-			className = className.replace(regEx, "");
+			while (spacedClassName.indexOf(spacedClass) > -1)
+				spacedClassName = spacedClassName.replace(spacedClass, " ");
 		}
 
-		this.className = className.bbbSpaceClean();
+		this.className = spacedClassName.bbbSpaceClean();
 	};
 
 	Element.prototype.bbbWatchNodes = function(func) {
@@ -235,12 +245,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			override_account: newOption("checkbox", false, "Override Account Settings", "Allow the \"resize post\", \"load sample first\", and \"blacklist\" settings to override their corresponding account settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
 			post_drag_scroll: newOption("checkbox", false, "Post Drag Scrolling", "While holding down left click on a post's content, mouse movement can be used to scroll the whole page and reposition the content.<tiphead>Note</tiphead>This option is automatically disabled when translation mode is active."),
-			post_link_new_window: newOption("dropdown", "none", "New Tab/Window", "Force post links in the search, pool, popular, favorites, and notes listings to open in a new tab/window during normal and/or endless page browsing. <tiphead>Notes</tiphead>Holding down the control key while clicking a post link will open the post in the current tab/window.<br><br>Whether the post opens in a new tab or a new window depends upon your browser configuration. <tiphead>Tip</tiphead>This option can be useful as a \"safety net\" to keep accidental left clicks from disrupting endless page browsing.", {txtOptions:["Disabled:disabled", "Endless:endless", "Normal:normal", "Always:endless normal"]}),
+			post_link_new_window: newOption("dropdown", "none", "New Tab/Window", "Force post links in the search, pool, popular, favorites, and notes listings to open in a new tab/window during normal and/or endless page browsing. <tiphead>Notes</tiphead>Holding down the control and shift keys while clicking a post link will open the post in the current tab/window.<br><br>Whether the post opens in a new tab or a new window depends upon your browser configuration. <tiphead>Tip</tiphead>This option can be useful as a safeguard to keep accidental left clicks from disrupting endless page browsing.", {txtOptions:["Disabled:disabled", "Endless:endless", "Normal:normal", "Always:endless normal"]}),
 			post_resize: newOption("checkbox", true, "Resize Post", "Shrink large post content to fit the browser window when initially loading a post.<tiphead>Note</tiphead>When logged in, the account's \"fit images to window\" setting will override this option."),
 			post_resize_mode: newOption("dropdown", "width", "Resize Mode", "Choose how to shrink large post content to fit the browser window when initially loading a post.", {txtOptions:["Width (Default):width", "Height:height", "Width & Height:all"]}),
 			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"remove tag headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			post_tag_titles: newOption("checkbox", false, "Post Tag Titles", "Change the page titles for posts to a full list of the post tags."),
 			remove_tag_headers: newOption("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
+			resize_link_style: newOption("dropdown", "minimal", "Resize Link Style", "Set how the resize links in the post sidebar options section will display. <tipdesc>Full:</tipdesc> Show the resize to window, width, and height links on separate lines. <tipdesc>Minimal:</tipdesc> Show the resize to window, width, and height links on one line.", {txtOptions:["Full:full", "Minimal:minimal"]}),
 			script_blacklisted_tags: "",
 			search_add: newOption("dropdown", "disabled", "Search Add", "Modify the sidebar tag list by adding, removing, or replacing links in the sidebar tag list that modify the current search's tags. <tipdesc>Remove:</tipdesc> Remove any preexisting \"+\" and \"&ndash;\" links. <tipdesc>Link:</tipdesc> Add \"+\" and \"&ndash;\" links to modified versions of the current search that include or exclude their respective tags. <tipdesc>Toggle:</tipdesc> Add toggle links that modify the search box with their respective tags. Clicking a toggle link will switch between a tag being included (+), excluded (&ndash;), potentially included among other tags (~), and removed (&raquo;). Right clicking a toggle link will immediately remove its tag. If a tag already exists in the search box or gets entered/removed through alternative means, the toggle link will automatically update to reflect the tag's current status. <tiphead>Note</tiphead>The remove option is intended for users above the basic user level that want to remove the links. For users that can't normally see the links and do not wish to see them, this setting should be set to disabled.", {txtOptions:["Disabled:disabled", "Remove:remove", "Link:link", "Toggle:toggle"]}),
 			show_banned: newOption("checkbox", false, "Show Banned", "Display all banned posts in the search, pool, popular, favorites, comments, and notes listings."),
@@ -272,7 +283,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post"], "Post Control"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "comment_score"], "Misc."),
-			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "override_account", "thumb_cache_limit"], "Script Settings"),
+			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "resize_link_style", "override_account", "thumb_cache_limit"], "Script Settings"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
@@ -331,6 +342,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var bypass_api = bbb.user.bypass_api;
 	var manage_cookies = bbb.user.manage_cookies;
 	var enable_status_message = bbb.user.enable_status_message;
+	var resize_link_style = bbb.user.resize_link_style;
 	var override_account = bbb.user.override_account;
 	var track_new = bbb.user.track_new;
 
@@ -3221,46 +3233,124 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function modifyResizeLink() {
 		// Replace the single resize link with three custom resize links.
-		var resizeListItem = document.getElementById("image-resize-to-window-link").parentNode;
-		var optionsFrag = document.createDocumentFragment();
+		var resizeListLink = document.getElementById("image-resize-to-window-link");
 
-		var resizeListAll = document.createElement("li");
-		optionsFrag.appendChild(resizeListAll);
+		if (!resizeListLink)
+			return;
+
+		var resizeListItem = resizeListLink.parentNode;
+		var resizeListParent = resizeListItem.parentNode;
+		var optionsFrag = document.createDocumentFragment();
 
 		var resizeLinkAll = bbb.el.resizeLinkAll = document.createElement("a");
 		resizeLinkAll.href = "#";
-		resizeLinkAll.innerHTML = "Resize to window";
 		resizeLinkAll.addEventListener("click", function(event) {
 			resizePost("all");
 			event.preventDefault();
 		}, false);
-		resizeListAll.appendChild(resizeLinkAll);
-
-		var resizeListWidth = document.createElement("li");
-		optionsFrag.appendChild(resizeListWidth);
 
 		var resizeLinkWidth = bbb.el.resizeLinkWidth = document.createElement("a");
 		resizeLinkWidth.href = "#";
-		resizeLinkWidth.innerHTML = "Resize to window width";
 		resizeLinkWidth.addEventListener("click", function(event) {
 			resizePost("width");
 			event.preventDefault();
 		}, false);
-		resizeListWidth.appendChild(resizeLinkWidth);
-
-		var resizeListHeight = document.createElement("li");
-		optionsFrag.appendChild(resizeListHeight);
 
 		var resizeLinkHeight = bbb.el.resizeLinkHeight = document.createElement("a");
 		resizeLinkHeight.href = "#";
-		resizeLinkHeight.innerHTML = "Resize to window height";
 		resizeLinkHeight.addEventListener("click", function(event) {
 			resizePost("height");
 			event.preventDefault();
 		}, false);
-		resizeListHeight.appendChild(resizeLinkHeight);
 
-		resizeListItem.parentNode.replaceChild(optionsFrag, resizeListItem);
+		if (resize_link_style === "full") {
+			var resizeListAll = document.createElement("li");
+			optionsFrag.appendChild(resizeListAll);
+
+			resizeLinkAll.innerHTML = "Resize to window";
+			resizeListAll.appendChild(resizeLinkAll);
+
+			var resizeListWidth = document.createElement("li");
+			optionsFrag.appendChild(resizeListWidth);
+
+			resizeLinkWidth.innerHTML = "Resize to window width";
+			resizeListWidth.appendChild(resizeLinkWidth);
+
+			var resizeListHeight = document.createElement("li");
+			optionsFrag.appendChild(resizeListHeight);
+
+			resizeLinkHeight.innerHTML = "Resize to window height";
+			resizeListHeight.appendChild(resizeLinkHeight);
+
+			resizeListParent.replaceChild(optionsFrag, resizeListItem);
+		}
+		else if (resize_link_style === "minimal") {
+			var resizeList = document.createElement("li");
+			optionsFrag.appendChild(resizeList);
+
+			var resizeLabelLink = document.createElement("a");
+			resizeLabelLink.href = "#";
+			resizeLabelLink.innerHTML = "Resize:";
+			resizeLabelLink.style.marginRight = "2px";
+			resizeLabelLink.addEventListener("click", function(event) {
+				if (bbb.post.resize.mode === "none")
+					resizePost("all");
+				else
+					resizePost("none");
+
+				event.preventDefault();
+			}, false);
+			resizeList.appendChild(resizeLabelLink);
+
+			resizeLinkAll.innerHTML = "(&#x2194;)";
+			resizeLinkAll.style.display = "inline-block";
+			resizeLinkAll.style.textAlign = "center";
+			resizeLinkAll.style.marginRight = "2px";
+			resizeLinkAll.style.position = "relative";
+			resizeList.appendChild(resizeLinkAll);
+
+			var allOverlapArrow = document.createElement("span");
+			allOverlapArrow.innerHTML = "&#x2195;";
+			allOverlapArrow.style.display = "inline-block";
+			allOverlapArrow.style.textAlign = "center";
+			allOverlapArrow.style.position = "absolute";
+			allOverlapArrow.style.left = "0px";
+			resizeLinkAll.appendChild(allOverlapArrow);
+
+			resizeLinkWidth.innerHTML = "(&#x2194;)";
+			resizeLinkWidth.style.display = "inline-block";
+			resizeLinkWidth.style.textAlign = "center";
+			resizeLinkWidth.style.marginRight = "2px";
+			resizeList.appendChild(resizeLinkWidth);
+
+			resizeLinkHeight.innerHTML = "(&#x2195;)";
+			resizeLinkHeight.style.display = "inline-block";
+			resizeLinkHeight.style.textAlign = "center";
+			resizeLinkHeight.style.marginRight = "2px";
+			resizeList.appendChild(resizeLinkHeight);
+
+			resizeList.style.height = "0px";
+			resizeList.style.visibility = "hidden";
+			resizeList.style.fontWeight = "bold";
+			resizeList.style.position = "relative";
+
+			resizeListParent.insertBefore(resizeList, resizeListItem);
+
+			var allWidth = resizeLinkAll.clientWidth;
+			var widthWidth = resizeLinkWidth.clientWidth;
+			var heightWidth = resizeLinkHeight.clientWidth;
+
+			resizeLinkAll.style.width = allWidth + "px";
+			allOverlapArrow.style.width = allWidth + "px";
+			resizeLinkWidth.style.width = widthWidth + "px";
+			resizeLinkHeight.style.width = heightWidth + "px";
+
+			resizeList.style.height = "auto";
+			resizeList.style.visibility = "visible";
+			resizeList.style.fontWeight = "normal";
+
+			resizeListParent.removeChild(resizeListItem);
+		}
 	}
 
 	function resizePost(mode) {
@@ -4893,7 +4983,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Reset any blacklisted thumbnails.
 		while (blacklistedPosts[0])
-			blacklistedPosts[0].bbbRemoveClass("blacklisted", "blacklisted-active");
+			blacklistedPosts[0].bbbRemoveClass("blacklisted blacklisted-active");
 
 		// Check if there actually are any tags.
 		if (!blacklistTags || !/[^\s,]/.test(blacklistTags))
@@ -5066,7 +5156,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (matchList.count !== false && !element.bbbHasClass("blacklisted")) { // Post is already tested, but needs to be set up again.
 			if (matchList.count > 0 && bbb.blacklist.smart_view.override[matchId] !== true)
-				element.bbbAddClass("blacklisted", "blacklisted-active");
+				element.bbbAddClass("blacklisted blacklisted-active");
 			else
 				element.bbbAddClass("blacklisted");
 
@@ -6451,7 +6541,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 
 		document.addEventListener("click", function(event) {
-			if (event.button !== 0 || event.shiftKey || event.altKey)
+			var bypass = (event.shiftKey && event.ctrlKey);
+
+			if (event.button !== 0 || event.altKey || !bypass && (event.shiftKey || event.ctrlKey))
 				return;
 
 			if ((bbb.endless.enabled && post_link_new_window.indexOf("endless") < 0) || (!bbb.endless.enabled && post_link_new_window.indexOf("normal") < 0))
@@ -6462,11 +6554,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (target.tagName === "IMG" && target.parentNode)
 				url = target.parentNode.href;
-			else if (target.tagName === "A" && target.bbbHasClass("bbb-post-link"))
+			else if (target.tagName === "A" && target.bbbHasClass("bbb-post-link", "bbb-thumb-link"))
 				url = target.href;
 
 			if (url && /\/posts\/\d+/.test(url)) {
-				if (event.ctrlKey)
+				if (bypass)
 					location.href = url;
 				else
 					window.open(url);
