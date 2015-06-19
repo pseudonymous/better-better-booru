@@ -3251,7 +3251,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (infoSection) {
 			var infoItems = infoSection.getElementsByTagName("li");
-			var sizeRegex = /^\s*(Size:\s+)([\d\.	]+\s+\S+)/i;
+			var sizeRegex = /^\s*(Size:\s+)([\d\.]+\s+\S+)/i;
 
 			for (i = 0, il = infoItems.length; i < il; i++) {
 				var infoItem = infoItems[i];
