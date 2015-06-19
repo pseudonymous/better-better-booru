@@ -173,7 +173,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		},
 		hotkeys: {
 			other: { // Hotkeys for misc locations.
-				66: createMenu, // B
+				66: openMenu, // B
 				69: endlessToggle // E
 			},
 			post: { // Post hotkeys.
@@ -181,7 +181,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				50: function() { resizePost("width"); }, // 2
 				51: function() { resizePost("height"); }, // 3
 				52: function() { resizePost("none"); }, // 4
-				66: createMenu, // B
+				66: openMenu, // B
 				78: function(event) { // N
 					Danbooru.Note.TranslationMode.toggle(event);
 					translationModeToggle();
@@ -428,7 +428,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	else if (fixed_sidebar)
 		delayMe(fixedSidebar); // Delayed to allow Danbooru layout to finalize.
 
-	collapseSidebar();
+	delayMe(collapseSidebar); // Delayed to allow Danbooru layout to finalize.
 
 	delayMe(endlessInit); // Delayed to allow Danbooru layout to finalize.
 
@@ -695,6 +695,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Enable the "Resize to window", "Toggle Notes", "Random Post", and "Find similar" options for logged out users.
 		createOptionsSection(post);
+
+		// Fix the direct post links in the information and options sections for hidden posts.
+		fixPostDownloadLinks(post);
 
 		// Replace the "resize to window" link with new resize links.
 		modifyResizeLink();
@@ -1593,7 +1596,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		for (var i = 0, il = metaTags.length; i < il; i++) {
 			var tag = metaTags[i];
 
-			if (tag.name === meta || tag.property === meta) {
+			if (tag.name === meta || tag.getAttribute("property") === meta) {
 				if (tag.hasAttribute("content"))
 					return tag.content;
 				else
@@ -1673,7 +1676,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
 		link.addEventListener("click", function(event) {
-			createMenu();
+			openMenu();
 
 			event.preventDefault();
 		}, false);
@@ -1689,12 +1692,20 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		window.addEventListener("resize", adjustMenuTimer, false);
 	}
 
-	function createMenu() {
+	function openMenu() {
 		if (bbb.el.menu.window)
 			return;
 
 		loadSettings();
+		createMenu();
+	}
 
+	function reloadMenu() {
+		removeMenu();
+		createMenu();
+	}
+
+	function createMenu() {
 		var menu = bbb.el.menu.window = document.createElement("div");
 		menu.id = "bbb_menu";
 		menu.style.visibility = "hidden";
@@ -1843,9 +1854,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		reset.style.cssFloat = "right";
 		reset.style.color = "#ff1100";
 		reset.addEventListener("click", function(event) {
-			removeMenu();
 			loadDefaults();
-			createMenu();
+			reloadMenu();
 			event.preventDefault();
 		}, false);
 
@@ -2929,10 +2939,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (backupString) {
 			try {
 				bbb.user = JSON.parse(backupString); // This is where we expect an error.
-				removeMenu();
 				checkUser(bbb.user, bbb.options);
 				convertSettings("backup");
-				createMenu();
+				reloadMenu();
 				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"Save & Close\" to finalize the restore.");
 			}
 			catch (error) {
@@ -3227,8 +3236,51 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var infoSection = document.getElementById("post-information");
 		var options = document.createElement("section");
 		options.id = "post-options";
-		options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li><li><a id="random-post" href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + post.preview_file_url + '">Find similar</a></li></ul>';
+		options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li><li>Download</li><li><a id="random-post" href="http://danbooru.donmai.us/posts/random">Random post</a></li><li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + post.preview_file_url + '">Find similar</a></li></ul>';
 		infoSection.parentNode.insertBefore(options, infoSection.nextElementSibling);
+	}
+
+	function fixPostDownloadLinks(post) {
+		// Fix the disabled "size" and "download" links in the sidebar of hidden posts.
+		if (isLoggedIn() && !post.is_hidden)
+			return;
+		var i, il; // Loop variables.
+
+		// Fix the "size" link.
+		var infoSection = document.getElementById("post-information");
+
+		if (infoSection) {
+			var infoItems = infoSection.getElementsByTagName("li");
+			var sizeRegex = /^\s*(Size:\s+)([\d\.	]+\s+\S+)/i;
+
+			for (i = 0, il = infoItems.length; i < il; i++) {
+				var infoItem = infoItems[i];
+
+				if (sizeRegex.test(infoItem.innerHTML)) {
+					infoItem.innerHTML = infoItem.innerHTML.replace(sizeRegex, '$1<a href="' + post.file_url + '">$2</a>');
+					break;
+				}
+			}
+		}
+
+		// Fix the "download" link.
+		var optionsSection = document.getElementById("post-options");
+
+		if (optionsSection) {
+			var optionItems = optionsSection.getElementsByTagName("li");
+			var downloadRegex = /^\s*Download\s*$/i;
+			var title = getMeta("og:title");
+			var downloadName = (title ? title.replace(" - Danbooru", " - ") : "");
+
+			for (i = 0, il = optionItems.length; i < il; i++) {
+				var optionItem = optionItems[i];
+
+				if (downloadRegex.test(optionItem.innerHTML)) {
+					optionItem.innerHTML = '<a download="' + downloadName + post.md5 + '.' + post.file_ext + '" href="' + post.file_url + '">Download</a>';
+					break;
+				}
+			}
+		}
 	}
 
 	function modifyResizeLink() {
@@ -3495,17 +3547,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					swapImageUpdate(post, "sample");
 					target.src = "about:blank";
 					target.removeAttribute("src");
-					delayMe(function(){ target.src = post.large_file_url; });
+					delayMe(function() { target.src = post.large_file_url; });
 				}
 				else { // Load the original image.
 					swapImageUpdate(post, "original");
 					target.src = "about:blank";
 					target.removeAttribute("src");
-					delayMe(function(){ target.src = post.file_url; });
+					delayMe(function() { target.src = post.file_url; });
 				}
 
 				if (!bbb.post.swapped)
-					delayMe(function(){ resizePost("swap"); });
+					delayMe(function() { resizePost("swap"); });
 				else
 					bbb.post.swapped = true;
 			}
