@@ -243,7 +243,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option."),
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
+			move_save_search: newOption("checkbox", false, "Move Save Search", "Turn the \"save this search\" button into a link and move it into the related section in the sidebar."),
 			override_account: newOption("checkbox", false, "Override Account Settings", "Allow the \"resize post\", \"load sample first\", and \"blacklist\" settings to override their corresponding account settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
+			page_counter: newOption("checkbox", false, "Page Counter", "Add a page counter and \"go to page #\" input near the top of listing pages. <tiphead>Note</tiphead>The total number of pages will not be displayed if the pages are using the \"previous & next\" paging system or the total number of pages exceeds the maximum amount allowed by your user account level."),
 			post_drag_scroll: newOption("checkbox", false, "Post Drag Scrolling", "While holding down left click on a post's content, mouse movement can be used to scroll the whole page and reposition the content.<tiphead>Note</tiphead>This option is automatically disabled when translation mode is active."),
 			post_link_new_window: newOption("dropdown", "none", "New Tab/Window", "Force post links in the search, pool, popular, favorites, and notes listings to open in a new tab/window during normal and/or endless page browsing. <tiphead>Notes</tiphead>Holding down the control and shift keys while clicking a post link will open the post in the current tab/window.<br><br>Whether the post opens in a new tab or a new window depends upon your browser configuration. <tiphead>Tip</tiphead>This option can be useful as a safeguard to keep accidental left clicks from disrupting endless page browsing.", {txtOptions:["Disabled:disabled", "Endless:endless", "Normal:normal", "Always:endless normal"]}),
 			post_resize: newOption("checkbox", true, "Resize Post", "Shrink large post content to fit the browser window when initially loading a post.<tiphead>Note</tiphead>When logged in, the account's \"fit images to window\" setting will override this option."),
@@ -277,14 +279,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		},
 		sections: { // Setting sections and ordering.
 			blacklist_options: newSection("general", ["blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
+			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
+			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post"], "Post Control"),
 			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_fixed_paginator", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
-			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post"], "Post Control"),
-			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "comment_score"], "Misc."),
+			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "page_counter", "comment_score"], "Misc."),
+			misc_layout: newSection("general", ["move_save_search"], "Misc."),
 			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "resize_link_style", "override_account", "thumb_cache_limit"], "Script Settings"),
-			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 		},
@@ -338,6 +341,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var autohide_sidebar = gLocRegex.test(bbb.user.autohide_sidebar);
 	var fixed_sidebar = gLocRegex.test(bbb.user.fixed_sidebar);
 	var collapse_sidebar = bbb.user.collapse_sidebar;
+	var move_save_search = bbb.user.move_save_search;
+	var page_counter = bbb.user.page_counter;
 
 	var bypass_api = bbb.user.bypass_api;
 	var manage_cookies = bbb.user.manage_cookies;
@@ -430,7 +435,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	delayMe(collapseSidebar); // Delayed to allow Danbooru layout to finalize.
 
-	delayMe(endlessInit); // Delayed to allow Danbooru layout to finalize.
+	moveSaveSearch();
+
+	pageCounter();
+
+	endlessInit();
 
 	postLinkNewWindow();
 
@@ -850,9 +859,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				prepThumbnails(childSpan);
 
 				if (!existingPost) // There isn't a next post so append the new post to the end before the paginator.
-					document.getElementById("a-index").insertBefore(childSpan.firstChild, getPaginator());
+					document.getElementById("a-index").insertBefore(childSpan.firstElementChild, getPaginator());
 				else // Insert new post before the post that should follow it.
-					existingPost.parentNode.insertBefore(childSpan.firstChild, existingPost);
+					existingPost.parentNode.insertBefore(childSpan.firstElementChild, existingPost);
 
 				// Get the comments and image info.
 				searchPages("post_comments", post.id);
@@ -937,7 +946,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Create the main notice element.
 		childSpan.innerHTML = '<div class="ui-corner-all ui-state-highlight notice ' + classes + '"> ' + msg + ' (<a href="/wiki_pages?title=help%3Apost_relationships">learn more</a>) <a href="#" id="' + previewLinkId + '">' + previewLinkTxt + '</a> <div id="' + previewId + '" style="display: ' + displayStyle + ';"> </div> </div>';
 
-		var newNotice = childSpan.firstChild;
+		var newNotice = childSpan.firstElementChild;
 		var thumbDiv = getId(previewId, newNotice);
 		var previewLink = getId(previewLinkId, newNotice);
 
@@ -1156,13 +1165,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function replacePaginator(docEl) {
-		// Replace the paginator with a new one.
-		var target = getPaginator();
-		var newContent = getPaginator(docEl);
+	function replacePaginator(el) {
+		// Replace the contents inside the paginator div so as to preserve the original div and any event listeners attached to it.
+		var oldPag = getPaginator();
+		var newPag = getPaginator(el);
 
-		if (target && newContent)
-			target.parentNode.replaceChild(newContent, target);
+		if (oldPag && newPag)
+			oldPag.innerHTML = newPag.innerHTML;
 	}
 
 	function replaceComments(docEl, postId) {
@@ -1211,7 +1220,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function replaceThumbnails(docEl) {
 		// Replace the thumbnails and paginator with new ones.
 		var thumbContainer = getThumbContainer(gLoc);
-		var paginator = getPaginator();
 		var before = getThumbSibling(gLoc);
 
 		if (!thumbContainer) {
@@ -1222,7 +1230,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Thumb preparation.
 		var newThumbs = document.createDocumentFragment();
 		var newPosts = getPosts(docEl);
-		var newPaginator = getPaginator(docEl);
 
 		while (newPosts[0])
 			newThumbs.appendChild(newPosts[0]);
@@ -1252,7 +1259,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		thumbContainer.parentNode.replaceChild(replacement, thumbContainer);
 
 		// Replace paginator with new paginator.
-		paginator.parentNode.replaceChild(newPaginator, paginator);
+		replacePaginator(docEl);
 
 		// Update the URL with the limit value.
 		if (allowUserLimit())
@@ -1563,7 +1570,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var contDiv = getId("bbb-endless-load-div", target);
 
 			sibling = contDiv || paginator;
-
 		}
 
 		return sibling;
@@ -1801,6 +1807,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		layoutPage.bbbSection(bbb.sections.sidebar);
 		layoutPage.bbbSection(bbb.sections.notices);
+		layoutPage.bbbSection(bbb.sections.misc_layout);
 
 		var bordersPage = bbb.el.menu.bordersPage = document.createElement("div");
 		bordersPage.className = "bbb-page";
@@ -2495,7 +2502,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	Element.prototype.bbbTocSection = function() {
 		var page = this;
-		page.insertBefore(createTocSection(page), page.firstChild);
+		page.insertBefore(createTocSection(page), page.firstElementChild);
 	};
 
 	function newOption(type, def, lbl, expl, optPropObject) {
@@ -2595,7 +2602,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			borderSettings.push(newBorderItem);
 
 			var newBorderElement = createBorderOption(borderSettings, 0);
-			section.insertBefore(newBorderElement, section.children[0]);
+			section.insertBefore(newBorderElement, section.firstElementChild);
 		}
 
 		resetBorderElements(section);
@@ -3251,7 +3258,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (infoSection) {
 			var infoItems = infoSection.getElementsByTagName("li");
-			var sizeRegex = /^\s*(Size:\s+)([\d\.]+\s+\S+)/i;
+			var sizeRegex = /^(\s*Size:\s+)([\d\.]+\s+\S+)/i;
 
 			for (i = 0, il = infoItems.length; i < il; i++) {
 				var infoItem = infoItems[i];
@@ -3698,7 +3705,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		if (mainList)
-			mainList.insertBefore(tagHolder, mainList.firstChild);
+			mainList.insertBefore(tagHolder, mainList.firstElementChild);
 		else {
 			var newHeader = document.createElement("h1");
 			newHeader.innerHTML = "Tags";
@@ -4195,7 +4202,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var childSpan = document.createElement("span");
 		childSpan.innerHTML = createThumbHTML(post, query);
 
-		return childSpan.firstChild;
+		return childSpan.firstElementChild;
 	}
 
 	function createThumbListing(posts, orderedIds) {
@@ -4585,7 +4592,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Set up the fixed paginator.
-		endlessFixedPaginator();
+		delayMe(endlessFixedPaginator); // Delayed to allow Danbooru layout to finalize.
 
 		// Check the session default or original default value to see if endless pages should be enabled.
 		var sessionDefault = sessionStorage.bbb_endless_default;
@@ -4789,9 +4796,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Prep the first queued page object and add it to the document.
 		var firstPageObject = bbb.endless.pages.shift();
 		var page = firstPageObject.page;
-		var newPaginator = firstPageObject.paginator;
 		var thumbContainer = getThumbContainer(gLoc);
-		var curPaginator = getPaginator();
 		var before = getThumbSibling(gLoc);
 
 		// Prepare thumbnails.
@@ -4814,7 +4819,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			dividerLink.innerHTML = '<a href="' + updateURLQuery(location.href, {page: firstNum}) + '">Page ' + firstNum + '</a>' + (lastNum ? ' ~ <a href="' + updateURLQuery(location.href, {page: lastNum}) + '">Page ' + lastNum + '</a>' : '');
 
 			if (!bbb.endless.fill_first_page)
-				page.insertBefore(divider, page.firstChild);
+				page.insertBefore(divider, page.firstElementChild);
 			else if (lastNum) // Only add the divider for filling the first page when there are actual posts added.
 				thumbContainer.insertBefore(divider, (getPosts()[0] || before));
 		}
@@ -4829,7 +4834,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			markerLink.innerHTML = '<a href="' + updateURLQuery(location.href, {page: firstNum}) + '">Page ' + firstNum + '</a>' + (lastNum ? '<br/>~<br/><a href="' + updateURLQuery(location.href, {page: lastNum}) + '">Page ' + lastNum + '</a>' : '');
 
 			if (!bbb.endless.fill_first_page)
-				page.insertBefore(marker, page.firstChild);
+				page.insertBefore(marker, page.firstElementChild);
 			else if (lastNum) // Only add the marker for filling the first page when there are actual posts added.
 				thumbContainer.insertBefore(marker, (getPosts()[0] || before));
 		}
@@ -4841,16 +4846,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			thumbContainer.insertBefore(page, before);
 
 		// Replace the paginator.
-		if (curPaginator && newPaginator)
-			curPaginator.parentNode.replaceChild(newPaginator, curPaginator);
+		replacePaginator(firstPageObject.paginator);
 
 		// Fix hidden thumbnails.
 		fixHiddenThumbs();
 		bbbStatus("hidden", "new"); // Update status message with new amount.
-
-		// New post tracking link fix.
-		if (getVar("new_posts") === "list")
-			bbb.el.trackNewMarkLink.innerHTML = "Mark pages 1-" + firstNum + " viewed";
 
 		if (!bbb.endless.fill_first_page)
 			bbb.endless.append_page = false;
@@ -5419,6 +5419,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (gLoc === "post")
 			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
+		else if (gLoc === "comment_search" || gLoc === "comment")
+			delayMe(fixCommentSearch);
 		else if (useAPI()) // API only features.
 			searchJSON(gLoc);
 		else // Alternate mode for features.
@@ -5502,10 +5504,44 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (gLoc === "favorites") {
 			if (allowUserLimit() || noPages) {
-				paginator.innerHTML = "Loading..."; // Disable the paginator while fixing it.
+				paginator.innerHTML = "<p>Loading...</p>"; // Disable the paginator while fixing it.
 
 				searchPages("paginator");
 			}
+		}
+	}
+
+	function fixCommentSearch() {
+		// Fix the thumbnails for hidden posts in the comment search.
+		var posts = getPosts();
+
+		for (var i = 0, il = posts.length; i < il; i++) {
+			var post = posts[i];
+			var hasImg = post.getElementsByTagName("img")[0];
+			var tags = post.getAttribute("data-tags");
+			var previewUrl = post.getAttribute("data-preview-file-url");
+
+			// If the information for fixing the thumbnails is missing, stop checking.
+			if (!hasImg && !previewUrl)
+				return;
+
+			// Skip posts with content the user doesn't want or that already have images.
+			if (hasImg || (!show_loli && /\bloli\b/.test(tags)) || (!show_shota && /\bshota\b/.test(tags)) || (!show_toddlercon && /\btoddlercon\b/.test(tags)) || (!show_banned && /\bbanned\b/.test(post.getAttribute("data-flags"))))
+				continue;
+
+			var preview = post.getElementsByClassName("preview")[0];
+			var before = preview.firstElementChild;
+
+			var thumb = document.createElement("a");
+			thumb.href = "/posts/" + post.getAttribute("data-id");
+			thumb.innerHTML = '<img src="' + previewUrl + '" alt="' + post.getAttribute("data-md5") + '" title="' + tags + ' user:' + post.getAttribute("data-uploader") + ' rating:' + post.getAttribute("data-rating") + ' score:' + post.getAttribute("data-score") + '">';
+
+			if (before)
+				preview.insertBefore(thumb, before);
+			else
+				preview.appendChild(thumb);
+
+			prepThumbnails(post);
 		}
 	}
 
@@ -5556,7 +5592,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			window.clearTimeout(bbb.timers.keepBbbNotice);
 
 		if (notice.style.display === "block" && /\S/.test(noticeMsg.textContent)) { // Insert new text at the top if the notice is already open.
-			noticeMsg.insertBefore(msg, noticeMsg.children[0]);
+			noticeMsg.insertBefore(msg, noticeMsg.firstElementChild);
 
 			// Don't allow the notice to be closed via clicking for half a second. Prevents accidental message closing.
 			bbb.timers.keepBbbNotice = window.setTimeout(function() {
@@ -6030,11 +6066,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				var currentPage = Number(getVar("page")) || 1;
 				var savedPage = Math.ceil((info.viewing - limitNum) / limitNum) + 1;
 				var currentViewed = Number(/id:>(\d+)/.exec(decodeURIComponent(location.search))[1]);
+				var paginator = getPaginator();
 
 				// Replace the chickens message on the first page with a more specific message.
 				if (!firstPost && currentPage < 2) {
-					if (postsDiv && postsDiv.children[0])
-						postsDiv.children[0].innerHTML = "No new posts.";
+					if (postsDiv && postsDiv.firstElementChild)
+						postsDiv.firstElementChild.innerHTML = "No new posts.";
 				}
 
 				// Update the saved page information.
@@ -6046,7 +6083,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				// Modify new post searches with a mark as viewed link.
 				if (postSections) {
 					var markSection = document.createElement("li");
-					var markLink = bbb.el.trackNewMarkLink = document.createElement("a");
+
+					var markLink = document.createElement("a");
 					markLink.innerHTML = (currentPage > 1 ? "Mark pages 1-" + currentPage + " viewed" : "Mark page 1 viewed");
 					markLink.href = "#";
 					markSection.appendChild(markLink);
@@ -6058,11 +6096,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					}, false);
 
 					var resetSection = document.createElement("li");
+					resetSection.style.cssFloat = "right";
+
 					var resetLink = document.createElement("a");
 					resetLink.innerHTML = "Reset (Mark all viewed)";
 					resetLink.href = "#";
 					resetLink.style.color = "#FF1100";
-					resetLink.style.cssFloat = "right";
 					resetSection.appendChild(resetLink);
 					postSections.appendChild(resetSection);
 
@@ -6070,6 +6109,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						trackNewReset();
 						event.preventDefault();
 					}, false);
+
+					// Update the mark link if the paginator updates.
+					if (paginator) {
+						paginator.bbbWatchNodes(function() {
+							var activePage = paginator.getElementsByTagName("span")[0];
+
+							if (activePage)
+								markLink.innerHTML = "Mark pages 1-" + activePage.textContent.bbbSpaceClean() + " viewed";
+						});
+					}
 				}
 			}
 		}
@@ -6293,7 +6342,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (thumb_info === "below") {
 			styles += '.bbb-thumb-info-parent .bbb-thumb-info {display: block;' + thumbInfoStyle + '}' +
-			'article.post-preview.bbb-thumb-info-parent, .post-preview div.preview.bbb-thumb-info-parent {height: ' + (thumbMaxDim + 18) + 'px !important;}'; // Adjust thumbnail height space to allocate for the info.
+			'article.post-preview.bbb-thumb-info-parent, .post-preview div.preview.bbb-thumb-info-parent {height: ' + (thumbMaxDim + 18) + 'px !important;}' + // Adjust thumbnail height space to allocate for the info.
+			'article.post-preview.bbb-thumb-info-parent.pooled {height: ' + (thumbMaxDim + 78) + 'px !important;}'; // Pool gallery view thumb height adjustment.
 		}
 		else if (thumb_info === "hover") {
 			styles += '.bbb-thumb-info-parent .bbb-thumb-info {display: none; position: relative; bottom: 18px; background-color: rgba(255, 255, 255, 0.9);' + thumbInfoStyle + '}' +
@@ -6338,22 +6388,25 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Additional blacklist bars.
-		if (blacklist_add_bars)
+		if (blacklist_add_bars) {
 			styles += '#blacklist-box.bbb-blacklist-box {margin-bottom: 1em;}' +
 			'#blacklist-box.bbb-blacklist-box ul {display: inline;}' +
 			'#blacklist-box.bbb-blacklist-box li {display: inline; margin-right: 1em;}' +
 			'#blacklist-box.bbb-blacklist-box li a {color: #0073FF; cursor: pointer;}' +
 			'#blacklist-box.bbb-blacklist-box li span {color: #AAAAAA;}';
+		}
 
 		// Blacklist thumbnail display;
-		if (blacklist_post_display === "removed")
+		if (blacklist_post_display === "removed") {
 			styles += 'div.post.post-preview.blacklisted {display: block !important;}' + // Comment listing override.
 			'div.post.post-preview.blacklisted.blacklisted-active {display: none !important;}';
-		else if (blacklist_post_display === "hidden")
+		}
+		else if (blacklist_post_display === "hidden") {
 			styles += 'article.post-preview.blacklisted.blacklisted-active {display: inline-block !important;}' +
 			'div.post.post-preview.blacklisted {display: block !important;}' + // Comments.
 			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview {visibility: hidden !important;}';
-		else if (blacklist_post_display === "replaced")
+		}
+		else if (blacklist_post_display === "replaced") {
 			styles += 'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {display: inline-block !important; background-position: ' + totalBorderWidth + 'px ' + totalBorderWidth + 'px !important; background-repeat: no-repeat !important; background-image: url(' + bbbBlacklistImg + ') !important;}' +
 			'#has-parent-relationship-preview article.post-preview.blacklisted.blacklisted-active, #has-children-relationship-preview article.post-preview.blacklisted.blacklisted-active {background-position: ' + (totalBorderWidth + 5) + 'px ' + (totalBorderWidth + 5) + 'px !important;}' + // Account for relation notice padding.
 			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link img, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link img {opacity: 0.0 !important; height: 150px !important; width: 150px !important; border-width: 0px !important; padding: 0px !important;}' + // Remove all status border space.
@@ -6361,6 +6414,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link.bbb-custom-tag, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link.bbb-custom-tag {padding: ' + border_spacing + 'px !important; margin: ' + (border_width + customBorderSpacing) + 'px !important;}' +
 			'div.post.post-preview.blacklisted {display: block !important;}' +
 			'div.post.post-preview.blacklisted.blacklisted-active {display: block !important;}';
+		}
 
 		// Blacklist marking.
 		if (blacklist_thumb_mark === "icon") {
@@ -6379,10 +6433,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					styles += 'article.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link.bbb-custom-tag:after, article.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link.bbb-custom-tag:before, div.post.post-preview.' + statusBorderItem.class_name + ' div.preview a.bbb-thumb-link.bbb-custom-tag:after, div.post.post-preview.' + statusBorderItem.class_name + ' div.preview a.bbb-thumb-link.bbb-custom-tag:before {margin: ' + (border_width + border_spacing + customBorderSpacing) + 'px !important}'; // Margin applies to posts with a status and custom border.
 			}
 		}
-		else if (blacklist_thumb_mark === "highlight")
+		else if (blacklist_thumb_mark === "highlight") {
 			styles += 'article.post-preview.blacklisted, div.post.post-preview.blacklisted div.preview {background-color: ' + blacklist_highlight_color + ' !important;}' +
 			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active div.preview {background-color: transparent !important;}' +
 			'article.post-preview.blacklisted.blacklisted-active.current-post {background-color: rgba(0, 0, 0, 0.1) !important}';
+		}
 
 		// Blacklist post controls.
 		if (blacklist_thumb_controls) {
@@ -6472,6 +6527,94 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		document.getElementsByTagName("head")[0].appendChild(customStyles);
 	}
 
+	function pageCounter() {
+		var pageEl = document.getElementById("page");
+		var paginator = getPaginator();
+
+		if (!page_counter || !paginator || !pageEl)
+			return;
+
+		var numString = "";
+		var lastNumString;
+
+		// Provide page number info if available.
+		if (!/[a-zA-Z]/.test(paginator.textContent)) {// Number paginators don't contain any letters.
+			var activePage = paginator.getElementsByTagName("span")[0];
+
+			var pageItems = paginator.getElementsByTagName("li");
+			var numPageItems = pageItems.length;
+			var lastPageItem = pageItems[numPageItems - 1];
+			var activeNum = activePage.textContent.bbbSpaceClean();
+			var lastNum;
+
+			if (activePage.parentNode === lastPageItem) // Last/only page case.
+				lastNum = activeNum;
+			else { // In all other cases, there should always be a next page button and at least two other page items (1-X).
+				lastNum = lastPageItem.previousElementSibling.textContent.bbbSpaceClean();
+
+				if (!bbbIsNum(lastNum)) // Too many pages for the current user to view.
+					lastNum = "";
+			}
+
+			lastNumString = (lastNum ? " of " + lastNum : "");
+			numString = 'Page ' + activeNum + '<span id="bbb-page-counter-last">' + lastNumString + '</span> | ';
+		}
+
+		var pageNav = bbb.el.bbbTopNav;
+		var pageInput = bbb.el.bbbTopNavInput;
+
+		if (!pageNav) { // Create the page nav.
+			var pageNavString = '<div id="bbb-page-counter" style="float: right; font-size: 87.5%;">' + numString + '<form id="bbb-page-counter-form" style="display: inline;"><input id="bbb-page-counter-input" size="4" placeholder="Page#" type="text"><input type="submit" value="Go"></form></div>';
+
+			pageNav = bbb.el.bbbTopNav = document.createElement("div");
+			pageNav.innerHTML = pageNavString;
+
+			pageInput = bbb.el.bbbTopNavInput = getId("bbb-page-counter-input", pageNav);
+
+			getId("bbb-page-counter-form", pageNav).addEventListener("submit", function(event) {
+				var value = pageInput.value.bbbSpaceClean();
+
+				if (value !== "" && value !== "Page#")
+					location.href = updateURLQuery(location.href, {page:value});
+
+				event.preventDefault();
+			}, false);
+
+			if (numString)
+				paginator.bbbWatchNodes(pageCounter);
+
+			pageEl.insertBefore(pageNav, pageEl.firstElementChild);
+		}
+		else // Update the last page in the page nav.
+			document.getElementById("bbb-page-counter-last").innerHTML = lastNumString;
+	}
+
+	function moveSaveSearch() {
+		var saveSearchDiv = document.getElementById("saved-searches-nav");
+		var relatedSection = document.getElementById("related-box");
+
+		if (!move_save_search || !saveSearchDiv || !relatedSection)
+			return;
+
+		saveSearchDiv.parentNode.removeChild(saveSearchDiv);
+
+		var relatedSectionMenu = relatedSection.getElementsByTagName("ul")[0];
+
+		var saveSearchItem = document.createElement("li");
+
+		var saveSearchLink = document.createElement("a");
+		saveSearchLink.href = "#";
+		saveSearchLink.innerHTML = "Save this search";
+		saveSearchLink.id = "save-search";
+		saveSearchItem.appendChild(saveSearchLink);
+
+		Danbooru.Post.initialize_saved_searches();
+
+		saveSearchLink.addEventListener("click", disableEvent, false);
+
+		relatedSectionMenu.insertBefore(saveSearchItem, relatedSectionMenu.firstElementChild);
+	}
+
 	function commentScoreInit() {
 		// Set up the initial comment scores and get ready to handle new comments.
 		if (!comment_score || (gLoc !== "comments" && gLoc !== "comment_search" && gLoc !== "comment" && gLoc !== "post"))
@@ -6480,9 +6623,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var paginator = getPaginator();
 		var watchedNode = (paginator ? paginator.parentNode : document.body);
 
-		watchedNode.bbbWatchNodes(commentScore);
-
 		commentScore();
+		watchedNode.bbbWatchNodes(commentScore);
 	}
 
 	function commentScore() {
@@ -6577,12 +6719,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				var thumbEl = post.getElementsByClassName("preview")[0] || post;
 				thumbEl.bbbAddClass("bbb-thumb-info-parent");
 
+				var postLink = thumbEl.getElementsByTagName("a")[0];
+				var before = (postLink ? postLink.nextElementSibling : undefined);
+
 				score = (score < 0 ? '<span style="color: #CC0000;">' + score + '</span>' : score);
 
 				var infoDiv = document.createElement("div");
 				infoDiv.className = "bbb-thumb-info" + (tooShort ? " bbb-thumb-info-short" : "");
 				infoDiv.innerHTML = "&#x2605;" + score + "&nbsp;&nbsp;&nbsp;&hearts;" + favCount + "&nbsp;&nbsp;&nbsp;&nbsp;" + rating;
-				thumbEl.appendChild(infoDiv);
+
+				if (before)
+					thumbEl.insertBefore(infoDiv, before);
+				else
+					thumbEl.appendChild(infoDiv);
 			}
 		}
 	}
@@ -7160,7 +7309,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var pageText = (page ? page.textContent.toLowerCase() : "");
 		var paginator = getPaginator();
 
-		if (!paginator && (pageText.indexOf("canceling statement due to statement timeout") > -1 || pageText.indexOf("you cannot search for more than") > -1 || pageText.indexOf("that record was not found") > -1))
+		if (!paginator && (pageText.indexOf("canceling statement due to statement timeout") > -1 || pageText.indexOf("you cannot search for more than") > -1 || pageText.indexOf("that record was not found") > -1 || pageText.indexOf("please narrow your search terms") > -1))
 			return true;
 		else if (gLoc === "search" || gLoc === "favorites") {
 			if (limit === 0 || pageNum === "b1" || noResultsPage())
@@ -7360,16 +7509,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var tagsInput = document.getElementById("tags");
 
 		if (tagsInput && (gLoc === "search" || gLoc === "post" || gLoc === "intro" || gLoc === "favorites")) {
-			searchAddToggleWatch();
-			tagsInput.addEventListener("input", searchAddToggleWatch, false);
-			tagsInput.addEventListener("keyup", searchAddToggleWatch, false);
-			tagsInput.addEventListener("cut", searchAddToggleWatch, false);
-			tagsInput.addEventListener("paste", searchAddToggleWatch, false);
-			tagsInput.addEventListener("change", searchAddToggleWatch, false);
+			searchAddToggleCheck();
+			tagsInput.addEventListener("input", searchAddToggleCheck, false);
+			tagsInput.addEventListener("keyup", searchAddToggleCheck, false);
+			tagsInput.addEventListener("cut", searchAddToggleCheck, false);
+			tagsInput.addEventListener("paste", searchAddToggleCheck, false);
+			tagsInput.addEventListener("change", searchAddToggleCheck, false);
 		}
 	}
 
-	function searchAddToggleWatch(event) {
+	function searchAddToggleCheck(event) {
 		// Watch the search box value, test it upon changes, and update the tag links accordingly.
 		var input = (event ? event.target : document.getElementById("tags"));
 		var value = input.value;
