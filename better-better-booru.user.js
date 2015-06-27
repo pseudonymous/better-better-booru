@@ -59,59 +59,58 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	};
 
 	Element.prototype.bbbHasClass = function() {
-		// Test an element for one or more classes.
-		var spacedClassName = this.className.bbbSpacePad();
-		var hasClass = false;
+		// Test an element for one or more collections of classes.
+		var classList = this.classList;
 
 		for (var i = 0, il = arguments.length; i < il; i++) {
-			var classString = arguments[i];
-			var classArray = classString.bbbSpaceClean().split(" ");
-			hasClass = true;
+			var classes = arguments[i].bbbSpaceClean();
+
+			if (!classes)
+				continue;
+
+			var classArray = classes.split(" ");
+			var hasClass = true;
 
 			for (var j = 0, jl = classArray.length; j < jl; j++) {
-				var spacedClass = classArray[j].bbbSpacePad();
-
-				if (spacedClassName.indexOf(spacedClass) < 0) {
+				if (!classList.contains(classArray[j])) {
 					hasClass = false;
 					break;
 				}
 			}
 
 			if (hasClass)
-				return hasClass;
+				return true;
 		}
 
-		return hasClass;
+		return false;
 	};
 
 	Element.prototype.bbbAddClass = function(classString) {
 		// Add one or more classes to an element.
-		var className = this.className;
-		var classArray = classString.bbbSpaceClean().split(" ");
+		var classes = classString.bbbSpaceClean();
 
-		for (var i = 0, il = classArray.length; i < il; i++) {
-			var aClass = classArray[i];
+		if (!classes)
+			return;
 
-			if (!this.bbbHasClass(aClass))
-				className = className + " " + aClass;
-		}
+		var classList = this.classList;
+		var classArray = classes.split(" ");
 
-		this.className = className.bbbSpaceClean();
+		for (var i = 0, il = classArray.length; i < il; i++)
+			classList.add(classArray[i]);
 	};
 
 	Element.prototype.bbbRemoveClass = function(classString) {
 		// Remove one or more classes from an element.
-		var spacedClassName = this.className.bbbSpacePad();
-		var classArray = classString.bbbSpaceClean().split(" ");
+		var classes = classString.bbbSpaceClean();
 
-		for (var i = 0, il = classArray.length; i < il; i++) {
-			var spacedClass = classArray[i].bbbSpacePad();
+		if (!classes)
+			return;
 
-			while (spacedClassName.indexOf(spacedClass) > -1)
-				spacedClassName = spacedClassName.replace(spacedClass, " ");
-		}
+		var classList = this.classList;
+		var classArray = classes.split(" ");
 
-		this.className = spacedClassName.bbbSpaceClean();
+		for (var i = 0, il = classArray.length; i < il; i++)
+			classList.remove(classArray[i]);
 	};
 
 	Element.prototype.bbbWatchNodes = function(func) {
@@ -1209,8 +1208,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Add it all in and get it ready.
-		while (commentSection.children[0])
-			newContent.appendChild(commentSection.children[0]);
+		while (commentSection.firstElementChild)
+			newContent.appendChild(commentSection.firstElementChild);
 
 		target.appendChild(newContent);
 
@@ -3695,8 +3694,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				tagList.removeChild(header);
 				tagList.removeChild(list);
 
-				while (list.children[0])
-					tagHolder.appendChild(list.children[0]);
+				while (list.firstElementChild)
+					tagHolder.appendChild(list.firstElementChild);
 			}
 			else if (header.tagName === "H1" && list) {
 				mainList = list;
