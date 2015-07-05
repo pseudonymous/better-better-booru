@@ -221,13 +221,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
 			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, and notes listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"Load More\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
 			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and add them to the new page until the desired number of thumbnails is reached. <tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
-			endless_fixed_paginator: newOption("dropdown", "disabled", "Fixed Paginator", "Make the paginator always visible by fixing it to the bottom of the window when it would not normally be visible. <tipdesc>Fixed:</tipdesc> Allow the paginator to fix itself to the bottom of the window.<tipdesc>Minimal:</tipdesc> Allow the paginator to fix itself to the bottom of the window and make it smaller by removing most of the blank space within it.", {txtOptions:["Disabled:disabled", "Fixed:fixed", "Minimal:minimal"]}),
 			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
 			endless_preload: newOption("checkbox", false, "Preload Next Page", "Start loading the next page as soon as possible.<tiphead>Note</tiphead>A preloaded page will not be appended until the scroll limit is reached."),
 			endless_remove_dup: newOption("checkbox", false, "Remove Duplicates", "When appending new pages, remove posts that already exist in the listing from the new page.<tiphead>Note</tiphead>Duplicate posts are caused by the addition of new posts to the beginning of a listing or changes to the order of the posts."),
 			endless_scroll_limit: newOption("dropdown", 500, "Scroll Limit", "Set the minimum amount of pixels that the window can have left to vertically scroll before it starts appending the next page.", {numList:[0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			endless_separator: newOption("dropdown", "none", "Page Separator", "Distinguish pages from each other by marking them with a separator.<tipdesc>Marker:</tipdesc> Place a thumbnail sized marker before the first thumbnail of each page.<tipdesc>Divider:</tipdesc> Completely separate pages by placing a horizontal line between them.", {txtOptions:["None:none", "Marker:marker", "Divider:divider"]}),
 			endless_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling endless pages on and off, the mode it's toggled to will override the default and persist across other pages in the same tab until it is closed."),
+			fixed_paginator: newOption("dropdown", "disabled", "Fixed Paginator", "Make the paginator always visible for the favorites, search, pool, and notes listings by fixing it to the bottom of the window when it would normally start scrolling out of view. <tiphead>Note</tiphead>Options labeled with \"minimal\" will also make the fixed paginator smaller by removing most of the blank space within it.", {txtOptions:["Disabled:disabled", "Endless:endless", "Endless (Minimal):endless minimal", "Normal:normal", "Normal (Minimal):normal minimal", "Always:endless normal", "Always (Minimal):endless normal minimal"]}),
 			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar never completely vertically scroll out of view for posts, favorites listings, and/or searches by fixing it to the top or bottom of the window when it would normally start scrolling out of view. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window and the Danbooru location being modified, the \"tag scrollbars\", \"collapsible sidebar\", and/or \"remove tag headers\" options may be needed for best results.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			hide_ban_notice: newOption("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 			hide_comment_notice: newOption("checkbox", false, "Hide Comment Guide Notice", "Hide the Danbooru comment guide notice."),
@@ -242,7 +242,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option."),
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
-			move_save_search: newOption("checkbox", false, "Move Save Search", "Turn the \"save this search\" button into a link and move it into the related section in the sidebar."),
+			move_save_search: newOption("checkbox", false, "Move Save Search", "Move the \"save search\" button into the related section in the sidebar."),
 			override_account: newOption("checkbox", false, "Override Account Settings", "Allow the \"resize post\", \"load sample first\", and \"blacklist\" settings to override their corresponding account settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
 			page_counter: newOption("checkbox", false, "Page Counter", "Add a page counter and \"go to page #\" input near the top of listing pages. <tiphead>Note</tiphead>The total number of pages will not be displayed if the pages are using the \"previous & next\" paging system or the total number of pages exceeds the maximum amount allowed by your user account level."),
 			post_drag_scroll: newOption("checkbox", false, "Post Drag Scrolling", "While holding down left click on a post's content, mouse movement can be used to scroll the whole page and reposition the content.<tiphead>Note</tiphead>This option is automatically disabled when translation mode is active."),
@@ -281,11 +281,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post"], "Post Control"),
-			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_fixed_paginator", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
+			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "page_counter", "comment_score"], "Misc."),
-			misc_layout: newSection("general", ["move_save_search"], "Misc."),
+			misc_layout: newSection("general", ["fixed_paginator", "move_save_search"], "Misc."),
 			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "resize_link_style", "override_account", "thumb_cache_limit"], "Script Settings"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
@@ -339,6 +339,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var thumb_info = bbb.user.thumb_info;
 	var autohide_sidebar = gLocRegex.test(bbb.user.autohide_sidebar);
 	var fixed_sidebar = gLocRegex.test(bbb.user.fixed_sidebar);
+	var fixed_paginator = bbb.user.fixed_paginator;
 	var collapse_sidebar = bbb.user.collapse_sidebar;
 	var move_save_search = bbb.user.move_save_search;
 	var page_counter = bbb.user.page_counter;
@@ -384,7 +385,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	// Endless
 	var endless_default = bbb.user.endless_default;
 	var endless_fill = bbb.user.endless_fill;
-	var endless_fixed_paginator = bbb.user.endless_fixed_paginator;
 	var endless_pause_interval = bbb.user.endless_pause_interval;
 	var endless_preload = bbb.user.endless_preload;
 	var endless_remove_dup = bbb.user.endless_remove_dup;
@@ -433,6 +433,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		delayMe(fixedSidebar); // Delayed to allow Danbooru layout to finalize.
 
 	delayMe(collapseSidebar); // Delayed to allow Danbooru layout to finalize.
+
+	delayMe(fixedPaginator); // Delayed to allow Danbooru layout to finalize.
 
 	moveSaveSearch();
 
@@ -1566,9 +1568,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "pool" || mode === "notes" || mode === "favorites") {
 			var paginator = getPaginator(target);
-			var contDiv = getId("bbb-endless-load-div", target);
+			var endlessDiv = getId("bbb-endless-button-div", target);
 
-			sibling = contDiv || paginator;
+			sibling = endlessDiv || paginator;
 		}
 
 		return sibling;
@@ -4458,26 +4460,30 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	/* Endless Page functions */
-	function endlessToggle() {
+	function endlessToggle(event) {
 		// Toggle endless pages on and off.
 		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites"))
 			return;
 
+		// Change the default for the duration of the session if necessary.
+		if (endless_session_toggle) {
+			var onValue = (bbb.user.endless_default !== "off" ? bbb.user.endless_default : "on");
+			var newDefault = (bbb.endless.enabled ? "off" : onValue);
+			console.log(onValue + " - " + newDefault);
+			sessionStorage.bbb_endless_default = endless_default = newDefault;
+		}
+
 		if (bbb.endless.enabled) {
 			endlessDisable();
-			bbbNotice("Endless pages disabled.", 2);
+
+			if (event && event.type !== "click")
+				bbbNotice("Endless pages disabled.", 2);
 		}
 		else {
 			endlessEnable();
-			bbbNotice("Endless pages enabled.", 2);
-		}
 
-		// Change the default for the duration of the session if necessary.
-		if (endless_session_toggle) {
-			var onValue = (endless_default !== "off" ? endless_default : "on");
-			var newDefault = (bbb.endless.enabled ? onValue : "off");
-
-			sessionStorage.bbb_endless_default = newDefault;
+			if (event && event.type !== "click")
+				bbbNotice("Endless pages enabled.", 2);
 		}
 	}
 
@@ -4487,12 +4493,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 
 		bbb.endless.enabled = true;
-
-		// Check on the paginator.
-		endlessFixedCheck();
-
-		// Add the body class to trigger certain stylesheet rules.
-		document.body.bbbAddClass("bbb-endless-enabled");
+		bbb.el.endlessEnableDiv.style.display = "none";
+		bbb.el.endlessLoadDiv.style.display = "inline-block";
+		bbb.el.endlessLink.style.fontWeight = "bold";
 
 		// Check on the next page status.
 		if (bbb.endless.append_page)
@@ -4508,7 +4511,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Turn off endless pages.
 		bbb.endless.enabled = false;
 		bbb.endless.append_page = false;
-		document.body.bbbRemoveClass("bbb-endless-enabled");
+		bbb.el.endlessEnableDiv.style.display = "inline-block";
+		bbb.el.endlessLoadDiv.style.display = "none";
+		bbb.el.endlessLink.style.fontWeight = "normal";
 
 		// Remove the listener for detecting the amount of scroll left.
 		window.removeEventListener("scroll", endlessCheck, false);
@@ -4542,7 +4547,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			var link = document.createElement("a");
+			var link = bbb.el.endlessLink = document.createElement("a");
 			link.href = "#";
 			link.innerHTML = "Endless";
 			link.addEventListener("click", function(event) {
@@ -4551,26 +4556,32 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}, false);
 
 			var item = document.createElement("li");
+			item.style.textAlign = "center";
+			item.style.display = "inline-block";
 			item.appendChild(link);
 
 			if (listingItemSibling)
 				menu.insertBefore(item, listingItemSibling);
 			else
 				menu.appendChild(item);
+
+			link.style.fontWeight = "bold";
+			item.style.width = item.clientWidth + "px";
+			link.style.fontWeight = "normal";
 		}
 
-		// Set up the load more button.
 		var paginator = getPaginator();
 
 		if (paginator) {
 			var paginatorParent = paginator.parentNode;
 
+			// Set up the load more button.
 			var buttonDiv = document.createElement("div");
-			buttonDiv.id = "bbb-endless-load-div";
+			buttonDiv.id = "bbb-endless-button-div";
 
-			var buttonCenterAssist = document.createElement("div");
-			buttonCenterAssist.id = "bbb-endless-load-center";
-			buttonDiv.appendChild(buttonCenterAssist);
+			var loadButtonDiv = bbb.el.endlessLoadDiv = document.createElement("div");
+			loadButtonDiv.id = "bbb-endless-load-div";
+			buttonDiv.appendChild(loadButtonDiv);
 
 			var loadButton = bbb.el.endlessLoadButton = document.createElement("a");
 			loadButton.innerHTML = "Load More";
@@ -4585,27 +4596,37 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				endlessQueueCheck();
 				event.preventDefault();
 			}, false);
-			buttonCenterAssist.appendChild(loadButton);
+			loadButtonDiv.appendChild(loadButton);
+
+			// Set up the enable button.
+			var enableButtonDiv = bbb.el.endlessEnableDiv = document.createElement("div");
+			enableButtonDiv.id = "bbb-endless-enable-div";
+			buttonDiv.appendChild(enableButtonDiv);
+
+			var enableButton = document.createElement("a");
+			enableButton.innerHTML = "Endless";
+			enableButton.href = "#";
+			enableButton.id = "bbb-endless-enable-button";
+			enableButton.addEventListener("click", function(event) {
+				enableButton.blur();
+				endlessToggle();
+				event.preventDefault();
+			}, false);
+			enableButtonDiv.appendChild(enableButton);
 
 			paginatorParent.insertBefore(buttonDiv, paginator);
 		}
 
-		// Set up the fixed paginator.
-		delayMe(endlessFixedPaginator); // Delayed to allow Danbooru layout to finalize.
-
 		// Check the session default or original default value to see if endless pages should be enabled.
 		var sessionDefault = sessionStorage.bbb_endless_default;
 
-		if (endless_session_toggle && sessionDefault) {
-			if (sessionDefault === "on")
-				endlessEnable();
-			else if (sessionDefault === "paused") {
-				endless_default = "paused";
-				endlessEnable();
-			}
-		}
-		else if (endless_default !== "off")
+		if (endless_session_toggle && sessionDefault)
+			endless_default = sessionDefault;
+
+		if (endless_default !== "off")
 			endlessEnable();
+		else
+			endlessDisable();
 	}
 
 	function endlessObjectInit() {
@@ -4649,7 +4670,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function endlessCheck() {
 		// Check whether the current document is ready for a page to be appended.
-		if (bbb.endless.append_page || !bbb.endless.enabled || bbb.timers.scrollCheck) // Don't check if the script is ready, disabled, delayed, or waiting to be told to continue.
+		if (bbb.endless.append_page || !bbb.endless.enabled || bbb.timers.endlessCheck) // Don't check if the script is ready, disabled, delayed, or waiting to be told to continue.
 			return;
 
 		// Check whether a user is looking at the "posts tab" and not the "wiki tab" in the main search listing.
@@ -4657,8 +4678,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postsVisible = (!postsDiv || postsDiv.style.display !== "none");
 
 		if (bbb.xml.thumbs || bbb.xml.paginator || !postsVisible) { // Delay the check until the page is completely ready.
-			bbb.timers.scrollCheck = window.setTimeout( function() {
-				bbb.timers.scrollCheck = 0;
+			bbb.timers.endlessCheck = window.setTimeout( function() {
+				bbb.timers.endlessCheck = 0;
 
 				endlessCheck();
 			}, 250);
@@ -4674,7 +4695,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			if (!bbb.endless.last_paginator)
 				endlessObjectInit();
 
-			endlessPause();
+			endlessPauseCheck();
 
 			endlessQueueCheck();
 		}
@@ -4785,7 +4806,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Warn the user if this is a listing full of hidden posts.
 		if (bbb.endless.no_thumb_count === 10) {
 			bbbNotice("There have been no or very few thumbnails detected in the last 10 retrieved pages. Using endless pages with fill mode on this search could potentially be very slow or stall out completely. If you would like to continue, you may click the \"Load More\" button near the bottom of the page.", -1);
-			endlessPause(true);
+			endlessPause();
 		}
 		else
 			endlessQueueCheck();
@@ -4878,107 +4899,22 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return (!endlessNexURL() || noResultsPage());
 	}
 
-	function endlessPause(forcePause) {
+	function endlessPauseCheck() {
+		// Check if loading needs to be paused due to the interval or default.
+		var numPages = document.getElementsByClassName("bbb-endless-page").length + 1;
+
+		if (numPages % endless_pause_interval === 0 || (endless_default === "paused" && numPages === 1))
+			endlessPause();
+	}
+
+	function endlessPause() {
 		// Pause endless pages so that it can't add any more pages.
 		if (bbb.endless.paused || (endlessLastPage() && !bbb.endless.pages.length))
 			return;
 
-		var numPages = document.getElementsByClassName("bbb-endless-page").length + 1;
-
-		if (numPages % endless_pause_interval === 0 || (endless_default === "paused" && numPages === 1) || forcePause) {
-			bbb.endless.paused = true;
-			bbb.endless.append_page = false;
-			bbb.el.endlessLoadButton.style.display = "inline-block";
-		}
-	}
-
-	function endlessFixedPaginator() {
-		// Set up the fixed paginator.
-		if (endless_fixed_paginator === "disabled" || document.getElementById("bbb-fixed-paginator-style")) // Don't run if disabled or if everything has already been prepared.
-			return;
-
-		var paginator = getPaginator();
-		var paginatorMenu = (paginator ? paginator.getElementsByTagName("menu")[0] : undefined);
-		var paginatorLink = (paginatorMenu ? paginatorMenu.getElementsByTagName("a")[0] : undefined);
-
-		if (!paginatorLink)
-			return;
-
-		// Get all our measurements.
-		var docRect = document.documentElement.getBoundingClientRect();
-		var docWidth = docRect.width;
-		var docBottom = docRect.bottom;
-
-		var paginatorRect = paginator.getBoundingClientRect();
-		var paginatorBottom = paginatorRect.bottom;
-		var paginatorLeft = paginatorRect.left;
-		var paginatorRight = docWidth - paginatorRect.right;
-		var paginatorHeight = paginatorRect.height;
-
-		var menuRect = paginatorMenu.getBoundingClientRect();
-		var menuBottom = menuRect.bottom;
-
-		var linkRect = paginatorLink.getBoundingClientRect();
-		var linkBottom = linkRect.bottom;
-
-		var paginatorMargAdjust = (paginatorLeft - paginatorRight) / 2;
-		var menuBottomAdjust = linkBottom - menuBottom;
-
-		var paginatorSpacer = document.createElement("div"); // Prevents the document height form changing when the paginator is fixed to the bottom of the window.
-		paginatorSpacer.id = "bbb-endless-fixed-spacer";
-
-		var paginatorSibling = paginator.nextElementSibling;
-
-		if (paginatorSibling)
-			paginator.parentNode.insertBefore(paginatorSpacer, paginatorSibling);
-		else
-			paginator.parentNode.appendChild(paginatorSpacer);
-
-		// Create the css for the fixed paginator separately from the main one since it needs to know what the page's final layout will be with the main css applied.
-		var style = document.createElement("style");
-		style.type = "text/css";
-		style.id = "bbb-fixed-paginator-style";
-		style.innerHTML = '.bbb-endless-enabled.bbb-endless-fixed .paginator {position: fixed; padding: 0px; margin: 0px; bottom: 0px; left: 50%; margin-left: ' + paginatorMargAdjust + 'px;}' +
-		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu {position: relative; left: -50%; padding: ' + menuBottomAdjust + 'px 0px; background-color: #FFFFFF;}' +
-		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:first-child {padding-left: 0px;}' +
-		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:first-child > * {margin-left: 0px;}' +
-		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:last-child {padding-right: 0px;}' +
-		'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li:last-child > * {margin-right: 0px;}' +
-		'#bbb-endless-fixed-spacer {display: none; height: ' + paginatorHeight + 'px; clear: both; width: 100%;}' +
-		'.bbb-endless-enabled.bbb-endless-fixed #bbb-endless-fixed-spacer {display: block;}';
-
-		if (endless_fixed_paginator === "minimal") {
-			style.innerHTML += '.bbb-endless-enabled.bbb-endless-fixed .paginator menu {padding: 3px 0px;}' +
-			'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li a, .bbb-endless-enabled.bbb-endless-fixed .paginator menu li span {padding: 2px; margin: 0px 2px 0px 0px;}' +
-			'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li {padding: 0px;}' +
-			'.bbb-endless-enabled.bbb-endless-fixed .paginator menu li a {border-color: #CCCCCC;}';
-		}
-
-		document.getElementsByTagName("head")[0].appendChild(style);
-
-		bbb.endless.paginator_space = docBottom - paginatorBottom - menuBottomAdjust; // Store the amount of space between the bottom of the page and the paginator.
-
-		document.body.bbbWatchNodes(endlessFixedCheck);
-		document.addEventListener("click", endlessFixedCheck, false);
-		window.addEventListener("scroll", endlessFixedCheck, false);
-		window.addEventListener("resize", endlessFixedCheck, false);
-
-		endlessFixedCheck();
-	}
-
-	function endlessFixedCheck() {
-		// Check if the paginator needs to be in its default position or fixed to the window.
-		if (!bbb.endless.enabled || !bbb.endless.paginator_space)
-			return;
-
-		var docHeight = document.documentElement.scrollHeight;
-		var scrolled = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-		var viewHeight = document.documentElement.clientHeight;
-
-		if (viewHeight + scrolled < docHeight - bbb.endless.paginator_space)
-			document.body.bbbAddClass("bbb-endless-fixed");
-		else
-			document.body.bbbRemoveClass("bbb-endless-fixed");
+		bbb.endless.paused = true;
+		bbb.endless.append_page = false;
+		bbb.el.endlessLoadButton.style.display = "inline-block";
 	}
 
 	/* Blacklist Functions */
@@ -6353,24 +6289,25 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Endless
-		styles += '.bbb-endless-enabled .paginator {padding: 3em 0px 0px;}' +
-		'#bbb-endless-load-div {display: none; width: 100%; height: 0px; overflow: visible; clear: both; text-align: center;}' +
-		'.bbb-endless-enabled #bbb-endless-load-div {display: block;}' +
-		'#bbb-endless-load-center {position: absolute; display: inline-block;}' +
-		'#bbb-endless-load-button {position: relative; left: -50%; border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px; margin-top: 3px;}';
+		if (endless_default !== "disabled") {
+			styles += 'div.paginator {padding: 3em 0px 0px;}' +
+			'#bbb-endless-button-div {width: 100%; height: 0px; overflow: visible; clear: both; text-align: center;}' +
+			'#bbb-endless-load-div, #bbb-endless-enable-div {display: none; position: absolute;}' +
+			'#bbb-endless-load-button, #bbb-endless-enable-button {position: relative; left: -50%; border: 1px solid #EAEAEA; border-radius: 5px; display: inline-block; padding: 5px; margin-top: 3px;}';
 
-		if (endless_separator === "divider") {
-			styles += '.bbb-endless-page {display: block; clear: both;}' +
-			'.bbb-endless-divider {display: block; border: 1px solid #CCCCCC; height: 0px; margin: 15px 0px; width: 100%; float: left;}' +
-			'.bbb-endless-divider-link {position: relative; top: -16px; display: inline-block; height: 32px; margin-left: 5%; padding: 0px 5px; font-size: 14px; font-weight: bold; line-height: 32px; background-color: #FFFFFF; color: #CCCCCC;}';
+			if (endless_separator === "divider") {
+				styles += '.bbb-endless-page {display: block; clear: both;}' +
+				'.bbb-endless-divider {display: block; border: 1px solid #CCCCCC; height: 0px; margin: 15px 0px; width: 100%; float: left;}' +
+				'.bbb-endless-divider-link {position: relative; top: -16px; display: inline-block; height: 32px; margin-left: 5%; padding: 0px 5px; font-size: 14px; font-weight: bold; line-height: 32px; background-color: #FFFFFF; color: #CCCCCC;}';
+			}
+			else if (endless_separator === "marker") {
+				styles += '.bbb-endless-page {display: inline;}' +
+				'.bbb-endless-marker {display: block; border: 1px solid #CCCCCC; height: 148px; width: 148px; line-height: 148px; margin: ' + totalBorderWidth + 'px ' + (totalBorderWidth + listingExtraSpace) + 'px ' + (totalBorderWidth + listingExtraSpace) + 'px ' + totalBorderWidth + 'px; text-align: center; float: left;}' +
+				'.bbb-endless-marker-link {display: inline-block; font-size: 14px; font-weight: bold; line-height: 14px; vertical-align: middle; color: #CCCCCC;}';
+			}
+			else if (endless_separator === "none")
+				styles += '.bbb-endless-page {display: inline;}';
 		}
-		else if (endless_separator === "marker") {
-			styles += '.bbb-endless-page {display: inline;}' +
-			'.bbb-endless-marker {display: block; border: 1px solid #CCCCCC; height: 148px; width: 148px; line-height: 148px; margin: ' + totalBorderWidth + 'px ' + (totalBorderWidth + listingExtraSpace) + 'px ' + (totalBorderWidth + listingExtraSpace) + 'px ' + totalBorderWidth + 'px; text-align: center; float: left;}' +
-			'.bbb-endless-marker-link {display: inline-block; font-size: 14px; font-weight: bold; line-height: 14px; vertical-align: middle; color: #CCCCCC;}';
-		}
-		else if (endless_separator === "none")
-			styles += '.bbb-endless-page {display: inline;}';
 
 		// Hide sidebar.
 		if (autohide_sidebar) {
@@ -6450,6 +6387,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'article.post-preview.blacklisted:hover .bbb-close-circle, div.post.post-preview.blacklisted:hover div.preview .bbb-close-circle {display: block; position: absolute; top: 0px; right: 0px; z-index: 9002 ; cursor: pointer; background-image: url(\'/images/ui-icons_222222_256x240.png\'); background-repeat: no-repeat; background-color: #FFFFFF; background-position: -32px -192px; width: 16px; height: 16px; overflow: hidden;}' +
 			'article.post-preview.blacklisted.blacklisted-active:hover .bbb-close-circle, div.post.post-preview.blacklisted.blacklisted-active:hover div.preview .bbb-close-circle {display: none;}' +
 			'article.post-preview.blacklisted .bbb-close-circle, div.post.post-preview.blacklisted div.preview .bbb-close-circle {display: none;}';
+		}
+
+		if (move_save_search) {
+			styles += '.bbb-saved-search-item #saved-searches-nav, .bbb-saved-search-item #saved-searches-nav * {background-color: transparent; color: #0073FF; display: inline; font-family: Verdana,Helvetica,sans-serif; line-height: 1.25em; padding: 0px; margin: 0px; border: none;}' +
+			'.bbb-saved-search-item #saved-searches-nav input:hover, .bbb-saved-search-item #saved-searches-nav button:hover {color: #80b9ff;}' +
+			'.bbb-saved-search-item #saved-searches-nav input:focus, .bbb-saved-search-item #saved-searches-nav button:focus {outline: thin dotted;}';
 		}
 
 		if (search_add === "remove")
@@ -6589,6 +6532,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function moveSaveSearch() {
+		// Move the "save search" div into the sidebar related section and style it as a link.
 		var saveSearchDiv = document.getElementById("saved-searches-nav");
 		var relatedSection = document.getElementById("related-box");
 
@@ -6600,16 +6544,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var relatedSectionMenu = relatedSection.getElementsByTagName("ul")[0];
 
 		var saveSearchItem = document.createElement("li");
-
-		var saveSearchLink = document.createElement("a");
-		saveSearchLink.href = "#";
-		saveSearchLink.innerHTML = "Save this search";
-		saveSearchLink.id = "save-search";
-		saveSearchItem.appendChild(saveSearchLink);
-
-		Danbooru.Post.initialize_saved_searches();
-
-		saveSearchLink.addEventListener("click", disableEvent, false);
+		saveSearchItem.className = "bbb-saved-search-item";
+		saveSearchItem.appendChild(saveSearchDiv);
 
 		relatedSectionMenu.insertBefore(saveSearchItem, relatedSectionMenu.firstElementChild);
 	}
@@ -6746,7 +6682,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			if (event.button !== 0 || event.altKey || !bypass && (event.shiftKey || event.ctrlKey))
 				return;
 
-			if ((bbb.endless.enabled && post_link_new_window.indexOf("endless") < 0) || (!bbb.endless.enabled && post_link_new_window.indexOf("normal") < 0))
+			var runEndless = (post_link_new_window.indexOf("endless") > -1);
+			var runNormal = (post_link_new_window.indexOf("normal") > -1);
+
+			if ((bbb.endless.enabled && !runEndless) || (!bbb.endless.enabled && !runNormal))
 				return;
 
 			var target = event.target;
@@ -7025,7 +6964,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function autohideSidebar() {
-		// Show the sidebar when it gets focus, hide it when it loses focus, and don't allow its links to retain focus.
+		// Show the sidebar when it gets focus, hide it when it loses focus, and only allow select elements to retain focus.
 		var sidebar = document.getElementById("sidebar");
 
 		if (!sidebar)
@@ -7034,7 +6973,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		sidebar.addEventListener("click", function(event) {
 			var target = event.target;
 
-			if (target.href)
+			if (target.id !== "tags")
 				target.blur();
 		}, false);
 		sidebar.addEventListener("focus", function() {
@@ -7068,6 +7007,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		fixedSidebarCheck();
 		document.body.bbbWatchNodes(fixedSidebarCheck);
+		document.addEventListener("keyup", fixedSidebarCheck, false);
 		document.addEventListener("click", fixedSidebarCheck, false);
 		window.addEventListener("scroll", fixedSidebarCheck, false);
 		window.addEventListener("resize", fixedSidebarCheck, false);
@@ -7124,6 +7064,97 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			sidebar.style.left = (sidebarLeft - horScrolled) + "px";
 		else
 			sidebar.style.left = sidebarLeft + "px";
+	}
+
+	function fixedPaginator() {
+		// Set up the fixed paginator.
+		if (fixed_paginator === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites"))
+			return;
+
+		var paginator = getPaginator();
+		var paginatorMenu = (paginator ? paginator.getElementsByTagName("menu")[0] : undefined);
+		var paginatorLink = (paginatorMenu ? (paginatorMenu.getElementsByTagName("a")[0] || paginatorMenu.getElementsByTagName("span")[0]) : undefined);
+
+		if (!paginatorLink)
+			return;
+
+		// Get all our measurements.
+		var docRect = document.documentElement.getBoundingClientRect();
+		var docWidth = docRect.width;
+		var docBottom = docRect.bottom;
+
+		var paginatorRect = paginator.getBoundingClientRect();
+		var paginatorBottom = paginatorRect.bottom;
+		var paginatorLeft = paginatorRect.left;
+		var paginatorRight = docWidth - paginatorRect.right;
+		var paginatorHeight = paginatorRect.height;
+
+		var menuRect = paginatorMenu.getBoundingClientRect();
+		var menuBottom = menuRect.bottom;
+
+		var linkRect = paginatorLink.getBoundingClientRect();
+		var linkBottom = linkRect.bottom;
+
+		var paginatorMargAdjust = (paginatorLeft - paginatorRight) / 2;
+		var menuBottomAdjust = linkBottom - menuBottom;
+
+		var paginatorSpacer = document.createElement("div"); // Prevents the document height form changing when the paginator is fixed to the bottom of the window.
+		paginatorSpacer.id = "bbb-fixed-paginator-spacer";
+
+		var paginatorSibling = paginator.nextElementSibling;
+
+		if (paginatorSibling)
+			paginator.parentNode.insertBefore(paginatorSpacer, paginatorSibling);
+		else
+			paginator.parentNode.appendChild(paginatorSpacer);
+
+		// Create the css for the fixed paginator separately from the main one since it needs to know what the page's final layout will be with the main css applied.
+		var style = document.createElement("style");
+		style.type = "text/css";
+		style.innerHTML = '.bbb-fixed-paginator div.paginator {position: fixed; padding: 0px; margin: 0px; bottom: 0px; left: 50%; margin-left: ' + paginatorMargAdjust + 'px;}' +
+		'.bbb-fixed-paginator div.paginator menu {position: relative; left: -50%; padding: ' + menuBottomAdjust + 'px 0px; background-color: #FFFFFF;}' +
+		'.bbb-fixed-paginator div.paginator menu li:first-child {padding-left: 0px;}' +
+		'.bbb-fixed-paginator div.paginator menu li:first-child > * {margin-left: 0px;}' +
+		'.bbb-fixed-paginator div.paginator menu li:last-child {padding-right: 0px;}' +
+		'.bbb-fixed-paginator div.paginator menu li:last-child > * {margin-right: 0px;}' +
+		'#bbb-fixed-paginator-spacer {display: none; height: ' + paginatorHeight + 'px; clear: both; width: 100%;}' +
+		'.bbb-fixed-paginator #bbb-fixed-paginator-spacer {display: block;}';
+
+		if (fixed_paginator.indexOf("minimal") > -1) {
+			style.innerHTML += '.bbb-fixed-paginator div.paginator menu {padding: 3px 0px;}' +
+			'.bbb-fixed-paginator div.paginator menu li a, .bbb-fixed-paginator div.paginator menu li span {padding: 2px; margin: 0px 2px 0px 0px;}' +
+			'.bbb-fixed-paginator div.paginator menu li {padding: 0px;}' +
+			'.bbb-fixed-paginator div.paginator menu li a {border-color: #CCCCCC;}';
+		}
+
+		document.getElementsByTagName("head")[0].appendChild(style);
+
+		bbb.endless.paginator_space = docBottom - paginatorBottom - menuBottomAdjust; // Store the amount of space between the bottom of the page and the paginator.
+
+		document.body.bbbWatchNodes(fixedPaginatorCheck);
+		document.addEventListener("keyup", fixedPaginatorCheck, false);
+		document.addEventListener("click", fixedPaginatorCheck, false);
+		window.addEventListener("scroll", fixedPaginatorCheck, false);
+		window.addEventListener("resize", fixedPaginatorCheck, false);
+
+		fixedPaginatorCheck();
+	}
+
+	function fixedPaginatorCheck() {
+		// Check if the paginator needs to be in its default position or fixed to the window.
+		if (!bbb.endless.paginator_space)
+			return;
+
+		var runEndless = (fixed_paginator.indexOf("endless") > -1);
+		var runNormal = (fixed_paginator.indexOf("normal") > -1);
+		var docHeight = document.documentElement.scrollHeight;
+		var scrolled = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+		var viewHeight = document.documentElement.clientHeight;
+
+		if (viewHeight + scrolled < docHeight - bbb.endless.paginator_space && ((runEndless && bbb.endless.enabled) || (runNormal && !bbb.endless.enabled)))
+			document.body.bbbAddClass("bbb-fixed-paginator");
+		else
+			document.body.bbbRemoveClass("bbb-fixed-paginator");
 	}
 
 	function collapseSidebar() {
