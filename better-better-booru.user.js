@@ -129,10 +129,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		blacklist: {
 			entries: [],
 			match_list: {},
-			smart_view: {
-				middle_target: undefined,
-				override: {}
-			}
+			smart_view_target: undefined
 		},
 		cache: { // Thumbnail info cache.
 			current: {
@@ -252,7 +249,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"remove tag headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			post_tag_titles: newOption("checkbox", false, "Post Tag Titles", "Change the page titles for posts to a full list of the post tags."),
 			remove_tag_headers: newOption("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
-			resize_link_style: newOption("dropdown", "minimal", "Resize Link Style", "Set how the resize links in the post sidebar options section will display. <tipdesc>Full:</tipdesc> Show the resize to window, width, and height links on separate lines. <tipdesc>Minimal:</tipdesc> Show the resize to window, width, and height links on one line.", {txtOptions:["Full:full", "Minimal:minimal"]}),
+			resize_link_style: newOption("dropdown", "full", "Resize Link Style", "Set how the resize links in the post sidebar options section will display. <tipdesc>Full:</tipdesc> Show the resize to window, width, and height links on separate lines. <tipdesc>Minimal:</tipdesc> Show the resize to window (W&H), width (W), and height (H) links on one line.", {txtOptions:["Full:full", "Minimal:minimal"]}),
 			script_blacklisted_tags: "",
 			search_add: newOption("dropdown", "disabled", "Search Add", "Modify the sidebar tag list by adding, removing, or replacing links in the sidebar tag list that modify the current search's tags. <tipdesc>Remove:</tipdesc> Remove any preexisting \"+\" and \"&ndash;\" links. <tipdesc>Link:</tipdesc> Add \"+\" and \"&ndash;\" links to modified versions of the current search that include or exclude their respective tags. <tipdesc>Toggle:</tipdesc> Add toggle links that modify the search box with their respective tags. Clicking a toggle link will switch between a tag being included (+), excluded (&ndash;), potentially included among other tags (~), and removed (&raquo;). Right clicking a toggle link will immediately remove its tag. If a tag already exists in the search box or gets entered/removed through alternative means, the toggle link will automatically update to reflect the tag's current status. <tiphead>Note</tiphead>The remove option is intended for users above the basic user level that want to remove the links. For users that can't normally see the links and do not wish to see them, this setting should be set to disabled.", {txtOptions:["Disabled:disabled", "Remove:remove", "Link:link", "Toggle:toggle"]}),
 			show_banned: newOption("checkbox", false, "Show Banned", "Display all banned posts in the search, pool, popular, favorites, comments, and notes listings."),
@@ -617,12 +614,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							}
 							else {
 								var linkId = uniqueIdNum(); // Create a unique ID.
+								var noticeMsg = bbbNotice('Error retrieving post information (JSON Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
 
-								bbbNotice('Error retrieving post information (JSON Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
 								bbbStatus("posts", "error");
 
 								document.getElementById(linkId).addEventListener("click", function(event) {
-									closeBbbNoticeMsg(event);
+									closeBbbNoticeMsg(noticeMsg);
 									searchJSON(mode, optArg);
 									event.preventDefault();
 								}, false);
@@ -1150,10 +1147,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							else if (mode === "paginator")
 								msg = "Error updating paginator";
 
-							bbbNotice(msg + ' (HTML Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
+							var noticeMsg = bbbNotice(msg + ' (HTML Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
 
 							document.getElementById(linkId).addEventListener("click", function(event) {
-								closeBbbNoticeMsg(event);
+								closeBbbNoticeMsg(noticeMsg);
 								searchPages(mode, optArg);
 								event.preventDefault();
 							}, false);
@@ -1488,10 +1485,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var webmVid = imgContainer.getElementsByTagName("video")[0];
 		var ugoira = imgContainer.getElementsByTagName("canvas")[0];
 		var other = document.evaluate('.//a[starts-with(@href, "/data/")]', imgContainer, null, 9, null).singleNodeValue;
-		var element = swfEmb || webmVid || ugoira || img || other;
+		var el = swfEmb || webmVid || ugoira || img || other;
 		var secondaryEl = swfObj; // Other elements related to the main element. Only applies to flash for now.
 
-		return {container: imgContainer, el: element, secEl: secondaryEl};
+		return {container: imgContainer, el: el, secEl: secondaryEl};
 	}
 
 	function getPosts(target) {
@@ -2616,7 +2613,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		borderElement.bbbAddClass("bbb-no-highlight");
 		borderElement.nextSibling.bbbAddClass("bbb-no-highlight");
-		bbb.borderEdit = {mode: "move", settings: borderSettings, section: section, index: index, element: borderElement};
+		bbb.borderEdit = {mode: "move", settings: borderSettings, section: section, index: index, el: borderElement};
 		section.bbbAddClass("bbb-insert-highlight");
 		bbb.el.menu.window.addEventListener("click", insertBorder, true);
 	}
@@ -2653,7 +2650,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				if (newIndex !== oldIndex) {
 					var borderItem = borderSettings.splice(oldIndex, 1)[0];
-					var borderElement = bbb.borderEdit.element;
+					var borderElement = bbb.borderEdit.el;
 
 					if (newIndex < oldIndex)
 						borderSettings.splice(newIndex, 0, borderItem);
@@ -3362,31 +3359,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}, false);
 			resizeList.appendChild(resizeLabelLink);
 
-			resizeLinkAll.innerHTML = "(&#x2194;)";
-			resizeLinkAll.style.display = "inline-block";
-			resizeLinkAll.style.textAlign = "center";
-			resizeLinkAll.style.marginRight = "2px";
-			resizeLinkAll.style.position = "relative";
+			resizeLinkAll.innerHTML = "(W&H)";
+			resizeLinkAll.className = "bbb-resize-link";
+			resizeLinkAll.title = "Resize to Window Width & Height";
 			resizeList.appendChild(resizeLinkAll);
 
-			var allOverlapArrow = document.createElement("span");
-			allOverlapArrow.innerHTML = "&#x2195;";
-			allOverlapArrow.style.display = "inline-block";
-			allOverlapArrow.style.textAlign = "center";
-			allOverlapArrow.style.position = "absolute";
-			allOverlapArrow.style.left = "0px";
-			resizeLinkAll.appendChild(allOverlapArrow);
-
-			resizeLinkWidth.innerHTML = "(&#x2194;)";
-			resizeLinkWidth.style.display = "inline-block";
-			resizeLinkWidth.style.textAlign = "center";
-			resizeLinkWidth.style.marginRight = "2px";
+			resizeLinkWidth.innerHTML = "(W)";
+			resizeLinkWidth.className = "bbb-resize-link";
+			resizeLinkWidth.title = "Resize to Window Width";
 			resizeList.appendChild(resizeLinkWidth);
 
-			resizeLinkHeight.innerHTML = "(&#x2195;)";
-			resizeLinkHeight.style.display = "inline-block";
-			resizeLinkHeight.style.textAlign = "center";
-			resizeLinkHeight.style.marginRight = "2px";
+			resizeLinkHeight.innerHTML = "(H)";
+			resizeLinkHeight.className = "bbb-resize-link";
+			resizeLinkHeight.title = "Resize to Window Height";
 			resizeList.appendChild(resizeLinkHeight);
 
 			resizeList.style.height = "0px";
@@ -3401,7 +3386,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var heightWidth = resizeLinkHeight.clientWidth;
 
 			resizeLinkAll.style.width = allWidth + "px";
-			allOverlapArrow.style.width = allWidth + "px";
 			resizeLinkWidth.style.width = widthWidth + "px";
 			resizeLinkHeight.style.width = heightWidth + "px";
 
@@ -5025,6 +5009,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var links = document.getElementsByClassName("bbb-blacklist-entry-" + entryNumber);
 		var post;
 		var el;
+		var matchList;
 		var i, il; // Loop variables.
 
 		if (entry.active) {
@@ -5035,10 +5020,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			for (i = 0, il = matches.length; i < il; i++) {
 				post = matches[i];
+				matchList = bbb.blacklist.match_list[post.id];
 				el = document.getElementById(post.elId);
-				bbb.blacklist.match_list[post.id].count--;
 
-				if (!bbb.blacklist.match_list[post.id].count && bbb.blacklist.smart_view.override[post.id] !== false)
+				matchList.count--;
+
+				if (!matchList.count && matchList.override !== false)
 					el.bbbRemoveClass("blacklisted-active");
 			}
 		}
@@ -5050,10 +5037,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			for (i = 0, il = matches.length; i < il; i++) {
 				post = matches[i];
+				matchList = bbb.blacklist.match_list[post.id];
 				el = document.getElementById(post.elId);
-				bbb.blacklist.match_list[post.id].count++;
 
-				if (bbb.blacklist.smart_view.override[post.id] !== true)
+				matchList.count++;
+
+				if (matchList.override !== true)
 					el.bbbAddClass("blacklisted-active");
 			}
 		}
@@ -5105,62 +5094,62 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function blacklistTest(matchId, element) {
+	function blacklistTest(matchId, el) {
 		// Test a post/image for a blacklist match and use the provided ID to store its info.
 		var matchList = bbb.blacklist.match_list[matchId];
 
 		if (typeof(matchList) === "undefined") { // Post hasn't been tested yet.
-			matchList = bbb.blacklist.match_list[matchId] = {count: undefined, matches: []};
+			matchList = bbb.blacklist.match_list[matchId] = {count: undefined, matches: [], override: undefined};
 
 			for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
 				var entry = bbb.blacklist.entries[i];
 
-				if (thumbSearchMatch(element, entry.search)) {
-					element.bbbAddClass("blacklisted");
+				if (thumbSearchMatch(el, entry.search)) {
+					el.bbbAddClass("blacklisted");
 
 					if (entry.active) {
-						element.bbbAddClass("blacklisted-active");
+						el.bbbAddClass("blacklisted-active");
 						matchList.count = ++matchList.count || 1;
 					}
 					else
 						matchList.count = matchList.count || 0;
 
 					matchList.matches.push(entry);
-					entry.matches.push({id:matchId, elId:element.id});
+					entry.matches.push({id:matchId, elId:el.id});
 				}
 			}
 
 			if (matchList.count === undefined) // No match.
 				matchList.count = false;
-			else if (element.id !== "image-container") { // Match found so prepare the thumbnail.
+			else if (el.id !== "image-container") { // Match found so prepare the thumbnail.
 				if (blacklist_thumb_controls)
-					blacklistPostControl(element, matchList);
+					blacklistPostControl(el, matchList);
 
 				if (blacklist_smart_view)
-					blacklistSmartView(element);
+					blacklistSmartView(el);
 			}
 
 		}
-		else if (matchList.count !== false && !element.bbbHasClass("blacklisted")) { // Post is already tested, but needs to be set up again.
-			if (matchList.count > 0 && bbb.blacklist.smart_view.override[matchId] !== true)
-				element.bbbAddClass("blacklisted blacklisted-active");
+		else if (matchList.count !== false && !el.bbbHasClass("blacklisted")) { // Post is already tested, but needs to be set up again.
+			if (matchList.count > 0 && matchList.override !== true)
+				el.bbbAddClass("blacklisted blacklisted-active");
 			else
-				element.bbbAddClass("blacklisted");
+				el.bbbAddClass("blacklisted");
 
-			if (element.id !== "image-container") {
+			if (el.id !== "image-container") {
 				if (blacklist_thumb_controls)
-					blacklistPostControl(element, matchList);
+					blacklistPostControl(el, matchList);
 
 				if (blacklist_smart_view)
-					blacklistSmartView(element);
+					blacklistSmartView(el);
 			}
 		}
 	}
 
-	function blacklistPostControl(element, matchList) {
+	function blacklistPostControl(el, matchList) {
 		// Add the blacklist post controls to a thumbnail.
-		var target = element.getElementsByClassName("preview")[0] || element;
-		var id = element.getAttribute("data-id");
+		var target = el.getElementsByClassName("preview")[0] || el;
+		var id = el.getAttribute("data-id");
 		var tip = bbb.el.blacklistTip;
 
 		if (!tip) { // Create the tip if it doesn't exist.
@@ -5176,7 +5165,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					return;
 
 				var target = event.target;
-				var postContainer = element;
+				var postContainer = el;
 				var blacklistTip = bbb.el.blacklistTip;
 
 				if (!postContainer.bbbHasClass("blacklisted-active") || (target.tagName === "A" && !target.bbbHasClass("bbb-thumb-link"))) // If the thumb isn't currently hidden or a link that isn't the thumb link is clicked, allow the link click.
@@ -5224,7 +5213,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						if (viewLink) {
 							viewLink.addEventListener("click", function(event) {
 								if (event.button === 0)
-									blacklistSmartViewUpdate(element);
+									blacklistSmartViewUpdate(el);
 							}, false);
 						}
 					}
@@ -5234,7 +5223,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				else {
 					blacklistHideTip();
 					postContainer.bbbRemoveClass("blacklisted-active");
-					bbb.blacklist.smart_view.override[id] = true;
+					bbb.blacklist.match_list[id].override = true;
 				}
 
 				event.preventDefault();
@@ -5249,8 +5238,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			hide.className = "bbb-close-circle";
 			hide.addEventListener("click", function(event) {
 				if (event.button === 0) {
-					element.bbbAddClass("blacklisted-active");
-					bbb.blacklist.smart_view.override[id] = false;
+					el.bbbAddClass("blacklisted-active");
+					bbb.blacklist.match_list[id].override = false;
 				}
 			}, false);
 			target.appendChild(hide);
@@ -5274,9 +5263,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			tip.removeAttribute("style");
 	}
 
-	function blacklistSmartView(element) {
+	function blacklistSmartView(el) {
 		// Set up the smart view event listeners.
-		var img = element.getElementsByTagName("img")[0];
+		var img = el.getElementsByTagName("img")[0];
 		var link = (img ? img.parentNode : undefined);
 
 		if (!link)
@@ -5285,26 +5274,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Normal left click support.
 		link.addEventListener("click", function(event) {
 			if (event.button === 0)
-				blacklistSmartViewUpdate(element);
+				blacklistSmartViewUpdate(el);
 		}, false);
 
 		// Right and middle button click support.
 		link.addEventListener("mousedown", function(event) {
 			if (event.button === 1)
-				bbb.blacklist.smart_view.middle_target = link;
+				bbb.blacklist.smart_view_target = link;
 		}, false);
 		link.addEventListener("mouseup", function(event) {
-			if (event.button === 1 && bbb.blacklist.smart_view.middle_target === link)
-				blacklistSmartViewUpdate(element);
+			if (event.button === 1 && bbb.blacklist.smart_view_target === link)
+				blacklistSmartViewUpdate(el);
 			else if (event.button === 2)
-				blacklistSmartViewUpdate(element);
+				blacklistSmartViewUpdate(el);
 		}, false);
 	}
 
-	function blacklistSmartViewUpdate(element) {
+	function blacklistSmartViewUpdate(el) {
 		// Update the blacklisted thumbnail info in the smart view object.
 		var time = new Date().getTime();
-		var id = element.getAttribute("data-id");
+		var id = el.getAttribute("data-id");
 		var smartView;
 
 		if (typeof(localStorage.bbb_smart_view) === "undefined") // Initialize the object if it doesn't exist.
@@ -5318,7 +5307,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				smartView.last = time; // Adjust the object.
 		}
 
-		if (!element.bbbHasClass("blacklisted-active"))
+		if (!el.bbbHasClass("blacklisted-active"))
 			smartView[id] = time;
 		else
 			delete smartView[id];
@@ -5416,14 +5405,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function fixPaginator(target) {
 		var paginator = getPaginator(target);
 
-		if (!paginator)
+		if (!paginator || gLoc === "pool") // Pools don't accept limits so do nothing for them.
 			return;
 
-		var noPages = paginator.textContent.indexOf("Go back") > -1;
-
-		if (gLoc === "search" || gLoc === "notes") {
+		if (/\d/.test(paginator.textContent)) { // Fix numbered paginators.
 			if (allowUserLimit()) {
-				// Fix existing paginator with user's custom limit.
+			// Fix existing paginator with user's custom limit.
 				var pageLinks = paginator.getElementsByTagName("a");
 				var pageLink;
 
@@ -5434,15 +5421,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 				searchPages("paginator");
 			}
-			else if (noPages)
-				searchPages("paginator");
 		}
-		else if (gLoc === "favorites") {
-			if (allowUserLimit() || noPages) {
-				paginator.innerHTML = "<p>Loading...</p>"; // Disable the paginator while fixing it.
+		else if (allowUserLimit() || paginator.textContent.indexOf("Go back") > -1) { // Fix next/previous paginators.
+			paginator.innerHTML = "<p>Loading...</p>"; // Disable the paginator while fixing it.
 
-				searchPages("paginator");
-			}
+			searchPages("paginator");
 		}
 	}
 
@@ -5526,7 +5509,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (bbb.timers.keepBbbNotice)
 			window.clearTimeout(bbb.timers.keepBbbNotice);
 
-		if (notice.style.display === "block" && /\S/.test(noticeMsg.textContent)) { // Insert new text at the top if the notice is already open.
+		if (notice.style.display === "block" && /\S/.test(noticeMsg.textContent)) { // Insert new text at the top if the notice is already open and has an actual message.
 			noticeMsg.insertBefore(msg, noticeMsg.firstElementChild);
 
 			// Don't allow the notice to be closed via clicking for half a second. Prevents accidental message closing.
@@ -5534,7 +5517,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				bbb.timers.keepBbbNotice = 0;
 			}, 500);
 		}
-		else {
+		else { // Make sure the notice is clear and put in the first message.
 			noticeMsg.innerHTML = "";
 			noticeMsg.appendChild(msg);
 		}
@@ -5547,35 +5530,33 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		notice.style.display = "block";
+
+		return msg;
 	}
 
 	function closeBbbNotice() {
 		// Click handler for closing the notice.
-		var notice = bbb.el.notice;
-
 		if (bbb.timers.keepBbbNotice)
 			return;
 
-		notice.style.display = "none";
+		bbb.el.notice.style.display = "none";
 	}
 
-	function closeBbbNoticeMsg(eventOrElement) {
-		// Closes the provided notice message or uses the provided event to act as a click handler for closing the notice message that the clicked element is a child of. Will close the whole notice if there is only one message.
+	function closeBbbNoticeMsg(el) {
+		// Closes the provided notice message or the whole notice if there is only one message.
 		var notice = bbb.el.notice;
-		var target = eventOrElement.target || eventOrElement;
+		var target = el;
 
 		if (notice.getElementsByClassName("bbb-notice-msg-entry").length > 1) {
-			if (!target.bbbHasClass("bbb-notice-msg-entry")) {
-				while (target.parentNode && !target.bbbHasClass("bbb-notice-msg-entry") && target !== notice)
-					target = target.parentNode;
-			}
+			if (!target.parentNode)
+				target = undefined;
 		}
 		else
 			target = notice;
 
 		if (target === notice)
 			closeBbbNotice();
-		else
+		else if (target)
 			target.parentNode.removeChild(target);
 	}
 
@@ -6384,7 +6365,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active div.preview, article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link {cursor: help !important;}' +
 			'article.post-preview.blacklisted.blacklisted-active a, div.post.post-preview.blacklisted.blacklisted-active div.preview a {cursor: pointer !important;}' +
 			'article.post-preview.blacklisted, div.post.post-preview.blacklisted div.preview {position: relative !important;}' +
-			'article.post-preview.blacklisted:hover .bbb-close-circle, div.post.post-preview.blacklisted:hover div.preview .bbb-close-circle {display: block; position: absolute; top: 0px; right: 0px; z-index: 9002 ; cursor: pointer; background-image: url(\'/images/ui-icons_222222_256x240.png\'); background-repeat: no-repeat; background-color: #FFFFFF; background-position: -32px -192px; width: 16px; height: 16px; overflow: hidden;}' +
+			'article.post-preview.blacklisted:hover .bbb-close-circle, div.post.post-preview.blacklisted:hover div.preview .bbb-close-circle {display: block; position: absolute; top: 0px; right: 0px; z-index: 9002 ; cursor: pointer; background-image: url(\'/images/ui-icons_222222_256x240.png\'); background-repeat: no-repeat; background-color: #FFFFFF; background-position: -32px -192px; width: 16px; height: 16px; border-radius: 8px; overflow: hidden;}' +
 			'article.post-preview.blacklisted.blacklisted-active:hover .bbb-close-circle, div.post.post-preview.blacklisted.blacklisted-active:hover div.preview .bbb-close-circle {display: none;}' +
 			'article.post-preview.blacklisted .bbb-close-circle, div.post.post-preview.blacklisted div.preview .bbb-close-circle {display: none;}';
 		}
@@ -6394,6 +6375,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'.bbb-saved-search-item #saved-searches-nav input:hover, .bbb-saved-search-item #saved-searches-nav button:hover {color: #80b9ff;}' +
 			'.bbb-saved-search-item #saved-searches-nav input:focus, .bbb-saved-search-item #saved-searches-nav button:focus {outline: thin dotted;}';
 		}
+
+		if (resize_link_style === "minimal")
+			styles += '.bbb-resize-link {display: inline-block; text-align: center; margin-right: 2px; font-size: 87.5%;}';
 
 		if (search_add === "remove")
 			styles += '.search-inc-tag, .search-exl-tag {display: none !important;}';
@@ -6480,9 +6464,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var lastNumString;
 
 		// Provide page number info if available.
-		if (!/[a-zA-Z]/.test(paginator.textContent)) {// Number paginators don't contain any letters.
+		if (/\d/.test(paginator.textContent)) {
 			var activePage = paginator.getElementsByTagName("span")[0];
-
 			var pageItems = paginator.getElementsByTagName("li");
 			var numPageItems = pageItems.length;
 			var lastPageItem = pageItems[numPageItems - 1];
@@ -6707,9 +6690,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}, false);
 	}
 
-	function formatTip(event, element, content, x, y) {
+	function formatTip(event, el, content, x, y) {
 		// Position + resize the tip and display it.
-		var tip = element;
+		var tip = el;
 		var windowX = event.clientX;
 		var windowY = event.clientY;
 		var topOffset = 0;
