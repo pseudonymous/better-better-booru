@@ -243,17 +243,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			hide_upload_notice: newOption("checkbox", false, "Hide Upload Guide Notice", "Hide the Danbooru upload guide notice."),
 			image_swap_mode: newOption("dropdown", "load", "Image Swap Mode", "Set how swapping between the sample and original image is done.<tipdesc>Load First:</tipdesc> Display the image being swapped in after it has finished downloading. <tipdesc>View While Loading:</tipdesc> Immediately display the image being swapped in while it is downloading.", {txtOptions:["Load First (Default):load", "View While Loading:view"]}),
 			search_tag_scrollbars: newOption("dropdown", 0, "Search Tag Scrollbars", "Limit the length of the sidebar tag list for the search listing by restricting it to a set height in pixels. When the list exceeds the set height, a scrollbar will be added to allow the rest of the list to be viewed.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
-			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option."),
+			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option. This behavior can be changed with the \"override sample setting\" option under the preferences tab."),
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			move_save_search: newOption("checkbox", false, "Move Save Search", "Move the \"save search\" button into the related section in the sidebar."),
-			override_blacklist: newOption("checkbox", false, "Override Blacklist", "Allow the \"blacklist\" setting to override the default blacklist for logged out users or account blacklist for logged in users."),
+			override_blacklist: newOption("dropdown", "logged_out", "Override Blacklist", "Allow the \"blacklist\" setting to override the default blacklist for logged out users and/or account blacklist for logged in users. <tipdesc>Logged out:</tipdesc> Override the default blacklist for logged out users. <tipdesc>Always:</tipdesc> Override the default blacklist for logged out users and account blacklist for logged in users.", {txtOptions:["Disabled:disabled", "Logged out:logged_out", "Always:always"]}),
 			override_resize: newOption("checkbox", false, "Override Resize Setting", "Allow the \"resize post\" setting to override the account \"fit images to window\" settings when logged in."),
 			override_sample: newOption("checkbox", false, "Override Sample Setting", "Allow the \"load sample first\" setting to override the account \"default image width\" settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
 			page_counter: newOption("checkbox", false, "Page Counter", "Add a page counter and \"go to page #\" input field near the top of listing pages. <tiphead>Note</tiphead>The total number of pages will not be displayed if the pages are using the \"previous & next\" paging system or the total number of pages exceeds the maximum amount allowed by your user account level."),
 			post_drag_scroll: newOption("checkbox", false, "Post Drag Scrolling", "While holding down left click on a post's content, mouse movement can be used to scroll the whole page and reposition the content.<tiphead>Note</tiphead>This option is automatically disabled when translation mode is active."),
 			post_link_new_window: newOption("dropdown", "none", "New Tab/Window", "Force post links in the search, pool, popular, favorites, notes, and favorite group listings to open in a new tab/window during normal and/or endless page browsing. <tiphead>Notes</tiphead>When this option is active, holding down the control and shift keys while clicking a post link will open the post in the current tab/window.<br><br>Whether the post opens in a new tab or a new window depends upon your browser configuration. <tiphead>Tip</tiphead>This option can be useful as a safeguard to keep accidental left clicks from disrupting endless page browsing.", {txtOptions:["Disabled:disabled", "Endless:endless", "Normal:normal", "Always:endless normal"]}),
-			post_resize: newOption("checkbox", true, "Resize Post", "Shrink large post content to fit the browser window when initially loading a post.<tiphead>Note</tiphead>When logged in, the account's \"fit images to window\" setting will override this option."),
+			post_resize: newOption("checkbox", true, "Resize Post", "Shrink large post content to fit the browser window when initially loading a post.<tiphead>Note</tiphead>When logged in, the account's \"fit images to window\" setting will override this option. This behavior can be changed with the \"override resize setting\" option under the preferences tab."),
 			post_resize_mode: newOption("dropdown", "width", "Resize Mode", "Choose how to shrink large post content to fit the browser window when initially loading a post.", {txtOptions:["Width (Default):width", "Height:height", "Width & Height:all"]}),
 			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"remove tag headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			post_tag_titles: newOption("checkbox", false, "Post Tag Titles", "Change the page titles for posts to a full list of the post tags."),
@@ -1480,7 +1480,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			var isUgoira = postTag === "CANVAS" || (ext === "zip" && /(?:^|\s)ugoira(?:$|\s)/.test(imgInfo.tag_string));
+			var isUgoira = (postTag === "CANVAS" || (ext === "zip" && /(?:^|\s)ugoira(?:$|\s)/.test(imgInfo.tag_string)));
+			var isAnimatedImg = /(?:^|\s)animated_(?:gif|png)(?:$|\s)/.test(imgInfo.tag_string);
 
 			if (isUgoira) {
 				if (postTag === "CANVAS") {
@@ -1501,7 +1502,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			imgInfo.has_large = ((imgWidth > 850 && ext !== "swf" && ext !== "webm") || isUgoira ? true : false);
+			imgInfo.has_large = (!isAnimatedImg && ((imgWidth > 850 && ext !== "swf" && ext !== "webm") || isUgoira) ? true : false);
 			imgInfo.md5 = md5;
 			imgInfo.file_ext = ext;
 			imgInfo.file_url = "/data/" + md5 + "." + ext;
@@ -2509,7 +2510,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		helpButton.href = "#";
 		helpButton.className = "bbb-button";
 		helpButton.style.cssFloat = "right";
-		helpButton.bbbSetTip("Hide posts that match the specified tag(s).<tiphead>Directions</tiphead>Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating matching rules for posts you wish to blacklist. Blank lines will be ignored and are only used for improved readability.<br><br> All commas will be converted to new lines and all extra spaces and extra blank lines will be removed the next time the settings are opened. By using the \"Format\" button, you can manually perform this action on the blacklist rules. <tiphead>Note</tiphead>When logged in, the account's \"Blacklisted tags\" list will override this option.");
+		helpButton.bbbSetTip("Hide posts that match the specified tag(s).<tiphead>Directions</tiphead>Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating matching rules for posts you wish to blacklist. Blank lines will be ignored and are only used for improved readability.<br><br> All commas will be converted to new lines and all extra spaces and extra blank lines will be removed the next time the settings are opened. By using the \"Format\" button, you can manually perform this action on the blacklist rules. <tiphead>Note</tiphead>When logged in, the account's \"Blacklisted tags\" list will override this option. This behavior can be changed with the \"override blacklist\" option under the preferences tab.");
 		buttonDiv.appendChild(helpButton);
 
 		return sectionFrag;
@@ -2964,6 +2965,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 					if (bbb.user.search_add)
 						bbb.user.search_add = "link";
+
+					if (bbb.user.override_account) {
+						bbb.user.override_blacklist = "always";
+						bbb.user.override_resize = true;
+						bbb.user.override_sample = true;
+					}
+					else
+						bbb.user.override_blacklist = "logged_out";
 
 					break;
 			}
@@ -4838,7 +4847,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postsVisible = (!postsDiv || postsDiv.style.display !== "none");
 
 		if (bbb.xml.thumbs || bbb.xml.paginator || !postsVisible) // Delay the check until the page is completely ready.
-			endlessDelay(250);
+			endlessDelay(100);
 		else {
 			if (!bbb.endless.last_paginator)
 				endlessObjectInit();
@@ -5041,7 +5050,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		if (quick_search.indexOf("remove") > -1 && bbb.quick_search !== "")
-			endlessDelay(1250);
+			endlessDelay(1100);
 
 		endlessCheck();
 	}
@@ -6780,7 +6789,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				else if (quick_search.indexOf("pinned") > -1)
 					quickSearchPinEnable();
 
-
 				quickSearchTest();
 			}
 
@@ -6802,6 +6810,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					searchDiv.bbbRemoveClass("bbb-quick-search-show");
 			});
 		}, true);
+
+		// If a mouse click misses an input within the quick search div, cancel it so the quick search doesn't minimize.
+		searchDiv.addEventListener("mousedown", disableEvent, true);
 
 		// Hide the search div if the escape key is pressed while using it and autocomplete isn't open.
 		searchDiv.addEventListener("keydown", function(event) {
@@ -6865,7 +6876,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (allowAutocomplete && Danbooru.Autocomplete && Danbooru.Autocomplete.initialize_tag_autocomplete) {
 			try {
 				var autoComplete = Danbooru.Autocomplete.initialize_tag_autocomplete.toString().match(/\{([\s\S]*)\}/)[1];
-				var searchAutoComplete = autoComplete.replace(/(,)#tags|#tags(,)/, "$1#tags,#bbb-quick-search-input$2");  // /\$\([\s\S]*?#tags[\s\S]*?\)([\s\S]*?)\$\([\s\S]*?#artist_name[\s\S]*?\)/, '$("#bbb-quick-search-input")$1$()'
+				var searchAutoComplete = autoComplete.replace(/(,)#tags|#tags(,)/, "$1#tags,#bbb-quick-search-input$2"); // /\$\([\s\S]*?#tags[\s\S]*?\)([\s\S]*?)\$\([\s\S]*?#artist_name[\s\S]*?\)/, '$("#bbb-quick-search-input")$1$()'
 				var autoInit = new Function(searchAutoComplete);
 
 				autoInit();
@@ -6882,7 +6893,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				$(searchInput).autocomplete("widget").css("position", "fixed");
 			}
 			catch (error) {
-				bbbNotice("Unexpected error while trying to initialize autocomplete for quick search. (Error: " + error.message + ")", -1);
+				bbbNotice("Unexpected error while trying to initialize autocomplete for the quick search. (Error: " + error.message + ")", -1);
 			}
 		}
 
@@ -7888,7 +7899,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var setting;
 
 		if (scriptSetting === "script_blacklisted_tags") {
-			if (override_blacklist)
+			if ((isLoggedIn() && override_blacklist === "always") || override_blacklist === "logged_out")
 				setting = bbb.user.script_blacklisted_tags;
 			else
 				setting = getMeta("blacklisted-tags") || "";
