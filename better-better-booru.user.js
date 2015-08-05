@@ -179,10 +179,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				s70: {func: quickSearchReset} // SHIFT + F
 			},
 			post: { // Post hotkeys.
-				49: {func: resizeHotkey, autostop: false}, // 1
-				50: {func: resizeHotkey, autostop: false}, // 2
-				51: {func: resizeHotkey, autostop: false}, // 3
-				52: {func: resizeHotkey, autostop: false}, // 4
+				49: {func: resizeHotkey, custom_handler: true}, // 1
+				50: {func: resizeHotkey, custom_handler: true}, // 2
+				51: {func: resizeHotkey, custom_handler: true}, // 3
+				52: {func: resizeHotkey, custom_handler: true}, // 4
 				66: {func: openMenu}, // B
 				78: {func: function(event) { // N
 					Danbooru.Note.TranslationMode.toggle(event);
@@ -2971,8 +2971,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						bbb.user.override_resize = true;
 						bbb.user.override_sample = true;
 					}
-					else
-						bbb.user.override_blacklist = "logged_out";
 
 					break;
 			}
@@ -3826,17 +3824,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var header = tagList.children[childIndex];
 			var list = tagList.children[childIndex + 1];
 
-			if (header.tagName === "H2" && list) {
+			if (header.tagName === "H2" && list && list.tagName === "UL") {
 				tagList.removeChild(header);
 				tagList.removeChild(list);
 
 				while (list.firstElementChild)
 					tagHolder.appendChild(list.firstElementChild);
 			}
-			else if (header.tagName === "H1" && list) {
+			else if (header.tagName === "H1" && list && list.tagName === "UL") {
 				mainList = list;
 				childIndex += 2;
 			}
+			else
+				childIndex += 1;
 		}
 
 		if (mainList)
@@ -6505,7 +6505,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			else if (endless_separator === "marker") {
 				styles += '.bbb-endless-page {display: inline;}' +
 				'article.bbb-endless-marker-article {height: ' + thumbMaxHeight + 'px !important; width: ' + thumbMaxWidth + 'px !important; margin: 0px ' + listingExtraSpace + 'px ' + listingExtraSpace + 'px 0px !important; float: left; overflow: hidden; text-align: center; vertical-align: baseline; position: relative;}' +
-				'.bbb-endless-marker {display: inline-block; border: 1px solid #CCCCCC; height: 148px; width: 148px; line-height: 148px; text-align: center;}' +
+				'.bbb-endless-marker {display: inline-block; border: 1px solid #CCCCCC; height: 148px; width: 148px; line-height: 148px; text-align: center; margin-top: ' + totalBorderWidth + 'px;}' +
 				'.bbb-endless-marker-link {display: inline-block; font-size: 14px; font-weight: bold; line-height: 14px; vertical-align: middle; color: #CCCCCC;}';
 			}
 			else if (endless_separator === "none")
@@ -6812,7 +6812,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}, true);
 
 		// If a mouse click misses an input within the quick search div, cancel it so the quick search doesn't minimize.
-		searchDiv.addEventListener("mousedown", disableEvent, true);
+		searchDiv.addEventListener("mousedown", disableEvent, false);
 
 		// Hide the search div if the escape key is pressed while using it and autocomplete isn't open.
 		searchDiv.addEventListener("keydown", function(event) {
@@ -7237,12 +7237,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var hotkey = bbb.hotkeys[loc][hotkeyCode];
 
 			if (hotkey) {
-				var autostop = hotkey.autostop;
-				autostop = (typeof(autostop) !== "boolean" || autostop === true ? true : false);
+				var customHandler = hotkey.custom_handler;
+				customHandler = (typeof(customHandler) !== "boolean" || customHandler !== true ? false : true);
 
 				hotkey.func(event); // The event object will always be the first argument passed to the provided function (previously declared or anonymous).
 
-				if (autostop) {
+				if (!customHandler) {
 					event.stopPropagation();
 					event.preventDefault();
 				}
