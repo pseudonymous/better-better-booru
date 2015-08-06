@@ -229,7 +229,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			endless_preload: newOption("checkbox", false, "Preload Next Page", "Start loading the next page as soon as possible.<tiphead>Note</tiphead>A preloaded page will not be appended until the scroll limit is reached."),
 			endless_remove_dup: newOption("checkbox", false, "Remove Duplicates", "When appending new pages, remove posts that already exist in the listing from the new page.<tiphead>Note</tiphead>Duplicate posts are caused by the addition of new posts to the beginning of a listing or changes to the order of the posts."),
 			endless_scroll_limit: newOption("dropdown", 500, "Scroll Limit", "Set the minimum amount of pixels that the window can have left to vertically scroll before it starts appending the next page.", {numList:[0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
-			endless_separator: newOption("dropdown", "none", "Page Separator", "Distinguish pages from each other by marking them with a separator.<tipdesc>Marker:</tipdesc> Place a thumbnail sized marker before the first thumbnail of each page.<tipdesc>Divider:</tipdesc> Completely separate pages by placing a horizontal line between them.", {txtOptions:["None:none", "Marker:marker", "Divider:divider"]}),
+			endless_separator: newOption("dropdown", "divider", "Page Separator", "Distinguish pages from each other by marking them with a separator.<tipdesc>Marker:</tipdesc> Place a thumbnail sized marker before the first thumbnail of each page.<tipdesc>Divider:</tipdesc> Completely separate pages by placing a horizontal line between them.", {txtOptions:["None:none", "Marker:marker", "Divider:divider"]}),
 			endless_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling endless pages on and off, the mode it's toggled to will override the default and persist across other pages in the same browsing session for that tab until it ends."),
 			fixed_paginator: newOption("dropdown", "disabled", "Fixed Paginator", "Make the paginator always visible for the favorites, search, pool, notes, and favorite group listings by fixing it to the bottom of the window when it would normally start scrolling out of view. <tiphead>Note</tiphead>Options labeled with \"minimal\" will also make the fixed paginator smaller by removing most of the blank space within it.", {txtOptions:["Disabled:disabled", "Endless:endless", "Endless (Minimal):endless minimal", "Normal:normal", "Normal (Minimal):normal minimal", "Always:endless normal", "Always (Minimal):endless normal minimal"]}),
 			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar never completely vertically scroll out of view for posts, favorites listings, and/or searches by fixing it to the top or bottom of the window when it would normally start scrolling out of view. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window and the Danbooru location being modified, the \"tag scrollbars\", \"collapsible sidebar\", and/or \"remove tag headers\" options may be needed for best results.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
@@ -439,10 +439,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	modifyPage();
 
-	if (autohide_sidebar)
-		autohideSidebar();
-	else if (fixed_sidebar)
-		delayMe(fixedSidebar); // Delayed to allow Danbooru layout to finalize.
+	autohideSidebar();
+
+	delayMe(fixedSidebar); // Delayed to allow Danbooru layout to finalize.
 
 	delayMe(collapseSidebar); // Delayed to allow Danbooru layout to finalize.
 
@@ -3836,7 +3835,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				childIndex += 2;
 			}
 			else
-				childIndex += 1;
+				childIndex++;
 		}
 
 		if (mainList)
@@ -4303,6 +4302,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Quick search.
 		quickSearchTest(target);
+
+		// Fix the mode menu.
+		danbModeMenu(target);
 	}
 
 	function checkHiddenThumbs(post) {
@@ -4587,6 +4589,24 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (linkParent.tagName === "ARTICLE" || linkParent.id.indexOf("nav-link-for-pool-") === 0)
 					link.href = link.href.split("?", 1)[0];
 			}
+		}
+	}
+
+	function danbModeMenu(target) {
+		// Add mode menu functionality to newly created thumbnails.
+		var thumbs = (target || document).getElementsByTagName("img");
+		var menuHandler = function(event) {
+			if (event.button === 0)
+				Danbooru.PostModeMenu.click(event);
+		};
+
+		for (var i = 0, il = thumbs.length; i < il; i++) {
+			var thumbLink = thumbs[i].parentNode;
+
+			if (!thumbLink || thumbLink.tagName !== "A")
+				return;
+
+			thumbLink.addEventListener("click", menuHandler, false);
 		}
 	}
 
@@ -7149,8 +7169,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		document.addEventListener("click", function(event) {
 			var bypass = (event.shiftKey && event.ctrlKey);
+			var danbMode = getCookie().mode || "view";
 
-			if (event.button !== 0 || event.altKey || !bypass && (event.shiftKey || event.ctrlKey))
+			if (event.button !== 0 || event.altKey || !bypass && (event.shiftKey || event.ctrlKey) || danbMode !== "view")
 				return;
 
 			var runEndless = (post_link_new_window.indexOf("endless") > -1);
@@ -7229,7 +7250,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var activeTag = active.tagName;
 			var activeType = active.type;
 
-			if (activeTag === "SELECT" || activeTag === "TEXTAREA" || activeTag === "INPUT" && (activeType === "text" || activeType === "password"))
+			if (activeTag === "SELECT" || activeTag === "TEXTAREA" || (activeTag === "INPUT" && !/^(:?button|checkbox|file|hidden|image|radio|reset|submit)$/.test(activeType))) // Input types: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#Attributes
 				return;
 
 			var loc = (gLoc === "post" ? "post" : "other");
@@ -7487,7 +7508,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Show the sidebar when it gets focus, hide it when it loses focus, and only allow select elements to retain focus.
 		var sidebar = document.getElementById("sidebar");
 
-		if (!sidebar)
+		if (!autohide_sidebar || !sidebar)
 			return;
 
 		sidebar.addEventListener("click", function(event) {
@@ -7510,7 +7531,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var content = bbb.fixed_sidebar.content = document.getElementById("content");
 		var comments = document.getElementById("comments");
 
-		if (!sidebar || !content || (gLoc === "post" && !comments))
+		if (!fixed_sidebar || autohide_sidebar || !sidebar || !content || (gLoc === "post" && !comments))
 			return;
 
 		var docRect = document.documentElement.getBoundingClientRect();
@@ -7896,22 +7917,23 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function accountSettingCheck(scriptSetting) {
 		// Determine whether the script setting or account/anonymous setting should be used.
+		var loggedIn = isLoggedIn();
 		var setting;
 
 		if (scriptSetting === "script_blacklisted_tags") {
-			if ((isLoggedIn() && override_blacklist === "always") || override_blacklist === "logged_out")
+			if ((loggedIn && override_blacklist === "always") || (!loggedIn && override_blacklist !== "disabled"))
 				setting = bbb.user.script_blacklisted_tags;
 			else
 				setting = getMeta("blacklisted-tags") || "";
 		}
 		else if (scriptSetting === "post_resize") {
-			if (isLoggedIn() && !override_resize)
+			if (loggedIn && !override_resize)
 				setting = (getMeta("always-resize-images") === "true");
 			else
 				setting = bbb.user.post_resize;
 		}
 		else if (scriptSetting === "load_sample_first") {
-			if (isLoggedIn() && !override_sample)
+			if (loggedIn && !override_sample)
 				setting = (getMeta("default-image-size") === "large");
 			else
 				setting = bbb.user.load_sample_first;
