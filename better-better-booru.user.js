@@ -4594,6 +4594,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function danbModeMenu(target) {
 		// Add mode menu functionality to newly created thumbnails.
+		var modeSection = document.getElementById("mode-box");
+
+		if (!modeSection)
+			return;
+
 		var thumbs = (target || document).getElementsByTagName("img");
 		var menuHandler = function(event) {
 			if (event.button === 0)
@@ -7169,9 +7174,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		document.addEventListener("click", function(event) {
 			var bypass = (event.shiftKey && event.ctrlKey);
+			var modeSection = document.getElementById("mode-box");
 			var danbMode = getCookie().mode || "view";
 
-			if (event.button !== 0 || event.altKey || !bypass && (event.shiftKey || event.ctrlKey) || danbMode !== "view")
+			if (event.button !== 0 || event.altKey || !bypass && (event.shiftKey || event.ctrlKey) || (modeSection && danbMode !== "view"))
 				return;
 
 			var runEndless = (post_link_new_window.indexOf("endless") > -1);
