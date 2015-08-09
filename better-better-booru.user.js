@@ -246,7 +246,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option. This behavior can be changed with the \"override sample setting\" option under the preferences tab."),
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
-			move_save_search: newOption("checkbox", false, "Move Save Search", "Move the \"save search\" button into the related section in the sidebar."),
+			move_save_search: newOption("checkbox", false, "Move Save Search", "Move the \"save this search\" button into the related section in the sidebar."),
 			override_blacklist: newOption("dropdown", "logged_out", "Override Blacklist", "Allow the \"blacklist\" setting to override the default blacklist for logged out users and/or account blacklist for logged in users. <tipdesc>Logged out:</tipdesc> Override the default blacklist for logged out users. <tipdesc>Always:</tipdesc> Override the default blacklist for logged out users and account blacklist for logged in users.", {txtOptions:["Disabled:disabled", "Logged out:logged_out", "Always:always"]}),
 			override_resize: newOption("checkbox", false, "Override Resize Setting", "Allow the \"resize post\" setting to override the account \"fit images to window\" settings when logged in."),
 			override_sample: newOption("checkbox", false, "Override Sample Setting", "Allow the \"load sample first\" setting to override the account \"default image width\" settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
@@ -5134,6 +5134,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var blacklistBox = document.getElementById("blacklist-box");
 		var blacklistList = document.getElementById("blacklist-list");
 		var blacklistedPosts = document.getElementsByClassName("blacklisted");
+		var blacklistDisabled = (getCookie()["disable-all-blacklists"] === "1");
 
 		// Reset sidebar blacklist.
 		if (blacklistBox && blacklistList) {
@@ -5190,7 +5191,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var blacklistSearch = createSearch(blacklistTag);
 
 			if (blacklistSearch.length) {
-				var newEntry = {active: true, tags:blacklistTag, search:blacklistSearch, matches: [], index: i};
+				var newEntry = {active: !blacklistDisabled, tags:blacklistTag, search:blacklistSearch, matches: [], index: i};
 
 				bbb.blacklist.entries.push(newEntry);
 
@@ -5201,9 +5202,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 					var blacklistLink = document.createElement("a");
 					blacklistLink.innerHTML = (blacklistTag.length < 19 ? blacklistTag + " " : blacklistTag.substring(0, 18).bbbSpaceClean() + "... ");
-					blacklistLink.className = "bbb-blacklist-entry-" + i;
+					blacklistLink.className = "bbb-blacklist-entry-" + i + (blacklistDisabled ? " blacklisted-active" : "");
 					blacklistLink.setAttribute("data-bbb-blacklist-entry", i);
-					blacklistLink.addEventListener("click", blacklistLinkToggle, false);
+					blacklistLink.addEventListener("click", blacklistEntryLinkToggle, false);
 					blacklistItem.appendChild(blacklistLink);
 
 					var blacklistCount = document.createElement("span");
@@ -5215,20 +5216,80 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 		}
 
+		// Replace the disable/enable all blacklist links with our own.
+		var enableLink = document.getElementById("re-enable-all-blacklists");
+		var disableLink = document.getElementById("disable-all-blacklists");
+
+		if (enableLink && disableLink) {
+			var newEnableLink = bbb.el.blacklistEnableLink = enableLink.cloneNode(true);
+			var newDisableLink = bbb.el.blacklistDisableLink = disableLink.cloneNode(true);
+
+			newEnableLink.addEventListener("click", blacklistLinkToggle, false);
+			newDisableLink.addEventListener("click", blacklistLinkToggle, false);
+
+			if (blacklistList)
+				blacklistList.style.marginBottom = "0.5em";
+
+			enableLink.parentNode.replaceChild(newEnableLink, enableLink);
+			disableLink.parentNode.replaceChild(newDisableLink, disableLink);
+		}
+
 		// Test all posts on the page for a match and set up the initial blacklist.
 		blacklistUpdate();
 	}
 
 	function blacklistLinkToggle(event) {
+		// Event listener function for permanently toggling the entire blacklist.
+		if (event.button !== 0)
+			return;
+
+		var blacklistDisabled = (getCookie()["disable-all-blacklists"] === "1");
+		var entries = bbb.blacklist.entries;
+
+		for (var i = 0, il = entries.length; i < il; i++) {
+			var entry = entries[i];
+
+			if (blacklistDisabled) {
+				if (!entry.active)
+					blacklistEntryToggle(i);
+			}
+			else {
+				if (entry.active)
+					blacklistEntryToggle(i);
+			}
+		}
+
+		if (blacklistDisabled) {
+			bbb.el.blacklistEnableLink.style.display = "none";
+			bbb.el.blacklistDisableLink.style.display = "inline";
+			createCookie("disable-all-blacklists", 0, 365);
+		}
+		else {
+			bbb.el.blacklistEnableLink.style.display = "inline";
+			bbb.el.blacklistDisableLink.style.display = "none";
+			createCookie("disable-all-blacklists", 1, 365);
+		}
+
+		event.preventDefault();
+	}
+
+	function blacklistEntryLinkToggle(event) {
 		// Event listener function for blacklist entry toggle links.
 		if (event.button !== 0)
 			return;
 
-		var link = event.target;
-		var entryNumber = Number(link.getAttribute("data-bbb-blacklist-entry"));
-		var entry = bbb.blacklist.entries[entryNumber];
+		var entryNumber = Number(event.target.getAttribute("data-bbb-blacklist-entry"));
+
+		blacklistEntryToggle(entryNumber);
+
+		event.preventDefault();
+	}
+
+	function blacklistEntryToggle(entryIndex) {
+		// Toggle a blacklist entry and adjust all of its related elements.
+		var entry = bbb.blacklist.entries[entryIndex];
 		var matches = entry.matches;
-		var links = document.getElementsByClassName("bbb-blacklist-entry-" + entryNumber);
+		var links = document.getElementsByClassName("bbb-blacklist-entry-" + entryIndex);
 		var post;
 		var el;
 		var matchList;
@@ -5268,8 +5329,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					el.bbbAddClass("blacklisted-active");
 			}
 		}
-
-		event.preventDefault();
 	}
 
 	function blacklistUpdate(target) {
@@ -5417,7 +5476,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						blacklistLink.className = "bbb-blacklist-entry-" + entryIndex + (matchEntry.active ? "" : " blacklisted-active");
 						blacklistLink.setAttribute("data-bbb-blacklist-entry", entryIndex);
 						blacklistLink.innerHTML = (blacklistTag.length < 51 ? blacklistTag + " " : blacklistTag.substring(0, 50).bbbSpaceClean() + "...");
-						blacklistLink.addEventListener("click", blacklistLinkToggle, false);
+						blacklistLink.addEventListener("click", blacklistEntryLinkToggle, false);
 						blacklistItem.appendChild(blacklistLink);
 
 						list.appendChild(blacklistItem);
@@ -5971,9 +6030,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				return false;
 		}
 		else if (tag instanceof RegExp) { // Check wildcard tags.
-			var stringTag = String(tag); // Convert regex to a string and...
-			stringTag = stringTag.substring(2, stringTag.length - 2); // ...remove the leading "/ " and trailing " /" before passing it for testing.
-			targetTags = (isMetatag(stringTag) ? postInfo.metatags : postInfo.tags);
+			targetTags = (isMetatag(tag.source) ? postInfo.metatags : postInfo.tags);
 
 			return tag.test(targetTags);
 		}
