@@ -4237,6 +4237,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			// Give the thumbnail link an identifying class.
 			link.bbbAddClass("bbb-thumb-link");
 
+			// Give the post container an ID class for resolving cases where the same post shows up on the page multiple times.
+			post.bbbAddClass("post_" + id);
+
 			// Correct parent status borders on "no active children" posts for logged out users.
 			if (hasChildren && show_deleted)
 				post.bbbAddClass("post-status-has-children");
@@ -5291,9 +5294,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var matches = entry.matches;
 		var links = document.getElementsByClassName("bbb-blacklist-entry-" + entryIndex);
 		var post;
-		var el;
+		var els;
 		var matchList;
-		var i, il; // Loop variables.
+		var i, il, j, jl; // Loop variables.
 
 		if (entry.active) {
 			entry.active = false;
@@ -5304,12 +5307,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			for (i = 0, il = matches.length; i < il; i++) {
 				post = matches[i];
 				matchList = bbb.blacklist.match_list[post.id];
-				el = document.getElementById(post.elId);
+				els = document.getElementsByClassName(post.elId);
 
 				matchList.count--;
 
-				if (!matchList.count && matchList.override !== false)
-					el.bbbRemoveClass("blacklisted-active");
+				if (!matchList.count && matchList.override !== false) {
+					for (j = 0, jl = els.length; j < jl; j++)
+						els[j].bbbRemoveClass("blacklisted-active");
+				}
 			}
 		}
 		else {
@@ -5321,12 +5326,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			for (i = 0, il = matches.length; i < il; i++) {
 				post = matches[i];
 				matchList = bbb.blacklist.match_list[post.id];
-				el = document.getElementById(post.elId);
+				els = document.getElementsByClassName(post.elId);
 
 				matchList.count++;
 
-				if (matchList.override !== true)
-					el.bbbAddClass("blacklisted-active");
+				if (matchList.override !== true) {
+					for (j = 0, jl = els.length; j < jl; j++)
+						els[j].bbbAddClass("blacklisted-active");
+				}
 			}
 		}
 	}
@@ -5446,10 +5453,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					return;
 
 				var target = event.target;
-				var postContainer = el;
 				var blacklistTip = bbb.el.blacklistTip;
+				var i, il; // Loop variables.
 
-				if (!postContainer.bbbHasClass("blacklisted-active") || (target.tagName === "A" && !target.bbbHasClass("bbb-thumb-link"))) // If the thumb isn't currently hidden or a link that isn't the thumb link is clicked, allow the link click.
+				if (!el.bbbHasClass("blacklisted-active") || (target.tagName === "A" && !target.bbbHasClass("bbb-thumb-link"))) // If the thumb isn't currently hidden or a link that isn't the thumb link is clicked, allow the link click.
 					return;
 
 				if (blacklistTip.style.display !== "block") {
@@ -5463,7 +5470,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					var list = document.createElement("ul");
 					tipContent.appendChild(list);
 
-					for (var i = 0, il = matchEntries.length; i < il; i++) {
+					for (i = 0, il = matchEntries.length; i < il; i++) {
 						var matchEntry = matchEntries[i];
 						var entryIndex = matchEntry.index;
 						var blacklistTag = matchEntry.tags;
@@ -5502,8 +5509,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					blacklistShowTip(event, tipContent);
 				}
 				else {
+					var els = document.getElementsByClassName("post_" + id);
+
+					for (i = 0, il = els.length; i < il; i++)
+						els[i].bbbRemoveClass("blacklisted-active");
+
 					blacklistHideTip();
-					postContainer.bbbRemoveClass("blacklisted-active");
 					bbb.blacklist.match_list[id].override = true;
 				}
 
@@ -5518,10 +5529,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var hide = document.createElement("span");
 			hide.className = "bbb-close-circle";
 			hide.addEventListener("click", function(event) {
-				if (event.button === 0) {
-					el.bbbAddClass("blacklisted-active");
-					bbb.blacklist.match_list[id].override = false;
-				}
+				if (event.button !== 0)
+					return;
+
+				var els = document.getElementsByClassName("post_" + id);
+
+				for (var i = 0, il = els.length; i < il; i++)
+					els[i].bbbAddClass("blacklisted-active");
+
+				bbb.blacklist.match_list[id].override = false;
 			}, false);
 			target.appendChild(hide);
 		}
