@@ -5137,7 +5137,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var blacklistBox = document.getElementById("blacklist-box");
 		var blacklistList = document.getElementById("blacklist-list");
 		var blacklistedPosts = document.getElementsByClassName("blacklisted");
-		var blacklistDisabled = (getCookie()["disable-all-blacklists"] === "1");
 
 		// Reset sidebar blacklist.
 		if (blacklistBox && blacklistList) {
@@ -5175,7 +5174,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Reset any blacklist info.
 		if (bbb.blacklist.entries.length) {
 			delete bbb.blacklist;
-			bbb.blacklist = {entries: [], match_list: {}};
+			bbb.blacklist = {entries: [], match_list: {}, smart_view_target: undefined};
 		}
 
 		// Reset any blacklisted thumbnails.
@@ -5186,6 +5185,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!blacklistTags || !/[^\s,]/.test(blacklistTags))
 			return;
 
+		var blacklistDisabled = (getCookie()["disable-all-blacklists"] === "1" && blacklistBox);
 		blacklistTags = blacklistTags.split(",");
 
 		// Create the blacklist section.
@@ -5229,6 +5229,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			newEnableLink.addEventListener("click", blacklistLinkToggle, false);
 			newDisableLink.addEventListener("click", blacklistLinkToggle, false);
+
+			if (blacklistDisabled) {
+				newEnableLink.style.display = "inline";
+				newDisableLink.style.display = "none";
+			}
+			else {
+				newEnableLink.style.display = "none";
+				newDisableLink.style.display = "inline";
+			}
 
 			if (blacklistList)
 				blacklistList.style.marginBottom = "0.5em";
@@ -5294,6 +5303,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var matches = entry.matches;
 		var links = document.getElementsByClassName("bbb-blacklist-entry-" + entryIndex);
 		var post;
+		var id;
 		var els;
 		var matchList;
 		var i, il, j, jl; // Loop variables.
@@ -5305,15 +5315,20 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				links[i].bbbAddClass("blacklisted-active");
 
 			for (i = 0, il = matches.length; i < il; i++) {
-				post = matches[i];
-				matchList = bbb.blacklist.match_list[post.id];
-				els = document.getElementsByClassName(post.elId);
+				id = matches[i];
+				matchList = bbb.blacklist.match_list[id];
 
 				matchList.count--;
 
 				if (!matchList.count && matchList.override !== false) {
-					for (j = 0, jl = els.length; j < jl; j++)
-						els[j].bbbRemoveClass("blacklisted-active");
+					if (id === "image-container")
+						document.getElementById("image-container").bbbRemoveClass("blacklisted-active");
+					else {
+						els = document.getElementsByClassName(id);
+
+						for (j = 0, jl = els.length; j < jl; j++)
+							els[j].bbbRemoveClass("blacklisted-active");
+					}
 				}
 			}
 		}
@@ -5324,15 +5339,20 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				links[i].bbbRemoveClass("blacklisted-active");
 
 			for (i = 0, il = matches.length; i < il; i++) {
-				post = matches[i];
-				matchList = bbb.blacklist.match_list[post.id];
-				els = document.getElementsByClassName(post.elId);
+				id = matches[i];
+				matchList = bbb.blacklist.match_list[id];
 
 				matchList.count++;
 
 				if (matchList.override !== true) {
-					for (j = 0, jl = els.length; j < jl; j++)
-						els[j].bbbAddClass("blacklisted-active");
+					if (id === "image-container")
+						document.getElementById("image-container").bbbAddClass("blacklisted-active");
+					else {
+						els = document.getElementsByClassName(id);
+
+						for (j = 0, jl = els.length; j < jl; j++)
+							els[j].bbbAddClass("blacklisted-active");
+					}
 				}
 			}
 		}
@@ -5356,16 +5376,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var imgId = imgContainer.getAttribute("data-id");
 
 			if (!blacklistSmartViewCheck(imgId))
-				blacklistTest("imgContainer", imgContainer);
+				blacklistTest(imgContainer);
 		}
 
 		// Search the posts for matches.
-		for (i = 0, il = posts.length; i < il; i++) {
-			var post = posts[i];
-			var postId = post.getAttribute("data-id");
-
-			blacklistTest(postId, post);
-		}
+		for (i = 0, il = posts.length; i < il; i++)
+			blacklistTest(posts[i]);
 
 		// Update the blacklist sidebar section match counts and display any blacklist items that have a match.
 		if (blacklistBox && blacklistList) {
@@ -5382,12 +5398,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function blacklistTest(matchId, el) {
-		// Test a post/image for a blacklist match and use the provided ID to store its info.
-		var matchList = bbb.blacklist.match_list[matchId];
+	function blacklistTest(el) {
+		// Test a post/image for a blacklist match and use its ID to store its info.
+		var id = el.id;
+		var matchList = bbb.blacklist.match_list[id];
 
 		if (typeof(matchList) === "undefined") { // Post hasn't been tested yet.
-			matchList = bbb.blacklist.match_list[matchId] = {count: undefined, matches: [], override: undefined};
+			matchList = bbb.blacklist.match_list[id] = {count: undefined, matches: [], override: undefined};
 
 			for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
 				var entry = bbb.blacklist.entries[i];
@@ -5403,7 +5420,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						matchList.count = matchList.count || 0;
 
 					matchList.matches.push(entry);
-					entry.matches.push({id:matchId, elId:el.id});
+					entry.matches.push(id);
 				}
 			}
 
@@ -5437,7 +5454,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function blacklistPostControl(el, matchList) {
 		// Add the blacklist post controls to a thumbnail.
 		var target = el.getElementsByClassName("preview")[0] || el;
-		var id = el.getAttribute("data-id");
+		var id = el.id;
 		var tip = bbb.el.blacklistTip;
 
 		if (!tip) { // Create the tip if it doesn't exist.
@@ -5492,7 +5509,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					var viewLinkDiv = document.createElement("div");
 					viewLinkDiv.style.marginTop = "1em";
 					viewLinkDiv.style.textAlign = "center";
-					viewLinkDiv.innerHTML = '<a class="bbb-post-link" id="bbb-blacklist-view-link" href="/posts/' + id + '">View post</a>';
+					viewLinkDiv.innerHTML = '<a class="bbb-post-link" id="bbb-blacklist-view-link" href="/posts/' + id.match(/\d+/)[0] + '">View post</a>';
 					tipContent.appendChild(viewLinkDiv);
 
 					if (blacklist_smart_view) {
@@ -5509,7 +5526,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					blacklistShowTip(event, tipContent);
 				}
 				else {
-					var els = document.getElementsByClassName("post_" + id);
+					var els = document.getElementsByClassName(id);
 
 					for (i = 0, il = els.length; i < il; i++)
 						els[i].bbbRemoveClass("blacklisted-active");
@@ -5532,7 +5549,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (event.button !== 0)
 					return;
 
-				var els = document.getElementsByClassName("post_" + id);
+				var els = document.getElementsByClassName(id);
 
 				for (var i = 0, il = els.length; i < il; i++)
 					els[i].bbbAddClass("blacklisted-active");
