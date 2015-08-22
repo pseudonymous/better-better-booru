@@ -30,8 +30,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	// Don't get hoisted so they should be declared at the top to simplify things.
 	String.prototype.bbbSpacePad = function() {
 		// Add a leading and trailing space.
-		var text = this;
-		return (text.length ? " " + text + " " : text);
+		return (this.length ? " " + this + " " : "");
 	};
 
 	String.prototype.bbbSpaceClean = function() {
@@ -41,7 +40,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	String.prototype.bbbTagClean = function() {
 		// Remove extra commas along with leading, trailing, and multiple spaces.
-		return this.replace(/[\s,]*,[\s,]*/g, ", ").replace(/[\s,]+$|^[\s,]+/g, "").replace(/\s+/g, " ");
+		return this.replace(/[\s,]*(%\))\s*|\s*([~-]*\(%)[\s,]*/g, " $& ").replace(/[\s,]*,[\s,]*/g, ", ").replace(/[\s,]+$|^[\s,]+/g, "").replace(/\s+/g, " ");
+	};
+
+	String.prototype.bbbHash = function() {
+		// Turn a string into a hash using the current Danbooru hash method.
+		var hash = 5381;
+		var i = this.length;
+
+		while(i)
+			hash = (hash * 33) ^ this.charCodeAt(--i);
+
+		return hash >>> 0;
 	};
 
 	Element.prototype.bbbGetPadding = function() {
@@ -581,6 +591,36 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var xml = JSON.parse(xmlhttp.responseText);
 
+						// Remove extra objects from the XML JSON.
+						var isArray = (xml instanceof Array);
+						var firstObject = (isArray ? xml[0] : xml);
+
+						if (firstObject && typeof(firstObject) === "object") {
+							var objectProperties = [];
+							var i, il; // Loop variables.
+
+							for (i in firstObject) {
+								if (firstObject.hasOwnProperty(i))
+									objectProperties.push(i);
+							}
+
+							var firstProperty = objectProperties[0];
+							var firstValue = firstObject[firstProperty];
+
+							if (firstProperty && typeof(firstValue) === "object" && objectProperties.length === 1) {
+								if (isArray) {
+									var formattedXml = [];
+
+									for (i = 0, il = xml.length; i < il; i++)
+										formattedXml.push(xml[i][firstProperty]);
+
+									xml = formattedXml;
+								}
+								else
+									xml = xml[firstProperty];
+							}
+						}
+
 						// Update status message.
 						if (mode === "search" || mode === "popular" || mode === "popular_view" || mode === "notes" || mode === "favorites" || mode === "pool_search" || mode === "favorite_group_search") {
 							bbb.xml.thumbs = false;
@@ -657,7 +697,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var orderedIds = (gLoc === "pool" || gLoc === "favorite_group" ? optArg : undefined);
 		var before = getThumbSibling(gLoc);
 
-		if (!posts.length)
+		if (!posts[0])
 			return;
 
 		if (!thumbContainer) {
@@ -1360,7 +1400,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			article.bbbRemoveClass("bbb-hidden-thumb");
 
 			// Continue to the next image or finish by updating the cache.
-			if (hiddenImgs.length) {
+			if (hiddenImgs[0]) {
 				hiddenId = hiddenImgs[0].getAttribute("data-id");
 				searchPages("hidden", hiddenId);
 			}
@@ -1437,7 +1477,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			id: Number(imgContainer.getAttribute("data-id")),
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
 			has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
-			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent").length),
+			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent")[0]),
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
 			rating: imgContainer.getAttribute("data-rating"),
 			score: Number(imgContainer.getAttribute("data-score")),
@@ -1889,7 +1929,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 OR posts without tags ending with tag2.</li></ul><br>Multiple match rules can be applied by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for any posts in a pool, "none" for posts not in a pool, and "active" for any posts in an active (not deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses coupled with percent signs:<ul><li><b>(% ~tag1 ~tag2 %) (% ~tag3 ~tag3 %)</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 (% tag2, tag3 tag4 %)</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -(% tag2 tag3 %)</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~(% tag3 tag4 %)</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for any posts in a pool, "none" for posts not in a pool, "active" for any posts in an active (not deleted) pool, and "inactive" for any posts in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
@@ -1953,7 +1993,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		tagEditOk.href = "#";
 		tagEditOk.className = "bbb-button";
 		tagEditOk.addEventListener("click", function(event) {
-			var tags = tagEditArea.value.replace(/[\r\n]+/g, ",").bbbTagClean();
+			var tags = searchMultiToSingle(tagEditArea.value);
 			var args = bbb.tagEdit;
 
 			tagEditBlocker.style.display = "none";
@@ -2486,8 +2526,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		var blacklistTextarea = bbb.el.menu.blacklistTextarea = document.createElement("textarea");
 		blacklistTextarea.className = "bbb-blacklist-area";
-		blacklistTextarea.value = bbb.user.script_blacklisted_tags.bbbTagClean().replace(/,\s*/g, "\r\n\r\n");
-		blacklistTextarea.addEventListener("change", function() { bbb.user.script_blacklisted_tags = blacklistTextarea.value.replace(/[\r\n]+/g, ",").bbbTagClean(); }, false);
+		blacklistTextarea.value = searchSingleToMulti(bbb.user.script_blacklisted_tags);
+		blacklistTextarea.addEventListener("change", function() { bbb.user.script_blacklisted_tags = searchMultiToSingle(blacklistTextarea.value); }, false);
 		sectionDiv.appendChild(blacklistTextarea);
 
 		var buttonDiv = document.createElement("div");
@@ -2499,7 +2539,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		formatButton.href = "#";
 		formatButton.className = "bbb-button";
 		formatButton.addEventListener("click", function(event) {
-			blacklistTextarea.value = blacklistTextarea.value.replace(/[\r\n]+/g, ",").bbbTagClean().replace(/,\s*/g, "\r\n\r\n");
+			var textareaString = searchMultiToSingle(blacklistTextarea.value);
+
+			blacklistTextarea.value = searchSingleToMulti(textareaString);
 			event.preventDefault();
 		}, false);
 		buttonDiv.appendChild(formatButton);
@@ -2657,7 +2699,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		section.removeChild(borderElement);
 		borderSettings.splice(index,1);
 
-		if (borderSettings.length === 0) {
+		if (!borderSettings[0]) {
 			// If no borders are left, add a new blank border.
 			var newBorderItem = newBorder("", false, "#000000", "solid");
 			borderSettings.push(newBorderItem);
@@ -2777,7 +2819,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function tagEditWindow(input, object, prop) {
 		bbb.el.menu.tagEditBlocker.style.display = "block";
-		bbb.el.menu.tagEditArea.value = input.value.bbbTagClean().replace(/,\s*/g, "\r\n\r\n");
+		bbb.el.menu.tagEditArea.value = searchSingleToMulti(input.value);
 		bbb.el.menu.tagEditArea.focus();
 		bbb.tagEdit = {input: input, object: object, prop: prop};
 	}
@@ -2996,14 +3038,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function createBackupText() {
 		// Create a plain text version of the settings.
 		var textarea = bbb.el.menu.backupTextarea;
-		textarea.value = "Better Better Booru v" + bbb.user.bbb_version + " Backup (" + timestamp("y-m-d hh:mm:ss") + "):\r\n\r\n" + JSON.stringify(bbb.user) + "\r\n";
+		textarea.value = "Better Better Booru v" + bbb.user.bbb_version + " Backup (" + timestamp() + "):\r\n\r\n" + JSON.stringify(bbb.user) + "\r\n";
 		textarea.focus();
 		textarea.setSelectionRange(0,0);
 	}
 
 	function createBackupPage() {
 		// Open a new tab/window and place the setting text in it.
-		window.open(('data:text/html,<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + timestamp("y-m-d hh:mm:ss") + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(bbb.user) + '</body></html>').replace(/#/g, encodeURIComponent("#")));
+		window.open(('data:text/html,<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + timestamp() + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(bbb.user) + '</body></html>').replace(/#/g, encodeURIComponent("#")));
 	}
 
 	function restoreBackupText() {
@@ -3907,7 +3949,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					deletedNotices[i].style.position = "absolute";
 					deletedNotices[i].style.zIndex = "2003";
 
-					if (deletedNotices[i].getElementsByTagName("li").length) {
+					if (deletedNotices[i].getElementsByTagName("li")[0]) {
 						deletedNotice = deletedNotices[i];
 						newStatusContent = newStatusContent.replace("Deleted", '<a href="#" id="bbb-deleted-link">Deleted</a>');
 					}
@@ -4189,13 +4231,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var posts = getPosts(target);
 		var i, il; // Loop variables.
 
-		if (!posts.length)
+		if (!posts[0])
 			return;
 
 		var searches = bbb.custom_tag.searches;
 
 		// Create and cache border search objects.
-		if (custom_tag_borders && !searches.length) {
+		if (custom_tag_borders && !searches[0]) {
 			for (i = 0, il = tag_borders.length; i < il; i++)
 				searches.push(createSearch(tag_borders[i].tags));
 		}
@@ -4345,7 +4387,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		var hiddenImgs = document.getElementsByClassName("bbb-hidden-thumb");
 
-		if (hiddenImgs.length) {
+		if (hiddenImgs[0]) {
 			if (!bbb.cache.save_enabled) {
 				window.addEventListener("beforeunload", updateThumbCache);
 				bbb.cache.save_enabled = true;
@@ -4422,7 +4464,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function updateThumbCache() {
 		// Add the current new thumbnail info to the saved thumbnail information.
-		if (!bbb.cache.current.history.length || !thumb_cache_limit)
+		if (!bbb.cache.current.history[0] || !thumb_cache_limit)
 			return;
 
 		loadThumbCache();
@@ -4602,20 +4644,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!modeSection)
 			return;
 
-		var thumbs = (target || document).getElementsByTagName("img");
+		var links = (target || document).getElementsByClassName("bbb-thumb-link");
 		var menuHandler = function(event) {
 			if (event.button === 0)
 				Danbooru.PostModeMenu.click(event);
 		};
 
-		for (var i = 0, il = thumbs.length; i < il; i++) {
-			var thumbLink = thumbs[i].parentNode;
-
-			if (!thumbLink || thumbLink.tagName !== "A")
-				return;
-
-			thumbLink.addEventListener("click", menuHandler, false);
-		}
+		for (var i = 0, il = links.length; i < il; i++)
+			links[i].addEventListener("click", menuHandler, false);
 	}
 
 	function potentialHiddenPosts(mode, target) {
@@ -4977,7 +5013,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Queue up a new page object.
 		var numNewPosts = posts.length;
 
-		if (numNewPosts > 0 || (!endless_fill && !badPaginator) || (endless_fill && !bbb.endless.pages.length && !lastPage)) { // Queue the page if: 1) There are thumbnails. 2) It's normal mode and not a "no results" page. 3) It's fill mode and there is no object to work with for future pages.
+		if (numNewPosts > 0 || (!endless_fill && !badPaginator) || (endless_fill && !bbb.endless.pages[0] && !lastPage)) { // Queue the page if: 1) There are thumbnails. 2) It's normal mode and not a "no results" page. 3) It's fill mode and there is no object to work with for future pages.
 			var newPageObject = {
 				page: newPage,
 				page_num: [pageNum],
@@ -4994,7 +5030,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bbb.endless.no_thumb_count++;
 
 		// Get rid of the load more button for special circumstances where the paginator isn't accurate.
-		if (lastPage && !bbb.endless.pages.length)
+		if (lastPage && !bbb.endless.pages[0])
 			bbb.el.endlessLoadButton.style.display = "none";
 
 		// Warn the user if this is a listing full of hidden posts.
@@ -5113,7 +5149,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function endlessPause() {
 		// Pause endless pages so that it can't add any more pages.
-		if (bbb.endless.paused || (endlessLastPage() && !bbb.endless.pages.length))
+		if (bbb.endless.paused || (endlessLastPage() && !bbb.endless.pages[0]))
 			return;
 
 		bbb.endless.paused = true;
@@ -5136,12 +5172,25 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var blacklistTags = accountSettingCheck("script_blacklisted_tags");
 		var blacklistBox = document.getElementById("blacklist-box");
 		var blacklistList = document.getElementById("blacklist-list");
+		var enableLink = document.getElementById("re-enable-all-blacklists");
+		var disableLink = document.getElementById("disable-all-blacklists");
 		var blacklistedPosts = document.getElementsByClassName("blacklisted");
+		var i, il; // Loop variables.
 
 		// Reset sidebar blacklist.
 		if (blacklistBox && blacklistList) {
 			blacklistBox.style.display = "none";
-			blacklistList.innerHTML = "";
+
+			var childIndex = 0;
+
+			while (blacklistList.children[childIndex]) {
+				var child = blacklistList.children[childIndex];
+
+				if (child.getElementsByTagName("a")[0] && child !== enableLink && child !== disableLink)
+					blacklistList.removeChild(child);
+				else
+					childIndex++;
+			}
 		}
 		else if (blacklist_add_bars) {
 			var target;
@@ -5172,7 +5221,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Reset any blacklist info.
-		if (bbb.blacklist.entries.length) {
+		if (bbb.blacklist.entries[0]) {
 			delete bbb.blacklist;
 			bbb.blacklist = {entries: [], match_list: {}, smart_view_target: undefined};
 		}
@@ -5185,32 +5234,44 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!blacklistTags || !/[^\s,]/.test(blacklistTags))
 			return;
 
-		var blacklistDisabled = (getCookie()["disable-all-blacklists"] === "1" && blacklistBox);
-		blacklistTags = blacklistTags.split(",");
+		// Preserve commas within nested/grouped tags.
+		var groupsObject = replaceSearchGroups(blacklistTags);
+		var groups = groupsObject.groups;
+
+		blacklistTags = groupsObject.search.replace(/,/g, "%,%");
+		blacklistTags = restoreSearchGroups(blacklistTags, groups);
+		blacklistTags = blacklistTags.split("%,%");
 
 		// Create the blacklist section.
-		for (var i = 0, il = blacklistTags.length; i < il; i++) {
+		var cookies = getCookie();
+		var blacklistDisabled = (cookies["disable-all-blacklists"] === "1" && blacklistBox);
+
+		for (i = 0, il = blacklistTags.length; i < il; i++) {
 			var blacklistTag = blacklistTags[i].bbbSpaceClean();
 			var blacklistSearch = createSearch(blacklistTag);
 
-			if (blacklistSearch.length) {
-				var newEntry = {active: !blacklistDisabled, tags:blacklistTag, search:blacklistSearch, matches: [], index: i};
+			if (blacklistSearch[0]) {
+				var entryHash = blacklistTag.bbbHash();
+				var entryDisabled = (blacklistDisabled || (cookies["bl:" + entryHash] === "1") ? true : false);
+				var newEntry = {active: !entryDisabled, tags:blacklistTag, search:blacklistSearch, matches: [], index: i, hash: entryHash};
 
 				bbb.blacklist.entries.push(newEntry);
 
 				if (blacklistList) {
 					var blacklistItem = document.createElement("li");
 					blacklistItem.title = blacklistTag;
+					blacklistItem.className = "bbb-blacklist-item-" + i;
 					blacklistItem.style.display = "none";
 
 					var blacklistLink = document.createElement("a");
 					blacklistLink.innerHTML = (blacklistTag.length < 19 ? blacklistTag + " " : blacklistTag.substring(0, 18).bbbSpaceClean() + "... ");
-					blacklistLink.className = "bbb-blacklist-entry-" + i + (blacklistDisabled ? " blacklisted-active" : "");
+					blacklistLink.className = "bbb-blacklist-entry-" + i + (entryDisabled ? " blacklisted-active" : "");
 					blacklistLink.setAttribute("data-bbb-blacklist-entry", i);
 					blacklistLink.addEventListener("click", blacklistEntryLinkToggle, false);
 					blacklistItem.appendChild(blacklistLink);
 
 					var blacklistCount = document.createElement("span");
+					blacklistCount.className = "count";
 					blacklistCount.innerHTML = "0";
 					blacklistItem.appendChild(blacklistCount);
 
@@ -5220,9 +5281,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Replace the disable/enable all blacklist links with our own.
-		var enableLink = document.getElementById("re-enable-all-blacklists");
-		var disableLink = document.getElementById("disable-all-blacklists");
-
 		if (enableLink && disableLink) {
 			var newEnableLink = bbb.el.blacklistEnableLink = enableLink.cloneNode(true);
 			var newDisableLink = bbb.el.blacklistDisableLink = disableLink.cloneNode(true);
@@ -5302,7 +5360,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var entry = bbb.blacklist.entries[entryIndex];
 		var matches = entry.matches;
 		var links = document.getElementsByClassName("bbb-blacklist-entry-" + entryIndex);
-		var post;
 		var id;
 		var els;
 		var matchList;
@@ -5310,6 +5367,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (entry.active) {
 			entry.active = false;
+
+			createCookie("bl:" + entry.hash, 1);
 
 			for (i = 0, il = links.length; i < il; i++)
 				links[i].bbbAddClass("blacklisted-active");
@@ -5334,6 +5393,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else {
 			entry.active = true;
+
+			createCookie("bl:" + entry.hash, 0, -1);
 
 			for (i = 0, il = links.length; i < il; i++)
 				links[i].bbbRemoveClass("blacklisted-active");
@@ -5360,7 +5421,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function blacklistUpdate(target) {
 		// Update the blacklists without resetting everything.
-		if (!bbb.blacklist.entries.length)
+		if (!bbb.blacklist.entries[0])
 			return;
 
 		// Retrieve the necessary elements from the target element or current document.
@@ -5387,12 +5448,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (blacklistBox && blacklistList) {
 			for (i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
 				var entryLength = bbb.blacklist.entries[i].matches.length;
-				var item = blacklistList.getElementsByTagName("li")[i];
+				var item = blacklistList.getElementsByClassName("bbb-blacklist-item-" + i)[0];
 
 				if (entryLength) {
 					blacklistBox.style.display = "block";
 					item.style.display = "";
-					item.getElementsByTagName("span")[0].innerHTML = entryLength;
+					item.getElementsByClassName("count")[0].innerHTML = entryLength;
 				}
 			}
 		}
@@ -5941,33 +6002,41 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function thumbSearchMatch(post, searchArray) {
 		// Take search objects and test them against a thumbnail's info.
-		if (!searchArray.length)
+		if (!searchArray[0])
 			return false;
 
-		var tags = post.getAttribute("data-tags");
-		var flags = post.getAttribute("data-flags") || "active";
-		var rating = " rating:" + post.getAttribute("data-rating");
-		var status = " status:" + (flags === "flagged" ? flags + " active" : flags).replace(/\s/g, " status:");
-		var user = " user:" + post.getAttribute("data-uploader").replace(/\s/g, "_").toLowerCase();
-		var pools = " " + post.getAttribute("data-pools");
-		var score = post.getAttribute("data-score");
-		var favcount = post.getAttribute("data-fav-count");
-		var id = post.getAttribute("data-id");
-		var width = post.getAttribute("data-width");
-		var height = post.getAttribute("data-height");
-		var parentId = post.getAttribute("data-parent-id");
-		var parent = (parentId ? " parent:" + parentId : "");
-		var hasChildren = post.getAttribute("data-has-children");
-		var child = (hasChildren === "true" ? " child:true" : "");
-		var postInfo = {
-			tags: tags.bbbSpacePad(),
-			metatags:(rating + status + user + pools + parent + child).bbbSpacePad(),
-			score: Number(score),
-			favcount: Number(favcount),
-			id: Number(id),
-			width: Number(width),
-			height: Number(height)
-		};
+		var postInfo;
+
+		if (post instanceof Element) {
+			var tags = post.getAttribute("data-tags");
+			var flags = post.getAttribute("data-flags") || "active";
+			var rating = " rating:" + post.getAttribute("data-rating");
+			var status = " status:" + (flags === "flagged" ? flags + " active" : flags).replace(/\s/g, " status:");
+			var user = " user:" + post.getAttribute("data-uploader").replace(/\s/g, "_").toLowerCase();
+			var pools = " " + post.getAttribute("data-pools");
+			var score = post.getAttribute("data-score");
+			var favcount = post.getAttribute("data-fav-count");
+			var id = post.getAttribute("data-id");
+			var width = post.getAttribute("data-width");
+			var height = post.getAttribute("data-height");
+			var parentId = post.getAttribute("data-parent-id");
+			var parent = (parentId ? " parent:" + parentId : "");
+			var hasChildren = post.getAttribute("data-has-children");
+			var child = (hasChildren === "true" ? " child:true" : "");
+
+			postInfo = {
+				tags: tags.bbbSpacePad(),
+				metatags:(rating + status + user + pools + parent + child).bbbSpacePad(),
+				score: Number(score),
+				favcount: Number(favcount),
+				id: Number(id),
+				width: Number(width),
+				height: Number(height)
+			};
+		}
+		else
+			postInfo = post;
+
 		var anyResult;
 		var allResult;
 		var searchTerm = "";
@@ -6068,21 +6137,25 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return tag.test(targetTags);
 		}
 		else if (typeof(tag) === "object") { // Check numeric metatags.
-			var tagsMetaValue = postInfo[tag.tagName];
-
-			if (tag.equals !== undefined) {
-				if (tagsMetaValue !== tag.equals)
-					return false;
-			}
+			if (tag instanceof Array)
+				return thumbSearchMatch(postInfo, tag);
 			else {
-				if (tag.greater !== undefined && tagsMetaValue <= tag.greater)
-					return false;
+				var tagsMetaValue = postInfo[tag.tagName];
 
-				if (tag.less !== undefined && tagsMetaValue >= tag.less)
-					return false;
+				if (tag.equals !== undefined) {
+					if (tagsMetaValue !== tag.equals)
+						return false;
+				}
+				else {
+					if (tag.greater !== undefined && tagsMetaValue <= tag.greater)
+						return false;
+
+					if (tag.less !== undefined && tagsMetaValue >= tag.less)
+						return false;
+				}
+
+				return true;
 			}
-
-			return true;
 		}
 	}
 
@@ -6091,7 +6164,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!/[^\s,]/.test(search))
 			return [];
 
-		var searchStrings = search.toLowerCase().replace(/\b(rating:[qes])\w+/g, "$1").split(",");
+		var groupsObject = replaceSearchGroups(search);
+		var groups = groupsObject.groups;
+		var searchStrings = groupsObject.search.toLowerCase().replace(/\b(rating:[qes])\w+/g, "$1").split(",");
 		var searches = [];
 
 		// Sort through each matching rule.
@@ -6122,7 +6197,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					searchTerm = searchTerm.slice(1);
 				}
 
-				if (searchTerm.length < 1) // Stop if there is no actual tag.
+				if (!searchTerm.length) // Stop if there is no actual tag.
 					continue;
 
 				mode = searchObject[primaryMode][secondaryMode];
@@ -6203,6 +6278,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 				else if (searchTerm.indexOf("*") > -1) // Prepare wildcard tags as regular expressions.
 					mode.push(new RegExp(escapeRegEx(searchTerm).replace(/\*/g, "\S*").bbbSpacePad())); // Don't use "\\S*" here since escapeRegEx replaces * with \*. That escape carries over to the next replacement and makes us end up with "\\S*".
+				else if (/%\d+%/.test(searchTerm)) {
+					var groupIndex = Number(searchTerm.match(/\d+/)[0]);
+
+					mode.push(createSearch(groups[groupIndex]));
+				}
 				else if (typeof(searchTerm) === "string") { // Add regular tags.
 					if (isMetatag(searchTerm)) {
 						var tagObject = searchTerm.split(/:(.+)/);
@@ -6223,6 +6303,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						}
 						else if (tagValue === "active" && tagName === "pool")
 							mode.push(new RegExp((tagName + ":(collection|series)").bbbSpacePad()));
+						else if (tagValue === "inactive" && tagName === "pool") {
+							secondaryMode = (secondaryMode === "includes" ? "excludes" : "includes"); // Flip the include/exclude mode.
+							mode = searchObject[primaryMode][secondaryMode];
+
+							mode.push(new RegExp((tagName + ":(collection|series)").bbbSpacePad()));
+						}
 						else // Allow all other values through (ex: parent:# & pool:series).
 							mode.push(searchTerm.bbbSpacePad());
 					}
@@ -6239,6 +6325,108 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		return searches;
+	}
+
+	function replaceSearchGroups(search) {
+		// Collect all the nested/grouped tags in a search and replace them with placeholders.
+		if (search.indexOf("%") < 0)
+			return {search: search, groups: []};
+
+		var searchString = search;
+		var parens = searchString.match(/\(%|%\)/g);
+
+		// Remove unpaired opening parentheses near the end of the search.
+		while (parens[parens.length - 1] === "(%") {
+			searchString = searchString.replace(/^(.*\s)?[~-]*\(%/, "$1");
+			parens.pop();
+		}
+
+		// Take the remaining parentheses and figure out how to pair them up.
+		var startCount = 0;
+		var endCount = 0;
+		var groupStartIndex = 0;
+		var groups = [];
+
+		for (var i = 0, il = parens.length; i < il; i++) {
+			var paren = parens[i];
+			var nextParen = parens[i + 1];
+
+			if (paren === "(%")
+				startCount++;
+			else
+				endCount++;
+
+			if (endCount > startCount) { // Remove unpaired closing parentheses near the start of the string.
+				searchString = searchString.replace(/^(.*?)%\)/, "$1");
+				endCount = 0;
+				groupStartIndex++;
+			}
+			else if (startCount === endCount || (!nextParen && endCount > 0 && startCount > endCount)) { // Replace evenly paired parentheses with a placeholder.
+				var groupRegex = new RegExp(parens.slice(groupStartIndex, i + 1).join(".*?").replace(/[\(\)]/g, "\\$&"));
+				var groupMatch = searchString.match(groupRegex)[0];
+
+				searchString = searchString.replace(groupMatch, "%" + groups.length + "%");
+				startCount = 0;
+				endCount = 0;
+				groupStartIndex = i + 1;
+				groups.push(groupMatch.substring(2, groupMatch.length - 2));
+			}
+			else if (!nextParen && startCount > 0 && endCount === 0 ) // Remove leftover unpaired opening parentheses.
+				searchString = searchString.replace(/^(.*\s)?[~-]*\(%/, "$1");
+		}
+
+		return {search: searchString, groups: groups};
+	}
+
+	function restoreSearchGroups(search, groups) {
+		// Replace all group placeholders with their corresponding group.
+		var restoredSearch = search;
+
+		for (var i = 0, il = groups.length; i < il; i++) {
+			var groupPlaceholder = new RegExp("%" + i + "%");
+
+			restoredSearch = restoredSearch.replace(groupPlaceholder, "(%" + groups[i] + "%)");
+		}
+
+		return restoredSearch;
+	}
+
+	function cleanSearchGroups(string) {
+		// Take a search string and clean up extra spaces, commas, and any parentheses that are missing their opening/closing parenthesis.
+		var groupObject = replaceSearchGroups(string);
+		var groups = groupObject.groups;
+		var searchString = groupObject.search;
+
+		for (var i = 0, il = groups.length; i < il; i++)
+			groups[i] = cleanSearchGroups(groups[i]);
+
+		searchString = restoreSearchGroups(searchString, groups).bbbTagClean();
+
+		return searchString;
+	}
+
+	function searchSingleToMulti(string) {
+		// Take a single line search and format it into multiple lines for a textarea.
+		var groupsObject = replaceSearchGroups(cleanSearchGroups(string));
+		var searchString = groupsObject.search;
+		var groups = groupsObject.groups;
+		var searchText = searchString.replace(/,\s*/g, "\r\n\r\n");
+
+		searchText = restoreSearchGroups(searchText, groups);
+
+		return searchText;
+	}
+
+	function searchMultiToSingle(multi) {
+		// Take a multiple line search from a textarea and format it into a single line.
+		var searchStrings = multi.split(/[\r\n]+/g);
+
+		for (var i = 0, il = searchStrings.length; i < il; i++)
+			searchStrings[i] = cleanSearchGroups(searchStrings[i]);
+
+		var searchString = searchStrings.join(", ");
+
+		return searchString;
 	}
 
 	function trackNew() {
@@ -6724,7 +6912,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'.bbb-quick-search-pinned #bbb-quick-search-pin, .bbb-quick-search-active.bbb-quick-search-pinned #bbb-quick-search-status {background-position: -145px -145px;}' + // Vertical pin.
 			'#bbb-quick-search.bbb-quick-search-active {background-color: #DDDDDD;}' +
 			'#bbb-quick-search.bbb-quick-search-active.bbb-quick-search-show {background-color: #FFFFFF;}' +
-			'#bbb-quick-search-pin:focus, #bbb-quick-search-pin:hover {background-color: #CCCCCC;}';
+			'#bbb-quick-search-pin:focus, #bbb-quick-search-pin:hover {background-color: #CCCCCC;}' +
+			'#news-updates {padding-right: 25px !important;}';
 
 			if (quick_search.indexOf("remove") > -1)
 				styles += 'article.post-preview.bbb-quick-search-filtered, article.post.post-preview.blacklisted.bbb-quick-search-filtered, article.post-preview.blacklisted.blacklisted-active.bbb-quick-search-filtered {display: none !important;}';
@@ -6881,7 +7070,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Create the quick search.
 		var searchDiv = bbb.el.quickSearchDiv = document.createElement("div");
 		searchDiv.id = "bbb-quick-search";
-		searchDiv.innerHTML = '<input id="bbb-quick-search-status" type="button" value=""><form id="bbb-quick-search-form"><input id="bbb-quick-search-input" size="50" placeholder="Tags" autocomplete="' + (allowAutocomplete ? "off" : "on") + '" type="text"> <input id="bbb-quick-search-pin" type="button" value=""> <input id="bbb-quick-search-submit" type="submit" value="Go"></form>';
+		searchDiv.innerHTML = '<input id="bbb-quick-search-status" type="button" value=""><form id="bbb-quick-search-form"><input id="bbb-quick-search-input" size="75" placeholder="Tags" autocomplete="' + (allowAutocomplete ? "off" : "on") + '" type="text"> <input id="bbb-quick-search-pin" type="button" value=""> <input id="bbb-quick-search-submit" type="submit" value="Go"></form>';
 
 		var searchForm = bbb.el.quickSearchForm = getId("bbb-quick-search-form", searchDiv);
 		var searchInput = bbb.el.quickSearchInput = getId("bbb-quick-search-input", searchDiv);
@@ -6927,7 +7116,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}, true);
 
 		// If a mouse click misses an input within the quick search div, cancel it so the quick search doesn't minimize.
-		searchDiv.addEventListener("mousedown", disableEvent, false);
+		searchDiv.addEventListener("mousedown", function(event) {
+			var target = event.target;
+
+			if (target === searchDiv || target === searchForm)
+				event.preventDefault();
+		}, false);
 
 		// Hide the search div if the escape key is pressed while using it and autocomplete isn't open.
 		searchDiv.addEventListener("keydown", function(event) {
@@ -7155,7 +7349,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var comment = comments[i];
 
 			// Skip if the comment is already scored.
-			if (comment.getElementsByClassName("bbb-comment-score").length)
+			if (comment.getElementsByClassName("bbb-comment-score")[0])
 				continue;
 
 			var score = comment.getAttribute("data-score");
@@ -7202,14 +7396,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Add score, favorite count, and rating info to thumbnails.
 		var posts = getPosts(target);
 
-		if (thumb_info === "disabled" || !posts.length)
+		if (thumb_info === "disabled" || !posts[0])
 			return;
 
 		for (var i = 0, il = posts.length; i < il; i++) {
 			var post = posts[i];
 
 			// Skip thumbnails that already have the info added.
-			if (post.getElementsByClassName("bbb-thumb-info").length)
+			if (post.getElementsByClassName("bbb-thumb-info")[0])
 				continue;
 
 			var score = Number(post.getAttribute("data-score"));
@@ -7277,11 +7471,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				return;
 
 			var target = event.target;
+			var targetTag = target.tagName;
 			var url;
 
-			if (target.tagName === "IMG" && target.parentNode)
+			if (targetTag === "IMG" && target.parentNode)
 				url = target.parentNode.href;
-			else if (target.tagName === "A" && target.bbbHasClass("bbb-post-link", "bbb-thumb-link"))
+			else if (targetTag === "A" && target.bbbHasClass("bbb-post-link", "bbb-thumb-link"))
 				url = target.href;
 
 			if (url && /\/posts\/\d+/.test(url)) {
@@ -8094,7 +8289,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return true;
 
 		// If any one "any" tag isn't censored, not all posts will be bad.
-		var anyMatch = !!anyTags.length;
+		var anyMatch = !!anyTags[0];
 
 		for (i = 0, il = anyTags.length; i < il; i++) {
 			tag = anyTags[i];
@@ -8519,26 +8714,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return newUrl;
 	}
 
-	function bbbPadDate(number) {
-		// Adds a leading "0" to single digit date/time values.
-		var numString = String(number);
-
-		if (numString.length === 1)
-			numString = "0" + numString;
-
-		return numString;
-	}
-
 	function timestamp(format) {
 		// Returns a simple timestamp based on the format string provided. String placeholders: y = year, m = month, d = day, hh = hours, mm = minutes, ss = seconds
+		var stamp = format || "y-m-d hh:mm:ss";
 		var time = new Date();
 		var year = time.getFullYear();
-		var month = bbbPadDate(time.getMonth() + 1);
-		var day = bbbPadDate(time.getDate());
-		var hours = bbbPadDate(time.getHours());
-		var minutes = bbbPadDate(time.getMinutes());
-		var seconds = bbbPadDate(time.getSeconds());
-		var stamp = format.replace("hh", hours).replace("mm", minutes).replace("ss", seconds).replace("y", year).replace("m", month).replace("d", day);
+		var month = time.getMonth() + 1;
+		var day = time.getDate();
+		var hours = time.getHours();
+		var minutes = time.getMinutes();
+		var seconds = time.getSeconds();
+
+		stamp = stamp.replace("hh", hours).replace("mm", minutes).replace("ss", seconds).replace("y", year).replace("m", month).replace("d", day).replace(/(^|\D)(\d)($|\D)/g, "$10$2$3");
 
 		return stamp;
 	}
