@@ -7,11 +7,10 @@ Links
 -----
 * [Homepage](https://github.com/pseudonymous/better-better-booru)
 * [Greasy Fork](https://greasyfork.org/scripts/3575-better-better-booru)
-* [Installation](#installation)
 * [Changelog](https://github.com/pseudonymous/better-better-booru/blob/master/changelog.md)
  
 ---
-Features<a name="features"></a>
+Features
 --------
 * Allows the viewing of hidden/censored tags and automatic control of the number of thumbnails per a page with a basic account or no account.
 * Improved image resizing that works on flash and webm content and also allows resizing by width, height, or both.
@@ -41,7 +40,7 @@ Features<a name="features"></a>
 * Various options for customizing the majority of notices by either altering or hiding them.
  
 ---
-Installation<a name="installation"></a>
+Installation
 ---------------
 1. Installing a userscript manager is strongly recommended and sometimes required. Suggestions:
  * [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) (Firefox)
