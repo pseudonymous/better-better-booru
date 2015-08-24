@@ -20,7 +20,7 @@ Features
  * Thumbnail controls - Allow control over the blacklist from a blacklisted thumbnail and allow for individual control of each blacklisted thumbnail.
  * Smart view - When viewing a blacklisted post, automatically display it if its thumbnail was already unhidden.
  * Additional bars - Add blacklist bars to the comments, notes, and/or pool gallery listing so that the blacklist entries can be disabled and enabled as desired.
- * Added support for wildcards (*), the "or/any" operator (~), and additional metatags (ex: score:&lt;0, etc.).
+ * Added support for wildcards (*), the "or/any" operator (~), nesting/grouping, and additional metatags (ex: score:&lt;0, etc.).
 * Multiple options and features for altering post viewing:
  * Alternate image swap - Swap between the sample and original image by clicking the image.
  * Resize image mode - Set the initial automatic resizing of an image to be by width, height, or both.
