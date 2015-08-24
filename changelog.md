@@ -1,5 +1,66 @@
 Changelog
 ----------
+* Version ?:
+ * Added a "move save search" layout option for moving the "save this search" button to the sidebar's related section.
+ * Added a "page counter" option for including a page counter and "go to page" input near the top of listing pages.
+ * Added a "disable embedded notes" option for forcing notes to display with the original style.
+ * Added a "quick search" option for sieving through thumbnails.
+ * Added a "collapsible sidebar" layout option for minimizing sidebar sections.
+ * Added a "thumbnail info" option for displaying the score, favorite count, and rating for a post with its thumbnail.
+ * Added a "comment score" option for displaying scores on comments.
+ * Added a "new tab/window" option for forcing post links in thumbnail listings to open in a new window/tab.
+ * Added a "fixed sidebar" layout option for fixing the sidebar to the side of the window viewport.
+ * Added a "fixed paginator" layout option for fixing the paginator to the bottom of the window viewport.
+ * Added a "search tag scrollbar" layout option for the tag section in searches.
+ * Added an "image swap mode" option for setting how images are changed between the original and sample versions.
+ * Added "endless pages" support for various thumbnail listings along with multiple tweaking options.
+ * Added a layout tab and moved the notice and sidebar options to it.
+ * Added a blacklist tab with several new customization options and moved the blacklist to it.
+ * Added some hotkeys and a hotkey section to the help tab.
+ * Added thumbnail matching rule support for the "parent" and "child" metatags and expanded support for the "pool" metatag.
+ * Added thumbnail matching rule support for tag grouping/nesting.
+ * Updated the "auto-scroll" option with a new option for only scrolling past the header and made it not scroll on return visits to pages that are already scrolled.
+ * Updated the "search add" option to make it resemble Danbooru's links and provide options for removing the links or adding a link for modifying the search box.
+ * Updated the resize post links with a new minimal preferences option that places all the resize links on one line.
+ * Updated to support fixing the direct post links (size, download) on hidden posts.
+ * Updated to support showing hidden thumbnails in the comment search and on individually linked comments.
+ * Updated for better Safebooru compatibility.
+ * Updated to support favorite groups.
+ * Updated to support the popular view section (Currently disabled since view counts were removed).
+ * Updated to support the Danbooru mode menu.
+ * Updated to always display animated GIFs and PNGs with their full/original versions and not use sample images.
+ * Updated to support Danbooru's API and blacklist changes.
+ * Replaced the "override account" option with separate options for overriding Danbooru's resize, sample, and blacklist settings.
+ * Fixed the pausing of video content when dragging it with the "drag scroll" option.
+ * Fixed a problem where previous page content would end up displaying on the current page.
+ * Fixed an overflow issue with the sidebar layout options.
+ * Fixed the insertion of links for the options menu and new post tracking by making it more accurate.
+ * Fixed a problem with revealing hidden thumbnails on posts with parent and child notices.
+ * Script reorganization and overhaul.
+* Version 6.5.4:
+ * Updated to support the hotkey for swapping between the original and sample on "ugoira" posts.
+ * Fixed the auto-scroll, blacklist, and parent/child notice's hidden thumbnail support on flash posts.
+ * Fixed the "view sample" link on "ugoira" posts for users viewing the original by default.
+ * Fixed the ignoring of a logged in user's account setting for viewing the sample or original by default on "ugoira" posts.
+ * Fixed a blacklist error for logged in users with blank blacklists.
+* Version 6.5.3:
+ * Fixed the blacklist section so that it properly updates for hidden images.
+* Version 6.5.2:
+ * Fixed a conflict between the "alternate image swap" option and translation mode.
+* Version 6.5.1:
+ * Fixed the "alternate image swap" option.
+* Version 6.5:
+ * Added support for the favorites listing.
+ * Updated to support Danbooru's ugoira changes with added support for note viewing on the sample webm versions and an additional "view sample" link for switching from the original ugoira versions.
+ * Fixed a potential problem with thumbnails where the "tags" query value would end up set as "undefined".
+ * Fixed the random post hotkey for logged out users.
+ * Fixed an issue with wildcards and metatags for thumbnail matching rules.
+ * Fixed the detection of the notes search as a notes listing.
+ * Fixed post resizing for hidden blacklisted posts.
+* Version 6.4:
+ * Updated to support "ugoira" animation posts in their native format.
+* Version 6.3.2:
+ * Updated to support "ugoira" animation posts with a temporary workaround.
 * Version 6.3.1:
  * Updated to support showing banned posts in the comments section.
 * Version 6.3:
