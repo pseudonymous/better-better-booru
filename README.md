@@ -21,7 +21,7 @@ Features
  * Smart view - When viewing a blacklisted post, automatically display it if its thumbnail was already unhidden.
  * Additional bars - Add blacklist bars to the comments, notes, and/or pool gallery listing so that the blacklist entries can be disabled and enabled as desired.
  * Added support for wildcards (*), the "or/any" operator (~), and additional metatags (ex: score:&lt;0, etc.).
-* Multiple options for altering post viewing:
+* Multiple options and features for altering post viewing:
  * Alternate image swap - Swap between the sample and original image by clicking the image.
  * Resize image mode - Set the initial automatic resizing of an image to be by width, height, or both.
  * Image drag scrolling - Use click and drag on post content to reposition it.
@@ -49,7 +49,7 @@ Features
  * Page counter - Add an indicator near the top of listings that displays the page number information and allows for easy jumping to specific pages.
  * Comment scores - Make the score rating for comments visible.
  * Quick search - Filter the current thumbnails for specific posts that match your search.
-* Improved accessibility for logged out users via several features and options:
+* Improved accessibility for logged out users via several options and features:
  * Options menu - Adds back the missing sidebar section with all the options accessible to logged out users.
  * Control over the blacklist, post sample setting, and post resizing setting.
 
