@@ -50,8 +50,8 @@ Features
  * Comment scores - Make the score rating for comments visible.
  * Quick search - Filter the current thumbnails for specific posts that match your search.
 * Improved accessibility for logged out users via several options and features:
- * Options menu - Adds back the missing sidebar section with all the options accessible to logged out users.
  * Control over the blacklist, post sample setting, and post resizing setting.
+ * Adds back the missing sidebar options section with all the options accessible to logged out users.
 
  
 ---
