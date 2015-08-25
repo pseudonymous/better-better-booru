@@ -216,10 +216,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
-			blacklist_add_bars: newOption("dropdown", "none", "Additional Bars", "Add blacklist bars to the pool gallery, comments, and/or notes listings so that blacklist entries can be toggled as needed.", {txtOptions:["Disabled:none", "Comments:comments", "Notes:notes", "Pool Gallery:pool_gallery", "Comments & Notes:comments notes", "Comments & Pool Gallery:comments pool_gallery", "Notes & Pool Gallery:notes pool_gallery", "All:comments notes pool_gallery"]}),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
-			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted post thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"x\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
-			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> The default Danbooru behavior where the posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"Blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
+			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"x\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
+			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> The default Danbooru behavior where the posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
 			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <tipdesc>Highlight:</tipdesc> Change the background color of blacklisted thumbnails. <tipdesc>Icon Overlay:</tipdesc> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
 			border_spacing: newOption("dropdown", 0, "Border Spacing", "Set the amount of blank space between a border and thumbnail and between a custom tag border and status border. <tiphead>Note</tiphead>Even when set to 0, status borders and custom tag borders will always have a minimum value of 1 between them. <tiphead>Tip</tiphead>Use this option if you often have trouble distinguishing a border from the thumbnail image.", {txtOptions:["0 (Default):0", "1:1", "2:2", "3:3"]}),
@@ -233,7 +232,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, popular, and favorite group listings."),
 			disable_embedded_notes: newOption("checkbox", false, "Disable Embedded Notes", "Force posts with embedded notes to display with the original note styling. <tiphead>Notes</tiphead>While notes will display with the original styling, the actual post settings will still have embedded notes set to enabled. <br><br>Due to the actual settings, users that may wish to edit notes will have to edit the notes with the embedded note styling so that nothing ends up breaking in unexpected ways. When toggling translation mode or opening the edit note dialog box, the notes will automatically revert back to the original embedded notes until the page is reloaded. <br><br>Note resizing and moving will be allowed without the reversion to embedded notes since this ability is sometimes necessary for badly positioned notes. Any note resizing or moving done as a part of intended note editing should be done <b>after</b> triggering the embedded note reversion since any changes before it will be lost."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
-			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, notes, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"Load More\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
+			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, notes, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"load more\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
 			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and add them to the new page until the desired number of thumbnails is reached. <tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
 			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
 			endless_preload: newOption("checkbox", false, "Preload Next Page", "Start loading the next page as soon as possible.<tiphead>Note</tiphead>A preloaded page will not be appended until the scroll limit is reached."),
@@ -258,8 +257,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			move_save_search: newOption("checkbox", false, "Move Save Search", "Move the \"save this search\" button into the related section in the sidebar."),
 			override_blacklist: newOption("dropdown", "logged_out", "Override Blacklist", "Allow the \"blacklist\" setting to override the default blacklist for logged out users and/or account blacklist for logged in users. <tipdesc>Logged out:</tipdesc> Override the default blacklist for logged out users. <tipdesc>Always:</tipdesc> Override the default blacklist for logged out users and account blacklist for logged in users.", {txtOptions:["Disabled:disabled", "Logged out:logged_out", "Always:always"]}),
-			override_resize: newOption("checkbox", false, "Override Resize Setting", "Allow the \"resize post\" setting to override the account \"fit images to window\" settings when logged in."),
-			override_sample: newOption("checkbox", false, "Override Sample Setting", "Allow the \"load sample first\" setting to override the account \"default image width\" settings when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
+			override_resize: newOption("checkbox", false, "Override Resize Setting", "Allow the \"resize post\" setting to override the account \"fit images to window\" setting when logged in."),
+			override_sample: newOption("checkbox", false, "Override Sample Setting", "Allow the \"load sample first\" setting to override the account \"default image width\" setting when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
 			page_counter: newOption("checkbox", false, "Page Counter", "Add a page counter and \"go to page #\" input field near the top of listing pages. <tiphead>Note</tiphead>The total number of pages will not be displayed if the pages are using the \"previous & next\" paging system or the total number of pages exceeds the maximum amount allowed by your user account level."),
 			post_drag_scroll: newOption("checkbox", false, "Post Drag Scrolling", "While holding down left click on a post's content, mouse movement can be used to scroll the whole page and reposition the content.<tiphead>Note</tiphead>This option is automatically disabled when translation mode is active."),
 			post_link_new_window: newOption("dropdown", "none", "New Tab/Window", "Force post links in the search, pool, popular, favorites, notes, and favorite group listings to open in a new tab/window during normal and/or endless page browsing. <tiphead>Notes</tiphead>When this option is active, holding down the control and shift keys while clicking a post link will open the post in the current tab/window.<br><br>Whether the post opens in a new tab or a new window depends upon your browser configuration. <tiphead>Tip</tiphead>This option can be useful as a safeguard to keep accidental left clicks from disrupting endless page browsing.", {txtOptions:["Disabled:disabled", "Endless:endless", "Normal:normal", "Always:endless normal"]}),
@@ -269,7 +268,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			post_tag_titles: newOption("checkbox", false, "Post Tag Titles", "Change the page titles for posts to a full list of the post tags."),
 			quick_search: newOption("dropdown", "disabled", "Quick Search", "Add a new search box to the upper right corner of the window viewport that allows searching through the current thumbnails for specific posts. <tipdesc>Fade:</tipdesc> Fade all posts that don't match in the thumbnail listing. <tipdesc>Remove:</tipdesc> Remove all posts that don't match from the thumbnail listing. <tiphead>Directions</tiphead>Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating searches. <br><br>The search starts minimized in the upper right corner. Left clicking the main icon will open and close the search. Right clicking the main icon will completely reset the search. Holding down shift while left clicking the main icon will toggle an active search's pinned status. <br><br>While open, the search can be entered/updated in the search box and the pinned status can be toggled by clicking the pushpin icon. If no changes are made to an active search, submitting it a second time will reset the quick search. <tiphead>Notes</tiphead>Options labeled with \"pinned\" will make searches default to being pinned. <br><br>A pinned search will persist across other pages in the same browsing session for that tab until it ends or the search is unpinned. <br><br>When not set to disabled, the quick search can be opened by using the \"F\" hotkey. Additionally, an active search can be reset by using \"Shift + F\". Pressing \"escape\" while the quick search is open will close it.", {txtOptions:["Disabled:disabled", "Fade:fade", "Fade (Pinned):fade pinned", "Remove:remove", "Remove (Pinned):remove pinned"]}),
 			remove_tag_headers: newOption("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
-			resize_link_style: newOption("dropdown", "full", "Resize Link Style", "Set how the resize links in the post sidebar options section will display. <tipdesc>Full:</tipdesc> Show the resize to window, width, and height links on separate lines. <tipdesc>Minimal:</tipdesc> Show the resize to window (W&H), width (W), and height (H) links on one line.", {txtOptions:["Full:full", "Minimal:minimal"]}),
+			resize_link_style: newOption("dropdown", "full", "Resize Link Style", "Set how the resize links in the post sidebar options section will display. <tipdesc>Full:</tipdesc> Show the \"resize to window\", \"resize to window width\", and \"resize to window height\" links on separate lines. <tipdesc>Minimal:</tipdesc> Show the \"resize to window\" (W&H), \"resize to window width\" (W), and \"resize to window height\" (H) links on one line.", {txtOptions:["Full:full", "Minimal:minimal"]}),
 			script_blacklisted_tags: "",
 			search_add: newOption("dropdown", "disabled", "Search Add", "Modify the sidebar tag list by adding, removing, or replacing links in the sidebar tag list that modify the current search's tags. <tipdesc>Remove:</tipdesc> Remove any preexisting \"+\" and \"&ndash;\" links. <tipdesc>Link:</tipdesc> Add \"+\" and \"&ndash;\" links to modified versions of the current search that include or exclude their respective tags. <tipdesc>Toggle:</tipdesc> Add toggle links that modify the search box with their respective tags. Clicking a toggle link will switch between a tag being included (+), excluded (&ndash;), potentially included among other tags (~), and removed (&raquo;). Right clicking a toggle link will immediately remove its tag. If a tag already exists in the search box or gets entered/removed through alternative means, the toggle link will automatically update to reflect the tag's current status. <tiphead>Note</tiphead>The remove option is intended for users above the basic user level that want to remove the links. For users that can't normally see the links and do not wish to see them, this setting should be set to disabled.", {txtOptions:["Disabled:disabled", "Remove:remove", "Link:link", "Toggle:toggle"]}),
 			show_banned: newOption("checkbox", false, "Show Banned", "Display all banned posts in the search, pool, popular, favorites, comments, notes, and favorite group listings."),
@@ -295,7 +294,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			old: ""
 		},
 		sections: { // Setting sections and ordering.
-			blacklist_options: newSection("general", ["blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
+			blacklist_options: newSection("general", ["blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view"], "Options"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes"], "Post Control"),
@@ -343,7 +342,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var blacklist_post_display = bbb.user.blacklist_post_display;
 	var blacklist_thumb_mark = bbb.user.blacklist_thumb_mark;
 	var blacklist_highlight_color = bbb.user.blacklist_highlight_color;
-	var blacklist_add_bars = gLocRegex.test(bbb.user.blacklist_add_bars);
 	var blacklist_thumb_controls = bbb.user.blacklist_thumb_controls;
 	var blacklist_smart_view = bbb.user.blacklist_smart_view;
 
@@ -590,36 +588,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				else if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var xml = JSON.parse(xmlhttp.responseText);
-
-						// Remove extra objects from the XML JSON.
-						var isArray = (xml instanceof Array);
-						var firstObject = (isArray ? xml[0] : xml);
-
-						if (firstObject && typeof(firstObject) === "object") {
-							var objectProperties = [];
-							var i, il; // Loop variables.
-
-							for (i in firstObject) {
-								if (firstObject.hasOwnProperty(i))
-									objectProperties.push(i);
-							}
-
-							var firstProperty = objectProperties[0];
-							var firstValue = firstObject[firstProperty];
-
-							if (firstProperty && typeof(firstValue) === "object" && objectProperties.length === 1) {
-								if (isArray) {
-									var formattedXml = [];
-
-									for (i = 0, il = xml.length; i < il; i++)
-										formattedXml.push(xml[i][firstProperty]);
-
-									xml = formattedXml;
-								}
-								else
-									xml = xml[firstProperty];
-							}
-						}
 
 						// Update status message.
 						if (mode === "search" || mode === "popular" || mode === "popular_view" || mode === "notes" || mode === "favorites" || mode === "pool_search" || mode === "favorite_group_search") {
@@ -1274,7 +1242,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function replaceComments(docEl, postId) {
 		// Fix hidden comments with information from a post.
-		var commentDiv = document.getElementById("post_" + postId);
+		var divId = "post_" + postId;
+		var commentDiv = document.getElementById(divId);
 		var commentSection = docEl.getElementsByClassName("comments-for-post")[0];
 		var comments = commentSection.getElementsByClassName("comment");
 		var numComments = comments.length;
@@ -1313,6 +1282,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		target.appendChild(newContent);
 
 		Danbooru.Comment.initialize_all();
+		$("#" + divId + " .simple_form .dtext-preview").hide();
+		$("#" + divId + " .simple_form input[value=Preview]").click(Danbooru.Dtext.click_button);
 	}
 
 	function replaceThumbnails(docEl) {
@@ -1929,7 +1900,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses coupled with percent signs:<ul><li><b>(% ~tag1 ~tag2 %) (% ~tag3 ~tag3 %)</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 (% tag2, tag3 tag4 %)</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -(% tag2 tag3 %)</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~(% tag3 tag4 %)</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for any posts in a pool, "none" for posts not in a pool, "active" for any posts in an active (not deleted) pool, and "inactive" for any posts in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses coupled with percent signs:<ul><li><b>(% ~tag1 ~tag2 %) (% ~tag3 ~tag3 %)</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 (% tag2, tag3 tag4 %)</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -(% tag2 tag3 %)</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~(% tag3 tag4 %)</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
@@ -5192,33 +5163,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					childIndex++;
 			}
 		}
-		else if (blacklist_add_bars) {
-			var target;
-			var before;
-
-			if (gLoc === "pool_gallery") {
-				target = document.getElementById("a-gallery");
-				before = (target ? target.getElementsByTagName("section")[0] : undefined);
-			}
-			else if (gLoc === "notes" || gLoc === "comments") {
-				target = document.getElementById("a-index");
-
-				if (target)
-					before = getPosts(target)[0] || getPaginator(target);
-			}
-
-			if (target && before && before.parentNode === target) {
-				blacklistBox = document.createElement("div");
-				blacklistBox.id = "blacklist-box";
-				blacklistBox.className = "bbb-blacklist-box";
-				blacklistBox.style.display = "none";
-				blacklistBox.innerHTML = '<strong>Blacklisted: </strong> <ul id="blacklist-list"> </ul>';
-
-				blacklistList = getId("blacklist-list", blacklistBox);
-
-				target.insertBefore(blacklistBox, before);
-			}
-		}
 
 		// Reset any blacklist info.
 		if (bbb.blacklist.entries[0]) {
@@ -6827,15 +6771,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (collapse_sidebar) {
 			styles += '#sidebar ul.bbb-collapsed-sidebar, #sidebar form.bbb-collapsed-sidebar {display: block !important; height: 0px !important; margin: 0px !important; padding: 0px !important; overflow: hidden !important;}' + // Hide the element without changing the display to "none" since that interferes with some of Danbooru's JS.
 			'#sidebar h1, #sidebar h2 {display: inline-block !important;}'; // Inline-block is possible here due to not using display in the previous rule.
-		}
-
-		// Additional blacklist bars.
-		if (blacklist_add_bars) {
-			styles += '#blacklist-box.bbb-blacklist-box {margin-bottom: 1em;}' +
-			'#blacklist-box.bbb-blacklist-box ul {display: inline;}' +
-			'#blacklist-box.bbb-blacklist-box li {display: inline; margin-right: 1em;}' +
-			'#blacklist-box.bbb-blacklist-box li a {color: #0073FF; cursor: pointer;}' +
-			'#blacklist-box.bbb-blacklist-box li span {color: #AAAAAA;}';
 		}
 
 		// Blacklist thumbnail display;
