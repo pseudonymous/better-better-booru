@@ -5957,7 +5957,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var rating = " rating:" + post.getAttribute("data-rating");
 			var status = " status:" + (flags === "flagged" ? flags + " active" : flags).replace(/\s/g, " status:");
 			var user = " user:" + post.getAttribute("data-uploader").replace(/\s/g, "_").toLowerCase();
-			var pools = " " + post.getAttribute("data-pools");
+			var poolData = " " + post.getAttribute("data-pools");
+			var pools = (/pool:\d+/.test(poolData) && !/pool:(collection|series)/.test(poolData) ? poolData + " pool:inactive" : poolData);
 			var score = post.getAttribute("data-score");
 			var favcount = post.getAttribute("data-fav-count");
 			var id = post.getAttribute("data-id");
@@ -6247,12 +6248,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						}
 						else if (tagValue === "active" && tagName === "pool")
 							mode.push(new RegExp((tagName + ":(collection|series)").bbbSpacePad()));
-						else if (tagValue === "inactive" && tagName === "pool") {
-							secondaryMode = (secondaryMode === "includes" ? "excludes" : "includes"); // Flip the include/exclude mode.
-							mode = searchObject[primaryMode][secondaryMode];
-
-							mode.push(new RegExp((tagName + ":(collection|series)").bbbSpacePad()));
-						}
 						else // Allow all other values through (ex: parent:# & pool:series).
 							mode.push(searchTerm.bbbSpacePad());
 					}
