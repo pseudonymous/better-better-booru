@@ -36,6 +36,7 @@ Changelog
  * Fixed an overflow issue with the sidebar layout options.
  * Fixed the insertion of links for the options menu and new post tracking by making it more accurate.
  * Fixed a problem with revealing hidden thumbnails on posts with parent and child notices.
+ * Fixed the preview and edit buttons for hidden posts in Danbooru's comments section.
  * Script reorganization and overhaul.
 * Version 6.5.4:
  * Updated to support the hotkey for swapping between the original and sample on "ugoira" posts.
