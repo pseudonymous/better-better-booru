@@ -29,7 +29,7 @@ Changelog
  * Updated to support the popular view section (Currently disabled since view counts were removed).
  * Updated to support the Danbooru mode menu.
  * Updated to always display animated GIFs and PNGs with their full/original versions and not use sample images.
- * Updated to support Danbooru's API and blacklist changes.
+ * Updated to support Danbooru's blacklist changes.
  * Replaced the "override account" option with separate options for overriding Danbooru's resize, sample, and blacklist settings.
  * Fixed the pausing of video content when dragging it with the "drag scroll" option.
  * Fixed a problem where previous page content would end up displaying on the current page.
