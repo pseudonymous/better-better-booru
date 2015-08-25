@@ -1,14 +1,14 @@
 Better Better Booru
 ===================
 Various tweaks to make Danbooru better.
- 
+
 ---
 Links
 -----
 * [Homepage](https://github.com/pseudonymous/better-better-booru)
 * [Greasy Fork](https://greasyfork.org/scripts/3575-better-better-booru)
 * [Changelog](https://github.com/pseudonymous/better-better-booru/blob/master/changelog.md)
- 
+
 ---
 Features
 --------
@@ -52,10 +52,9 @@ Features
  * Control over the blacklist, post sample setting, and post resizing setting.
  * Adds back the missing sidebar options section with all the options accessible to logged out users.
 
- 
 ---
 Installation
----------------
+------------
 1. Installing a userscript manager is strongly recommended and sometimes required. Suggestions:
  * [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) (Firefox)
  * [Tampermonkey](http://tampermonkey.net/) (Chrome, Opera)
@@ -67,5 +66,5 @@ Installation
 4. Choose to allow/install after reviewing your options.
 5. The script should now be installed and ready for use on Danbooru.
 6. To access script features, use the "BBB Settings" link in the Danbooru navigation bar.
- 
+
 ** Note: If installing from a local file on your computer, your browser may require additional steps.
