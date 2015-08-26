@@ -845,7 +845,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var existingPost = existingPosts[eci];
 
 			if (!existingPost || String(post.id) !== existingPost.getAttribute("data-id")) {
-				if (!/(?:^|\s)(?:loli|shota|toddlercon)(?:$|\s)/.test(post.tag_string) && !post.is_banned) // API post isn't hidden and doesn't exist on the page so the API has different information. Skip it and try to find where the page's info matches up.
+				if (!/(?:^|\s)(?:loli|shota|toddlercon)(?:$|\s)/.test(post.tag_string) && !post.is_banned) // API post isn't hidden and doesn't exist on the page. Skip it and try to find where the page's info matches up.
 					continue;
 				else if ((!show_loli && /(?:^|\s)loli(?:$|\s)/.test(post.tag_string)) || (!show_shota && /(?:^|\s)shota(?:$|\s)/.test(post.tag_string)) || (!show_toddlercon && /(?:^|\s)toddlercon(?:$|\s)/.test(post.tag_string)) || (!show_banned && post.is_banned) || safebPostTest(post)) { // Skip hidden posts if the user has selected to do so.
 					expectedPosts--;
@@ -902,9 +902,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			eci++;
 		}
 
-		// If we don't have the expected number of posts, the API info and page are too out of sync.
-		if (existingPosts.length !== expectedPosts)
-			bbbNotice("Loading of hidden post(s) failed. Please refresh.", -1);
+		// If we don't have the expected number of posts, the API info and page are too out of sync. (Message disabled to work around deleted comments until an accurate method is worked out.)
+		// if (existingPosts.length !== expectedPosts)
+			// bbbNotice("Loading of hidden post(s) failed. Please refresh.", -1);
 	}
 
 	function parseRelations(xml, mode, parentId) {
