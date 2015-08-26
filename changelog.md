@@ -1,6 +1,6 @@
 Changelog
 ----------
-* Version ?:
+* Version 7.0:
  * Added a "move save search" layout option for moving the "save this search" button to the sidebar's related section.
  * Added a "page counter" option for including a page counter and "go to page" input near the top of listing pages.
  * Added a "disable embedded notes" option for forcing notes to display with the original style.
