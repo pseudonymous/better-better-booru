@@ -278,7 +278,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			show_shota: newOption("checkbox", false, "Show Shota", "Display shota posts in the search, pool, popular, favorites, comments, notes, and favorite group listings."),
 			show_toddlercon: newOption("checkbox", false, "Show Toddlercon", "Display toddlercon posts in the search, pool, popular, favorites, comments, notes, and favorite group listings."),
 			single_color_borders: newOption("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
-			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score(&#x2605;), favorite count(&hearts;), and rating (S, Q, or E) for a post with its thumbnails. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
+			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score(&#x2605;), favorite count(&hearts;), and rating (S, Q, or E) for a post with its thumbnail. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
 			thumbnail_count: newOption("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search, favorites, and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
 			track_new: newOption("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<tiphead>Note</tiphead>While browsing the new posts, the current page of posts is also tracked. If the new post listing is left, clicking the \"new\" link later on will attempt to pull up the posts where browsing was left off at.<tiphead>Tip</tiphead>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
@@ -742,7 +742,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Create content.
 		if (post.file_ext === "swf") // Create flash object.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
-		else if (post.file_ext === "webm") // Create webm video
+		else if (post.file_ext === "webm" || post.file_ext === "mp4") // Create video
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
 		else if (post.file_ext === "zip" && /(?:^|\s)ugoira(?:$|\s)/.test(post.tag_string)) { // Create ugoira
 			var useUgoiraOrig = getVar("original");
@@ -885,7 +885,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				// Create the new post.
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div id="post_' + post.id + '" class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-approver-id="' + post.approver_id + '" data-fav-count="' + post.fav_count + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.preview_file_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div id="post_' + post.id + '" class="post post-preview' + post.thumb_class + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-flags="' + post.flags + '" data-score="' + post.score + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-id="' + post.id + '" data-has-sound="' + post.has_sound + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-approver-id="' + post.approver_id + '" data-fav-count="' + post.fav_count + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"> <div class="preview"> <a href="/posts/' + post.id + '"> <img alt="' + post.md5 + '" src="' + post.preview_file_url + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + post.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + post.created_at + '" title="' + post.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + post.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + post.uploader_id + '">' + post.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + post.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + post.id + '">' + post.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				// Prepare thumbnails.
 				prepThumbnails(childSpan);
@@ -1445,6 +1445,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			large_file_url: "",
 			preview_file_url: "",
 			has_large: undefined,
+			has_sound: (imgContainer.getAttribute("data-has-sound") === "true" ? true : false),
 			id: Number(imgContainer.getAttribute("data-id")),
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
 			has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
@@ -1480,7 +1481,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			// Test for the original image file extension if it is unknown.
 			if (!ext && imgWidth) {
-				var testExt = ["jpg", "png", "gif", "jpeg", "webm"];
+				var testExt = ["jpg", "png", "gif", "jpeg", "webm", "mp4"];
 
 				for (var i = 0, il = testExt.length; i < il; i++) {
 					if (isThere("/data/" + md5 + "." + testExt[i])) {
@@ -1512,7 +1513,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 			}
 
-			imgInfo.has_large = (!isAnimatedImg && ((imgWidth > 850 && ext !== "swf" && ext !== "webm") || isUgoira) ? true : false);
+			imgInfo.has_large = (!isAnimatedImg && ((imgWidth > 850 && ext !== "swf" && ext !== "webm" && ext !== "mp4") || isUgoira) ? true : false);
 			imgInfo.md5 = md5;
 			imgInfo.file_ext = ext;
 			imgInfo.file_url = "/data/" + md5 + "." + ext;
@@ -1554,10 +1555,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var img = getId("image", target);
 		var swfObj = imgContainer.getElementsByTagName("object")[0];
 		var swfEmb = (swfObj ? swfObj.getElementsByTagName("embed")[0] : undefined);
-		var webmVid = imgContainer.getElementsByTagName("video")[0];
+		var video = imgContainer.getElementsByTagName("video")[0];
 		var ugoira = imgContainer.getElementsByTagName("canvas")[0];
 		var other = document.evaluate('.//a[starts-with(@href, "/data/")]', imgContainer, null, 9, null).singleNodeValue;
-		var el = swfEmb || webmVid || ugoira || img || other;
+		var el = swfEmb || video || ugoira || img || other;
 		var secondaryEl = swfObj; // Other elements related to the main element. Only applies to flash for now.
 
 		return {container: imgContainer, el: el, secEl: secondaryEl};
@@ -3260,7 +3261,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var translateLink = document.getElementById("translate");
 		var toggleFunction;
 
-		if (post.file_ext !== "webm" && post.file_ext !== "swf") { // Don't allow translation functions on webm videos or flash.
+		if (post.file_ext !== "webm" && post.file_ext !== "mp4" && post.file_ext !== "swf") { // Don't allow translation functions on webm videos or flash.
 			if (postTag !== "VIDEO") { // Make translation mode work on non-video content.
 				// Allow the translation note functions if notes aren't locked.
 				if (document.getElementById("note-locked-notice"))
@@ -3294,7 +3295,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				createHotkey("78", toggleFunction);
 			}
 		}
-		else if (translateLink) { // If the translate link exists on webm videos or flash, provide a warning.
+		else if (translateLink) { // If the translate link exists on videos or flash, provide a warning.
 			toggleFunction = function(event) {
 				bbbNotice('Note editing is not allowed on flash/video content.', -1);
 				event.preventDefault();
@@ -3325,7 +3326,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postTag = (postEl ? postEl.tagName : undefined);
 
 		// Stop here for content that doesn't allow note editing.
-		if (post.file_ext === "webm" || post.file_ext === "swf" || postTag === "VIDEO")
+		if (post.file_ext === "webm" || post.file_ext === "mp4" || post.file_ext === "swf" || postTag === "VIDEO")
 			return;
 
 		// Save the original note functions.
@@ -4370,7 +4371,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function createThumbHTML(post, query) {
 		// Create a thumbnail HTML string.
-		return '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + query + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '"></a></article>';
+		return '<article class="post-preview' + post.thumb_class + '" id="post_' + post.id + '" data-id="' + post.id + '" data-has-sound="' + post.has_sound + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" data-rating="' + post.rating + '" data-width="' + post.image_width + '" data-height="' + post.image_height + '" data-flags="' + post.flags + '" data-parent-id="' + post.parent_id + '" data-has-children="' + post.has_children + '" data-score="' + post.score + '" data-fav-count="' + post.fav_count + '" data-approver-id="' + post.approver_id + '" data-pixiv-id="' + post.pixiv_id + '" data-md5="' + post.md5 + '" data-file-ext="' + post.file_ext + '" data-file-url="' + post.file_url + '" data-large-file-url="' + post.large_file_url + '" data-preview-file-url="' + post.preview_file_url + '"><a href="/posts/' + post.id + query + '"><img src="' + post.preview_file_url + '" alt="' + post.tag_string + '"></a></article>';
 	}
 
 	function createThumb(post, query) {
@@ -5716,6 +5717,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		post.parent_id = post.parent_id || "";
 		post.pixiv_id = post.pixiv_id || "";
 
+		// Missing API/data fixes.
+		post.has_sound = (typeof(post.has_sound) === "boolean" ? post.has_sound : /(?:^|\s)(?:video|flash)_with_sound(?:$|\s)/.test(post.tag_string));
+
 		post.flags = flags.bbbSpaceClean();
 		post.thumb_class = thumbClass;
 
@@ -6792,7 +6796,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (blacklist_thumb_mark === "icon") {
 			styles += 'article.post-preview:before, div.post.post-preview div.preview:before {content: none !important;}' + // Disable original Danbooru animated overlay.
 			'article.post-preview.blacklisted a.bbb-thumb-link:after, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after {content: "\\A0"; position: absolute; bottom: 0px; right: 0px; height: 20px; width: 20px; line-height: 20px; font-weight: bold; color: #FFFFFF; background: rgba(0, 0, 0, 0.5) url(\'' + bbbBlacklistIcon + '\');}' + // Create blacklist overlay.
-			'article.post-preview[data-tags~="animated"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="swf"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="webm"] a.bbb-thumb-link:before, div.post.post-preview[data-tags~="animated"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="swf"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="webm"] div.preview a.bbb-thumb-link:before {content: "\\25BA"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru animated overlay.
+			'article.post-preview[data-tags~="animated"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="swf"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="webm"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="mp4"] a.bbb-thumb-link:before, div.post.post-preview[data-tags~="animated"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="swf"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="webm"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="mp4"] div.preview a.bbb-thumb-link:before {content: "\\25BA"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru animated overlay.
+			'article.post-preview[data-has-sound="true"] a.bbb-thumb-link:before, div.post.post-preview[data-has-sound="true"] div.preview a.bbb-thumb-link:before {content: "\\266A"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru audio overlay.
 			'article.post-preview.blacklisted a.bbb-thumb-link:after, article.post-preview a.bbb-thumb-link:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after, div.post.post-preview div.preview a.bbb-thumb-link:before {margin: ' + (border_width + border_spacing) + 'px;}' + // Margin applies to posts with no borders or only a status border.
 			'article.post-preview.blacklisted a.bbb-thumb-link.bbb-custom-tag:after, article.post-preview a.bbb-thumb-link.bbb-custom-tag:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link.bbb-custom-tag:after, div.post.post-preview div.preview a.bbb-thumb-link.bbb-custom-tag:before {margin: ' + border_spacing + 'px;}' + // Margin applies to posts with only a custom border.
 			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:after, article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:before, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:after, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:before {content: none;}' + // Don't display when actively blacklisted.
