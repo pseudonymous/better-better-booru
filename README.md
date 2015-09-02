@@ -19,6 +19,7 @@ Features
  * Thumbnail marking - Mark blacklisted thumbnails that have been unhidden so that they are easier to distinguish from other thumbnails.
  * Thumbnail controls - Allow control over the blacklist from a blacklisted thumbnail and allow for individual control of each blacklisted thumbnail.
  * Smart view - When viewing a blacklisted post, automatically display it if its thumbnail was already unhidden.
+ * Additional bars - Add a blacklist bar to thumbnail sections without it so that blacklist entries can be toggled as needed.
  * Added support for wildcards (*), the "or/any" operator (~), nesting/grouping, and additional metatags (ex: score:&lt;0, etc.).
 * Multiple options and features for altering post viewing:
  * Alternate image swap - Swap between the sample and original image by clicking the image.
