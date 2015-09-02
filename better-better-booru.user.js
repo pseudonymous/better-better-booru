@@ -216,8 +216,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
+			blacklist_add_bars: newOption("checkbox", false, "Additional Bars", "Add a blacklist bar to the comment search listing and individually linked comments so that blacklist entries can be toggled as needed."),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
-			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"x\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
+			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
 			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> The default Danbooru behavior where the posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
 			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <tipdesc>Highlight:</tipdesc> Change the background color of blacklisted thumbnails. <tipdesc>Icon Overlay:</tipdesc> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
@@ -266,7 +267,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			post_resize_mode: newOption("dropdown", "width", "Resize Mode", "Choose how to shrink large post content to fit the browser window when initially loading a post.", {txtOptions:["Width (Default):width", "Height:height", "Width & Height:all"]}),
 			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"remove tag headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			post_tag_titles: newOption("checkbox", false, "Post Tag Titles", "Change the page titles for posts to a full list of the post tags."),
-			quick_search: newOption("dropdown", "disabled", "Quick Search", "Add a new search box to the upper right corner of the window viewport that allows searching through the current thumbnails for specific posts. <tipdesc>Fade:</tipdesc> Fade all posts that don't match in the thumbnail listing. <tipdesc>Remove:</tipdesc> Remove all posts that don't match from the thumbnail listing. <tiphead>Directions</tiphead>Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating searches. <br><br>The search starts minimized in the upper right corner. Left clicking the main icon will open and close the search. Right clicking the main icon will completely reset the search. Holding down shift while left clicking the main icon will toggle an active search's pinned status. <br><br>While open, the search can be entered/updated in the search box and the pinned status can be toggled by clicking the pushpin icon. If no changes are made to an active search, submitting it a second time will reset the quick search. <tiphead>Notes</tiphead>Options labeled with \"pinned\" will make searches default to being pinned. <br><br>A pinned search will persist across other pages in the same browsing session for that tab until it ends or the search is unpinned. <br><br>When not set to disabled, the quick search can be opened by using the \"F\" hotkey. Additionally, an active search can be reset by using \"Shift + F\". Pressing \"escape\" while the quick search is open will close it.", {txtOptions:["Disabled:disabled", "Fade:fade", "Fade (Pinned):fade pinned", "Remove:remove", "Remove (Pinned):remove pinned"]}),
+			quick_search: newOption("dropdown", "disabled", "Quick Search", "Add a new search box to the upper right corner of the window viewport that allows searching through the current thumbnails for specific posts. <tipdesc>Fade:</tipdesc> Fade all posts that don't match in the thumbnail listing. <tipdesc>Remove:</tipdesc> Remove all posts that don't match from the thumbnail listing. <tiphead>Directions</tiphead>Please read the \"thumbnail matching rules\" section under the help tab for information about creating searches. <br><br>The search starts minimized in the upper right corner. Left clicking the main icon will open and close the search. Right clicking the main icon will completely reset the search. Holding down shift while left clicking the main icon will toggle an active search's pinned status. <br><br>While open, the search can be entered/updated in the search box and the pinned status can be toggled by clicking the pushpin icon. If no changes are made to an active search, submitting it a second time will reset the quick search. <tiphead>Notes</tiphead>Options labeled with \"pinned\" will make searches default to being pinned. <br><br>A pinned search will persist across other pages in the same browsing session for that tab until it ends or the search is unpinned. <br><br>When not set to disabled, the quick search can be opened by using the \"F\" hotkey. Additionally, an active search can be reset by using \"Shift + F\". Pressing \"Escape\" while the quick search is open will close it.", {txtOptions:["Disabled:disabled", "Fade:fade", "Fade (Pinned):fade pinned", "Remove:remove", "Remove (Pinned):remove pinned"]}),
 			remove_tag_headers: newOption("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
 			resize_link_style: newOption("dropdown", "full", "Resize Link Style", "Set how the resize links in the post sidebar options section will display. <tipdesc>Full:</tipdesc> Show the \"resize to window\", \"resize to window width\", and \"resize to window height\" links on separate lines. <tipdesc>Minimal:</tipdesc> Show the \"resize to window\" (W&H), \"resize to window width\" (W), and \"resize to window height\" (H) links on one line.", {txtOptions:["Full:full", "Minimal:minimal"]}),
 			script_blacklisted_tags: "",
@@ -280,7 +281,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			single_color_borders: newOption("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
 			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score(&#x2605;), favorite count(&hearts;), and rating (S, Q, or E) for a post with its thumbnail. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
 			thumbnail_count: newOption("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search, favorites, and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
-			track_new: newOption("checkbox", false, "Track New Posts", "Add a menu option titled \"New\" to the posts section submenu (between \"Listing\" and \"Upload\") that links to a customized search focused on keeping track of new posts.<tiphead>Note</tiphead>While browsing the new posts, the current page of posts is also tracked. If the new post listing is left, clicking the \"new\" link later on will attempt to pull up the posts where browsing was left off at.<tiphead>Tip</tiphead>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
+			track_new: newOption("checkbox", false, "Track New Posts", "Add a menu option titled \"new\" to the posts section submenu (between \"listing\" and \"upload\") that links to a customized search focused on keeping track of new posts.<tiphead>Note</tiphead>While browsing the new posts, the current page of posts is also tracked. If the new post listing is left, clicking the \"new\" link later on will attempt to pull up the posts where browsing was left off at.<tiphead>Tip</tiphead>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"], ["status:banned", true, "#000000", "solid"]),
 			thumb_cache_limit: newOption("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<tiphead>Note</tiphead>No actual thumbnails are cached. Only filename information used to speed up the display of hidden thumbnails is stored. Every 1000 entries is approximately equal to 0.1 megabytes of space.", {txtOptions:["Disabled:0"], numList:[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000,20000,21000,22000,23000,24000,25000,26000,27000,28000,29000,30000]}),
@@ -294,7 +295,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			old: ""
 		},
 		sections: { // Setting sections and ordering.
-			blacklist_options: newSection("general", ["blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view"], "Options"),
+			blacklist_options: newSection("general", ["blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes"], "Post Control"),
@@ -342,6 +343,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var blacklist_post_display = bbb.user.blacklist_post_display;
 	var blacklist_thumb_mark = bbb.user.blacklist_thumb_mark;
 	var blacklist_highlight_color = bbb.user.blacklist_highlight_color;
+	var blacklist_add_bars = bbb.user.blacklist_add_bars;
 	var blacklist_thumb_controls = bbb.user.blacklist_thumb_controls;
 	var blacklist_smart_view = bbb.user.blacklist_smart_view;
 
@@ -2299,7 +2301,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		helpButton.href = "#";
 		helpButton.innerHTML = "Help";
 		helpButton.className = "bbb-border-button";
-		helpButton.bbbSetTip("<b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<tipdesc>Status/Tags:</tipdesc> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating rules.<tipdesc>Color:</tipdesc> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<tipdesc>Style:</tipdesc> Set how the border looks. Please note that double only works with a border width of 3 or higher.<tipdesc>Move:</tipdesc> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<tipdesc>Preview:</tipdesc> Display a preview of the border's current settings.<tipdesc>Delete:</tipdesc> Remove the border and its settings.<tipdesc>New:</tipdesc> Create a new border.");
+		helpButton.bbbSetTip("<b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<tipdesc>Status/Tags:</tipdesc> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"thumbnail matching rules\" section under the help tab for information about creating rules.<tipdesc>Color:</tipdesc> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<tipdesc>Style:</tipdesc> Set how the border looks. Please note that double only works with a border width of 3 or higher.<tipdesc>Move:</tipdesc> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<tipdesc>Preview:</tipdesc> Display a preview of the border's current settings.<tipdesc>Delete:</tipdesc> Remove the border and its settings.<tipdesc>New:</tipdesc> Create a new border.");
 		editSpan.appendChild(helpButton);
 
 		var borderSettingsDiv = document.createElement("div");
@@ -2469,7 +2471,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		helpButton.innerHTML = "Help";
 		helpButton.href = "#";
 		helpButton.className = "bbb-button";
-		helpButton.bbbSetTip("Create copies of your settings that can be used for recovering lost/corrupted settings or transferring settings.<tiphead>Directions</tiphead>There are two options for creating a backup. Creating a text backup will provide a plain text format backup in the area provided that can be copied and saved where desired. Creating a backup page will open a new page that can be saved with the browser's \"save page\" or bookmark options. <br><br>To restore a backup, copy and paste the desired backup into the provided area and click \"Restore Backup\".");
+		helpButton.bbbSetTip("Create copies of your settings that can be used for recovering lost/corrupted settings or transferring settings.<tiphead>Directions</tiphead>There are two options for creating a backup. Creating a text backup will provide a plain text format backup in the area provided that can be copied and saved where desired. Creating a backup page will open a new page that can be saved with the browser's \"save page\" or bookmark options. <br><br>To restore a backup, copy and paste the desired backup into the provided area and click \"restore backup\".");
 		rightButtons.appendChild(helpButton);
 
 		return sectionFrag;
@@ -2523,7 +2525,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		helpButton.href = "#";
 		helpButton.className = "bbb-button";
 		helpButton.style.cssFloat = "right";
-		helpButton.bbbSetTip("Hide posts that match the specified tag(s).<tiphead>Directions</tiphead>Please read the \"Thumbnail Matching Rules\" section under the help tab for information about creating matching rules for posts you wish to blacklist. Blank lines will be ignored and are only used for improved readability.<br><br> All commas will be converted to new lines and all extra spaces and extra blank lines will be removed the next time the settings are opened. By using the \"Format\" button, you can manually perform this action on the blacklist rules. <tiphead>Note</tiphead>When logged in, the account's \"Blacklisted tags\" list will override this option. This behavior can be changed with the \"override blacklist\" option under the preferences tab.");
+		helpButton.bbbSetTip("Hide posts that match the specified tag(s).<tiphead>Directions</tiphead>Please read the \"thumbnail matching rules\" section under the help tab for information about creating matching rules for posts you wish to blacklist. Blank lines will be ignored and are only used for improved readability.<br><br> All commas will be converted to new lines and all extra spaces and extra blank lines will be removed the next time the settings are opened. By using the \"format\" button, you can manually perform this action on the blacklist rules. <tiphead>Note</tiphead>When logged in, the account's \"blacklisted tags\" list will override this option. This behavior can be changed with the \"override blacklist\" option under the preferences tab.");
 		buttonDiv.appendChild(helpButton);
 
 		return sectionFrag;
@@ -3031,7 +3033,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				checkUser(bbb.user, bbb.options);
 				convertSettings("backup");
 				reloadMenu();
-				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"Save & Close\" to finalize the restore.");
+				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"save & close\" to finalize the restore.");
 			}
 			catch (error) {
 				if (error instanceof SyntaxError)
@@ -3092,7 +3094,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				else if (showResNot === "all")
 					showResNot = "sample";
 
-				bbbNotice("Settings updated. The resized notice will now be hidden when viewing original images. You may change this setting under \"Notices\" in the settings panel.", 10);
+				bbbNotice("Settings updated. The resized notice will now be hidden when viewing original images. You may change this setting under \"notices\" in the settings panel.", 10);
 			}
 			else { // Sample image.
 				if (showResNot === "sample")
@@ -3100,7 +3102,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				else if (showResNot === "all")
 					showResNot = "original";
 
-				bbbNotice("Settings updated. The resized notice will now be hidden when viewing sample images. You may change this setting under \"Notices\" in the settings panel.", 10);
+				bbbNotice("Settings updated. The resized notice will now be hidden when viewing sample images. You may change this setting under \"notices\" in the settings panel.", 10);
 			}
 
 			updateSettings("show_resized_notice", showResNot);
@@ -3404,12 +3406,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function fixPostDownloadLinks() {
-		// Fix the disabled "size" and "download" links in the sidebar of hidden posts.
+		// Fix the "size" and "download" links in the sidebar.
 		var post = bbb.post.info;
+		var i, il; // Loop variables.
 
 		if (isLoggedIn() && !post.is_hidden)
 			return;
-		var i, il; // Loop variables.
 
 		// Fix the "size" link.
 		var infoSection = document.getElementById("post-information");
@@ -5007,7 +5009,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Warn the user if this is a listing full of hidden posts.
 		if (bbb.endless.no_thumb_count === 10) {
-			bbbNotice("There have been no or very few thumbnails detected in the last 10 retrieved pages. Using endless pages with fill mode on this search could potentially be very slow or stall out completely. If you would like to continue, you may click the \"Load More\" button near the bottom of the page.", -1);
+			bbbNotice("There have been no or very few thumbnails detected in the last 10 retrieved pages. Using endless pages with fill mode on this search could potentially be very slow or stall out completely. If you would like to continue, you may click the \"load more\" button near the bottom of the page.", -1);
 			endlessPause();
 		}
 		else
@@ -5149,7 +5151,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var blacklistedPosts = document.getElementsByClassName("blacklisted");
 		var i, il; // Loop variables.
 
-		// Reset sidebar blacklist.
+		// Reset the list or create it as needed.
 		if (blacklistBox && blacklistList) {
 			blacklistBox.style.display = "none";
 
@@ -5162,6 +5164,37 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					blacklistList.removeChild(child);
 				else
 					childIndex++;
+			}
+		}
+		else if (blacklist_add_bars) {
+			var target;
+			var before;
+
+			if (gLoc === "comment_search") {
+				target = document.getElementById("a-index");
+
+				if (target)
+					before = target.getElementsByClassName("comments-for-post")[0];
+			}
+			else if (gLoc === "comment") {
+				target = document.getElementById("a-show");
+
+				if (target)
+					before = target.getElementsByClassName("comments-for-post")[0];
+			}
+
+			if (target && before && before.parentNode === target) {
+				blacklistBox = document.createElement("div");
+				blacklistBox.id = "blacklist-box";
+				blacklistBox.className = "bbb-blacklist-box";
+				blacklistBox.style.display = "none";
+				blacklistBox.innerHTML = '<strong>Blacklisted: </strong> <ul id="blacklist-list"> <li id="disable-all-blacklists" style="display: inline;"><span class="link">Disable all</span></li> <li id="re-enable-all-blacklists" style="display: none;"><span class="link">Re-enable all</span></li> </ul>';
+
+				blacklistList = getId("blacklist-list", blacklistBox);
+				enableLink = getId("re-enable-all-blacklists", blacklistBox);
+				disableLink = getId("disable-all-blacklists", blacklistBox);
+
+				target.insertBefore(blacklistBox, before);
 			}
 		}
 
@@ -5241,9 +5274,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				newEnableLink.style.display = "none";
 				newDisableLink.style.display = "inline";
 			}
-
-			if (blacklistList)
-				blacklistList.style.marginBottom = "0.5em";
 
 			enableLink.parentNode.replaceChild(newEnableLink, enableLink);
 			disableLink.parentNode.replaceChild(newDisableLink, disableLink);
@@ -6085,10 +6115,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			return tag.test(targetTags);
 		}
-		else if (typeof(tag) === "object") { // Check numeric metatags.
-			if (tag instanceof Array)
+		else if (typeof(tag) === "object") {
+			if (tag instanceof Array) // Check grouped tags.
 				return thumbSearchMatch(postInfo, tag);
-			else {
+			else { // Check numeric metatags.
 				var tagsMetaValue = postInfo[tag.tagName];
 
 				if (tag.equals !== undefined) {
@@ -6227,14 +6257,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 				else if (searchTerm.indexOf("*") > -1) // Prepare wildcard tags as regular expressions.
 					mode.push(new RegExp(escapeRegEx(searchTerm).replace(/\*/g, "\S*").bbbSpacePad())); // Don't use "\\S*" here since escapeRegEx replaces * with \*. That escape carries over to the next replacement and makes us end up with "\\S*".
-				else if (/%\d+%/.test(searchTerm)) {
+				else if (/%\d+%/.test(searchTerm)) { // Prepare grouped tags as a search object.
 					var groupIndex = Number(searchTerm.match(/\d+/)[0]);
 
 					mode.push(createSearch(groups[groupIndex]));
 				}
 				else if (typeof(searchTerm) === "string") { // Add regular tags.
 					if (isMetatag(searchTerm)) {
-						var tagObject = searchTerm.split(/:(.+)/);
+						var tagObject = searchTerm.split(/:(.+)/, 2);
 						var tagName = tagObject[0];
 						var tagValue = tagObject[1];
 
@@ -6772,6 +6802,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'#sidebar h1, #sidebar h2 {display: inline-block !important;}'; // Inline-block is possible here due to not using display in the previous rule.
 		}
 
+		// Additional blacklist bars.
+		if (blacklist_add_bars) {
+			styles += '#blacklist-box.bbb-blacklist-box {margin-bottom: 1em;}' +
+			'#blacklist-box.bbb-blacklist-box ul {display: inline;}' +
+			'#blacklist-box.bbb-blacklist-box li {display: inline; margin-right: 1em;}' +
+			'#blacklist-box.bbb-blacklist-box li a, #blacklist-box.bbb-blacklist-box li span.link {color: #0073FF; cursor: pointer;}' +
+			'#blacklist-box.bbb-blacklist-box li span {color: #AAAAAA;}';
+		}
+
 		// Blacklist thumbnail display;
 		if (blacklist_post_display === "removed") {
 			styles += 'div.post.post-preview.blacklisted {display: block !important;}' + // Comment listing override.
@@ -7166,7 +7205,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function quickSearchReset() {
-		// Complete reset the quick search.
+		// Completely reset the quick search.
 		var filtered = document.getElementsByClassName("bbb-quick-search-filtered");
 
 		bbb.quick_search = "";
@@ -8063,14 +8102,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return "search";
 		else if (/^\/notes\/?$/.test(path) && query.indexOf("group_by=note") < 0)
 			return "notes";
+		else if (/\/comments\/\d+/.test(path))
+			return "comment";
 		else if (/^\/comments\/?$/.test(path)) {
 			if (query.indexOf("group_by=comment") < 0)
 				return "comments";
 			else // This may need to be more specific in the future.
 				return "comment_search";
 		}
-		else if (/\/comments\/\d+/.test(path))
-			return "comment";
 		else if (/\/explore\/posts\/popular(?:\/?$|\?)/.test(path))
 			return "popular";
 		// else if (/\/explore\/posts\/popular_view(?:\/?$|\?)/.test(path))
