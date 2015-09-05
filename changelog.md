@@ -4,6 +4,7 @@ Changelog
  * Added an "additional bars" blacklist option for adding a blacklist bar to thumbnail sections without it.
  * Updated to support MP4 posts.
  * Updated the "fixed paginator", "new tab/window", and "pool" metatag help notes.
+ * Updated the "thumbnail info cache limit" with a reduced maximum limit.
 * Version 7.0:
  * Added a "move save search" layout option for moving the "save this search" button to the sidebar's related section.
  * Added a "page counter" option for including a page counter and "go to page" input near the top of listing pages.
