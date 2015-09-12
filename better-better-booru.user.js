@@ -8462,6 +8462,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			tagsInput.addEventListener("cut", searchAddToggleCheck, false);
 			tagsInput.addEventListener("paste", searchAddToggleCheck, false);
 			tagsInput.addEventListener("change", searchAddToggleCheck, false);
+			$(tagsInput).on("autocompleteselect", function(event) { delayMe(function(event) { searchAddToggleCheck(event); }); }); // Delayed to allow autocomplete to change the input.
 		}
 	}
 
