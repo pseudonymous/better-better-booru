@@ -135,6 +135,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			this.addEventListener("DOMNodeInserted", func, false);
 	};
 
+	Storage.prototype.bbbSetItem = function(key, value) {
+		// Store a value in storage and warn if it is full.
+		var targetStorage;
+
+		if (this === localStorage)
+			targetStorage = localStorage;
+		else if (this === sessionStorage)
+			targetStorage = sessionStorage;
+
+		try {
+			targetStorage.setItem(key, value);
+		}
+		catch (error) {
+			if (error.code === 22 || error.code === 1014)
+				bbbNotice("Your settings/data could not be saved. The browser storage is full", -1);
+			else
+				bbbNotice("Unexpected error while attmpting to save. (Error: " + error.message + ")", -1);
+		}
+	};
+
 	/* Global Variables */
 	var bbb = { // Container for script info.
 		blacklist: {
@@ -602,7 +622,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						else if (mode === "pool_cache" || mode === "favorite_group_cache") {
 							var collId = /\/(?:pools|favorite_groups)\/(\d+)/.exec(location.href)[1];
 
-							sessionStorage["bbb_" + mode + "_" + collId] = new Date().getTime() + " " + xml.post_ids;
+							sessionStorage.bbbSetItem("bbb_" + mode + "_" + collId, new Date().getTime() + " " + xml.post_ids);
 							searchJSON(optArg, xml);
 						}
 						else if (mode === "endless") {
@@ -2836,10 +2856,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function loadSettings() {
 		// Load stored settings.
-		if (typeof(localStorage.bbb_settings) === "undefined")
+		var settings = localStorage.getItem("bbb_settings");
+
+		if (settings === null)
 			loadDefaults();
 		else {
-			bbb.user = JSON.parse(localStorage.bbb_settings);
+			bbb.user = JSON.parse(settings);
 			checkUser(bbb.user, bbb.options);
 
 			if (bbb.user.bbb_version !== bbb.options.bbb_version) {
@@ -2894,7 +2916,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bbb.user.blacklist_highlight_color = "#CCCCCC";
 
 		bbb.settings.changed = {};
-		localStorage.bbb_settings = JSON.stringify(bbb.user);
+		localStorage.bbbSetItem("bbb_settings", JSON.stringify(bbb.user));
 	}
 
 	function updateSettings() {
@@ -2928,7 +2950,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (/500$/.test(bbb.user.thumb_cache_limit))
 						bbb.user.thumb_cache_limit = bbb.options.thumb_cache_limit.def;
 
-					if (!/\.(jpg|gif|png)/.test(localStorage.bbb_thumb_cache)) {
+					if (!/\.(jpg|gif|png)/.test(localStorage.getItem("bbb_thumb_cache"))) {
 						localStorage.removeItem("bbb_thumb_cache");
 						loadThumbCache();
 					}
@@ -2941,7 +2963,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				case "6.2.1":
 				case "6.2.2":
 					// Reset the thumb cache to deal with "download-preview" and incorrect extension entries.
-					if (localStorage.bbb_thumb_cache) {
+					if (localStorage.getItem("bbb_thumb_cache")) {
 						localStorage.removeItem("bbb_thumb_cache");
 						loadThumbCache();
 					}
@@ -4443,11 +4465,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function loadThumbCache() {
 		// Initialize or load up the thumbnail cache.
-		if (typeof(localStorage.bbb_thumb_cache) !== "undefined")
-			bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+		var thumbCache = localStorage.getItem("bbb_thumb_cache");
+
+		if (thumbCache !== null)
+			bbb.cache.stored = JSON.parse(thumbCache);
 		else {
 			bbb.cache.stored = {history: [], names: {}};
-			localStorage.bbb_thumb_cache = JSON.stringify(bbb.cache.stored);
+			localStorage.bbbSetItem("bbb_thumb_cache", JSON.stringify(bbb.cache.stored));
 		}
 	}
 
@@ -4489,7 +4513,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				delete bcs.names[removedIds[i]];
 		}
 
-		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
+		localStorage.bbbSetItem("bbb_thumb_cache", JSON.stringify(bcs));
 		bbb.cache.current = {history: [], names: {}};
 	}
 
@@ -4508,13 +4532,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				delete bcs.names[removedIds[i]];
 		}
 
-		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
+		localStorage.bbbSetItem("bbb_thumb_cache", JSON.stringify(bcs));
 	}
 
 	function getIdCache() {
 		// Retrieve the cached list of post IDs used for the pool/favorite group thumbnails.
 		var collId = /\/(?:pools|favorite_groups)\/(\d+)/.exec(location.href)[1];
-		var idCache = sessionStorage["bbb_" + gLoc + "_cache_" + collId];
+		var idCache = sessionStorage.getItem("bbb_" + gLoc + "_cache_" + collId);
 		var curTime = new Date().getTime();
 		var cacheTime;
 		var timeDiff;
@@ -4682,7 +4706,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var onValue = (bbb.user.endless_default !== "off" ? bbb.user.endless_default : "on");
 			var newDefault = (bbb.endless.enabled ? "off" : onValue);
 
-			sessionStorage.bbb_endless_default = endless_default = newDefault;
+			endless_default = newDefault;
+			sessionStorage.bbbSetItem("bbb_endless_default", newDefault);
 		}
 
 		if (bbb.endless.enabled) {
@@ -4833,7 +4858,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Check the session default or original default value to see if endless pages should be enabled.
-		var sessionDefault = sessionStorage.bbb_endless_default;
+		var sessionDefault = sessionStorage.getItem("bbb_endless_default");
 
 		if (endless_session_toggle && sessionDefault)
 			endless_default = sessionDefault;
@@ -5659,12 +5684,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Update the blacklisted thumbnail info in the smart view object.
 		var time = new Date().getTime();
 		var id = el.getAttribute("data-id");
-		var smartView;
+		var smartView = localStorage.getItem("bbb_smart_view");
 
-		if (typeof(localStorage.bbb_smart_view) === "undefined") // Initialize the object if it doesn't exist.
+		if (smartView === null) // Initialize the object if it doesn't exist.
 			smartView = {last: time};
 		else {
-			smartView = JSON.parse(localStorage.bbb_smart_view);
+			smartView = JSON.parse(smartView);
 
 			if (time - smartView.last > 60000) // Reset the object if it hasn't been changed within a minute.
 				smartView = {last: time};
@@ -5677,16 +5702,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else
 			delete smartView[id];
 
-		localStorage.bbb_smart_view = JSON.stringify(smartView);
+		localStorage.bbbSetItem("bbb_smart_view", JSON.stringify(smartView));
 	}
 
 	function blacklistSmartViewCheck(id) {
 		// Check whether to display the post during the blacklist init.
-		if (!blacklist_smart_view || typeof(localStorage.bbb_smart_view) === "undefined")
+		var smartView = localStorage.getItem("bbb_smart_view");
+
+		if (!blacklist_smart_view || smartView === null)
 			return false;
 		else {
-			var smartView = JSON.parse(localStorage.bbb_smart_view);
 			var time = new Date().getTime();
+
+			smartView = JSON.parse(smartView);
 
 			if (time - smartView.last > 60000) { // Delete the ids if the object hasn't been changed within a minute.
 				localStorage.removeItem("bbb_smart_view");
@@ -7079,7 +7107,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				bbb.quick_search = bbb.el.quickSearchInput.value;
 
 				if (searchDiv.bbbHasClass("bbb-quick-search-pinned"))
-					sessionStorage.bbb_quick_search = bbb.quick_search;
+					sessionStorage.bbbSetItem("bbb_quick_search", bbb.quick_search);
 				else if (quick_search.indexOf("pinned") > -1)
 					quickSearchPinEnable();
 
@@ -7197,7 +7225,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Checked if the quick search has been pinned for this session.
-		var pinnedSearch = sessionStorage.bbb_quick_search;
+		var pinnedSearch = sessionStorage.getItem("bbb_quick_search");
 
 		if (pinnedSearch) {
 			bbb.quick_search = pinnedSearch;
@@ -7286,7 +7314,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		bbb.el.quickSearchDiv.bbbAddClass("bbb-quick-search-pinned");
 
 		if (bbb.quick_search)
-			sessionStorage.bbb_quick_search = bbb.quick_search;
+			sessionStorage.bbbSetItem("bbb_quick_search", bbb.quick_search);
 	}
 
 	function quickSearchPinDisable() {
