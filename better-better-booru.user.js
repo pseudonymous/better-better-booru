@@ -151,7 +151,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			if (error.code === 22 || error.code === 1014)
 				bbbNotice("Your settings/data could not be saved. The browser storage is full", -1);
 			else
-				bbbNotice("Unexpected error while attmpting to save. (Error: " + error.message + ")", -1);
+				bbbNotice("Unexpected error while attempting to save. (Error: " + error.message + ")", -1);
 		}
 	};
 
@@ -173,6 +173,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		custom_tag: {
 			searches: [],
 			style_list: {}
+		},
+		dialog: {
+			flags: {},
+			queue: []
 		},
 		drag_scroll: {
 			lastX: undefined,
@@ -1818,7 +1822,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function createMenu() {
 		var menu = bbb.el.menu.window = document.createElement("div");
-		menu.id = "bbb_menu";
+		menu.id = "bbb-menu";
 		menu.style.visibility = "hidden";
 
 		var tip = bbb.el.menu.tip = document.createElement("div");
@@ -1974,49 +1978,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		menu.appendChild(close);
 		menu.appendChild(cancel);
 		menu.appendChild(reset);
-
-		var tagEditBlocker = bbb.el.menu.tagEditBlocker = document.createElement("div");
-		tagEditBlocker.className = "bbb-edit-blocker";
-		menu.appendChild(tagEditBlocker);
-
-		var tagEditBox = document.createElement("div");
-		tagEditBox.className = "bbb-edit-box";
-		tagEditBlocker.appendChild(tagEditBox);
-
-		var tagEditHeader = document.createElement("h2");
-		tagEditHeader.innerHTML = "Tag Editor";
-		tagEditHeader.className = "bbb-header";
-		tagEditBox.appendChild(tagEditHeader);
-
-		var tagEditArea = bbb.el.menu.tagEditArea = document.createElement("textarea");
-		tagEditArea.className = "bbb-edit-area";
-		tagEditBox.appendChild(tagEditArea);
-
-		var tagEditOk = document.createElement("a");
-		tagEditOk.innerHTML = "OK";
-		tagEditOk.href = "#";
-		tagEditOk.className = "bbb-button";
-		tagEditOk.addEventListener("click", function(event) {
-			var tags = searchMultiToSingle(tagEditArea.value);
-			var args = bbb.tagEdit;
-
-			tagEditBlocker.style.display = "none";
-			args.input.value = tags;
-			args.object[args.prop] = tags;
-			event.preventDefault();
-		}, false);
-		tagEditBox.appendChild(tagEditOk);
-
-		var tagEditCancel = document.createElement("a");
-		tagEditCancel.innerHTML = "Cancel";
-		tagEditCancel.href = "#";
-		tagEditCancel.className = "bbb-button";
-		tagEditCancel.style.cssFloat = "right";
-		tagEditCancel.addEventListener("click", function(event) {
-			tagEditBlocker.style.display = "none";
-			event.preventDefault();
-		}, false);
-		tagEditBox.appendChild(tagEditCancel);
 
 		// Add menu to the DOM and manipulate the dimensions.
 		document.body.appendChild(menu);
@@ -2822,10 +2783,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function tagEditWindow(input, object, prop) {
-		bbb.el.menu.tagEditBlocker.style.display = "block";
-		bbb.el.menu.tagEditArea.value = searchSingleToMulti(input.value);
-		bbb.el.menu.tagEditArea.focus();
-		bbb.tagEdit = {input: input, object: object, prop: prop};
+		var tagEditBlocker = document.createDocumentFragment();
+
+		var tagEditHeader = document.createElement("h2");
+		tagEditHeader.innerHTML = "Tag Editor";
+		tagEditHeader.className = "bbb-header";
+		tagEditBlocker.appendChild(tagEditHeader);
+
+		var tagEditArea = bbb.el.menu.tagEditArea = document.createElement("textarea");
+		tagEditArea.value = searchSingleToMulti(input.value);
+		tagEditArea.className = "bbb-edit-area";
+		tagEditBlocker.appendChild(tagEditArea);
+
+		var tagEditOk = function() {
+			var tags = searchMultiToSingle(tagEditArea.value);
+
+			input.value = tags;
+			object[prop] = tags;
+		};
+
+		bbbDialog(tagEditBlocker, {ok: tagEditOk, cancel: true});
 	}
 
 	function adjustMenuHeight() {
@@ -3070,17 +3047,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				checkUser(bbb.user, bbb.options);
 				convertSettings("backup");
 				reloadMenu();
-				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"save & close\" to finalize the restore.");
+				bbbDialog("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"save & close\" to finalize the restore.");
 			}
 			catch (error) {
 				if (error instanceof SyntaxError)
-					alert("The backup does not appear to be formatted correctly. Please make sure everything was pasted correctly/completely and that only one backup is provided.");
+					bbbDialog("The backup does not appear to be formatted correctly. Please make sure everything was pasted correctly/completely and that only one backup is provided.");
 				else
-					alert("Unexpected error: " + error.message);
+					bbbDialog("Unexpected error: " + error.message);
 			}
 		}
 		else
-			alert("A backup could not be detected in the text provided. Please make sure everything was pasted correctly/completely.");
+			bbbDialog("A backup could not be detected in the text provided. Please make sure everything was pasted correctly/completely.");
 	}
 
 	/* Post functions */
@@ -6021,6 +5998,125 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			status.style.display = "none";
 	}
 
+	function bbbDialog(content, properties) {
+		// Open a dialog window that can have a predefined ok button (default) and/or cancel button. The properties object specifies dialog behavior and has the following values:
+		// ok/cancel: true to display the button, false to hide the button, function to display the button and specify a custom function for it
+		// condition: string to name a basic flag that will be checked/set by a dialog before displaying it, function to check custom conditions for a dialog before displaying it
+		// important: true to prioritize a dialog if it goes in the queue, false to allow a dialog to go to the end of the queue as normal
+
+		var prop = properties || {};
+		var okButton = (prop.ok === undefined ? true : prop.ok);
+		var cancelButton = (prop.cancel === undefined ? false : prop.cancel);
+		var condition = (prop.condition === undefined ? false : prop.condition);
+		var important = (prop.important === undefined ? false : prop.important);
+
+		// Queue the dialog window if one is already open.
+		if (document.getElementById("bbb-dialog-blocker")) {
+			if (important)
+				bbb.dialog.queue.unshift({content: content, properties: properties});
+			else
+				bbb.dialog.queue.push({content: content, properties: properties});
+
+			return;
+		}
+
+		// Test whether the dialog window should be allowed to display.
+		if (condition) {
+			var conditionType = typeof(condition);
+
+			if ((conditionType === "string" && bbb.dialog.flags[condition]) || (conditionType === "function" && condition())) {
+				nextBbbDialog();
+				return;
+			}
+			else if (conditionType === "string")
+				bbb.dialog.flags[condition] = true;
+		}
+
+		// Create the dialog window.
+		var blockDiv = document.createElement("div");
+		blockDiv.id = "bbb-dialog-blocker";
+
+		var windowDiv = document.createElement("div");
+		windowDiv.id = "bbb-dialog-window";
+		blockDiv.appendChild(windowDiv);
+
+		var contentDiv = windowDiv;
+
+		if (okButton) {
+			var ok = document.createElement("a");
+			ok.innerHTML = "OK";
+			ok.href = "#";
+			ok.className = "bbb-dialog-button";
+
+			if (typeof(okButton) === "function")
+				ok.addEventListener("click", okButton, false);
+
+			ok.addEventListener("click", closeBbbDialog, false);
+
+			okButton = ok;
+		}
+
+		if (cancelButton) {
+			var cancel = document.createElement("a");
+			cancel.innerHTML = "Cancel";
+			cancel.href = "#";
+			cancel.className = "bbb-dialog-button";
+			cancel.style.cssFloat = "right";
+
+			if (typeof(cancelButton) === "function")
+				cancel.addEventListener("click", cancelButton, false);
+
+			cancel.addEventListener("click", closeBbbDialog, false);
+
+			cancelButton = cancel;
+		}
+
+		if (okButton || cancelButton) {
+			contentDiv = document.createElement("div");
+			contentDiv.className = "bbb-dialog-content-div";
+			windowDiv.appendChild(contentDiv);
+
+			var buttonDiv = document.createElement("div");
+			buttonDiv.className = "bbb-dialog-button-div";
+			windowDiv.appendChild(buttonDiv);
+
+			if (okButton)
+				buttonDiv.appendChild(okButton);
+
+			if (cancelButton)
+				buttonDiv.appendChild(cancelButton);
+		}
+
+		if (typeof(content) === "string")
+			contentDiv.innerHTML = content;
+		else
+			contentDiv.appendChild(content);
+
+		document.body.appendChild(blockDiv);
+
+		(okButton || cancelButton).focus();
+	}
+
+	function closeBbbDialog(event) {
+		// Close the current dialog window.
+		var dialogBlocker = document.getElementById("bbb-dialog-blocker");
+
+		if (dialogBlocker)
+			document.body.removeChild(dialogBlocker);
+
+		nextBbbDialog();
+
+		event.preventDefault();
+	}
+
+	function nextBbbDialog() {
+		// Open the next queued dialog window.
+		var nextDialog = bbb.dialog.queue.shift();
+
+		if (nextDialog)
+			bbbDialog(nextDialog.content, nextDialog.properties);
+	}
+
 	function thumbSearchMatch(post, searchArray) {
 		// Take search objects and test them against a thumbnail's info.
 		if (!searchArray[0])
@@ -6633,54 +6729,50 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var customStyles = document.createElement("style");
 		customStyles.type = "text/css";
 
-		var styles = '#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); padding: 15px; position: fixed; top: 25px; left: 50%; z-index: 9001;}' +
-		'#bbb_menu * {font-size: 14px; line-height: 16px; outline: 0px none; border: 0px none; margin: 0px; padding: 0px;}' + // Reset some base settings.
-		'#bbb_menu h1 {font-size: 24px; line-height: 42px;}' +
-		'#bbb_menu h2 {font-size: 16px; line-height: 25px;}' +
-		'#bbb_menu input, #bbb_menu select, #bbb_menu textarea {border: #CCCCCC 1px solid;}' +
-		'#bbb_menu input {height: 17px; padding: 1px 0px; margin-top: 4px; vertical-align: top;}' +
-		'#bbb_menu input[type="checkbox"] {margin: 0px; vertical-align: middle; position: relative; bottom: 2px;}' +
-		'#bbb_menu .bbb-general-input input[type="text"], #bbb_menu .bbb-general-input select {width: 175px;}' +
-		'#bbb_menu select {height: 21px; margin-top: 4px; vertical-align: top;}' +
-		'#bbb_menu option {padding: 0px 3px;}' +
-		'#bbb_menu textarea {padding: 2px; resize: none;}' +
-		'#bbb_menu ul, #bbb_menu ol {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: block;}' +
-		'#bbb_menu .bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 5px 0px; padding: 5px 0px; overflow-y: auto;}' +
-		'#bbb_menu .bbb-page {position: relative; display: none;}' +
-		'#bbb_menu .bbb-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px;}' +
-		'#bbb_menu .bbb-tab {border-top-left-radius: 5px; border-top-right-radius: 5px; display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
-		'#bbb_menu .bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}' +
-		'#bbb_menu .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; width: 700px;}' +
-		'#bbb_menu .bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
-		'#bbb_menu .bbb-section-options, #bbb_menu .bbb-section-text {margin-bottom: 5px; max-width: 902px;}' +
-		'#bbb_menu .bbb-section-options-left, #bbb_menu .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
-		'#bbb_menu .bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
-		'#bbb_menu .bbb-general-label {display: block; height: 29px; padding: 0px 5px;}' +
-		'#bbb_menu .bbb-general-label:hover {background-color: #EEEEEE;}' +
-		'#bbb_menu .bbb-general-text {line-height: 29px;}' +
-		'#bbb_menu .bbb-general-input {float: right; line-height: 29px;}' +
-		'#bbb_menu .bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
-		'#bbb_menu .bbb-border-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
-		'#bbb_menu .bbb-border-bar, #bbb_menu .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
-		'#bbb_menu .bbb-border-settings {background-color: #FFFFFF;}' +
-		'#bbb_menu .bbb-border-div label, #bbb_menu .bbb-border-div span {display: inline-block; line-height: 29px;}' +
-		'#bbb_menu .bbb-border-name {text-align: left; width: 540px;}' +
-		'#bbb_menu .bbb-border-name input {width:460px;}' +
-		'#bbb_menu .bbb-border-color {text-align: center; width: 210px;}' +
-		'#bbb_menu .bbb-border-color input {width: 148px;}' +
-		'#bbb_menu .bbb-border-style {float: right; text-align: right; width: 130px;}' +
-		'#bbb_menu .bbb-border-divider {height: 4px;}' +
-		'#bbb_menu .bbb-insert-highlight .bbb-border-divider {background-color: blue; cursor: pointer;}' +
-		'#bbb_menu .bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
-		'#bbb_menu .bbb-border-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 2px; margin: 0px 2px;}' +
-		'#bbb_menu .bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}' +
-		'#bbb_menu .bbb-backup-area {height: 300px; width: 896px; margin-top: 2px;}' +
-		'#bbb_menu .bbb-blacklist-area {height: 300px; width: 896px; margin-top: 2px;}' +
-		'#bbb_menu .bbb-edit-blocker {display: none; height: 100%; width: 100%; background-color: rgba(0, 0, 0, 0.33); position: fixed; top: 0px; left: 0px;}' +
-		'#bbb_menu .bbb-edit-box {height: 500px; width: 800px; margin-left: -412px; margin-top: -262px; position: fixed; left: 50%; top: 50%; background-color: #FFFFFF; border: 2px solid #CCCCCC; padding: 10px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);}' +
-		'#bbb_menu .bbb-edit-text {margin-bottom: 5px;}' +
-		'#bbb_menu .bbb-edit-area {height: 429px; width: 794px; margin-bottom: 5px;}' +
-		'#bbb_menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
+		var styles = '#bbb-menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); padding: 15px; position: fixed; top: 25px; left: 50%; z-index: 9001;}' +
+		'#bbb-menu *, #bbb-dialog-window * {font-size: 14px; line-height: 16px; outline: 0px none; border: 0px none; margin: 0px; padding: 0px;}' + // Reset some base settings.
+		'#bbb-menu h1, #bbb-dialog-window h1 {font-size: 24px; line-height: 42px;}' +
+		'#bbb-menu h2, #bbb-dialog-window h2 {font-size: 16px; line-height: 25px;}' +
+		'#bbb-menu input, #bbb-menu select, #bbb-menu textarea, #bbb-dialog-window input, #bbb-dialog-window select, #bbb-dialog-window textarea {border: #CCCCCC 1px solid;}' +
+		'#bbb-menu input {height: 17px; padding: 1px 0px; margin-top: 4px; vertical-align: top;}' +
+		'#bbb-menu input[type="checkbox"] {margin: 0px; vertical-align: middle; position: relative; bottom: 2px;}' +
+		'#bbb-menu .bbb-general-input input[type="text"], #bbb-menu .bbb-general-input select {width: 175px;}' +
+		'#bbb-menu select {height: 21px; margin-top: 4px; vertical-align: top;}' +
+		'#bbb-menu option {padding: 0px 3px;}' +
+		'#bbb-menu textarea, #bbb-dialog-window textarea {padding: 2px; resize: none;}' +
+		'#bbb-menu ul, #bbb-menu ol, #bbb-dialog-window ul, #bbb-dialog-window ol {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: block;}' +
+		'#bbb-menu .bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 5px 0px; padding: 5px 0px; overflow-y: auto;}' +
+		'#bbb-menu .bbb-page {position: relative; display: none;}' +
+		'#bbb-menu .bbb-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px;}' +
+		'#bbb-menu .bbb-tab {border-top-left-radius: 5px; border-top-right-radius: 5px; display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
+		'#bbb-menu .bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}' +
+		'#bbb-menu .bbb-header, #bbb-dialog-window .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; width: 700px;}' +
+		'#bbb-menu .bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
+		'#bbb-menu .bbb-section-options, #bbb-menu .bbb-section-text {margin-bottom: 5px; max-width: 902px;}' +
+		'#bbb-menu .bbb-section-options-left, #bbb-menu .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
+		'#bbb-menu .bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
+		'#bbb-menu .bbb-general-label {display: block; height: 29px; padding: 0px 5px;}' +
+		'#bbb-menu .bbb-general-label:hover {background-color: #EEEEEE;}' +
+		'#bbb-menu .bbb-general-text {line-height: 29px;}' +
+		'#bbb-menu .bbb-general-input {float: right; line-height: 29px;}' +
+		'#bbb-menu .bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
+		'#bbb-menu .bbb-border-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
+		'#bbb-menu .bbb-border-bar, #bbb-menu .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
+		'#bbb-menu .bbb-border-settings {background-color: #FFFFFF;}' +
+		'#bbb-menu .bbb-border-div label, #bbb-menu .bbb-border-div span {display: inline-block; line-height: 29px;}' +
+		'#bbb-menu .bbb-border-name {text-align: left; width: 540px;}' +
+		'#bbb-menu .bbb-border-name input {width:460px;}' +
+		'#bbb-menu .bbb-border-color {text-align: center; width: 210px;}' +
+		'#bbb-menu .bbb-border-color input {width: 148px;}' +
+		'#bbb-menu .bbb-border-style {float: right; text-align: right; width: 130px;}' +
+		'#bbb-menu .bbb-border-divider {height: 4px;}' +
+		'#bbb-menu .bbb-insert-highlight .bbb-border-divider {background-color: blue; cursor: pointer;}' +
+		'#bbb-menu .bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
+		'#bbb-menu .bbb-border-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 2px; margin: 0px 2px;}' +
+		'#bbb-menu .bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}' +
+		'#bbb-menu .bbb-backup-area {height: 300px; width: 896px; margin-top: 2px;}' +
+		'#bbb-menu .bbb-blacklist-area {height: 300px; width: 896px; margin-top: 2px;}' +
+		'#bbb-menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
 		'#bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 488px; width: 488px; overflow: hidden; z-index: 9002; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);}' +
 		'#bbb-expl * {font-size: 12px;}' +
 		'#bbb-expl tiphead {display: block; font-weight: bold; text-decoration: underline; font-size: 13px; margin-top: 12px;}' +
@@ -6691,7 +6783,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb-notice {padding: 3px; width: 100%; display: none; position: relative; z-index: 9002; border-radius: 2px; border: 1px solid #000000; background-color: #CCCCCC;}' +
 		'#bbb-notice-msg {margin: 0px 25px 0px 55px; max-height: 200px; overflow: auto;}' +
 		'#bbb-notice-msg .bbb-notice-msg-entry {border-bottom: solid 1px #000000; margin-bottom: 5px; padding-bottom: 5px;}' +
-		'#bbb-notice-msg .bbb-notice-msg-entry:last-child {border-bottom: none 0px; margin-bottom: 0px; padding-bottom: 0px;}';
+		'#bbb-notice-msg .bbb-notice-msg-entry:last-child {border-bottom: none 0px; margin-bottom: 0px; padding-bottom: 0px;}' +
+		'#bbb-dialog-blocker {display: block; position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.33); z-index: 9003; text-align: center;}' +
+		'#bbb-dialog-blocker:before {content: ""; display: inline-block; height: 100%; vertical-align: middle;}' + // Helps vertically center an element with unknown dimensions: https://css-tricks.com/centering-in-the-unknown/
+		'#bbb-dialog-window {display: inline-block; display: inline-flex; flex-flow: column; position: relative; background-color: #FFFFFF; border: 10px solid #FFFFFF; outline: 1px solid #CCC; box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.5); color: #000000; max-width: 940px; max-height: 90%; overflow-x: hidden; overflow-y: auto; text-align: left; vertical-align: middle;}' +
+		'#bbb-dialog-window .bbb-dialog-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px; margin: 0px 5px;}' +
+		'#bbb-dialog-window .bbb-dialog-content-div {padding: 5px; overflow-x: hidden; overflow-y: auto;}' +
+		'#bbb-dialog-window .bbb-dialog-button-div {padding-top: 10px; flex-grow: 0; flex-shrink: 0; overflow: hidden;}' +
+		'#bbb-dialog-window .bbb-edit-area {height: 300px; width: 800px;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
 		if (thumbnail_count && (gLoc === "search" || gLoc === "notes" || gLoc === "favorites")) {
