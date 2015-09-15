@@ -6038,6 +6038,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		var windowDiv = document.createElement("div");
 		windowDiv.id = "bbb-dialog-window";
+		windowDiv.tabIndex = "-1";
 		blockDiv.appendChild(windowDiv);
 
 		var contentDiv = windowDiv;
@@ -6094,7 +6095,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		document.body.appendChild(blockDiv);
 
-		(okButton || cancelButton).focus();
+		(okButton || cancelButton || windowDiv).focus();
 	}
 
 	function closeBbbDialog(event) {
