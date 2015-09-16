@@ -1467,7 +1467,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postTag = (postEl ? postEl.tagName : undefined);
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
 		var directLink = getId("image-resize-link", target) || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
-		var twitterInfo = getMeta("twitter:image:src", target);
+		var twitterInfo = getMeta("twitter:image", target);
 		var previewInfo = getMeta("og:image", target);
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
 		var imgWidth = Number(imgContainer.getAttribute("data-width"));
