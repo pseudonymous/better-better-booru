@@ -4740,6 +4740,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function endlessInit() {
 		// Set up and start endless pages.
+		if (window.opener && history.length === 1)
+			sessionStorage.removeItem("bbb_endless_default");
+
 		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
 			return;
 
@@ -7182,6 +7185,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function quickSearch() {
 		// Set up quick search.
+		if (window.opener && history.length === 1)
+			sessionStorage.removeItem("bbb_quick_search");
+
 		if (quick_search === "disabled" || (gLoc !== "search" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "popular_view" && gLoc !== "favorite_group"))
 			return;
 
