@@ -734,7 +734,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Update the URL with the limit value.
 		if (allowUserLimit())
-			history.replaceState({}, "", updateURLQuery(location.search, {limit: thumbnail_count}));
+			history.replaceState((history.state || {}), "", updateURLQuery(location.search, {limit: thumbnail_count}));
 	}
 
 	function parsePost(postInfo) {
@@ -1370,7 +1370,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Update the URL with the limit value.
 		if (allowUserLimit())
-			history.replaceState({}, "", updateURLQuery(location.search, {limit: thumbnail_count}));
+			history.replaceState((history.state || {}), "", updateURLQuery(location.search, {limit: thumbnail_count}));
 	}
 
 	function replaceHidden(docEl) {
