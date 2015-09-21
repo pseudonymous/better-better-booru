@@ -4740,8 +4740,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function endlessInit() {
 		// Set up and start endless pages.
-		if (window.opener && history.length === 1)
-			sessionStorage.removeItem("bbb_endless_default");
+		resetSessionStorage("bbb_endless_default");
 
 		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
 			return;
@@ -7185,8 +7184,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function quickSearch() {
 		// Set up quick search.
-		if (window.opener && history.length === 1)
-			sessionStorage.removeItem("bbb_quick_search");
+		resetSessionStorage("bbb_quick_search");
 
 		if (quick_search === "disabled" || (gLoc !== "search" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "popular_view" && gLoc !== "favorite_group"))
 			return;
@@ -8330,6 +8328,20 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return true;
 		else
 			return false;
+	}
+
+	function resetSessionStorage(key) {
+		// Remove an inherited sessionStorage key for a new tab/window.
+		if (window.opener && history.length === 1) {
+			var state = history.state || {};
+			var stateProperty = key + "_reset";
+
+			if (!state[stateProperty]) {
+				sessionStorage.removeItem(key);
+				state[stateProperty] = true;
+				history.replaceState(state, "", location.href);
+			}
+		}
 	}
 
 	function accountSettingCheck(scriptSetting) {
