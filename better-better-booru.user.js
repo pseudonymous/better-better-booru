@@ -796,7 +796,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				noteToggleLinkInit();
 			}
 			else { // Load original ugoira version.
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a> | <a href="' + updateURLQuery(location.href, {original: "0"}) + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <div id="seek-slider" style="width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a> | <a href="' + updateURLQuery(location.href, {original: "0"}) + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
 
 				// Make notes toggle when clicking the ugoira animation.
 				noteToggleInit();
@@ -4161,13 +4161,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			$(function() {
 				Danbooru.Ugoira.create_player();
 				$(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) {
-					$("#ugoira-load-percentage").text(Math.floor(progress * 100));
-				});
-				$(Danbooru.Ugoira.player).on("loadingStateChanged", function(event, state) {
-					if (state === 2) {
-						$("#ugoira-load-progress").remove();
-						$("#seek-slider").show();
-					}
+					$("#seek-slider").progressbar("value", Math.floor(progress * 100));
 				});
 
 				var player_manually_paused = false;
@@ -4185,6 +4179,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					$("#ugoira-play").show();
 					player_manually_paused = true;
 					event.preventDefault();
+				});
+
+				$("#seek-slider").progressbar({
+					value: 0
 				});
 
 				$("#seek-slider").slider({
@@ -4740,7 +4738,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function endlessInit() {
 		// Set up and start endless pages.
-		resetSessionStorage("bbb_endless_default");
+		removeInheritedStorage("bbb_endless_default");
 
 		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
 			return;
@@ -7184,7 +7182,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function quickSearch() {
 		// Set up quick search.
-		resetSessionStorage("bbb_quick_search");
+		removeInheritedStorage("bbb_quick_search");
 
 		if (quick_search === "disabled" || (gLoc !== "search" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "popular_view" && gLoc !== "favorite_group"))
 			return;
@@ -8330,7 +8328,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return false;
 	}
 
-	function resetSessionStorage(key) {
+	function removeInheritedStorage(key) {
 		// Remove an inherited sessionStorage key for a new tab/window.
 		if (window.opener && history.length === 1) {
 			var state = history.state || {};
