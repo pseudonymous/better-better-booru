@@ -6,9 +6,7 @@
 // @version        7.1
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
-// @match          http://*.donmai.us/*
-// @match          https://*.donmai.us/*
-// @match          http://donmai.us/*
+// @match          *://*.donmai.us/*
 // @run-at         document-end
 // @grant          none
 // @icon           data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAAAAABWESUoAAAA9klEQVQ4y2NgGBgQu/Dau1/Pt/rhVPAfCkpwKXhUZ8Al2vT//yu89vDjV8AkP/P//zY0K//+eHVmoi5YyB7I/VDGiKYADP60wRT8P6aKTcH//0lgQcHS//+PYFdwFu7Ib8gKGBgYOQ22glhfGO7mqbEpzv///xyqAiAQAbGewIz8aoehQArEWsyQsu7O549XJiowoCpg4rM9CGS8V8UZ9GBwy5wBr4K/teL4Ffz//8mHgIL/v82wKgA6kkXE+zKIuRaHAhDQATFf4lHABmL+xKPAFhKUOBQwSyU+AzFXEvDFf3sCCnrxh8O3Ujwh+fXZvjoZ+udTAERqR5IgKEBRAAAAAElFTkSuQmCC
@@ -303,7 +301,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			show_shota: newOption("checkbox", false, "Show Shota", "Display shota posts in the search, pool, popular, favorites, comments, notes, and favorite group listings."),
 			show_toddlercon: newOption("checkbox", false, "Show Toddlercon", "Display toddlercon posts in the search, pool, popular, favorites, comments, notes, and favorite group listings."),
 			single_color_borders: newOption("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
-			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score(&#x2605;), favorite count(&hearts;), and rating (S, Q, or E) for a post with its thumbnail. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
+			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score (&#x2605;), favorite count (&hearts;), and rating (S, Q, or E) for a post with its thumbnail. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
 			thumbnail_count: newOption("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search, favorites, and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
 			track_new: newOption("checkbox", false, "Track New Posts", "Add a menu option titled \"new\" to the posts section submenu (between \"listing\" and \"upload\") that links to a customized search focused on keeping track of new posts.<tiphead>Note</tiphead>While browsing the new posts, the current page of posts is also tracked. If the new post listing is left, clicking the \"new\" link later on will attempt to pull up the posts where browsing was left off at.<tiphead>Tip</tiphead>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
@@ -1457,7 +1455,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	/* Functions for retrieving page info */
 	function scrapePost(pageEl) {
-		// Retrieve info from the current document or a supplied element containing the html with it.
+		// Retrieve info from the current document or a supplied element containing the HTML with it.
 		var target = pageEl || document;
 		var postContent = getPostContent(target);
 		var imgContainer = postContent.container;
@@ -5241,7 +5239,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Create the blacklist section.
 		var cookies = getCookie();
-		var blacklistDisabled = (cookies["disable-all-blacklists"] === "1" && blacklistBox);
+		var blacklistDisabled = (cookies.dab === "1" && blacklistBox);
 
 		for (i = 0, il = blacklistTags.length; i < il; i++) {
 			var blacklistTag = blacklistTags[i].bbbSpaceClean();
@@ -5249,7 +5247,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (blacklistSearch[0]) {
 				var entryHash = blacklistTag.bbbHash();
-				var entryDisabled = (blacklistDisabled || (cookies["bl:" + entryHash] === "1") ? true : false);
+				var entryDisabled = (blacklistDisabled || (cookies["b" + entryHash] === "1") ? true : false);
 				var newEntry = {active: !entryDisabled, tags:blacklistTag, search:blacklistSearch, matches: [], index: i, hash: entryHash};
 
 				bbb.blacklist.entries.push(newEntry);
@@ -5307,8 +5305,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (event.button !== 0)
 			return;
 
-		var blacklistDisabled = (getCookie()["disable-all-blacklists"] === "1");
+		var blacklistDisabled = (getCookie().dab === "1");
 		var entries = bbb.blacklist.entries;
+
+		if (blacklistDisabled) {
+			bbb.el.blacklistEnableLink.style.display = "none";
+			bbb.el.blacklistDisableLink.style.display = "inline";
+			createCookie("dab", 0, 365);
+		}
+		else {
+			bbb.el.blacklistEnableLink.style.display = "inline";
+			bbb.el.blacklistDisableLink.style.display = "none";
+			createCookie("dab", 1, 365);
+		}
 
 		for (var i = 0, il = entries.length; i < il; i++) {
 			var entry = entries[i];
@@ -5320,18 +5329,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			else {
 				if (entry.active)
 					blacklistEntryToggle(i);
-			}
-		}
 
-		if (blacklistDisabled) {
-			bbb.el.blacklistEnableLink.style.display = "none";
-			bbb.el.blacklistDisableLink.style.display = "inline";
-			createCookie("disable-all-blacklists", 0, 365);
-		}
-		else {
-			bbb.el.blacklistEnableLink.style.display = "inline";
-			bbb.el.blacklistDisableLink.style.display = "none";
-			createCookie("disable-all-blacklists", 1, 365);
+				createCookie("b" + entry.hash, 0, -1);
+			}
 		}
 
 		event.preventDefault();
@@ -5354,6 +5354,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var entry = bbb.blacklist.entries[entryIndex];
 		var matches = entry.matches;
 		var links = document.getElementsByClassName("bbb-blacklist-entry-" + entryIndex);
+		var blacklistDisabled = (getCookie().dab === "1");
 		var id;
 		var els;
 		var matchList;
@@ -5362,7 +5363,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (entry.active) {
 			entry.active = false;
 
-			createCookie("bl:" + entry.hash, 1);
+			if (!blacklistDisabled)
+				createCookie("b" + entry.hash, 1);
 
 			for (i = 0, il = links.length; i < il; i++)
 				links[i].bbbAddClass("blacklisted-active");
@@ -5388,7 +5390,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else {
 			entry.active = true;
 
-			createCookie("bl:" + entry.hash, 0, -1);
+			createCookie("b" + entry.hash, 0, -1);
 
 			for (i = 0, il = links.length; i < il; i++)
 				links[i].bbbRemoveClass("blacklisted-active");
