@@ -135,19 +135,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	Storage.prototype.bbbSetItem = function(key, value) {
 		// Store a value in storage and warn if it is full.
-		var targetStorage;
-
-		if (this === localStorage)
-			targetStorage = localStorage;
-		else if (this === sessionStorage)
-			targetStorage = sessionStorage;
-
 		try {
-			targetStorage.setItem(key, value);
+			this.setItem(key, value);
 		}
 		catch (error) {
 			if (error.code === 22 || error.code === 1014)
-				bbbNotice("Your settings/data could not be saved. The browser storage is full", -1);
+				bbbNotice("Your settings/data could not be saved. The browser storage is full.", -1);
 			else
 				bbbNotice("Unexpected error while attempting to save. (Error: " + error.message + ")", -1);
 		}
@@ -449,6 +442,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var bbbBlacklistIcon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAAC6V+0/AAAAkFBMVEUAAAD////////////////////////////////////////////////////////////////p6en////////////////////////////////////////////////////////+/v7///////////////////////////////////////////////////////////97JICZAAAAL3RSTlMACAQBoUSi5QcnMfmnsMW9VQno+vjsxrwstPyzMhOpSxS65vX06czqQf7NvqbzQKZY7GsAAADASURBVHhefZDnDoJAEITn8Kh3FAEFQbH3Mu//doaNLSFxfn7J7hT80cgJlAqc0S8bu55P+p47/rJQ8yUdflhCHq/WpjmZvKjSPPOyBFbZlNRKPFySzTaOANQJ6fZujsf9YUcjNMvpOQACn+kyLmjaObBI6QcAFGkRxYblLAIsqd4Q0ayUDzeBcr4A5q2h6U5Vfy5GeQbIh8l6I0YSKal72k3uhUSS8OQ0WwGPddFQq2/NPLW22rxrDgcZTvd35KGevk8VfmeGhUQAAAAASUVORK5CYII=";
 
 	/* "INIT" */
+	modifyDanbScript();
+
 	customCSS(); // Contains the portions related to notices.
 
 	delayMe(formatThumbnails); // Delayed to allow Danbooru to run first.
@@ -856,7 +851,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		disableEmbeddedNotes();
 
 		// Load/reload notes.
-		Danbooru.Note.load_all();
+		Danbooru.Note.load_all("bbb");
 
 		// Auto position the content if desired.
 		autoscrollPost();
@@ -3379,7 +3374,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			// Reset notes with embedded notes enabled.
 			Danbooru.Note.embed = true;
 			noteContainer.innerHTML = "";
-			Danbooru.Note.load_all();
+			Danbooru.Note.load_all("bbb");
 		};
 
 		document.addEventListener("click", toggleFunction, true); // Override all other click events for the translate link.
@@ -5711,6 +5706,20 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	/* Other functions */
+	function modifyDanbScript() {
+		// Modify some Danbooru functions so that they don't run unnecessarily.
+		var loadNotes = Danbooru.Note.load_all;
+
+		Danbooru.Note.load_all = function(allow) {
+			if (allow === "bbb")
+				loadNotes();
+		};
+
+		Danbooru.Blacklist.initialize_all = function() {
+			return;
+		};
+	}
+
 	function modifyPage() {
 		// Determine what function may be needed to fix/update content.
 		if (noXML())
