@@ -139,8 +139,30 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			this.setItem(key, value);
 		}
 		catch (error) {
-			if (error.code === 22 || error.code === 1014)
-				bbbNotice("Your settings/data could not be saved. The browser storage is full.", -1);
+			if (error.code === 22 || error.code === 1014) {
+				if (this === localStorage) {
+					if (localStorage.length > 2000) {
+						// Try clearing out autocomplete if that appears to be the problem.
+						for (var i = localStorage.length - 1; i >= 0; i--) {
+							var keyName = localStorage.key(i);
+
+							if (keyName.indexOf("ac-") === 0)
+								localStorage.removeItem(keyName);
+						}
+
+						try {
+							this.setItem(key, value);
+						}
+						catch (error2) {
+							bbbNotice("Your settings/data could not be saved. The browser's local storage is full.", -1);
+						}
+					}
+					else
+						bbbNotice("Your settings/data could not be saved. The browser's local storage is full.", -1);
+				}
+				else
+					bbbNotice("Your settings/data could not be saved. The browser's session storage is full.", -1);
+			}
 			else
 				bbbNotice("Unexpected error while attempting to save. (Error: " + error.message + ")", -1);
 		}
