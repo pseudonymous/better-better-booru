@@ -151,7 +151,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						}
 
 						try {
-							this.setItem(key, value);
+							localStorage.setItem(key, value);
 						}
 						catch (error2) {
 							bbbNotice("Your settings/data could not be saved. The browser's local storage is full.", -1);
@@ -188,7 +188,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			style_list: {}
 		},
 		dialog: {
-			flags: {},
 			queue: []
 		},
 		drag_scroll: {
@@ -218,6 +217,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			sidebar: undefined,
 			top: undefined
 		},
+		flags: {},
 		hotkeys: {
 			other: { // Hotkeys for misc locations.
 				66: {func: openMenu}, // B
@@ -258,6 +258,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
 			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> The default Danbooru behavior where the posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
+			blacklist_session_toggle: newOption("checkbox", true, "Session Toggle", "When toggling an individual blacklist entry on and off, the mode it's toggled to will persist across other pages in the same browsing session until it ends."),
 			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <tipdesc>Highlight:</tipdesc> Change the background color of blacklisted thumbnails. <tipdesc>Icon Overlay:</tipdesc> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
 			border_spacing: newOption("dropdown", 0, "Border Spacing", "Set the amount of blank space between a border and thumbnail and between a custom tag border and status border. <tiphead>Note</tiphead>Even when set to 0, status borders and custom tag borders will always have a minimum value of 1 between them. <tiphead>Tip</tiphead>Use this option if you often have trouble distinguishing a border from the thumbnail image.", {txtOptions:["0 (Default):0", "1:1", "2:2", "3:3"]}),
 			border_width: newOption("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3", "4:4", "5:5"]}),
@@ -332,7 +333,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			old: ""
 		},
 		sections: { // Setting sections and ordering.
-			blacklist_options: newSection("general", ["blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
+			blacklist_options: newSection("general", ["blacklist_session_toggle", "blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes"], "Post Control"),
@@ -349,13 +350,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			changed: {}
 		},
 		timers: {},
-		user: {}, // User settings.
-		xml: { // Active xml requests. False when successfully completed or not yet used. True when incomplete due to being in progress or an error.
-			endless: false,
-			hidden: false,
-			paginator: false,
-			thumbs: false
-		}
+		user: {} // User settings.
 	};
 
 	loadSettings(); // Load user settings.
@@ -377,6 +372,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var direct_downloads = bbb.user.direct_downloads;
 	var post_link_new_window = bbb.user.post_link_new_window;
 
+	var blacklist_session_toggle = bbb.user.blacklist_session_toggle;
 	var blacklist_post_display = bbb.user.blacklist_post_display;
 	var blacklist_thumb_mark = bbb.user.blacklist_thumb_mark;
 	var blacklist_highlight_color = bbb.user.blacklist_highlight_color;
@@ -532,7 +528,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			if (potentialHiddenPosts(mode)) {
 				url = (allowUserLimit() ? updateURLQuery(url, {limit: thumbnail_count}) : url);
-				bbb.xml.thumbs = true;
+				bbb.flags.thumbs_xml = true;
 
 				if (mode === "search")
 					fetchJSON(url.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?"), "search");
@@ -546,7 +542,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "popular" || mode === "popular_view") {
 			if (potentialHiddenPosts(mode)) {
-				bbb.xml.thumbs = true;
+				bbb.flags.thumbs_xml = true;
 
 				fetchJSON(url.replace(/\/(popular_view|popular)\/?/, "/$1.json"), mode);
 				bbbStatus("posts", "new");
@@ -555,7 +551,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (mode === "pool" || mode === "favorite_group") {
 			if (potentialHiddenPosts(mode)) {
 				idCache = getIdCache();
-				bbb.xml.thumbs = true;
+				bbb.flags.thumbs_xml = true;
 
 				if (idCache)
 					searchJSON(mode + "_search", {post_ids: idCache});
@@ -573,7 +569,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			fetchJSON("/posts.json?tags=status:any+id:" + idSearch.join(","), mode, idSearch);
 		}
 		else if (mode === "endless") {
-			bbb.xml.endless = true;
+			bbb.flags.endless_xml = true;
 
 			if (gLoc === "pool" || gLoc === "favorite_group") {
 				idCache = getIdCache();
@@ -632,7 +628,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 						// Update status message.
 						if (mode === "search" || mode === "popular" || mode === "popular_view" || mode === "notes" || mode === "favorites" || mode === "pool_search" || mode === "favorite_group_search") {
-							bbb.xml.thumbs = false;
+							bbb.flags.thumbs_xml = false;
 
 							parseListing(xml, optArg);
 						}
@@ -645,7 +641,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							searchJSON(optArg, xml);
 						}
 						else if (mode === "endless") {
-							bbb.xml.endless = false;
+							bbb.flags.endless_xml = false;
 
 							endlessXMLJSONHandler(xml, optArg);
 						}
@@ -1166,7 +1162,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (mode === "search" || mode === "notes" || mode === "favorites" || mode === "thumbnails") {
 			if (allowUserLimit()) {
 				url = updateURLQuery(location.href, {limit: thumbnail_count});
-				bbb.xml.thumbs = true;
+				bbb.flags.thumbs_xml = true;
 
 				fetchPages(url, "thumbnails");
 				bbbStatus("posts", "new");
@@ -1174,14 +1170,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "endless") {
 			url = endlessNexURL();
-			bbb.xml.endless = true;
+			bbb.flags.endless_xml = true;
 
 			fetchPages(url, "endless");
 			bbbStatus("posts", "new");
 		}
 		else if (mode === "paginator") {
 			url = (allowUserLimit() ? updateURLQuery(location.href, {limit: thumbnail_count}) : location.href);
-			bbb.xml.paginator = true;
+			bbb.flags.paginator_xml = true;
 
 			fetchPages(url, "paginator");
 		}
@@ -1193,7 +1189,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "hidden") {
 			url = "/posts/" + optArg;
-			bbb.xml.hidden = true;
+			bbb.flags.hidden_xml = true;
 
 			fetchPages(url, "hidden");
 			bbbStatus("hidden", "new");
@@ -1217,7 +1213,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						docEl.innerHTML = xmlhttp.responseText;
 
 						if (mode === "paginator") {
-							bbb.xml.paginator = false;
+							bbb.flags.paginator_xml = false;
 
 							replacePaginator(docEl);
 						}
@@ -1226,19 +1222,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							bbbStatus("post_comments", "done");
 						}
 						else if (mode === "thumbnails") {
-							bbb.xml.thumbs = false;
+							bbb.flags.thumbs_xml = false;
 
 							replaceThumbnails(docEl);
 							bbbStatus("posts", "done");
 						}
 						else if (mode === "hidden") {
-							bbb.xml.hidden = false;
+							bbb.flags.hidden_xml = false;
 
 							replaceHidden(docEl);
 							bbbStatus("hidden", "done");
 						}
 						else if (mode === "endless") {
-							bbb.xml.endless = false;
+							bbb.flags.endless_xml = false;
 
 							endlessXMLPageHandler(docEl);
 							bbbStatus("posts", "done");
@@ -1432,7 +1428,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				updateThumbCache();
 		}
 		else { // The image information couldn't be found.
-			bbb.xml.hidden = true; // Flag the XML as active to signal a problem and disable further attempts.
+			bbb.flags.hidden_xml = true; // Flag the XML as active to signal a problem and disable further attempts.
 
 			updateThumbCache();
 			bbbNotice("Error retrieving thumbnail information.", -1);
@@ -4385,7 +4381,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function fixHiddenThumbs() {
 		// Fix hidden thumbnails by fetching the info from a page.
-		if (bbb.xml.hidden)
+		if (bbb.flags.hidden_xml)
 			return;
 
 		var hiddenImgs = document.getElementsByClassName("bbb-hidden-thumb");
@@ -4918,7 +4914,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postsDiv = (gLoc === "search" ? document.getElementById("posts") : undefined);
 		var postsVisible = (!postsDiv || postsDiv.style.display !== "none");
 
-		if (bbb.xml.thumbs || bbb.xml.paginator || !postsVisible) // Delay the check until the page is completely ready.
+		if (bbb.flags.thumbs_xml || bbb.flags.paginator_xml || !postsVisible) // Delay the check until the page is completely ready.
 			endlessDelay(100);
 		else {
 			if (!bbb.endless.last_paginator)
@@ -4956,7 +4952,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function endlessRequestPage() {
 		// Start an XML request for a new page.
-		if (bbb.xml.endless || endlessLastPage()) // Retrieve pages one at a time for as long as they exist.
+		if (bbb.flags.endless_xml || endlessLastPage()) // Retrieve pages one at a time for as long as they exist.
 			return;
 
 		searchPages("endless");
@@ -5264,7 +5260,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (blacklistSearch[0]) {
 				var entryHash = blacklistTag.bbbHash();
-				var entryDisabled = (blacklistDisabled || (cookies["b" + entryHash] === "1") ? true : false);
+				var entryDisabled = (blacklistDisabled || (blacklist_session_toggle && cookies["b" + entryHash] === "1") ? true : false);
 				var newEntry = {active: !entryDisabled, tags:blacklistTag, search:blacklistSearch, matches: [], index: i, hash: entryHash};
 
 				bbb.blacklist.entries.push(newEntry);
@@ -5347,7 +5343,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (entry.active)
 					blacklistEntryToggle(i);
 
-				createCookie("b" + entry.hash, 0, -1);
+				if (blacklist_session_toggle)
+					createCookie("b" + entry.hash, 0, -1);
 			}
 		}
 
@@ -5380,7 +5377,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (entry.active) {
 			entry.active = false;
 
-			if (!blacklistDisabled)
+			if (blacklist_session_toggle && !blacklistDisabled)
 				createCookie("b" + entry.hash, 1);
 
 			for (i = 0, il = links.length; i < il; i++)
@@ -5407,7 +5404,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else {
 			entry.active = true;
 
-			createCookie("b" + entry.hash, 0, -1);
+			if (blacklist_session_toggle)
+				createCookie("b" + entry.hash, 0, -1);
 
 			for (i = 0, il = links.length; i < il; i++)
 				links[i].bbbRemoveClass("blacklisted-active");
@@ -6059,12 +6057,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (condition) {
 			var conditionType = typeof(condition);
 
-			if ((conditionType === "string" && bbb.dialog.flags[condition]) || (conditionType === "function" && condition())) {
+			if ((conditionType === "string" && bbb.flags[condition]) || (conditionType === "function" && condition())) {
 				nextBbbDialog();
 				return;
 			}
 			else if (conditionType === "string")
-				bbb.dialog.flags[condition] = true;
+				bbb.flags[condition] = true;
 		}
 
 		// Create the dialog window.
