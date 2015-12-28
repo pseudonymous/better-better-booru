@@ -140,11 +140,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		catch (error) {
 			if (error.code === 22 || error.code === 1014) {
+				var keyName;
+				var i;
+
 				if (this === localStorage) {
 					if (localStorage.length > 2000) {
 						// Try clearing out autocomplete if that appears to be the problem.
-						for (var i = localStorage.length - 1; i >= 0; i--) {
-							var keyName = localStorage.key(i);
+						for (i = localStorage.length - 1; i >= 0; i--) {
+							keyName = localStorage.key(i);
 
 							if (keyName.indexOf("ac-") === 0)
 								localStorage.removeItem(keyName);
@@ -153,15 +156,29 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						try {
 							localStorage.setItem(key, value);
 						}
-						catch (error2) {
-							bbbNotice("Your settings/data could not be saved. The browser's local storage is full.", -1);
+						catch (localError) {
+							bbbNotice("Your settings/data could not be saved/updated. The browser's local storage is full.", -1);
 						}
 					}
 					else
-						bbbNotice("Your settings/data could not be saved. The browser's local storage is full.", -1);
+						bbbNotice("Your settings/data could not be saved/updated. The browser's local storage is full.", -1);
 				}
-				else
-					bbbNotice("Your settings/data could not be saved. The browser's session storage is full.", -1);
+				else {
+					// Keep only a few values in session storage.
+					for (i = sessionStorage.length - 1; i >= 0; i--) {
+						keyName = sessionStorage.key(i);
+
+						if (keyName !== "bbb_endless_default" && keyName !== "bbb_quick_search")
+							sessionStorage.removeItem(keyName);
+					}
+
+					try {
+						sessionStorage.setItem(key, value);
+					}
+					catch (sessionError) {
+						bbbNotice("Your settings/data could not be saved/updated. The browser's session storage is full.", -1);
+					}
+				}
 			}
 			else
 				bbbNotice("Unexpected error while attempting to save. (Error: " + error.message + ")", -1);
