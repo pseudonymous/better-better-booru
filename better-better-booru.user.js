@@ -8901,16 +8901,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function timestamp(format) {
 		// Returns a simple timestamp based on the format string provided. String placeholders: y = year, m = month, d = day, hh = hours, mm = minutes, ss = seconds
+		function padDate(number) {
+			// Adds a leading "0" to single digit values.
+			var numString = String(number);
+
+			if (numString.length === 1)
+				numString = "0" + numString;
+
+			return numString;
+		}
+
 		var stamp = format || "y-m-d hh:mm:ss";
 		var time = new Date();
 		var year = time.getFullYear();
-		var month = time.getMonth() + 1;
-		var day = time.getDate();
-		var hours = time.getHours();
-		var minutes = time.getMinutes();
-		var seconds = time.getSeconds();
+		var month = padDate(time.getMonth() + 1);
+		var day = padDate(time.getDate());
+		var hours = padDate(time.getHours());
+		var minutes = padDate(time.getMinutes());
+		var seconds = padDate(time.getSeconds());
 
-		stamp = stamp.replace("hh", hours).replace("mm", minutes).replace("ss", seconds).replace("y", year).replace("m", month).replace("d", day).replace(/(^|\D)(\d)($|\D)/g, "$10$2$3");
+		stamp = stamp.replace("hh", hours).replace("mm", minutes).replace("ss", seconds).replace("y", year).replace("m", month).replace("d", day);
 
 		return stamp;
 	}
