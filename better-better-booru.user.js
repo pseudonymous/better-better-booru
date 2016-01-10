@@ -7036,7 +7036,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Blacklist thumbnail display;
 		if (blacklist_post_display === "removed") {
-			styles += 'div.post.post-preview.blacklisted {display: block !important;}' + // Comment listing override.
+			styles += 'article.post-preview.blacklisted {display: inline-block !important;}' +
+			'article.post-preview.blacklisted.blacklisted-active {display: none !important;}' +
+			'div.post.post-preview.blacklisted {display: block !important;}' + // Comment listing override.
 			'div.post.post-preview.blacklisted.blacklisted-active {display: none !important;}';
 		}
 		else if (blacklist_post_display === "hidden") {
