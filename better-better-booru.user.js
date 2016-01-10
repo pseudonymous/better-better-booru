@@ -140,33 +140,45 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		catch (error) {
 			if (error.code === 22 || error.code === 1014) {
-				var keyName;
-				var i;
-
 				if (this === localStorage) {
-					if (localStorage.length > 2000) {
-						// Try clearing out autocomplete if that appears to be the problem.
-						for (i = localStorage.length - 1; i >= 0; i--) {
-							keyName = localStorage.key(i);
+					if (!bbb.flags.local_storage_full) {
+						if (localStorage.length > 2000) {
+							// Try clearing out autocomplete if that appears to be the problem.
+							cleanLocalStorage("autocomplete");
 
-							if (keyName.indexOf("ac-") === 0)
-								localStorage.removeItem(keyName);
+							try {
+								localStorage.setItem(key, value);
+							}
+							catch (localError) {
+								bbb.flags.local_storage_full = true;
+							}
 						}
+						else
+							bbb.flags.local_storage_full = true;
 
-						try {
-							localStorage.setItem(key, value);
-						}
-						catch (localError) {
-							bbbNotice("Your settings/data could not be saved/updated. The browser's local storage is full.", -1);
+						// Store the local storage value until it can be retried.
+						if (bbb.flags.local_storage_full) {
+							bbb.local_storage_queue = {};
+							bbb.local_storage_queue[key] = value;
+							localStorageDialog();
 						}
 					}
-					else
-						bbbNotice("Your settings/data could not be saved/updated. The browser's local storage is full.", -1);
+					else {
+						// Temporarily store additional local storage values until they can be retried.
+						if (sessionStorage.getItem("bbb_local_storage_queue")) {
+							var sessLocal = JSON.parse(sessionStorage.getItem("bbb_local_storage_queue"));
+
+							sessLocal[key] = value;
+							sessionStorage.bbbSetItem("bbb_local_storage_queue", JSON.stringify(sessLocal));
+						}
+						else
+							bbb.local_storage_queue[key] = value;
+					}
 				}
 				else {
 					// Keep only a few values in session storage.
-					for (i = sessionStorage.length - 1; i >= 0; i--) {
-						keyName = sessionStorage.key(i);
+					for (var i = sessionStorage.length - 1; i >= 0; i--) {
+						var keyName = sessionStorage.key(i);
 
 						if (keyName !== "bbb_endless_default" && keyName !== "bbb_quick_search")
 							sessionStorage.removeItem(keyName);
@@ -181,7 +193,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				}
 			}
 			else
-				bbbNotice("Unexpected error while attempting to save. (Error: " + error.message + ")", -1);
+				bbbNotice("Unexpected error while attempting to save/update settings. (Error: " + error.message + ")", -1);
 		}
 	};
 
@@ -369,6 +381,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		timers: {},
 		user: {} // User settings.
 	};
+
+	localStorageCheck();
 
 	loadSettings(); // Load user settings.
 
@@ -6797,7 +6811,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb-menu .bbb-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px;}' +
 		'#bbb-menu .bbb-tab {border-top-left-radius: 5px; border-top-right-radius: 5px; display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
 		'#bbb-menu .bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}' +
-		'#bbb-menu .bbb-header, #bbb-dialog-window .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; width: 700px;}' +
+		'#bbb-menu .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; width: 700px;}' +
 		'#bbb-menu .bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
 		'#bbb-menu .bbb-section-options, #bbb-menu .bbb-section-text {margin-bottom: 5px; max-width: 902px;}' +
 		'#bbb-menu .bbb-section-options-left, #bbb-menu .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
@@ -6837,7 +6851,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb-notice-msg .bbb-notice-msg-entry:last-child {border-bottom: none 0px; margin-bottom: 0px; padding-bottom: 0px;}' +
 		'#bbb-dialog-blocker {display: block; position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.33); z-index: 9003; text-align: center;}' +
 		'#bbb-dialog-blocker:before {content: ""; display: inline-block; height: 100%; vertical-align: middle;}' + // Helps vertically center an element with unknown dimensions: https://css-tricks.com/centering-in-the-unknown/
-		'#bbb-dialog-window {display: inline-block; display: inline-flex; flex-flow: column; position: relative; background-color: #FFFFFF; border: 10px solid #FFFFFF; outline: 1px solid #CCC; box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.5); color: #000000; max-width: 940px; max-height: 90%; overflow-x: hidden; overflow-y: auto; text-align: left; vertical-align: middle;}' +
+		'#bbb-dialog-window {display: inline-block; display: inline-flex; flex-flow: column; position: relative; background-color: #FFFFFF; border: 10px solid #FFFFFF; outline: 1px solid #CCC; box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.5); color: #000000; max-width: 940px; max-height: 90%; overflow-x: hidden; overflow-y: auto; text-align: left; vertical-align: middle; line-height: initial;}' +
+		'#bbb-dialog-window .bbb-header {display: inline-block; clear: both; border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; margin-right: 100px; padding-right: 50px; white-space: nowrap;}' +
 		'#bbb-dialog-window .bbb-dialog-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px; margin: 0px 5px;}' +
 		'#bbb-dialog-window .bbb-dialog-content-div {padding: 5px; overflow-x: hidden; overflow-y: auto;}' +
 		'#bbb-dialog-window .bbb-dialog-button-div {padding-top: 10px; flex-grow: 0; flex-shrink: 0; overflow: hidden;}' +
@@ -8756,8 +8771,224 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		event.preventDefault();
 	}
 
+	function localStorageDialog() {
+		// Open a dialog box for cleaning out local storage for donmai.us.
+		if (getCookie().bbb_ignore_storage)
+			return;
+
+		var domains = [
+			{url: "http://danbooru.donmai.us/", untrusted: false},
+			{url: "https://danbooru.donmai.us/", untrusted: false},
+			{url: "http://donmai.us/", untrusted: false},
+			{url: "https://donmai.us/", untrusted: true},
+			{url: "http://sonohara.donmai.us/", untrusted: false},
+			{url: "https://sonohara.donmai.us/", untrusted: true},
+			{url: "http://hijiribe.donmai.us/", untrusted: false},
+			{url: "https://hijiribe.donmai.us/", untrusted: true},
+			{url: "http://safebooru.donmai.us/", untrusted: false},
+			{url: "https://safebooru.donmai.us/", untrusted: false},
+			{url: "http://testbooru.donmai.us/", untrusted: false}
+		];
+
+		var content = document.createDocumentFragment();
+
+		var header = document.createElement("h2");
+		header.innerHTML = "Local Storage Error";
+		header.className = "bbb-header";
+		content.appendChild(header);
+
+		var introText = document.createElement("div");
+		introText.innerHTML = "While trying to save some settings, BBB has detected that your browser's local storage is full for the donmai.us domain and was unable to automatically fix the problem. In order for BBB to function properly, the storage needs to be cleaned out.<br><br> BBB can cycle through the various donmai locations and clear out Danbooru's autocomplete cache and BBB's thumbnail info cache for each. Please select the domains/subdomains you'd like to clean from below and click OK to continue. If you click cancel, BBB will ignore the storage problems for the rest of this browsing session, but features may not work as expected.<br><br> <b>Notes:</b><ul><li>Three options in the domain list are not selected by default (marked as untrusted) since they require special permission from the user to accept invalid security certificates. However, if BBB detects you're already on one of these untrusted domains, then it will be automatically selected.</li><li>If you encounter this warning again right after storage has been cleaned, you may have to check domains you didn't check before or use the \"delete everything\" option to clear items in local storage besides autocomplete and thumbnail info.</li></ul><br> <b>Donmai.us domains/subdomains:</b><br>";
+		content.appendChild(introText);
+
+		var domainDiv = document.createElement("div");
+		domainDiv.style.lineHeight = "1.5em";
+		content.appendChild(domainDiv);
+
+		var cbFunc = function(event) {
+			var target = event.target;
+
+			target.nextSibling.style.textDecoration = (target.checked ? "none" : "line-through");
+		};
+
+		for (var i = 0, il = domains.length; i < il; i++) {
+			var domain = domains[i];
+			var isChecked = (!domain.untrusted || location.href.indexOf(domain.url) > -1);
+
+			var listCheckbox = document.createElement("input");
+			listCheckbox.name = domain.url;
+			listCheckbox.type = "checkbox";
+			listCheckbox.checked = isChecked;
+			listCheckbox.style.marginRight = "5px";
+			listCheckbox.addEventListener("click", cbFunc, false);
+			domainDiv.appendChild(listCheckbox);
+
+			var listLink = document.createElement("a");
+			listLink.innerHTML = domain.url + (domain.untrusted ? " (untrusted)" : "");
+			listLink.href = domain.url;
+			listLink.target = "_blank";
+			listLink.style.textDecoration = (isChecked ? "none" : "line-through");
+			domainDiv.appendChild(listLink);
+
+			var br = document.createElement("br");
+			domainDiv.appendChild(br);
+		}
+
+		var optionsText = document.createElement("div");
+		optionsText.innerHTML = "<b>Options:</b><br>";
+		optionsText.style.marginTop = "1em";
+		content.appendChild(optionsText);
+
+		var optionsDiv = document.createElement("div");
+		optionsDiv.style.lineHeight = "1.5em";
+		content.appendChild(optionsDiv);
+
+		var compCheckbox = document.createElement("input");
+		compCheckbox.name = "complete-delete";
+		compCheckbox.type = "checkbox";
+		compCheckbox.style.marginRight = "5px";
+		optionsDiv.appendChild(compCheckbox);
+
+		var compText = document.createTextNode("Delete everything in local storage for each selection except for my BBB settings.");
+		optionsDiv.appendChild(compText);
+
+		var okFunc = function() {
+			var options = domainDiv.getElementsByTagName("input");
+			var mode = (compCheckbox.checked ? "complete" : "normal");
+			var selectedURLs = [];
+			var origURL = location.href;
+			var nextURL;
+			var cleanCur = false;
+			var session = new Date().getTime();
+
+			for (var i = 0, il = options.length; i < il; i++) {
+				var option = options[i];
+
+				if (option.checked) {
+					if (origURL.indexOf(option.name) === 0)
+						cleanCur = true;
+					else if (!nextURL)
+						nextURL = option.name;
+					else
+						selectedURLs.push(encodeURIComponent(option.name));
+				}
+			}
+
+			// Clean the current domain if it was selected.
+			if (cleanCur)
+				cleanLocalStorage(mode);
+
+			if (!nextURL) {
+				// Retry saving if only the current domain was selected and do nothing if no domains were selected.
+				if (cleanCur)
+					retryLocalStorage();
+			}
+			else {
+				// Start cycling through domains.
+				bbbDialog("Currently cleaning local storage and loading the next domain. Please wait...", {ok: false, important: true});
+				sessionStorage.bbbSetItem("bbb_local_storage_queue", JSON.stringify(bbb.local_storage_queue));
+				location.href = updateURLQuery(nextURL + "posts/1/", {clean_storage: mode, clean_urls: selectedURLs.join(","), clean_origurl: encodeURIComponent(origURL), clean_session: session});
+			}
+		};
+
+		var cancelFunc = function() {
+			createCookie("bbb_ignore_storage", 1);
+		};
+
+		bbbDialog(content, {ok: okFunc, cancel: cancelFunc});
+	}
+
+	function cleanLocalStorage(mode) {
+		// Clean out various values in local storage.
+		var keyName;
+		var i;
+
+		if (mode === "autocomplete") {
+			for (i = localStorage.length - 1; i >= 0; i--) {
+				keyName = localStorage.key(i);
+
+				if (keyName.indexOf("ac-") === 0)
+					localStorage.removeItem(keyName);
+			}
+		}
+		else if (mode === "normal") {
+			for (i = localStorage.length - 1; i >= 0; i--) {
+				keyName = localStorage.key(i);
+
+				if (keyName.indexOf("ac-") === 0 || keyName === "bbb_thumb_cache")
+					localStorage.removeItem(keyName);
+			}
+		}
+		else if (mode === "complete") {
+			for (i = localStorage.length - 1; i >= 0; i--) {
+				keyName = localStorage.key(i);
+
+				if (keyName !== "bbb_settings")
+					localStorage.removeItem(keyName);
+			}
+		}
+	}
+
+	function retryLocalStorage() {
+		// Try to save items to local storage that failed to get saved before.
+		var sessLocal;
+
+		if (sessionStorage.getItem("bbb_local_storage_queue")) {
+			// Retrieve the local storage values from session storage after cycling through other domains.
+			sessLocal = JSON.parse(sessionStorage.getItem("bbb_local_storage_queue"));
+			sessionStorage.removeItem("bbb_local_storage_queue");
+		}
+		else if (bbb.local_storage_queue) {
+			// If only the BBB storage object exists, assume the user selected to only clean the current domain and reset things.
+			sessLocal = bbb.local_storage_queue;
+			delete bbb.local_storage_queue;
+			delete bbb.flags.local_storage_full;
+		}
+		else
+			return;
+
+		for (var i in sessLocal) {
+			if (sessLocal.hasOwnProperty(i))
+				localStorage.bbbSetItem(i, sessLocal[i]);
+		}
+
+		bbbNotice("Local storage cleaning has completed.", 6);
+	}
+
+	function localStorageCheck() {
+		// Check if the script is currently trying to manage local storage.
+		var cleanMode = getVar("clean_storage");
+		var cleanSession = Number(getVar("clean_session")) || 0;
+		var session = new Date().getTime();
+
+		// Stop if the script is not currently cleaning storage or if an old URL is detected.
+		if (!cleanMode || Math.abs(session - cleanSession) > 60000)
+			return;
+
+		if (cleanMode !== "save") {
+			// Cycle through the domains.
+			var urls = getVar("clean_urls").split(",");
+			var nextURL = urls.shift();
+			var origURL = getVar("clean_origurl");
+
+			bbb.flags.local_storage_full = true; // Keep the cycled domains from triggering storage problems
+			bbbDialog("Currently cleaning local storage and loading the next domain. Please wait...", {ok: false, important: true});
+			history.replaceState((history.state || {}), "", updateURLQuery(location.href, {clean_storage: undefined, clean_urls: undefined, clean_origurl: undefined, clean_session: undefined}));
+			cleanLocalStorage(cleanMode);
+
+			if (nextURL)
+				window.setTimeout(function() { location.href = updateURLQuery(decodeURIComponent(nextURL) + "posts/1/", {clean_storage: cleanMode, clean_urls: urls.join(), clean_origurl: origURL, clean_session: session}); }, 2000);
+			else
+				window.setTimeout(function() { location.href = updateURLQuery(decodeURIComponent(origURL), {clean_storage: "save", clean_session: session}); }, 2000);
+		}
+		else if (cleanMode === "save") {
+			history.replaceState((history.state || {}), "", updateURLQuery(location.href, {clean_storage: undefined, clean_session: undefined}));
+			retryLocalStorage();
+		}
+	}
+
 	function getCookie() {
-		// Return associative array with cookie values.
+		// Return an associative array with cookie values.
 		var data = document.cookie;
 
 		if(!data)
