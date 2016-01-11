@@ -285,9 +285,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			blacklist_add_bars: newOption("checkbox", false, "Additional Bars", "Add a blacklist bar to the comment search listing and individually linked comments so that blacklist entries can be toggled as needed."),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
 			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
-			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> The default Danbooru behavior where the posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
+			blacklist_post_display: newOption("dropdown", "default", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Default:</tipdesc> Danbooru's default method of displaying blacklisted posts. <tipdesc>Removed:</tipdesc> Posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Default:default", "Removed:removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
-			blacklist_session_toggle: newOption("checkbox", true, "Session Toggle", "When toggling an individual blacklist entry on and off, the mode it's toggled to will persist across other pages in the same browsing session until it ends."),
+			blacklist_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling an individual blacklist entry on and off, the mode it's toggled to will persist across other pages in the same browsing session until it ends.<tiphead>Note</tiphead>For blacklists with many entries, this option can cause unexpected behavior (ex: getting logged out) if too many entries are toggled off at the same time."),
 			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <tipdesc>Highlight:</tipdesc> Change the background color of blacklisted thumbnails. <tipdesc>Icon Overlay:</tipdesc> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
 			border_spacing: newOption("dropdown", 0, "Border Spacing", "Set the amount of blank space between a border and thumbnail and between a custom tag border and status border. <tiphead>Note</tiphead>Even when set to 0, status borders and custom tag borders will always have a minimum value of 1 between them. <tiphead>Tip</tiphead>Use this option if you often have trouble distinguishing a border from the thumbnail image.", {txtOptions:["0 (Default):0", "1:1", "2:2", "3:3"]}),
 			border_width: newOption("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3", "4:4", "5:5"]}),
@@ -6852,7 +6852,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb-dialog-blocker {display: block; position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.33); z-index: 9003; text-align: center;}' +
 		'#bbb-dialog-blocker:before {content: ""; display: inline-block; height: 100%; vertical-align: middle;}' + // Helps vertically center an element with unknown dimensions: https://css-tricks.com/centering-in-the-unknown/
 		'#bbb-dialog-window {display: inline-block; display: inline-flex; flex-flow: column; position: relative; background-color: #FFFFFF; border: 10px solid #FFFFFF; outline: 1px solid #CCC; box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.5); color: #000000; max-width: 940px; max-height: 90%; overflow-x: hidden; overflow-y: auto; text-align: left; vertical-align: middle; line-height: initial;}' +
-		'#bbb-dialog-window .bbb-header {display: inline-block; clear: both; border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; margin-right: 100px; padding-right: 50px; white-space: nowrap;}' +
+		'#bbb-dialog-window .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; margin-right: 100px; padding-right: 50px; white-space: nowrap;}' +
 		'#bbb-dialog-window .bbb-dialog-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px; margin: 0px 5px;}' +
 		'#bbb-dialog-window .bbb-dialog-content-div {padding: 5px; overflow-x: hidden; overflow-y: auto;}' +
 		'#bbb-dialog-window .bbb-dialog-button-div {padding-top: 10px; flex-grow: 0; flex-shrink: 0; overflow: hidden;}' +
@@ -7034,7 +7034,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'#blacklist-box.bbb-blacklist-box li span {color: #AAAAAA;}';
 		}
 
-		// Blacklist thumbnail display;
+		// Blacklist thumbnail display.
+		if (blacklist_post_display !== "default") {
+			// Override some of Danbooru's CSS for actively blacklisted thumbs.
+			styles += 'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {filter: none; -webkit-filter: none; -ms-filter: "none";}' +
+			'article.post-preview.blacklisted.blacklisted-active:after, div.post.post-preview.blacklisted.blacklisted-active:after {content: none;}' +
+			'article.post-preview.blacklisted.blacklisted-active img, div.post.post-preview.blacklisted.blacklisted-active img {display: initial;}' +
+			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {background-color: transparent;}';
+		}
+
 		if (blacklist_post_display === "removed") {
 			styles += 'article.post-preview.blacklisted {display: inline-block !important;}' +
 			'article.post-preview.blacklisted.blacklisted-active {display: none !important;}' +
@@ -7044,7 +7052,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (blacklist_post_display === "hidden") {
 			styles += 'article.post-preview.blacklisted.blacklisted-active {display: inline-block !important;}' +
 			'div.post.post-preview.blacklisted {display: block !important;}' + // Comments.
-			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview {visibility: hidden !important;}';
+			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link {visibility: hidden !important;}';
 		}
 		else if (blacklist_post_display === "replaced") {
 			styles += 'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {display: inline-block !important; background-position: ' + totalBorderWidth + 'px ' + totalBorderWidth + 'px !important; background-repeat: no-repeat !important; background-image: url(' + bbbBlacklistImg + ') !important;}' +
@@ -8127,7 +8135,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else
 			paginator.parentNode.appendChild(paginatorSpacer);
 
-		// Create the css for the fixed paginator separately from the main one since it needs to know what the page's final layout will be with the main css applied.
+		// Create the CSS for the fixed paginator separately from the main one since it needs to know what the page's final layout will be with the main CSS applied.
 		var style = document.createElement("style");
 		style.type = "text/css";
 		style.innerHTML = '.bbb-fixed-paginator div.paginator {position: fixed; padding: 0px; margin: 0px; bottom: 0px; left: 50%; margin-left: ' + paginatorMargAdjust + 'px;}' +
