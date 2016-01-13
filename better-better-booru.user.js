@@ -4336,7 +4336,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						link.bbbAddClass("bbb-custom-tag");
 
 						if (secondaryLength === 1 || (single_color_borders && secondaryLength > 1))
-							borderStyle = "border: " + border_width + "px " + secondary[0][0] + " " + secondary[0][1] + " !important;";
+							borderStyle = "border-color: " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " !important;";
 						else if (secondaryLength === 2)
 							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[1][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[1][1] + " " + secondary[0][1] + " !important;";
 						else if (secondaryLength === 3)
@@ -7022,6 +7022,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'.ui-autocomplete {z-index: 2002 !important;}';
 		}
 
+		// Collapse sidebar sections.
 		if (collapse_sidebar) {
 			styles += '#sidebar ul.bbb-collapsed-sidebar, #sidebar form.bbb-collapsed-sidebar {display: block !important; height: 0px !important; margin: 0px !important; padding: 0px !important; overflow: hidden !important;}' + // Hide the element without changing the display to "none" since that interferes with some of Danbooru's JS.
 			'#sidebar h1, #sidebar h2 {display: inline-block !important;}'; // Inline-block is possible here due to not using display in the previous rule.
