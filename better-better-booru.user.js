@@ -285,7 +285,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			blacklist_add_bars: newOption("checkbox", false, "Additional Bars", "Add a blacklist bar to the comment search listing and individually linked comments so that blacklist entries can be toggled as needed."),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
 			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
-			blacklist_post_display: newOption("dropdown", "default", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Default:</tipdesc> Danbooru's default method of displaying blacklisted posts. <tipdesc>Removed:</tipdesc> Posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Default:default", "Removed:removed", "Hidden:hidden", "Replaced:replaced"]}),
+			blacklist_post_display: newOption("dropdown", "disabled", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> Posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Disabled:disabled", "Removed:removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
 			blacklist_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling an individual blacklist entry on and off, the mode it's toggled to will persist across other pages in the same browsing session until it ends.<tiphead>Note</tiphead>For blacklists with many entries, this option can cause unexpected behavior (ex: getting logged out) if too many entries are toggled off at the same time."),
 			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <tipdesc>Highlight:</tipdesc> Change the background color of blacklisted thumbnails. <tipdesc>Icon Overlay:</tipdesc> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
@@ -6979,14 +6979,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Thumbnail info.
 		var thumbInfoStyle = "height: 18px; font-size: 14px; line-height: 18px; text-align: center;";
 
+		if (thumb_info !== "disabled")
+			styles += '.bbb-thumb-info-parent.blacklisted.blacklisted-active .bbb-thumb-info {display: none;}';
+
 		if (thumb_info === "below")
 			styles += '.bbb-thumb-info-parent .bbb-thumb-info {display: block;' + thumbInfoStyle + '}';
 		else if (thumb_info === "hover") {
 			styles += '.bbb-thumb-info-parent .bbb-thumb-info {display: none; position: relative; bottom: 18px; background-color: rgba(255, 255, 255, 0.9);' + thumbInfoStyle + '}' +
 			'.bbb-thumb-info-parent:hover .bbb-thumb-info {display: block;}' +
 			'#has-children-relationship-preview article.post-preview.bbb-thumb-info-parent, #has-parent-relationship-preview article.post-preview.bbb-thumb-info-parent {min-width: 130px !important;}' + // Give parent/child notice thumbs a minimum width to prevent element shifting upon hover.
-			'.bbb-thumb-info-parent:hover .bbb-thumb-info.bbb-thumb-info-short {bottom: 0px;}' + // Short thumbnails get no overlapping.
-			'.bbb-thumb-info-parent.blacklisted-active .bbb-thumb-info.bbb-thumb-info-short {bottom: 18px;}'; // Actively blacklisted short thumbnails get overlapping.
+			'.bbb-thumb-info-parent:hover .bbb-thumb-info.bbb-thumb-info-short {bottom: 0px;}'; // Short thumbnails get no overlapping.
 		}
 
 		// Endless
@@ -7035,13 +7037,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Blacklist thumbnail display.
-		if (blacklist_post_display !== "default") {
+		if (blacklist_post_display !== "disabled") {
 			// Override some of Danbooru's CSS for actively blacklisted thumbs.
 			styles += 'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {filter: none; -webkit-filter: none; -ms-filter: "none";}' +
 			'article.post-preview.blacklisted.blacklisted-active:after, div.post.post-preview.blacklisted.blacklisted-active:after {content: none;}' +
 			'article.post-preview.blacklisted.blacklisted-active img, div.post.post-preview.blacklisted.blacklisted-active img {display: initial;}' +
 			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {background-color: transparent;}';
 		}
+		else
+			styles += '.blacklisted.blacklisted-active a.bbb-thumb-link.bbb-custom-tag {border-width: 0px !important;}'; // Hide custom borders for Danbooru's default blacklist style.
 
 		if (blacklist_post_display === "removed") {
 			styles += 'article.post-preview.blacklisted {display: inline-block !important;}' +
@@ -7088,12 +7092,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'article.post-preview.blacklisted .bbb-close-circle, div.post.post-preview.blacklisted div.preview .bbb-close-circle {display: none;}';
 		}
 
+		// Move save search to the sidebar.
 		if (move_save_search) {
 			styles += '.bbb-saved-search-item #saved-searches-nav, .bbb-saved-search-item #saved-searches-nav * {background-color: transparent; color: #0073FF; display: inline; font-family: Verdana,Helvetica,sans-serif; line-height: 1.25em; padding: 0px; margin: 0px; border: none;}' +
 			'.bbb-saved-search-item #saved-searches-nav input:hover, .bbb-saved-search-item #saved-searches-nav button:hover {color: #80b9ff;}' +
 			'.bbb-saved-search-item #saved-searches-nav input:focus, .bbb-saved-search-item #saved-searches-nav button:focus {outline: thin dotted;}';
 		}
 
+		// Quick search styles.
 		if (quick_search !== "disabled") {
 			styles += '#bbb-quick-search {position: fixed; top: 0px; right: 0px; z-index: 2001; overflow: auto; padding: 2px; background-color: #FFFFFF; border-bottom: 1px solid #CCCCCC; border-left: 1px solid #CCCCCC; border-bottom-left-radius: 10px;}' +
 			'#bbb-quick-search-form {display: none;}' +
