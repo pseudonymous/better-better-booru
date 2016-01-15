@@ -1,5 +1,20 @@
 Changelog
 ----------
+* Version ?:
+ * Added a "session toggle" blacklist option for controlling whether individual blacklist entries remain toggled off across pages.
+ * Updated the "post display" blacklist option with a "disabled" setting to allow the use of Danbooru's default blacklist style and changed "removed" to a standalone setting.
+ * Updated the "thumbnail info" option so that it is hidden on blacklisted posts.
+ * Updated to support Danbooru's blacklist style changes.
+ * Updated to support Danbooru's slider changes for ugoira posts.
+ * Updated to support Danbooru not looping posts with sound.
+ * Updated to prevent notes and blacklists from being unnecessarily loaded by Danbooru.
+ * Fixed loading problems caused by full browser storage.
+ * Fixed audio issues on video posts with sound.
+ * Fixed the icon overlay position for animated/video posts.
+ * Fixed the "search add" option's "toggle" setting not responding to autocomplete selections made by mouse.
+ * Fixed the "thumbnail controls" blacklist option not working in the comments section when using the "post display" blacklist option's "hidden" setting.
+ * Fixed instances of tab/window specific settings carrying over to new tabs/windows (endless pages session toggle, quick search pinned status).
+ * Fixed the timestamp not using leading zeros properly.
 * Version 7.1:
  * Added an "additional bars" blacklist option for adding a blacklist bar to thumbnail sections without it.
  * Updated to support MP4 posts.
