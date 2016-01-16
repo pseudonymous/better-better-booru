@@ -15,6 +15,7 @@ Features
 * Allows the viewing of hidden/censored tags and automatic control of the number of thumbnails per a page with a basic account or no account.
 * Endless pages support for various thumbnail listings with several customization options.
 * Multiple options and features for improved blacklist functionality:
+ * Session toggle - Make individually disabled blacklist entries persist from page to page.
  * Post display - Change how blacklisted posts are hidden.
  * Thumbnail marking - Mark blacklisted thumbnails that have been unhidden so that they are easier to distinguish from other thumbnails.
  * Thumbnail controls - Allow control over the blacklist from a blacklisted thumbnail and allow for individual control of each blacklisted thumbnail.

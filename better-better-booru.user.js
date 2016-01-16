@@ -3,12 +3,10 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        7.1
+// @version        7.2
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
-// @match          http://*.donmai.us/*
-// @match          https://*.donmai.us/*
-// @match          http://donmai.us/*
+// @match          *://*.donmai.us/*
 // @run-at         document-end
 // @grant          none
 // @icon           data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAAAAABWESUoAAAA9klEQVQ4y2NgGBgQu/Dau1/Pt/rhVPAfCkpwKXhUZ8Al2vT//yu89vDjV8AkP/P//zY0K//+eHVmoi5YyB7I/VDGiKYADP60wRT8P6aKTcH//0lgQcHS//+PYFdwFu7Ib8gKGBgYOQ22glhfGO7mqbEpzv///xyqAiAQAbGewIz8aoehQArEWsyQsu7O549XJiowoCpg4rM9CGS8V8UZ9GBwy5wBr4K/teL4Ffz//8mHgIL/v82wKgA6kkXE+zKIuRaHAhDQATFf4lHABmL+xKPAFhKUOBQwSyU+AzFXEvDFf3sCCnrxh8O3Ujwh+fXZvjoZ+udTAERqR5IgKEBRAAAAAElFTkSuQmCC
@@ -135,6 +133,70 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			this.addEventListener("DOMNodeInserted", func, false);
 	};
 
+	Storage.prototype.bbbSetItem = function(key, value) {
+		// Store a value in storage and warn if it is full.
+		try {
+			this.setItem(key, value);
+		}
+		catch (error) {
+			if (error.code === 22 || error.code === 1014) {
+				if (this === localStorage) {
+					if (!bbb.flags.local_storage_full) {
+						if (localStorage.length > 2000) {
+							// Try clearing out autocomplete if that appears to be the problem.
+							cleanLocalStorage("autocomplete");
+
+							try {
+								localStorage.setItem(key, value);
+							}
+							catch (localError) {
+								bbb.flags.local_storage_full = true;
+							}
+						}
+						else
+							bbb.flags.local_storage_full = true;
+
+						// Store the local storage value until it can be retried.
+						if (bbb.flags.local_storage_full) {
+							bbb.local_storage_queue = {};
+							bbb.local_storage_queue[key] = value;
+							localStorageDialog();
+						}
+					}
+					else {
+						// Temporarily store additional local storage values until they can be retried.
+						if (sessionStorage.getItem("bbb_local_storage_queue")) {
+							var sessLocal = JSON.parse(sessionStorage.getItem("bbb_local_storage_queue"));
+
+							sessLocal[key] = value;
+							sessionStorage.bbbSetItem("bbb_local_storage_queue", JSON.stringify(sessLocal));
+						}
+						else
+							bbb.local_storage_queue[key] = value;
+					}
+				}
+				else {
+					// Keep only a few values in session storage.
+					for (var i = sessionStorage.length - 1; i >= 0; i--) {
+						var keyName = sessionStorage.key(i);
+
+						if (keyName !== "bbb_endless_default" && keyName !== "bbb_quick_search")
+							sessionStorage.removeItem(keyName);
+					}
+
+					try {
+						sessionStorage.setItem(key, value);
+					}
+					catch (sessionError) {
+						bbbNotice("Your settings/data could not be saved/updated. The browser's session storage is full.", -1);
+					}
+				}
+			}
+			else
+				bbbNotice("Unexpected error while attempting to save/update settings. (Error: " + error.message + ")", -1);
+		}
+	};
+
 	/* Global Variables */
 	var bbb = { // Container for script info.
 		blacklist: {
@@ -153,6 +215,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		custom_tag: {
 			searches: [],
 			style_list: {}
+		},
+		dialog: {
+			queue: []
 		},
 		drag_scroll: {
 			lastX: undefined,
@@ -181,6 +246,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			sidebar: undefined,
 			top: undefined
 		},
+		flags: {},
 		hotkeys: {
 			other: { // Hotkeys for misc locations.
 				66: {func: openMenu}, // B
@@ -211,7 +277,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			translation_mode: false
 		},
 		options: { // Setting options and data.
-			bbb_version: "7.1",
+			bbb_version: "7.2",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
@@ -219,8 +285,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			blacklist_add_bars: newOption("checkbox", false, "Additional Bars", "Add a blacklist bar to the comment search listing and individually linked comments so that blacklist entries can be toggled as needed."),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
 			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
-			blacklist_post_display: newOption("dropdown", "removed", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> The default Danbooru behavior where the posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Removed (Default):removed", "Hidden:hidden", "Replaced:replaced"]}),
+			blacklist_post_display: newOption("dropdown", "disabled", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> Posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Disabled:disabled", "Removed:removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
+			blacklist_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling an individual blacklist entry on and off, the mode it's toggled to will persist across other pages in the same browsing session until it ends.<tiphead>Note</tiphead>For blacklists with many entries, this option can cause unexpected behavior (ex: getting logged out) if too many entries are toggled off at the same time."),
 			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <tipdesc>Highlight:</tipdesc> Change the background color of blacklisted thumbnails. <tipdesc>Icon Overlay:</tipdesc> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
 			border_spacing: newOption("dropdown", 0, "Border Spacing", "Set the amount of blank space between a border and thumbnail and between a custom tag border and status border. <tiphead>Note</tiphead>Even when set to 0, status borders and custom tag borders will always have a minimum value of 1 between them. <tiphead>Tip</tiphead>Use this option if you often have trouble distinguishing a border from the thumbnail image.", {txtOptions:["0 (Default):0", "1:1", "2:2", "3:3"]}),
 			border_width: newOption("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3", "4:4", "5:5"]}),
@@ -279,7 +346,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			show_shota: newOption("checkbox", false, "Show Shota", "Display shota posts in the search, pool, popular, favorites, comments, notes, and favorite group listings."),
 			show_toddlercon: newOption("checkbox", false, "Show Toddlercon", "Display toddlercon posts in the search, pool, popular, favorites, comments, notes, and favorite group listings."),
 			single_color_borders: newOption("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
-			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score(&#x2605;), favorite count(&hearts;), and rating (S, Q, or E) for a post with its thumbnail. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
+			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score (&#x2605;), favorite count (&hearts;), and rating (S, Q, or E) for a post with its thumbnail. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
 			thumbnail_count: newOption("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search, favorites, and notes listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
 			track_new: newOption("checkbox", false, "Track New Posts", "Add a menu option titled \"new\" to the posts section submenu (between \"listing\" and \"upload\") that links to a customized search focused on keeping track of new posts.<tiphead>Note</tiphead>While browsing the new posts, the current page of posts is also tracked. If the new post listing is left, clicking the \"new\" link later on will attempt to pull up the posts where browsing was left off at.<tiphead>Tip</tiphead>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
@@ -295,7 +362,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			old: ""
 		},
 		sections: { // Setting sections and ordering.
-			blacklist_options: newSection("general", ["blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
+			blacklist_options: newSection("general", ["blacklist_session_toggle", "blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes"], "Post Control"),
@@ -312,14 +379,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			changed: {}
 		},
 		timers: {},
-		user: {}, // User settings.
-		xml: { // Active xml requests. False when successfully completed or not yet used. True when incomplete due to being in progress or an error.
-			endless: false,
-			hidden: false,
-			paginator: false,
-			thumbs: false
-		}
+		user: {} // User settings.
 	};
+
+	localStorageCheck();
 
 	loadSettings(); // Load user settings.
 
@@ -340,6 +403,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var direct_downloads = bbb.user.direct_downloads;
 	var post_link_new_window = bbb.user.post_link_new_window;
 
+	var blacklist_session_toggle = bbb.user.blacklist_session_toggle;
 	var blacklist_post_display = bbb.user.blacklist_post_display;
 	var blacklist_thumb_mark = bbb.user.blacklist_thumb_mark;
 	var blacklist_highlight_color = bbb.user.blacklist_highlight_color;
@@ -427,6 +491,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var bbbBlacklistIcon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAAC6V+0/AAAAkFBMVEUAAAD////////////////////////////////////////////////////////////////p6en////////////////////////////////////////////////////////+/v7///////////////////////////////////////////////////////////97JICZAAAAL3RSTlMACAQBoUSi5QcnMfmnsMW9VQno+vjsxrwstPyzMhOpSxS65vX06czqQf7NvqbzQKZY7GsAAADASURBVHhefZDnDoJAEITn8Kh3FAEFQbH3Mu//doaNLSFxfn7J7hT80cgJlAqc0S8bu55P+p47/rJQ8yUdflhCHq/WpjmZvKjSPPOyBFbZlNRKPFySzTaOANQJ6fZujsf9YUcjNMvpOQACn+kyLmjaObBI6QcAFGkRxYblLAIsqd4Q0ayUDzeBcr4A5q2h6U5Vfy5GeQbIh8l6I0YSKal72k3uhUSS8OQ0WwGPddFQq2/NPLW22rxrDgcZTvd35KGevk8VfmeGhUQAAAAASUVORK5CYII=";
 
 	/* "INIT" */
+	modifyDanbScript();
+
 	customCSS(); // Contains the portions related to notices.
 
 	delayMe(formatThumbnails); // Delayed to allow Danbooru to run first.
@@ -493,7 +559,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
 			if (potentialHiddenPosts(mode)) {
 				url = (allowUserLimit() ? updateURLQuery(url, {limit: thumbnail_count}) : url);
-				bbb.xml.thumbs = true;
+				bbb.flags.thumbs_xml = true;
 
 				if (mode === "search")
 					fetchJSON(url.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?"), "search");
@@ -507,7 +573,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "popular" || mode === "popular_view") {
 			if (potentialHiddenPosts(mode)) {
-				bbb.xml.thumbs = true;
+				bbb.flags.thumbs_xml = true;
 
 				fetchJSON(url.replace(/\/(popular_view|popular)\/?/, "/$1.json"), mode);
 				bbbStatus("posts", "new");
@@ -516,7 +582,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (mode === "pool" || mode === "favorite_group") {
 			if (potentialHiddenPosts(mode)) {
 				idCache = getIdCache();
-				bbb.xml.thumbs = true;
+				bbb.flags.thumbs_xml = true;
 
 				if (idCache)
 					searchJSON(mode + "_search", {post_ids: idCache});
@@ -534,7 +600,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			fetchJSON("/posts.json?tags=status:any+id:" + idSearch.join(","), mode, idSearch);
 		}
 		else if (mode === "endless") {
-			bbb.xml.endless = true;
+			bbb.flags.endless_xml = true;
 
 			if (gLoc === "pool" || gLoc === "favorite_group") {
 				idCache = getIdCache();
@@ -593,7 +659,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 						// Update status message.
 						if (mode === "search" || mode === "popular" || mode === "popular_view" || mode === "notes" || mode === "favorites" || mode === "pool_search" || mode === "favorite_group_search") {
-							bbb.xml.thumbs = false;
+							bbb.flags.thumbs_xml = false;
 
 							parseListing(xml, optArg);
 						}
@@ -602,11 +668,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						else if (mode === "pool_cache" || mode === "favorite_group_cache") {
 							var collId = /\/(?:pools|favorite_groups)\/(\d+)/.exec(location.href)[1];
 
-							sessionStorage["bbb_" + mode + "_" + collId] = new Date().getTime() + " " + xml.post_ids;
+							sessionStorage.bbbSetItem("bbb_" + mode + "_" + collId, new Date().getTime() + " " + xml.post_ids);
 							searchJSON(optArg, xml);
 						}
 						else if (mode === "endless") {
-							bbb.xml.endless = false;
+							bbb.flags.endless_xml = false;
 
 							endlessXMLJSONHandler(xml, optArg);
 						}
@@ -710,7 +776,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Update the URL with the limit value.
 		if (allowUserLimit())
-			history.replaceState({}, "", updateURLQuery(location.search, {limit: thumbnail_count}));
+			history.replaceState((history.state || {}), "", updateURLQuery(location.search, {limit: thumbnail_count}));
 	}
 
 	function parsePost(postInfo) {
@@ -741,11 +807,23 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Replace the "resize to window" link with new resize links.
 		modifyResizeLink();
 
+		// Keep any original video from continuing to play/download after being removed.
+		var origVideo = imgContainer.getElementsByTagName("video")[0];
+
+		if (origVideo) {
+			origVideo.pause();
+			origVideo.src = "about:blank";
+			origVideo.load();
+		}
+
 		// Create content.
 		if (post.file_ext === "swf") // Create flash object.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <object height="' + post.image_height + '" width="' + post.image_width + '"> <params name="movie" value="' + post.file_url + '"> <embed allowscriptaccess="never" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"> </params> </object> <p><a href="' + post.file_url + '">Save this flash (right click and save)</a></p>';
-		else if (post.file_ext === "webm" || post.file_ext === "mp4") // Create video
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
+		else if (post.file_ext === "webm" || post.file_ext === "mp4") { // Create video
+			var playerLoop = (post.has_sound ? '' : ' loop="loop"'); // No looping for videos with sound.
+
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay"' + playerLoop + ' controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
+		}
 		else if (post.file_ext === "zip" && /(?:^|\s)ugoira(?:$|\s)/.test(post.tag_string)) { // Create ugoira
 			var useUgoiraOrig = getVar("original");
 
@@ -760,7 +838,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				noteToggleLinkInit();
 			}
 			else { // Load original ugoira version.
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <p id="ugoira-load-progress">Loaded <span id="ugoira-load-percentage">0</span>%</p> <div id="seek-slider" style="display: none; width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a> | <a href="' + updateURLQuery(location.href, {original: "0"}) + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + post.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(post.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.image_height + '" data-large-width="' + post.image_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + post.image_height + '" width="' + post.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + post.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <div id="seek-slider" style="width: ' + (post.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + post.large_file_url + '">Save as video (right click and save)</a> | <a href="' + updateURLQuery(location.href, {original: "0"}) + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
 
 				// Make notes toggle when clicking the ugoira animation.
 				noteToggleInit();
@@ -822,7 +900,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		disableEmbeddedNotes();
 
 		// Load/reload notes.
-		Danbooru.Note.load_all();
+		Danbooru.Note.load_all("bbb");
 
 		// Auto position the content if desired.
 		autoscrollPost();
@@ -1115,7 +1193,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (mode === "search" || mode === "notes" || mode === "favorites" || mode === "thumbnails") {
 			if (allowUserLimit()) {
 				url = updateURLQuery(location.href, {limit: thumbnail_count});
-				bbb.xml.thumbs = true;
+				bbb.flags.thumbs_xml = true;
 
 				fetchPages(url, "thumbnails");
 				bbbStatus("posts", "new");
@@ -1123,14 +1201,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "endless") {
 			url = endlessNexURL();
-			bbb.xml.endless = true;
+			bbb.flags.endless_xml = true;
 
 			fetchPages(url, "endless");
 			bbbStatus("posts", "new");
 		}
 		else if (mode === "paginator") {
 			url = (allowUserLimit() ? updateURLQuery(location.href, {limit: thumbnail_count}) : location.href);
-			bbb.xml.paginator = true;
+			bbb.flags.paginator_xml = true;
 
 			fetchPages(url, "paginator");
 		}
@@ -1142,7 +1220,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 		else if (mode === "hidden") {
 			url = "/posts/" + optArg;
-			bbb.xml.hidden = true;
+			bbb.flags.hidden_xml = true;
 
 			fetchPages(url, "hidden");
 			bbbStatus("hidden", "new");
@@ -1166,7 +1244,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						docEl.innerHTML = xmlhttp.responseText;
 
 						if (mode === "paginator") {
-							bbb.xml.paginator = false;
+							bbb.flags.paginator_xml = false;
 
 							replacePaginator(docEl);
 						}
@@ -1175,19 +1253,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							bbbStatus("post_comments", "done");
 						}
 						else if (mode === "thumbnails") {
-							bbb.xml.thumbs = false;
+							bbb.flags.thumbs_xml = false;
 
 							replaceThumbnails(docEl);
 							bbbStatus("posts", "done");
 						}
 						else if (mode === "hidden") {
-							bbb.xml.hidden = false;
+							bbb.flags.hidden_xml = false;
 
 							replaceHidden(docEl);
 							bbbStatus("hidden", "done");
 						}
 						else if (mode === "endless") {
-							bbb.xml.endless = false;
+							bbb.flags.endless_xml = false;
 
 							endlessXMLPageHandler(docEl);
 							bbbStatus("posts", "done");
@@ -1334,7 +1412,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Update the URL with the limit value.
 		if (allowUserLimit())
-			history.replaceState({}, "", updateURLQuery(location.search, {limit: thumbnail_count}));
+			history.replaceState((history.state || {}), "", updateURLQuery(location.search, {limit: thumbnail_count}));
 	}
 
 	function replaceHidden(docEl) {
@@ -1381,7 +1459,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				updateThumbCache();
 		}
 		else { // The image information couldn't be found.
-			bbb.xml.hidden = true; // Flag the XML as active to signal a problem and disable further attempts.
+			bbb.flags.hidden_xml = true; // Flag the XML as active to signal a problem and disable further attempts.
 
 			updateThumbCache();
 			bbbNotice("Error retrieving thumbnail information.", -1);
@@ -1421,7 +1499,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	/* Functions for retrieving page info */
 	function scrapePost(pageEl) {
-		// Retrieve info from the current document or a supplied element containing the html with it.
+		// Retrieve info from the current document or a supplied element containing the HTML with it.
 		var target = pageEl || document;
 		var postContent = getPostContent(target);
 		var imgContainer = postContent.container;
@@ -1433,7 +1511,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postTag = (postEl ? postEl.tagName : undefined);
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
 		var directLink = getId("image-resize-link", target) || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
-		var twitterInfo = getMeta("twitter:image:src", target);
+		var twitterInfo = getMeta("twitter:image", target);
 		var previewInfo = getMeta("og:image", target);
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
 		var imgWidth = Number(imgContainer.getAttribute("data-width"));
@@ -1788,7 +1866,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function createMenu() {
 		var menu = bbb.el.menu.window = document.createElement("div");
-		menu.id = "bbb_menu";
+		menu.id = "bbb-menu";
 		menu.style.visibility = "hidden";
 
 		var tip = bbb.el.menu.tip = document.createElement("div");
@@ -1944,49 +2022,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		menu.appendChild(close);
 		menu.appendChild(cancel);
 		menu.appendChild(reset);
-
-		var tagEditBlocker = bbb.el.menu.tagEditBlocker = document.createElement("div");
-		tagEditBlocker.className = "bbb-edit-blocker";
-		menu.appendChild(tagEditBlocker);
-
-		var tagEditBox = document.createElement("div");
-		tagEditBox.className = "bbb-edit-box";
-		tagEditBlocker.appendChild(tagEditBox);
-
-		var tagEditHeader = document.createElement("h2");
-		tagEditHeader.innerHTML = "Tag Editor";
-		tagEditHeader.className = "bbb-header";
-		tagEditBox.appendChild(tagEditHeader);
-
-		var tagEditArea = bbb.el.menu.tagEditArea = document.createElement("textarea");
-		tagEditArea.className = "bbb-edit-area";
-		tagEditBox.appendChild(tagEditArea);
-
-		var tagEditOk = document.createElement("a");
-		tagEditOk.innerHTML = "OK";
-		tagEditOk.href = "#";
-		tagEditOk.className = "bbb-button";
-		tagEditOk.addEventListener("click", function(event) {
-			var tags = searchMultiToSingle(tagEditArea.value);
-			var args = bbb.tagEdit;
-
-			tagEditBlocker.style.display = "none";
-			args.input.value = tags;
-			args.object[args.prop] = tags;
-			event.preventDefault();
-		}, false);
-		tagEditBox.appendChild(tagEditOk);
-
-		var tagEditCancel = document.createElement("a");
-		tagEditCancel.innerHTML = "Cancel";
-		tagEditCancel.href = "#";
-		tagEditCancel.className = "bbb-button";
-		tagEditCancel.style.cssFloat = "right";
-		tagEditCancel.addEventListener("click", function(event) {
-			tagEditBlocker.style.display = "none";
-			event.preventDefault();
-		}, false);
-		tagEditBox.appendChild(tagEditCancel);
 
 		// Add menu to the DOM and manipulate the dimensions.
 		document.body.appendChild(menu);
@@ -2792,10 +2827,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function tagEditWindow(input, object, prop) {
-		bbb.el.menu.tagEditBlocker.style.display = "block";
-		bbb.el.menu.tagEditArea.value = searchSingleToMulti(input.value);
-		bbb.el.menu.tagEditArea.focus();
-		bbb.tagEdit = {input: input, object: object, prop: prop};
+		var tagEditBlocker = document.createDocumentFragment();
+
+		var tagEditHeader = document.createElement("h2");
+		tagEditHeader.innerHTML = "Tag Editor";
+		tagEditHeader.className = "bbb-header";
+		tagEditBlocker.appendChild(tagEditHeader);
+
+		var tagEditArea = bbb.el.menu.tagEditArea = document.createElement("textarea");
+		tagEditArea.value = searchSingleToMulti(input.value);
+		tagEditArea.className = "bbb-edit-area";
+		tagEditBlocker.appendChild(tagEditArea);
+
+		var tagEditOk = function() {
+			var tags = searchMultiToSingle(tagEditArea.value);
+
+			input.value = tags;
+			object[prop] = tags;
+		};
+
+		bbbDialog(tagEditBlocker, {ok: tagEditOk, cancel: true});
 	}
 
 	function adjustMenuHeight() {
@@ -2826,10 +2877,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function loadSettings() {
 		// Load stored settings.
-		if (typeof(localStorage.bbb_settings) === "undefined")
+		var settings = localStorage.getItem("bbb_settings");
+
+		if (settings === null)
 			loadDefaults();
 		else {
-			bbb.user = JSON.parse(localStorage.bbb_settings);
+			bbb.user = JSON.parse(settings);
 			checkUser(bbb.user, bbb.options);
 
 			if (bbb.user.bbb_version !== bbb.options.bbb_version) {
@@ -2884,7 +2937,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bbb.user.blacklist_highlight_color = "#CCCCCC";
 
 		bbb.settings.changed = {};
-		localStorage.bbb_settings = JSON.stringify(bbb.user);
+		localStorage.bbbSetItem("bbb_settings", JSON.stringify(bbb.user));
 	}
 
 	function updateSettings() {
@@ -2918,7 +2971,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (/500$/.test(bbb.user.thumb_cache_limit))
 						bbb.user.thumb_cache_limit = bbb.options.thumb_cache_limit.def;
 
-					if (!/\.(jpg|gif|png)/.test(localStorage.bbb_thumb_cache)) {
+					if (!/\.(jpg|gif|png)/.test(localStorage.getItem("bbb_thumb_cache"))) {
 						localStorage.removeItem("bbb_thumb_cache");
 						loadThumbCache();
 					}
@@ -2931,7 +2984,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				case "6.2.1":
 				case "6.2.2":
 					// Reset the thumb cache to deal with "download-preview" and incorrect extension entries.
-					if (localStorage.bbb_thumb_cache) {
+					if (localStorage.getItem("bbb_thumb_cache")) {
 						localStorage.removeItem("bbb_thumb_cache");
 						loadThumbCache();
 					}
@@ -2992,6 +3045,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					if (bbb.user.thumb_cache_limit > 10000)
 						bbb.user.thumb_cache_limit = 10000;
 
+				case "7.1":
 					break;
 			}
 
@@ -3038,17 +3092,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				checkUser(bbb.user, bbb.options);
 				convertSettings("backup");
 				reloadMenu();
-				alert("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"save & close\" to finalize the restore.");
+				bbbDialog("Backup settings loaded successfully. After reviewing the settings to ensure they are correct, please click \"save & close\" to finalize the restore.");
 			}
 			catch (error) {
 				if (error instanceof SyntaxError)
-					alert("The backup does not appear to be formatted correctly. Please make sure everything was pasted correctly/completely and that only one backup is provided.");
+					bbbDialog("The backup does not appear to be formatted correctly. Please make sure everything was pasted correctly/completely and that only one backup is provided.");
 				else
-					alert("Unexpected error: " + error.message);
+					bbbDialog("Unexpected error: " + error.message);
 			}
 		}
 		else
-			alert("A backup could not be detected in the text provided. Please make sure everything was pasted correctly/completely.");
+			bbbDialog("A backup could not be detected in the text provided. Please make sure everything was pasted correctly/completely.");
 	}
 
 	/* Post functions */
@@ -3370,7 +3424,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			// Reset notes with embedded notes enabled.
 			Danbooru.Note.embed = true;
 			noteContainer.innerHTML = "";
-			Danbooru.Note.load_all();
+			Danbooru.Note.load_all("bbb");
 		};
 
 		document.addEventListener("click", toggleFunction, true); // Override all other click events for the translate link.
@@ -4150,13 +4204,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			$(function() {
 				Danbooru.Ugoira.create_player();
 				$(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) {
-					$("#ugoira-load-percentage").text(Math.floor(progress * 100));
-				});
-				$(Danbooru.Ugoira.player).on("loadingStateChanged", function(event, state) {
-					if (state === 2) {
-						$("#ugoira-load-progress").remove();
-						$("#seek-slider").show();
-					}
+					$("#seek-slider").progressbar("value", Math.floor(progress * 100));
 				});
 
 				var player_manually_paused = false;
@@ -4174,6 +4222,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					$("#ugoira-play").show();
 					player_manually_paused = true;
 					event.preventDefault();
+				});
+
+				$("#seek-slider").progressbar({
+					value: 0
 				});
 
 				$("#seek-slider").slider({
@@ -4285,7 +4337,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						link.bbbAddClass("bbb-custom-tag");
 
 						if (secondaryLength === 1 || (single_color_borders && secondaryLength > 1))
-							borderStyle = "border: " + border_width + "px " + secondary[0][0] + " " + secondary[0][1] + " !important;";
+							borderStyle = "border-color: " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " !important;";
 						else if (secondaryLength === 2)
 							borderStyle = "border-color: " + secondary[0][0] + " " + secondary[1][0] + " " + secondary[1][0] + " " + secondary[0][0] + " !important; border-style: " + secondary[0][1] + " " + secondary[1][1] + " " + secondary[1][1] + " " + secondary[0][1] + " !important;";
 						else if (secondaryLength === 3)
@@ -4361,7 +4413,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function fixHiddenThumbs() {
 		// Fix hidden thumbnails by fetching the info from a page.
-		if (bbb.xml.hidden)
+		if (bbb.flags.hidden_xml)
 			return;
 
 		var hiddenImgs = document.getElementsByClassName("bbb-hidden-thumb");
@@ -4433,11 +4485,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function loadThumbCache() {
 		// Initialize or load up the thumbnail cache.
-		if (typeof(localStorage.bbb_thumb_cache) !== "undefined")
-			bbb.cache.stored = JSON.parse(localStorage.bbb_thumb_cache);
+		var thumbCache = localStorage.getItem("bbb_thumb_cache");
+
+		if (thumbCache !== null)
+			bbb.cache.stored = JSON.parse(thumbCache);
 		else {
 			bbb.cache.stored = {history: [], names: {}};
-			localStorage.bbb_thumb_cache = JSON.stringify(bbb.cache.stored);
+			localStorage.bbbSetItem("bbb_thumb_cache", JSON.stringify(bbb.cache.stored));
 		}
 	}
 
@@ -4479,7 +4533,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				delete bcs.names[removedIds[i]];
 		}
 
-		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
+		localStorage.bbbSetItem("bbb_thumb_cache", JSON.stringify(bcs));
 		bbb.cache.current = {history: [], names: {}};
 	}
 
@@ -4498,13 +4552,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				delete bcs.names[removedIds[i]];
 		}
 
-		localStorage.bbb_thumb_cache = JSON.stringify(bcs);
+		localStorage.bbbSetItem("bbb_thumb_cache", JSON.stringify(bcs));
 	}
 
 	function getIdCache() {
 		// Retrieve the cached list of post IDs used for the pool/favorite group thumbnails.
 		var collId = /\/(?:pools|favorite_groups)\/(\d+)/.exec(location.href)[1];
-		var idCache = sessionStorage["bbb_" + gLoc + "_cache_" + collId];
+		var idCache = sessionStorage.getItem("bbb_" + gLoc + "_cache_" + collId);
 		var curTime = new Date().getTime();
 		var cacheTime;
 		var timeDiff;
@@ -4672,7 +4726,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var onValue = (bbb.user.endless_default !== "off" ? bbb.user.endless_default : "on");
 			var newDefault = (bbb.endless.enabled ? "off" : onValue);
 
-			sessionStorage.bbb_endless_default = endless_default = newDefault;
+			endless_default = newDefault;
+			sessionStorage.bbbSetItem("bbb_endless_default", newDefault);
 		}
 
 		if (bbb.endless.enabled) {
@@ -4726,6 +4781,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function endlessInit() {
 		// Set up and start endless pages.
+		removeInheritedStorage("bbb_endless_default");
+
 		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
 			return;
 
@@ -4823,7 +4880,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Check the session default or original default value to see if endless pages should be enabled.
-		var sessionDefault = sessionStorage.bbb_endless_default;
+		var sessionDefault = sessionStorage.getItem("bbb_endless_default");
 
 		if (endless_session_toggle && sessionDefault)
 			endless_default = sessionDefault;
@@ -4889,7 +4946,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postsDiv = (gLoc === "search" ? document.getElementById("posts") : undefined);
 		var postsVisible = (!postsDiv || postsDiv.style.display !== "none");
 
-		if (bbb.xml.thumbs || bbb.xml.paginator || !postsVisible) // Delay the check until the page is completely ready.
+		if (bbb.flags.thumbs_xml || bbb.flags.paginator_xml || !postsVisible) // Delay the check until the page is completely ready.
 			endlessDelay(100);
 		else {
 			if (!bbb.endless.last_paginator)
@@ -4927,7 +4984,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function endlessRequestPage() {
 		// Start an XML request for a new page.
-		if (bbb.xml.endless || endlessLastPage()) // Retrieve pages one at a time for as long as they exist.
+		if (bbb.flags.endless_xml || endlessLastPage()) // Retrieve pages one at a time for as long as they exist.
 			return;
 
 		searchPages("endless");
@@ -5227,7 +5284,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Create the blacklist section.
 		var cookies = getCookie();
-		var blacklistDisabled = (cookies["disable-all-blacklists"] === "1" && blacklistBox);
+		var blacklistDisabled = (cookies.dab === "1" && blacklistBox);
 
 		for (i = 0, il = blacklistTags.length; i < il; i++) {
 			var blacklistTag = blacklistTags[i].bbbSpaceClean();
@@ -5235,7 +5292,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (blacklistSearch[0]) {
 				var entryHash = blacklistTag.bbbHash();
-				var entryDisabled = (blacklistDisabled || (cookies["bl:" + entryHash] === "1") ? true : false);
+				var entryDisabled = (blacklistDisabled || (blacklist_session_toggle && cookies["b" + entryHash] === "1") ? true : false);
 				var newEntry = {active: !entryDisabled, tags:blacklistTag, search:blacklistSearch, matches: [], index: i, hash: entryHash};
 
 				bbb.blacklist.entries.push(newEntry);
@@ -5293,8 +5350,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (event.button !== 0)
 			return;
 
-		var blacklistDisabled = (getCookie()["disable-all-blacklists"] === "1");
+		var blacklistDisabled = (getCookie().dab === "1");
 		var entries = bbb.blacklist.entries;
+
+		if (blacklistDisabled) {
+			bbb.el.blacklistEnableLink.style.display = "none";
+			bbb.el.blacklistDisableLink.style.display = "inline";
+			createCookie("dab", 0, 365);
+		}
+		else {
+			bbb.el.blacklistEnableLink.style.display = "inline";
+			bbb.el.blacklistDisableLink.style.display = "none";
+			createCookie("dab", 1, 365);
+		}
 
 		for (var i = 0, il = entries.length; i < il; i++) {
 			var entry = entries[i];
@@ -5306,18 +5374,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			else {
 				if (entry.active)
 					blacklistEntryToggle(i);
-			}
-		}
 
-		if (blacklistDisabled) {
-			bbb.el.blacklistEnableLink.style.display = "none";
-			bbb.el.blacklistDisableLink.style.display = "inline";
-			createCookie("disable-all-blacklists", 0, 365);
-		}
-		else {
-			bbb.el.blacklistEnableLink.style.display = "inline";
-			bbb.el.blacklistDisableLink.style.display = "none";
-			createCookie("disable-all-blacklists", 1, 365);
+				if (blacklist_session_toggle)
+					createCookie("b" + entry.hash, 0, -1);
+			}
 		}
 
 		event.preventDefault();
@@ -5340,6 +5400,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var entry = bbb.blacklist.entries[entryIndex];
 		var matches = entry.matches;
 		var links = document.getElementsByClassName("bbb-blacklist-entry-" + entryIndex);
+		var blacklistDisabled = (getCookie().dab === "1");
 		var id;
 		var els;
 		var matchList;
@@ -5348,7 +5409,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (entry.active) {
 			entry.active = false;
 
-			createCookie("bl:" + entry.hash, 1);
+			if (blacklist_session_toggle && !blacklistDisabled)
+				createCookie("b" + entry.hash, 1);
 
 			for (i = 0, il = links.length; i < il; i++)
 				links[i].bbbAddClass("blacklisted-active");
@@ -5374,7 +5436,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else {
 			entry.active = true;
 
-			createCookie("bl:" + entry.hash, 0, -1);
+			if (blacklist_session_toggle)
+				createCookie("b" + entry.hash, 0, -1);
 
 			for (i = 0, il = links.length; i < il; i++)
 				links[i].bbbRemoveClass("blacklisted-active");
@@ -5649,12 +5712,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Update the blacklisted thumbnail info in the smart view object.
 		var time = new Date().getTime();
 		var id = el.getAttribute("data-id");
-		var smartView;
+		var smartView = localStorage.getItem("bbb_smart_view");
 
-		if (typeof(localStorage.bbb_smart_view) === "undefined") // Initialize the object if it doesn't exist.
+		if (smartView === null) // Initialize the object if it doesn't exist.
 			smartView = {last: time};
 		else {
-			smartView = JSON.parse(localStorage.bbb_smart_view);
+			smartView = JSON.parse(smartView);
 
 			if (time - smartView.last > 60000) // Reset the object if it hasn't been changed within a minute.
 				smartView = {last: time};
@@ -5667,16 +5730,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else
 			delete smartView[id];
 
-		localStorage.bbb_smart_view = JSON.stringify(smartView);
+		localStorage.bbbSetItem("bbb_smart_view", JSON.stringify(smartView));
 	}
 
 	function blacklistSmartViewCheck(id) {
 		// Check whether to display the post during the blacklist init.
-		if (!blacklist_smart_view || typeof(localStorage.bbb_smart_view) === "undefined")
+		var smartView = localStorage.getItem("bbb_smart_view");
+
+		if (!blacklist_smart_view || smartView === null)
 			return false;
 		else {
-			var smartView = JSON.parse(localStorage.bbb_smart_view);
 			var time = new Date().getTime();
+
+			smartView = JSON.parse(smartView);
 
 			if (time - smartView.last > 60000) { // Delete the ids if the object hasn't been changed within a minute.
 				localStorage.removeItem("bbb_smart_view");
@@ -5692,6 +5758,20 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	/* Other functions */
+	function modifyDanbScript() {
+		// Modify some Danbooru functions so that they don't run unnecessarily.
+		var loadNotes = Danbooru.Note.load_all;
+
+		Danbooru.Note.load_all = function(allow) {
+			if (allow === "bbb")
+				loadNotes();
+		};
+
+		Danbooru.Blacklist.initialize_all = function() {
+			return;
+		};
+	}
+
 	function modifyPage() {
 		// Determine what function may be needed to fix/update content.
 		if (noXML())
@@ -5981,6 +6061,126 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			status.style.display = "block";
 		else // If requests are done, hide the notice.
 			status.style.display = "none";
+	}
+
+	function bbbDialog(content, properties) {
+		// Open a dialog window that can have a predefined ok button (default) and/or cancel button. The properties object specifies dialog behavior and has the following values:
+		// ok/cancel: true to display the button, false to hide the button, function to display the button and specify a custom function for it
+		// condition: string to name a basic flag that will be checked/set by a dialog before displaying it, function to check custom conditions for a dialog before displaying it
+		// important: true to prioritize a dialog if it goes in the queue, false to allow a dialog to go to the end of the queue as normal
+
+		var prop = properties || {};
+		var okButton = (prop.ok === undefined ? true : prop.ok);
+		var cancelButton = (prop.cancel === undefined ? false : prop.cancel);
+		var condition = (prop.condition === undefined ? false : prop.condition);
+		var important = (prop.important === undefined ? false : prop.important);
+
+		// Queue the dialog window if one is already open.
+		if (document.getElementById("bbb-dialog-blocker")) {
+			if (important)
+				bbb.dialog.queue.unshift({content: content, properties: properties});
+			else
+				bbb.dialog.queue.push({content: content, properties: properties});
+
+			return;
+		}
+
+		// Test whether the dialog window should be allowed to display.
+		if (condition) {
+			var conditionType = typeof(condition);
+
+			if ((conditionType === "string" && bbb.flags[condition]) || (conditionType === "function" && condition())) {
+				nextBbbDialog();
+				return;
+			}
+			else if (conditionType === "string")
+				bbb.flags[condition] = true;
+		}
+
+		// Create the dialog window.
+		var blockDiv = document.createElement("div");
+		blockDiv.id = "bbb-dialog-blocker";
+
+		var windowDiv = document.createElement("div");
+		windowDiv.id = "bbb-dialog-window";
+		windowDiv.tabIndex = "-1";
+		blockDiv.appendChild(windowDiv);
+
+		var contentDiv = windowDiv;
+
+		if (okButton) {
+			var ok = document.createElement("a");
+			ok.innerHTML = "OK";
+			ok.href = "#";
+			ok.className = "bbb-dialog-button";
+
+			if (typeof(okButton) === "function")
+				ok.addEventListener("click", okButton, false);
+
+			ok.addEventListener("click", closeBbbDialog, false);
+
+			okButton = ok;
+		}
+
+		if (cancelButton) {
+			var cancel = document.createElement("a");
+			cancel.innerHTML = "Cancel";
+			cancel.href = "#";
+			cancel.className = "bbb-dialog-button";
+			cancel.style.cssFloat = "right";
+
+			if (typeof(cancelButton) === "function")
+				cancel.addEventListener("click", cancelButton, false);
+
+			cancel.addEventListener("click", closeBbbDialog, false);
+
+			cancelButton = cancel;
+		}
+
+		if (okButton || cancelButton) {
+			contentDiv = document.createElement("div");
+			contentDiv.className = "bbb-dialog-content-div";
+			windowDiv.appendChild(contentDiv);
+
+			var buttonDiv = document.createElement("div");
+			buttonDiv.className = "bbb-dialog-button-div";
+			windowDiv.appendChild(buttonDiv);
+
+			if (okButton)
+				buttonDiv.appendChild(okButton);
+
+			if (cancelButton)
+				buttonDiv.appendChild(cancelButton);
+		}
+
+		if (typeof(content) === "string")
+			contentDiv.innerHTML = content;
+		else
+			contentDiv.appendChild(content);
+
+		document.body.appendChild(blockDiv);
+
+		(okButton || cancelButton || windowDiv).focus();
+	}
+
+	function closeBbbDialog(event) {
+		// Close the current dialog window.
+		var dialogBlocker = document.getElementById("bbb-dialog-blocker");
+
+		if (dialogBlocker)
+			document.body.removeChild(dialogBlocker);
+
+		nextBbbDialog();
+
+		event.preventDefault();
+	}
+
+	function nextBbbDialog() {
+		// Open the next queued dialog window.
+		var nextDialog = bbb.dialog.queue.shift();
+
+		if (nextDialog)
+			bbbDialog(nextDialog.content, nextDialog.properties);
 	}
 
 	function thumbSearchMatch(post, searchArray) {
@@ -6595,54 +6795,50 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var customStyles = document.createElement("style");
 		customStyles.type = "text/css";
 
-		var styles = '#bbb_menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); padding: 15px; position: fixed; top: 25px; left: 50%; z-index: 9001;}' +
-		'#bbb_menu * {font-size: 14px; line-height: 16px; outline: 0px none; border: 0px none; margin: 0px; padding: 0px;}' + // Reset some base settings.
-		'#bbb_menu h1 {font-size: 24px; line-height: 42px;}' +
-		'#bbb_menu h2 {font-size: 16px; line-height: 25px;}' +
-		'#bbb_menu input, #bbb_menu select, #bbb_menu textarea {border: #CCCCCC 1px solid;}' +
-		'#bbb_menu input {height: 17px; padding: 1px 0px; margin-top: 4px; vertical-align: top;}' +
-		'#bbb_menu input[type="checkbox"] {margin: 0px; vertical-align: middle; position: relative; bottom: 2px;}' +
-		'#bbb_menu .bbb-general-input input[type="text"], #bbb_menu .bbb-general-input select {width: 175px;}' +
-		'#bbb_menu select {height: 21px; margin-top: 4px; vertical-align: top;}' +
-		'#bbb_menu option {padding: 0px 3px;}' +
-		'#bbb_menu textarea {padding: 2px; resize: none;}' +
-		'#bbb_menu ul, #bbb_menu ol {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: block;}' +
-		'#bbb_menu .bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 5px 0px; padding: 5px 0px; overflow-y: auto;}' +
-		'#bbb_menu .bbb-page {position: relative; display: none;}' +
-		'#bbb_menu .bbb-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px;}' +
-		'#bbb_menu .bbb-tab {border-top-left-radius: 5px; border-top-right-radius: 5px; display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
-		'#bbb_menu .bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}' +
-		'#bbb_menu .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; width: 700px;}' +
-		'#bbb_menu .bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
-		'#bbb_menu .bbb-section-options, #bbb_menu .bbb-section-text {margin-bottom: 5px; max-width: 902px;}' +
-		'#bbb_menu .bbb-section-options-left, #bbb_menu .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
-		'#bbb_menu .bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
-		'#bbb_menu .bbb-general-label {display: block; height: 29px; padding: 0px 5px;}' +
-		'#bbb_menu .bbb-general-label:hover {background-color: #EEEEEE;}' +
-		'#bbb_menu .bbb-general-text {line-height: 29px;}' +
-		'#bbb_menu .bbb-general-input {float: right; line-height: 29px;}' +
-		'#bbb_menu .bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
-		'#bbb_menu .bbb-border-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
-		'#bbb_menu .bbb-border-bar, #bbb_menu .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
-		'#bbb_menu .bbb-border-settings {background-color: #FFFFFF;}' +
-		'#bbb_menu .bbb-border-div label, #bbb_menu .bbb-border-div span {display: inline-block; line-height: 29px;}' +
-		'#bbb_menu .bbb-border-name {text-align: left; width: 540px;}' +
-		'#bbb_menu .bbb-border-name input {width:460px;}' +
-		'#bbb_menu .bbb-border-color {text-align: center; width: 210px;}' +
-		'#bbb_menu .bbb-border-color input {width: 148px;}' +
-		'#bbb_menu .bbb-border-style {float: right; text-align: right; width: 130px;}' +
-		'#bbb_menu .bbb-border-divider {height: 4px;}' +
-		'#bbb_menu .bbb-insert-highlight .bbb-border-divider {background-color: blue; cursor: pointer;}' +
-		'#bbb_menu .bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
-		'#bbb_menu .bbb-border-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 2px; margin: 0px 2px;}' +
-		'#bbb_menu .bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}' +
-		'#bbb_menu .bbb-backup-area {height: 300px; width: 896px; margin-top: 2px;}' +
-		'#bbb_menu .bbb-blacklist-area {height: 300px; width: 896px; margin-top: 2px;}' +
-		'#bbb_menu .bbb-edit-blocker {display: none; height: 100%; width: 100%; background-color: rgba(0, 0, 0, 0.33); position: fixed; top: 0px; left: 0px;}' +
-		'#bbb_menu .bbb-edit-box {height: 500px; width: 800px; margin-left: -412px; margin-top: -262px; position: fixed; left: 50%; top: 50%; background-color: #FFFFFF; border: 2px solid #CCCCCC; padding: 10px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);}' +
-		'#bbb_menu .bbb-edit-text {margin-bottom: 5px;}' +
-		'#bbb_menu .bbb-edit-area {height: 429px; width: 794px; margin-bottom: 5px;}' +
-		'#bbb_menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
+		var styles = '#bbb-menu {background-color: #FFFFFF; border: 1px solid #CCCCCC; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5); padding: 15px; position: fixed; top: 25px; left: 50%; z-index: 9001;}' +
+		'#bbb-menu *, #bbb-dialog-window * {font-size: 14px; line-height: 16px; outline: 0px none; border: 0px none; margin: 0px; padding: 0px;}' + // Reset some base settings.
+		'#bbb-menu h1, #bbb-dialog-window h1 {font-size: 24px; line-height: 42px;}' +
+		'#bbb-menu h2, #bbb-dialog-window h2 {font-size: 16px; line-height: 25px;}' +
+		'#bbb-menu input, #bbb-menu select, #bbb-menu textarea, #bbb-dialog-window input, #bbb-dialog-window select, #bbb-dialog-window textarea {border: #CCCCCC 1px solid;}' +
+		'#bbb-menu input {height: 17px; padding: 1px 0px; margin-top: 4px; vertical-align: top;}' +
+		'#bbb-menu input[type="checkbox"] {margin: 0px; vertical-align: middle; position: relative; bottom: 2px;}' +
+		'#bbb-menu .bbb-general-input input[type="text"], #bbb-menu .bbb-general-input select {width: 175px;}' +
+		'#bbb-menu select {height: 21px; margin-top: 4px; vertical-align: top;}' +
+		'#bbb-menu option {padding: 0px 3px;}' +
+		'#bbb-menu textarea, #bbb-dialog-window textarea {padding: 2px; resize: none;}' +
+		'#bbb-menu ul, #bbb-menu ol, #bbb-dialog-window ul, #bbb-dialog-window ol {list-style: outside disc none; margin-top: 0px; margin-bottom: 0px; margin-left: 20px; display: block;}' +
+		'#bbb-menu .bbb-scroll-div {border: 1px solid #CCCCCC; margin: -1px 0px 5px 0px; padding: 5px 0px; overflow-y: auto;}' +
+		'#bbb-menu .bbb-page {position: relative; display: none;}' +
+		'#bbb-menu .bbb-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px;}' +
+		'#bbb-menu .bbb-tab {border-top-left-radius: 5px; border-top-right-radius: 5px; display: inline-block; padding: 5px; border: 1px solid #CCCCCC; margin-right: -1px;}' +
+		'#bbb-menu .bbb-active-tab {background-color: #FFFFFF; border-bottom-width: 0px; padding-bottom: 6px;}' +
+		'#bbb-menu .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; width: 700px;}' +
+		'#bbb-menu .bbb-toc {list-style-type: upper-roman; margin-left: 30px;}' +
+		'#bbb-menu .bbb-section-options, #bbb-menu .bbb-section-text {margin-bottom: 5px; max-width: 902px;}' +
+		'#bbb-menu .bbb-section-options-left, #bbb-menu .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
+		'#bbb-menu .bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
+		'#bbb-menu .bbb-general-label {display: block; height: 29px; padding: 0px 5px;}' +
+		'#bbb-menu .bbb-general-label:hover {background-color: #EEEEEE;}' +
+		'#bbb-menu .bbb-general-text {line-height: 29px;}' +
+		'#bbb-menu .bbb-general-input {float: right; line-height: 29px;}' +
+		'#bbb-menu .bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
+		'#bbb-menu .bbb-border-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
+		'#bbb-menu .bbb-border-bar, #bbb-menu .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
+		'#bbb-menu .bbb-border-settings {background-color: #FFFFFF;}' +
+		'#bbb-menu .bbb-border-div label, #bbb-menu .bbb-border-div span {display: inline-block; line-height: 29px;}' +
+		'#bbb-menu .bbb-border-name {text-align: left; width: 540px;}' +
+		'#bbb-menu .bbb-border-name input {width:460px;}' +
+		'#bbb-menu .bbb-border-color {text-align: center; width: 210px;}' +
+		'#bbb-menu .bbb-border-color input {width: 148px;}' +
+		'#bbb-menu .bbb-border-style {float: right; text-align: right; width: 130px;}' +
+		'#bbb-menu .bbb-border-divider {height: 4px;}' +
+		'#bbb-menu .bbb-insert-highlight .bbb-border-divider {background-color: blue; cursor: pointer;}' +
+		'#bbb-menu .bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
+		'#bbb-menu .bbb-border-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 2px; margin: 0px 2px;}' +
+		'#bbb-menu .bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}' +
+		'#bbb-menu .bbb-backup-area {height: 300px; width: 896px; margin-top: 2px;}' +
+		'#bbb-menu .bbb-blacklist-area {height: 300px; width: 896px; margin-top: 2px;}' +
+		'#bbb-menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
 		'#bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 488px; width: 488px; overflow: hidden; z-index: 9002; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);}' +
 		'#bbb-expl * {font-size: 12px;}' +
 		'#bbb-expl tiphead {display: block; font-weight: bold; text-decoration: underline; font-size: 13px; margin-top: 12px;}' +
@@ -6653,7 +6849,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb-notice {padding: 3px; width: 100%; display: none; position: relative; z-index: 9002; border-radius: 2px; border: 1px solid #000000; background-color: #CCCCCC;}' +
 		'#bbb-notice-msg {margin: 0px 25px 0px 55px; max-height: 200px; overflow: auto;}' +
 		'#bbb-notice-msg .bbb-notice-msg-entry {border-bottom: solid 1px #000000; margin-bottom: 5px; padding-bottom: 5px;}' +
-		'#bbb-notice-msg .bbb-notice-msg-entry:last-child {border-bottom: none 0px; margin-bottom: 0px; padding-bottom: 0px;}';
+		'#bbb-notice-msg .bbb-notice-msg-entry:last-child {border-bottom: none 0px; margin-bottom: 0px; padding-bottom: 0px;}' +
+		'#bbb-dialog-blocker {display: block; position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.33); z-index: 9003; text-align: center;}' +
+		'#bbb-dialog-blocker:before {content: ""; display: inline-block; height: 100%; vertical-align: middle;}' + // Helps vertically center an element with unknown dimensions: https://css-tricks.com/centering-in-the-unknown/
+		'#bbb-dialog-window {display: inline-block; display: inline-flex; flex-flow: column; position: relative; background-color: #FFFFFF; border: 10px solid #FFFFFF; outline: 1px solid #CCC; box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.5); color: #000000; max-width: 940px; max-height: 90%; overflow-x: hidden; overflow-y: auto; text-align: left; vertical-align: middle; line-height: initial;}' +
+		'#bbb-dialog-window .bbb-header {border-bottom: 2px solid #CCCCCC; margin-bottom: 5px; margin-right: 100px; padding-right: 50px; white-space: nowrap;}' +
+		'#bbb-dialog-window .bbb-dialog-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px; margin: 0px 5px;}' +
+		'#bbb-dialog-window .bbb-dialog-content-div {padding: 5px; overflow-x: hidden; overflow-y: auto;}' +
+		'#bbb-dialog-window .bbb-dialog-button-div {padding-top: 10px; flex-grow: 0; flex-shrink: 0; overflow: hidden;}' +
+		'#bbb-dialog-window .bbb-edit-area {height: 300px; width: 800px;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
 		if (thumbnail_count && (gLoc === "search" || gLoc === "notes" || gLoc === "favorites")) {
@@ -6684,8 +6888,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'.post-preview div.preview {height: ' + thumbMaxHeight + 'px !important; width: ' + thumbMaxWidth + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
 		'.post-preview div.preview a.bbb-thumb-link {line-height: 0px !important;}' +
 		'.post-preview a.bbb-thumb-link img {border-width: ' + border_width + 'px !important; padding: ' + border_spacing + 'px !important;}' +
-		'a.bbb-thumb-link.bbb-custom-tag {border-width: ' + border_width + 'px !important;}' +
-		'article.post-preview:before, .post-preview div.preview:before {margin: ' + totalBorderWidth + 'px !important;}'; // Thumbnail icon overlay position adjustment.
+		'a.bbb-thumb-link.bbb-custom-tag {border-width: ' + border_width + 'px !important;}';
 
 		if (custom_status_borders) {
 			var activeStatusStyles = "";
@@ -6758,8 +6961,27 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 		}
 
+		// Overlay setup.
+		styles += 'article.post-preview:before, div.post.post-preview div.preview:before {content: none !important;}' + // Disable original Danbooru animated overlay.
+		'article.post-preview[data-tags~="animated"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="swf"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="webm"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="mp4"] a.bbb-thumb-link:before, div.post.post-preview[data-tags~="animated"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="swf"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="webm"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="mp4"] div.preview a.bbb-thumb-link:before {content: "\\25BA"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru animated overlay.
+		'article.post-preview[data-has-sound="true"] a.bbb-thumb-link:before, div.post.post-preview[data-has-sound="true"] div.preview a.bbb-thumb-link:before {content: "\\266A"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru audio overlay.
+		'article.post-preview.blacklisted a.bbb-thumb-link:after, article.post-preview a.bbb-thumb-link:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after, div.post.post-preview div.preview a.bbb-thumb-link:before {margin: ' + (border_width + border_spacing) + 'px;}' + // Margin applies to posts with no borders or only a status border.
+		'article.post-preview.blacklisted a.bbb-thumb-link.bbb-custom-tag:after, article.post-preview a.bbb-thumb-link.bbb-custom-tag:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link.bbb-custom-tag:after, div.post.post-preview div.preview a.bbb-thumb-link.bbb-custom-tag:before {margin: ' + border_spacing + 'px;}' + // Margin applies to posts with only a custom border.
+		'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:after, article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:before, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:after, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:before {content: none;}' + // Don't display when actively blacklisted.
+		'article.post-preview a.bbb-thumb-link, div.post.post-preview div.preview a.bbb-thumb-link {position: relative;}'; // Allow the overlays to position relative to the link.
+
+		for (i = 0; i < sbsl; i++) {
+			statusBorderItem = status_borders[i];
+
+			if (statusBorderItem.is_enabled)
+				styles += 'article.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link.bbb-custom-tag:after, article.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link.bbb-custom-tag:before, div.post.post-preview.' + statusBorderItem.class_name + ' div.preview a.bbb-thumb-link.bbb-custom-tag:after, div.post.post-preview.' + statusBorderItem.class_name + ' div.preview a.bbb-thumb-link.bbb-custom-tag:before {margin: ' + (border_width + border_spacing + customBorderSpacing) + 'px !important}'; // Margin applies to posts with a status and custom border.
+		}
+
 		// Thumbnail info.
 		var thumbInfoStyle = "height: 18px; font-size: 14px; line-height: 18px; text-align: center;";
+
+		if (thumb_info !== "disabled")
+			styles += '.bbb-thumb-info-parent.blacklisted.blacklisted-active .bbb-thumb-info {display: none;}';
 
 		if (thumb_info === "below")
 			styles += '.bbb-thumb-info-parent .bbb-thumb-info {display: block;' + thumbInfoStyle + '}';
@@ -6767,8 +6989,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			styles += '.bbb-thumb-info-parent .bbb-thumb-info {display: none; position: relative; bottom: 18px; background-color: rgba(255, 255, 255, 0.9);' + thumbInfoStyle + '}' +
 			'.bbb-thumb-info-parent:hover .bbb-thumb-info {display: block;}' +
 			'#has-children-relationship-preview article.post-preview.bbb-thumb-info-parent, #has-parent-relationship-preview article.post-preview.bbb-thumb-info-parent {min-width: 130px !important;}' + // Give parent/child notice thumbs a minimum width to prevent element shifting upon hover.
-			'.bbb-thumb-info-parent:hover .bbb-thumb-info.bbb-thumb-info-short {bottom: 0px;}' + // Short thumbnails get no overlapping.
-			'.bbb-thumb-info-parent.blacklisted-active .bbb-thumb-info.bbb-thumb-info-short {bottom: 18px;}'; // Actively blacklisted short thumbnails get overlapping.
+			'.bbb-thumb-info-parent:hover .bbb-thumb-info.bbb-thumb-info-short {bottom: 0px;}'; // Short thumbnails get no overlapping.
 		}
 
 		// Endless
@@ -6802,6 +7023,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'.ui-autocomplete {z-index: 2002 !important;}';
 		}
 
+		// Collapse sidebar sections.
 		if (collapse_sidebar) {
 			styles += '#sidebar ul.bbb-collapsed-sidebar, #sidebar form.bbb-collapsed-sidebar {display: block !important; height: 0px !important; margin: 0px !important; padding: 0px !important; overflow: hidden !important;}' + // Hide the element without changing the display to "none" since that interferes with some of Danbooru's JS.
 			'#sidebar h1, #sidebar h2 {display: inline-block !important;}'; // Inline-block is possible here due to not using display in the previous rule.
@@ -6816,15 +7038,27 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'#blacklist-box.bbb-blacklist-box li span {color: #AAAAAA;}';
 		}
 
-		// Blacklist thumbnail display;
+		// Blacklist thumbnail display.
+		if (blacklist_post_display !== "disabled") {
+			// Override some of Danbooru's CSS for actively blacklisted thumbs.
+			styles += 'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {filter: none; -webkit-filter: none; -ms-filter: "none";}' +
+			'article.post-preview.blacklisted.blacklisted-active:after, div.post.post-preview.blacklisted.blacklisted-active:after {content: none;}' +
+			'article.post-preview.blacklisted.blacklisted-active img, div.post.post-preview.blacklisted.blacklisted-active img {display: initial;}' +
+			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {background-color: transparent;}';
+		}
+		else
+			styles += '.blacklisted.blacklisted-active a.bbb-thumb-link.bbb-custom-tag {border-width: 0px !important;}'; // Hide custom borders for Danbooru's default blacklist style.
+
 		if (blacklist_post_display === "removed") {
-			styles += 'div.post.post-preview.blacklisted {display: block !important;}' + // Comment listing override.
+			styles += 'article.post-preview.blacklisted {display: inline-block !important;}' +
+			'article.post-preview.blacklisted.blacklisted-active {display: none !important;}' +
+			'div.post.post-preview.blacklisted {display: block !important;}' + // Comment listing override.
 			'div.post.post-preview.blacklisted.blacklisted-active {display: none !important;}';
 		}
 		else if (blacklist_post_display === "hidden") {
 			styles += 'article.post-preview.blacklisted.blacklisted-active {display: inline-block !important;}' +
 			'div.post.post-preview.blacklisted {display: block !important;}' + // Comments.
-			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview {visibility: hidden !important;}';
+			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link {visibility: hidden !important;}';
 		}
 		else if (blacklist_post_display === "replaced") {
 			styles += 'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {display: inline-block !important; background-position: ' + totalBorderWidth + 'px ' + totalBorderWidth + 'px !important; background-repeat: no-repeat !important; background-image: url(' + bbbBlacklistImg + ') !important;}' +
@@ -6838,21 +7072,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Blacklist marking.
 		if (blacklist_thumb_mark === "icon") {
-			styles += 'article.post-preview:before, div.post.post-preview div.preview:before {content: none !important;}' + // Disable original Danbooru animated overlay.
-			'article.post-preview.blacklisted a.bbb-thumb-link:after, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after {content: "\\A0"; position: absolute; bottom: 0px; right: 0px; height: 20px; width: 20px; line-height: 20px; font-weight: bold; color: #FFFFFF; background: rgba(0, 0, 0, 0.5) url(\'' + bbbBlacklistIcon + '\');}' + // Create blacklist overlay.
-			'article.post-preview[data-tags~="animated"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="swf"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="webm"] a.bbb-thumb-link:before, article.post-preview[data-file-ext="mp4"] a.bbb-thumb-link:before, div.post.post-preview[data-tags~="animated"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="swf"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="webm"] div.preview a.bbb-thumb-link:before, div.post.post-preview[data-file-ext="mp4"] div.preview a.bbb-thumb-link:before {content: "\\25BA"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru animated overlay.
-			'article.post-preview[data-has-sound="true"] a.bbb-thumb-link:before, div.post.post-preview[data-has-sound="true"] div.preview a.bbb-thumb-link:before {content: "\\266A"; position: absolute; width: 20px; height: 20px; color: #FFFFFF; background-color: rgba(0, 0, 0, 0.5); line-height: 20px; top: 0px; left: 0px;}' + // Recreate Danbooru audio overlay.
-			'article.post-preview.blacklisted a.bbb-thumb-link:after, article.post-preview a.bbb-thumb-link:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after, div.post.post-preview div.preview a.bbb-thumb-link:before {margin: ' + (border_width + border_spacing) + 'px;}' + // Margin applies to posts with no borders or only a status border.
-			'article.post-preview.blacklisted a.bbb-thumb-link.bbb-custom-tag:after, article.post-preview a.bbb-thumb-link.bbb-custom-tag:before, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link.bbb-custom-tag:after, div.post.post-preview div.preview a.bbb-thumb-link.bbb-custom-tag:before {margin: ' + border_spacing + 'px;}' + // Margin applies to posts with only a custom border.
-			'article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:after, article.post-preview.blacklisted.blacklisted-active a.bbb-thumb-link:before, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:after, div.post.post-preview.blacklisted.blacklisted-active div.preview a.bbb-thumb-link:before {content: none;}' + // Don't display when actively blacklisted.
-			'article.post-preview a.bbb-thumb-link, div.post.post-preview div.preview a.bbb-thumb-link {position: relative;}'; // Allow the overlays to position relative to the link.
-
-			for (i = 0; i < sbsl; i++) {
-				statusBorderItem = status_borders[i];
-
-				if (statusBorderItem.is_enabled)
-					styles += 'article.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link.bbb-custom-tag:after, article.post-preview.' + statusBorderItem.class_name + ' a.bbb-thumb-link.bbb-custom-tag:before, div.post.post-preview.' + statusBorderItem.class_name + ' div.preview a.bbb-thumb-link.bbb-custom-tag:after, div.post.post-preview.' + statusBorderItem.class_name + ' div.preview a.bbb-thumb-link.bbb-custom-tag:before {margin: ' + (border_width + border_spacing + customBorderSpacing) + 'px !important}'; // Margin applies to posts with a status and custom border.
-			}
+			styles += 'article.post-preview.blacklisted a.bbb-thumb-link:after, div.post.post-preview.blacklisted div.preview a.bbb-thumb-link:after {content: "\\A0"; position: absolute; bottom: 0px; right: 0px; height: 20px; width: 20px; line-height: 20px; font-weight: bold; color: #FFFFFF; background: rgba(0, 0, 0, 0.5) url(\'' + bbbBlacklistIcon + '\');}'; // Create blacklist overlay.
 		}
 		else if (blacklist_thumb_mark === "highlight") {
 			styles += 'article.post-preview.blacklisted, div.post.post-preview.blacklisted div.preview {background-color: ' + blacklist_highlight_color + ' !important;}' +
@@ -6874,12 +7094,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			'article.post-preview.blacklisted .bbb-close-circle, div.post.post-preview.blacklisted div.preview .bbb-close-circle {display: none;}';
 		}
 
+		// Move save search to the sidebar.
 		if (move_save_search) {
 			styles += '.bbb-saved-search-item #saved-searches-nav, .bbb-saved-search-item #saved-searches-nav * {background-color: transparent; color: #0073FF; display: inline; font-family: Verdana,Helvetica,sans-serif; line-height: 1.25em; padding: 0px; margin: 0px; border: none;}' +
 			'.bbb-saved-search-item #saved-searches-nav input:hover, .bbb-saved-search-item #saved-searches-nav button:hover {color: #80b9ff;}' +
 			'.bbb-saved-search-item #saved-searches-nav input:focus, .bbb-saved-search-item #saved-searches-nav button:focus {outline: thin dotted;}';
 		}
 
+		// Quick search styles.
 		if (quick_search !== "disabled") {
 			styles += '#bbb-quick-search {position: fixed; top: 0px; right: 0px; z-index: 2001; overflow: auto; padding: 2px; background-color: #FFFFFF; border-bottom: 1px solid #CCCCCC; border-left: 1px solid #CCCCCC; border-bottom-left-radius: 10px;}' +
 			'#bbb-quick-search-form {display: none;}' +
@@ -7041,6 +7263,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function quickSearch() {
 		// Set up quick search.
+		removeInheritedStorage("bbb_quick_search");
+
 		if (quick_search === "disabled" || (gLoc !== "search" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "popular_view" && gLoc !== "favorite_group"))
 			return;
 
@@ -7068,7 +7292,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				bbb.quick_search = bbb.el.quickSearchInput.value;
 
 				if (searchDiv.bbbHasClass("bbb-quick-search-pinned"))
-					sessionStorage.bbb_quick_search = bbb.quick_search;
+					sessionStorage.bbbSetItem("bbb_quick_search", bbb.quick_search);
 				else if (quick_search.indexOf("pinned") > -1)
 					quickSearchPinEnable();
 
@@ -7186,7 +7410,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Checked if the quick search has been pinned for this session.
-		var pinnedSearch = sessionStorage.bbb_quick_search;
+		var pinnedSearch = sessionStorage.getItem("bbb_quick_search");
 
 		if (pinnedSearch) {
 			bbb.quick_search = pinnedSearch;
@@ -7275,7 +7499,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		bbb.el.quickSearchDiv.bbbAddClass("bbb-quick-search-pinned");
 
 		if (bbb.quick_search)
-			sessionStorage.bbb_quick_search = bbb.quick_search;
+			sessionStorage.bbbSetItem("bbb_quick_search", bbb.quick_search);
 	}
 
 	function quickSearchPinDisable() {
@@ -7919,7 +8143,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else
 			paginator.parentNode.appendChild(paginatorSpacer);
 
-		// Create the css for the fixed paginator separately from the main one since it needs to know what the page's final layout will be with the main css applied.
+		// Create the CSS for the fixed paginator separately from the main one since it needs to know what the page's final layout will be with the main CSS applied.
 		var style = document.createElement("style");
 		style.type = "text/css";
 		style.innerHTML = '.bbb-fixed-paginator div.paginator {position: fixed; padding: 0px; margin: 0px; bottom: 0px; left: 50%; margin-left: ' + paginatorMargAdjust + 'px;}' +
@@ -8183,6 +8407,20 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return true;
 		else
 			return false;
+	}
+
+	function removeInheritedStorage(key) {
+		// Remove an inherited sessionStorage key for a new tab/window.
+		if (window.opener && history.length === 1) {
+			var state = history.state || {};
+			var stateProperty = key + "_reset";
+
+			if (!state[stateProperty]) {
+				sessionStorage.removeItem(key);
+				state[stateProperty] = true;
+				history.replaceState(state, "", location.href);
+			}
+		}
 	}
 
 	function accountSettingCheck(scriptSetting) {
@@ -8451,6 +8689,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			tagsInput.addEventListener("cut", searchAddToggleCheck, false);
 			tagsInput.addEventListener("paste", searchAddToggleCheck, false);
 			tagsInput.addEventListener("change", searchAddToggleCheck, false);
+			$(tagsInput).on("autocompleteselect", function(event) { delayMe(function(event) { searchAddToggleCheck(event); }); }); // Delayed to allow autocomplete to change the input.
 		}
 	}
 
@@ -8550,8 +8789,224 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		event.preventDefault();
 	}
 
+	function localStorageDialog() {
+		// Open a dialog box for cleaning out local storage for donmai.us.
+		if (getCookie().bbb_ignore_storage)
+			return;
+
+		var domains = [
+			{url: "http://danbooru.donmai.us/", untrusted: false},
+			{url: "https://danbooru.donmai.us/", untrusted: false},
+			{url: "http://donmai.us/", untrusted: false},
+			{url: "https://donmai.us/", untrusted: true},
+			{url: "http://sonohara.donmai.us/", untrusted: false},
+			{url: "https://sonohara.donmai.us/", untrusted: true},
+			{url: "http://hijiribe.donmai.us/", untrusted: false},
+			{url: "https://hijiribe.donmai.us/", untrusted: true},
+			{url: "http://safebooru.donmai.us/", untrusted: false},
+			{url: "https://safebooru.donmai.us/", untrusted: false},
+			{url: "http://testbooru.donmai.us/", untrusted: false}
+		];
+
+		var content = document.createDocumentFragment();
+
+		var header = document.createElement("h2");
+		header.innerHTML = "Local Storage Error";
+		header.className = "bbb-header";
+		content.appendChild(header);
+
+		var introText = document.createElement("div");
+		introText.innerHTML = "While trying to save some settings, BBB has detected that your browser's local storage is full for the donmai.us domain and was unable to automatically fix the problem. In order for BBB to function properly, the storage needs to be cleaned out.<br><br> BBB can cycle through the various donmai locations and clear out Danbooru's autocomplete cache and BBB's thumbnail info cache for each. Please select the domains/subdomains you'd like to clean from below and click OK to continue. If you click cancel, BBB will ignore the storage problems for the rest of this browsing session, but features may not work as expected.<br><br> <b>Notes:</b><ul><li>Three options in the domain list are not selected by default (marked as untrusted) since they require special permission from the user to accept invalid security certificates. However, if BBB detects you're already on one of these untrusted domains, then it will be automatically selected.</li><li>If you encounter this warning again right after storage has been cleaned, you may have to check domains you didn't check before or use the \"delete everything\" option to clear items in local storage besides autocomplete and thumbnail info.</li></ul><br> <b>Donmai.us domains/subdomains:</b><br>";
+		content.appendChild(introText);
+
+		var domainDiv = document.createElement("div");
+		domainDiv.style.lineHeight = "1.5em";
+		content.appendChild(domainDiv);
+
+		var cbFunc = function(event) {
+			var target = event.target;
+
+			target.nextSibling.style.textDecoration = (target.checked ? "none" : "line-through");
+		};
+
+		for (var i = 0, il = domains.length; i < il; i++) {
+			var domain = domains[i];
+			var isChecked = (!domain.untrusted || location.href.indexOf(domain.url) > -1);
+
+			var listCheckbox = document.createElement("input");
+			listCheckbox.name = domain.url;
+			listCheckbox.type = "checkbox";
+			listCheckbox.checked = isChecked;
+			listCheckbox.style.marginRight = "5px";
+			listCheckbox.addEventListener("click", cbFunc, false);
+			domainDiv.appendChild(listCheckbox);
+
+			var listLink = document.createElement("a");
+			listLink.innerHTML = domain.url + (domain.untrusted ? " (untrusted)" : "");
+			listLink.href = domain.url;
+			listLink.target = "_blank";
+			listLink.style.textDecoration = (isChecked ? "none" : "line-through");
+			domainDiv.appendChild(listLink);
+
+			var br = document.createElement("br");
+			domainDiv.appendChild(br);
+		}
+
+		var optionsText = document.createElement("div");
+		optionsText.innerHTML = "<b>Options:</b><br>";
+		optionsText.style.marginTop = "1em";
+		content.appendChild(optionsText);
+
+		var optionsDiv = document.createElement("div");
+		optionsDiv.style.lineHeight = "1.5em";
+		content.appendChild(optionsDiv);
+
+		var compCheckbox = document.createElement("input");
+		compCheckbox.name = "complete-delete";
+		compCheckbox.type = "checkbox";
+		compCheckbox.style.marginRight = "5px";
+		optionsDiv.appendChild(compCheckbox);
+
+		var compText = document.createTextNode("Delete everything in local storage for each selection except for my BBB settings.");
+		optionsDiv.appendChild(compText);
+
+		var okFunc = function() {
+			var options = domainDiv.getElementsByTagName("input");
+			var mode = (compCheckbox.checked ? "complete" : "normal");
+			var selectedURLs = [];
+			var origURL = location.href;
+			var nextURL;
+			var cleanCur = false;
+			var session = new Date().getTime();
+
+			for (var i = 0, il = options.length; i < il; i++) {
+				var option = options[i];
+
+				if (option.checked) {
+					if (origURL.indexOf(option.name) === 0)
+						cleanCur = true;
+					else if (!nextURL)
+						nextURL = option.name;
+					else
+						selectedURLs.push(encodeURIComponent(option.name));
+				}
+			}
+
+			// Clean the current domain if it was selected.
+			if (cleanCur)
+				cleanLocalStorage(mode);
+
+			if (!nextURL) {
+				// Retry saving if only the current domain was selected and do nothing if no domains were selected.
+				if (cleanCur)
+					retryLocalStorage();
+			}
+			else {
+				// Start cycling through domains.
+				bbbDialog("Currently cleaning local storage and loading the next domain. Please wait...", {ok: false, important: true});
+				sessionStorage.bbbSetItem("bbb_local_storage_queue", JSON.stringify(bbb.local_storage_queue));
+				location.href = updateURLQuery(nextURL + "posts/1/", {clean_storage: mode, clean_urls: selectedURLs.join(","), clean_origurl: encodeURIComponent(origURL), clean_session: session});
+			}
+		};
+
+		var cancelFunc = function() {
+			createCookie("bbb_ignore_storage", 1);
+		};
+
+		bbbDialog(content, {ok: okFunc, cancel: cancelFunc});
+	}
+
+	function cleanLocalStorage(mode) {
+		// Clean out various values in local storage.
+		var keyName;
+		var i;
+
+		if (mode === "autocomplete") {
+			for (i = localStorage.length - 1; i >= 0; i--) {
+				keyName = localStorage.key(i);
+
+				if (keyName.indexOf("ac-") === 0)
+					localStorage.removeItem(keyName);
+			}
+		}
+		else if (mode === "normal") {
+			for (i = localStorage.length - 1; i >= 0; i--) {
+				keyName = localStorage.key(i);
+
+				if (keyName.indexOf("ac-") === 0 || keyName === "bbb_thumb_cache")
+					localStorage.removeItem(keyName);
+			}
+		}
+		else if (mode === "complete") {
+			for (i = localStorage.length - 1; i >= 0; i--) {
+				keyName = localStorage.key(i);
+
+				if (keyName !== "bbb_settings")
+					localStorage.removeItem(keyName);
+			}
+		}
+	}
+
+	function retryLocalStorage() {
+		// Try to save items to local storage that failed to get saved before.
+		var sessLocal;
+
+		if (sessionStorage.getItem("bbb_local_storage_queue")) {
+			// Retrieve the local storage values from session storage after cycling through other domains.
+			sessLocal = JSON.parse(sessionStorage.getItem("bbb_local_storage_queue"));
+			sessionStorage.removeItem("bbb_local_storage_queue");
+		}
+		else if (bbb.local_storage_queue) {
+			// If only the BBB storage object exists, assume the user selected to only clean the current domain and reset things.
+			sessLocal = bbb.local_storage_queue;
+			delete bbb.local_storage_queue;
+			delete bbb.flags.local_storage_full;
+		}
+		else
+			return;
+
+		for (var i in sessLocal) {
+			if (sessLocal.hasOwnProperty(i))
+				localStorage.bbbSetItem(i, sessLocal[i]);
+		}
+
+		bbbNotice("Local storage cleaning has completed.", 6);
+	}
+
+	function localStorageCheck() {
+		// Check if the script is currently trying to manage local storage.
+		var cleanMode = getVar("clean_storage");
+		var cleanSession = Number(getVar("clean_session")) || 0;
+		var session = new Date().getTime();
+
+		// Stop if the script is not currently cleaning storage or if an old URL is detected.
+		if (!cleanMode || Math.abs(session - cleanSession) > 60000)
+			return;
+
+		if (cleanMode !== "save") {
+			// Cycle through the domains.
+			var urls = getVar("clean_urls").split(",");
+			var nextURL = urls.shift();
+			var origURL = getVar("clean_origurl");
+
+			bbb.flags.local_storage_full = true; // Keep the cycled domains from triggering storage problems
+			bbbDialog("Currently cleaning local storage and loading the next domain. Please wait...", {ok: false, important: true});
+			history.replaceState((history.state || {}), "", updateURLQuery(location.href, {clean_storage: undefined, clean_urls: undefined, clean_origurl: undefined, clean_session: undefined}));
+			cleanLocalStorage(cleanMode);
+
+			if (nextURL)
+				window.setTimeout(function() { location.href = updateURLQuery(decodeURIComponent(nextURL) + "posts/1/", {clean_storage: cleanMode, clean_urls: urls.join(), clean_origurl: origURL, clean_session: session}); }, 2000);
+			else
+				window.setTimeout(function() { location.href = updateURLQuery(decodeURIComponent(origURL), {clean_storage: "save", clean_session: session}); }, 2000);
+		}
+		else if (cleanMode === "save") {
+			history.replaceState((history.state || {}), "", updateURLQuery(location.href, {clean_storage: undefined, clean_session: undefined}));
+			retryLocalStorage();
+		}
+	}
+
 	function getCookie() {
-		// Return associative array with cookie values.
+		// Return an associative array with cookie values.
 		var data = document.cookie;
 
 		if(!data)
@@ -8695,16 +9150,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function timestamp(format) {
 		// Returns a simple timestamp based on the format string provided. String placeholders: y = year, m = month, d = day, hh = hours, mm = minutes, ss = seconds
+		function padDate(number) {
+			// Adds a leading "0" to single digit values.
+			var numString = String(number);
+
+			if (numString.length === 1)
+				numString = "0" + numString;
+
+			return numString;
+		}
+
 		var stamp = format || "y-m-d hh:mm:ss";
 		var time = new Date();
 		var year = time.getFullYear();
-		var month = time.getMonth() + 1;
-		var day = time.getDate();
-		var hours = time.getHours();
-		var minutes = time.getMinutes();
-		var seconds = time.getSeconds();
+		var month = padDate(time.getMonth() + 1);
+		var day = padDate(time.getDate());
+		var hours = padDate(time.getHours());
+		var minutes = padDate(time.getMinutes());
+		var seconds = padDate(time.getSeconds());
 
-		stamp = stamp.replace("hh", hours).replace("mm", minutes).replace("ss", seconds).replace("y", year).replace("m", month).replace("d", day).replace(/(^|\D)(\d)($|\D)/g, "$10$2$3");
+		stamp = stamp.replace("hh", hours).replace("mm", minutes).replace("ss", seconds).replace("y", year).replace("m", month).replace("d", day);
 
 		return stamp;
 	}
