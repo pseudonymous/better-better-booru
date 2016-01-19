@@ -7044,10 +7044,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			styles += 'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {filter: none; -webkit-filter: none; -ms-filter: "none";}' +
 			'article.post-preview.blacklisted.blacklisted-active:after, div.post.post-preview.blacklisted.blacklisted-active:after {content: none;}' +
 			'article.post-preview.blacklisted.blacklisted-active img, div.post.post-preview.blacklisted.blacklisted-active img {display: initial;}' +
-			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {background-color: transparent;}';
+			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {background-color: transparent;}' +
+			'article.post-preview.blacklisted.blacklisted-active.current-post, div.post.post-preview.blacklisted.blacklisted-active.current-post {background-color: rgba(0, 0, 0, 0.1);}';
 		}
-		else
-			styles += '.blacklisted.blacklisted-active a.bbb-thumb-link.bbb-custom-tag {border-width: 0px !important;}'; // Hide custom borders for Danbooru's default blacklist style.
+		else {
+			styles += '#has-parent-relationship-preview article.post-preview.blacklisted.blacklisted-active, #has-children-relationship-preview article.post-preview.blacklisted.blacklisted-active {width: ' + thumbMaxWidth + 'px !important;}' + // Correct the width for blacklisted posts in the parent/child notices.
+			'.blacklisted.blacklisted-active a.bbb-thumb-link.bbb-custom-tag {border-width: 0px !important;}'; // Hide custom borders for Danbooru's default blacklist style.
+		}
 
 		if (blacklist_post_display === "removed") {
 			styles += 'article.post-preview.blacklisted {display: inline-block !important;}' +
