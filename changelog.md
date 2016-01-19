@@ -1,5 +1,7 @@
 Changelog
 ----------
+* Version 7.2.1:
+ * Updated to support Danbooru's blacklist style changes.
 * Version 7.2:
  * Added a "session toggle" blacklist option for controlling whether individual blacklist entries remain toggled off across pages.
  * Updated the "post display" blacklist option with a "disabled" setting to allow the use of Danbooru's default blacklist style and changed "removed" to a standalone setting.
