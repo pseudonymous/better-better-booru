@@ -1,5 +1,8 @@
 Changelog
 ----------
+* Version 7.2.2:
+ * Updated to support Danbooru's JavaScript changing to asynchronous.
+ * Updated to support Danbooru's blacklist style reset.
 * Version 7.2.1:
  * Updated to support Danbooru's blacklist style changes.
 * Version 7.2:
