@@ -1119,7 +1119,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			activeThumb.bbbAddClass("current-post");
 
 		// Make the show/hide links work.
-		previewLink.addEventListener("click", function(event) {
+		newNotice.addEventListener("click", function(event) {
+			if (event.target !== previewLink)
+				return;
+
 			if (thumbDiv.style.display === "block") {
 				thumbDiv.style.display = "none";
 				previewLink.innerHTML = "show &raquo;";
@@ -1132,7 +1135,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 
 			event.preventDefault();
-		}, false);
+			event.stopPropagation();
+		}, true);
 
 		// Prepare thumbnails.
 		prepThumbnails(newNotice);
@@ -1168,8 +1172,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			// Append the necessary script.
 			var mainScript = document.createElement("script");
-			mainScript.src = "/assets/ugoira_player.js";
 			mainScript.addEventListener("load", ugoiraInit, true); // Wait for this script to load before running the JavaScript that requires it.
+			mainScript.src = "/assets/ugoira_player.js";
 			document.head.appendChild(mainScript);
 		}
 	}
@@ -3282,8 +3286,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function noteToggleInit() {
 		// Override Danbooru's image click handler for toggling notes with a custom one.
 		document.addEventListener("click", function(event) {
-			if (event.target.id === "image" && event.button === 0 && !bbb.post.translation_mode) {
-				if (!bbb.drag_scroll.moved)
+			if (event.target.id === "image" && event.button === 0) {
+				if (!bbb.post.translation_mode && !bbb.drag_scroll.moved)
 					Danbooru.Note.Box.toggle_all();
 
 				event.stopPropagation();
@@ -3329,17 +3333,24 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (document.getElementById("note-locked-notice"))
 					return;
 
-				// Make the link toggling work for hidden posts.
-				if (post.is_hidden) {
-					if (translateLink)
-						translateLink.addEventListener("click", Danbooru.Note.TranslationMode.toggle, false);
-				}
-
 				// Script translation mode events and tracking used to resolve timing issues.
 				bbb.post.translation_mode = Danbooru.Note.TranslationMode.active;
 
-				if (translateLink)
-					translateLink.addEventListener("click", translationModeToggle, false);
+				// Override Danbooru's toggle function which may or may not exist depending on caching.
+				if (translateLink) {
+					toggleFunction = function(event) {
+						if (event.target !== translateLink)
+							return;
+
+						Danbooru.Note.TranslationMode.toggle(event);
+						translationModeToggle();
+
+						event.preventDefault();
+						event.stopPropagation();
+					};
+
+					translateLink.parentNode.addEventListener("click", toggleFunction, true);
+				}
 			}
 			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
 				toggleFunction = function(event) {
@@ -3439,8 +3450,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (post.has_large) {
 			document.addEventListener("click", function(event) {
-				if (event.target.id === "image" && event.button === 0 && !bbb.post.translation_mode) {
-					if (!bbb.drag_scroll.moved)
+				if (event.target.id === "image" && event.button === 0) {
+					if (!bbb.post.translation_mode && !bbb.drag_scroll.moved)
 						swapPost();
 
 					event.stopPropagation();
@@ -7040,19 +7051,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Blacklist thumbnail display.
-		if (blacklist_post_display !== "disabled") {
-			// Override some of Danbooru's CSS for actively blacklisted thumbs.
-			styles += 'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {filter: none; -webkit-filter: none; -ms-filter: "none";}' +
-			'article.post-preview.blacklisted.blacklisted-active:after, div.post.post-preview.blacklisted.blacklisted-active:after {content: none;}' +
-			'article.post-preview.blacklisted.blacklisted-active img, div.post.post-preview.blacklisted.blacklisted-active img {display: initial;}' +
-			'article.post-preview.blacklisted.blacklisted-active, div.post.post-preview.blacklisted.blacklisted-active {background-color: transparent;}' +
-			'article.post-preview.blacklisted.blacklisted-active.current-post, div.post.post-preview.blacklisted.blacklisted-active.current-post {background-color: rgba(0, 0, 0, 0.1);}';
-		}
-		else {
-			styles += '#has-parent-relationship-preview article.post-preview.blacklisted.blacklisted-active, #has-children-relationship-preview article.post-preview.blacklisted.blacklisted-active {width: ' + thumbMaxWidth + 'px !important;}' + // Correct the width for blacklisted posts in the parent/child notices.
-			'.blacklisted.blacklisted-active a.bbb-thumb-link.bbb-custom-tag {border-width: 0px !important;}'; // Hide custom borders for Danbooru's default blacklist style.
-		}
-
 		if (blacklist_post_display === "removed") {
 			styles += 'article.post-preview.blacklisted {display: inline-block !important;}' +
 			'article.post-preview.blacklisted.blacklisted-active {display: none !important;}' +
@@ -7762,8 +7760,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				hotkey.func(event); // The event object will always be the first argument passed to the provided function (previously declared or anonymous).
 
 				if (!customHandler) {
-					event.stopPropagation();
 					event.preventDefault();
+					event.stopPropagation();
 				}
 			}
 		}, true);
@@ -9211,16 +9209,51 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return "bbbuid" + bbb.uId;
 	}
 
-
 } // End of bbbScript.
 
-if (document.body) {
-	if (typeof(Danbooru) === "undefined") { // Load script into the page so it can access Danbooru's JavaScript in Chrome. Thanks to everyone else that has ever had this problem before... and Google which found the answers to their questions for me.
+function runBBBScript() {
+	// Run the script or prep it to run when Danbooru's JS is ready.
+	if (document.readyState === "interactive" && typeof(Danbooru) === "undefined") {
+		var danbScripts = document.getElementsByTagName("script");
+
+		for (var i = 0, il = danbScripts.length; i < il; i++) {
+			var curScript = danbScripts[i];
+			var curScriptSrc = curScript.src || "";
+
+			if (curScriptSrc.indexOf("donmai.us/assets/application-") > -1) {
+				curScript.addEventListener("load", bbbScript, true);
+				break;
+			}
+		}
+	}
+	else
+		bbbScript();
+}
+
+function testBBBAccess() {
+	// Check whether the script has access to the page.
+	if (!document.body)
+		return;
+
+	function testFunc() {
+		window.bbb_access = true;
+	}
+
+	var testScript = document.createElement('script');
+	testScript.type = "text/javascript";
+	testScript.appendChild(document.createTextNode('(' + testFunc + ')();'));
+	document.body.appendChild(testScript);
+	window.setTimeout(function() { document.body.removeChild(testScript); }, 0);
+
+	if (!window.bbb_access) { // Embed the script since it can't get to Danbooru's JS.
 		var script = document.createElement('script');
 		script.type = "text/javascript";
-		script.appendChild(document.createTextNode('(' + bbbScript + ')();'));
+		script.appendChild(document.createTextNode(bbbScript));
+		script.appendChild(document.createTextNode('(' + runBBBScript + ')();'));
 		document.body.appendChild(script);
 	}
 	else // Operate normally.
-		bbbScript();
+		runBBBScript();
 }
+
+testBBBAccess();
