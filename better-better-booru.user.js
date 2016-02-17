@@ -1226,7 +1226,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			url = "/posts/" + optArg;
 			bbb.flags.hidden_xml = true;
 
-			fetchPages(url, "hidden");
+			fetchPages(url, "hidden", optArg);
 			bbbStatus("hidden", "new");
 		}
 	}
