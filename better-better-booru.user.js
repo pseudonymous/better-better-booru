@@ -2883,8 +2883,23 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Load stored settings.
 		var settings = localStorage.getItem("bbb_settings");
 
-		if (settings === null)
+		if (settings === null) {
+			// Alert the user when there are no settings so that new users know what to do and other users are aware their usual settings aren't in effect.
+			var noSettingsNotice = function() {
+				if (!getCookie().bbb_no_settings && !bbb.flags.local_storage_full) {
+					var domain = location.protocol + "//" + location.hostname;
+
+					bbbNotice("No settings could be detected for " + domain + ". Please take a moment to set/restore your options by using the \"BBB Settings\" link in the Danbooru navigation bar.", 15);
+					createCookie("bbb_no_settings", 1);
+				}
+
+				document.removeEventListener("mousemove", noSettingsNotice, false);
+			};
+
+			document.addEventListener("mousemove", noSettingsNotice, false);
+
 			loadDefaults();
+		}
 		else {
 			bbb.user = JSON.parse(settings);
 			checkUser(bbb.user, bbb.options);
