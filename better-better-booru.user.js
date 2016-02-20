@@ -6873,8 +6873,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb-expl tipdesc {display: inline; font-weight: bold;}' +
 		'#bbb-expl tipdesc:before {content: "\\A0"; display: block; height: 12px; clear: both;}' + // Simulate a double line break.
 		'#bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; text-align: right; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
-		'#bbb-notice-container {position: fixed; top: 0.5em; left: 25%; width: 50%;}' +
-		'#bbb-notice {padding: 3px; width: 100%; display: none; position: relative; z-index: 9002; border-radius: 2px; border: 1px solid #000000; background-color: #CCCCCC;}' +
+		'#bbb-notice-container {position: fixed; top: 0.5em; left: 25%; width: 50%; z-index: 9002;}' +
+		'#bbb-notice {padding: 3px; width: 100%; display: none; position: relative; border-radius: 2px; border: 1px solid #000000; background-color: #CCCCCC;}' +
 		'#bbb-notice-msg {margin: 0px 25px 0px 55px; max-height: 200px; overflow: auto;}' +
 		'#bbb-notice-msg .bbb-notice-msg-entry {border-bottom: solid 1px #000000; margin-bottom: 5px; padding-bottom: 5px;}' +
 		'#bbb-notice-msg .bbb-notice-msg-entry:last-child {border-bottom: none 0px; margin-bottom: 0px; padding-bottom: 0px;}' +
