@@ -2528,11 +2528,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		sectionHeader.className = "bbb-header";
 		sectionFrag.appendChild(sectionHeader);
 
-		var sectionText = document.createElement("div");
-		sectionText.innerHTML = "Hide posts that match the specified tag(s).";
-		sectionText.className = "bbb-section-text";
-		//sectionFrag.appendChild(sectionText);
-
 		var sectionDiv = document.createElement("div");
 		sectionDiv.className = "bbb-section-options";
 		sectionFrag.appendChild(sectionDiv);
@@ -2884,19 +2879,22 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var settings = localStorage.getItem("bbb_settings");
 
 		if (settings === null) {
-			// Alert the user when there are no settings so that new users know what to do and other users are aware their usual settings aren't in effect.
-			var noSettingsNotice = function() {
-				if (!getCookie().bbb_no_settings && !bbb.flags.local_storage_full) {
-					var domain = location.protocol + "//" + location.hostname;
+			if (!getCookie().bbb_no_settings && !bbb.flags.local_storage_full) {
+				// Alert the user when there are no settings so that new users know what to do and other users are aware their usual settings aren't in effect.
+				var noSettingsNotice = function() {
+					if (!getCookie().bbb_no_settings) {
+						// Trigger the notice if it hasn't been displayed in another tab/window.
+						var domain = location.protocol + "//" + location.hostname;
 
-					bbbNotice("No settings could be detected for " + domain + ". Please take a moment to set/restore your options by using the \"BBB Settings\" link in the Danbooru navigation bar.", 15);
-					createCookie("bbb_no_settings", 1);
-				}
+						bbbNotice("No settings could be detected for " + domain + ". Please take a moment to set/restore your options by using the \"BBB Settings\" link in the Danbooru navigation bar.", 15);
+						createCookie("bbb_no_settings", 1);
+					}
 
-				document.removeEventListener("mousemove", noSettingsNotice, false);
-			};
+					document.removeEventListener("mousemove", noSettingsNotice, false);
+				};
 
-			document.addEventListener("mousemove", noSettingsNotice, false);
+				document.addEventListener("mousemove", noSettingsNotice, false);
+			}
 
 			loadDefaults();
 		}
