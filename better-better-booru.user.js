@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        7.2.2
+// @version        7.2.3
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -277,7 +277,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			translation_mode: false
 		},
 		options: { // Setting options and data.
-			bbb_version: "7.2.2",
+			bbb_version: "7.2.3",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
@@ -1226,7 +1226,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			url = "/posts/" + optArg;
 			bbb.flags.hidden_xml = true;
 
-			fetchPages(url, "hidden");
+			fetchPages(url, "hidden", optArg);
 			bbbStatus("hidden", "new");
 		}
 	}
@@ -2528,11 +2528,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		sectionHeader.className = "bbb-header";
 		sectionFrag.appendChild(sectionHeader);
 
-		var sectionText = document.createElement("div");
-		sectionText.innerHTML = "Hide posts that match the specified tag(s).";
-		sectionText.className = "bbb-section-text";
-		//sectionFrag.appendChild(sectionText);
-
 		var sectionDiv = document.createElement("div");
 		sectionDiv.className = "bbb-section-options";
 		sectionFrag.appendChild(sectionDiv);
@@ -2883,8 +2878,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Load stored settings.
 		var settings = localStorage.getItem("bbb_settings");
 
-		if (settings === null)
+		if (settings === null) {
+			if (!getCookie().bbb_no_settings && !bbb.flags.local_storage_full) {
+				// Alert the user when there are no settings so that new users know what to do and other users are aware their usual settings aren't in effect.
+				var noSettingsNotice = function() {
+					if (!getCookie().bbb_no_settings) {
+						// Trigger the notice if it hasn't been displayed in another tab/window.
+						var domain = location.protocol + "//" + location.hostname;
+
+						bbbNotice("No settings could be detected for " + domain + ". Please take a moment to set/restore your options by using the \"BBB Settings\" link in the Danbooru navigation bar.", 15);
+						createCookie("bbb_no_settings", 1);
+					}
+
+					document.removeEventListener("mousemove", noSettingsNotice, false);
+				};
+
+				document.addEventListener("mousemove", noSettingsNotice, false);
+			}
+
 			loadDefaults();
+		}
 		else {
 			bbb.user = JSON.parse(settings);
 			checkUser(bbb.user, bbb.options);
@@ -3052,6 +3065,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				case "7.1":
 				case "7.2":
 				case "7.2.1":
+				case "7.2.2":
 					break;
 			}
 
@@ -6858,8 +6872,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		'#bbb-expl tipdesc {display: inline; font-weight: bold;}' +
 		'#bbb-expl tipdesc:before {content: "\\A0"; display: block; height: 12px; clear: both;}' + // Simulate a double line break.
 		'#bbb-status {background-color: rgba(255, 255, 255, 0.75); border: 1px solid rgba(204, 204, 204, 0.75); font-size: 12px; font-weight: bold; text-align: right; display: none; padding: 3px; position: fixed; bottom: 0px; right: 0px; z-index: 9002;}' +
-		'#bbb-notice-container {position: fixed; top: 0.5em; left: 25%; width: 50%;}' +
-		'#bbb-notice {padding: 3px; width: 100%; display: none; position: relative; z-index: 9002; border-radius: 2px; border: 1px solid #000000; background-color: #CCCCCC;}' +
+		'#bbb-notice-container {position: fixed; top: 0.5em; left: 25%; width: 50%; z-index: 9002;}' +
+		'#bbb-notice {padding: 3px; width: 100%; display: none; position: relative; border-radius: 2px; border: 1px solid #000000; background-color: #CCCCCC;}' +
 		'#bbb-notice-msg {margin: 0px 25px 0px 55px; max-height: 200px; overflow: auto;}' +
 		'#bbb-notice-msg .bbb-notice-msg-entry {border-bottom: solid 1px #000000; margin-bottom: 5px; padding-bottom: 5px;}' +
 		'#bbb-notice-msg .bbb-notice-msg-entry:last-child {border-bottom: none 0px; margin-bottom: 0px; padding-bottom: 0px;}' +

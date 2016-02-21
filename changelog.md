@@ -1,5 +1,7 @@
 Changelog
 ----------
+* Version 7.2.3:
+ * Fixed the retry link for retrieving hidden thumbnails.
 * Version 7.2.2:
  * Updated to support Danbooru's JavaScript changing to asynchronous.
  * Updated to support Danbooru's blacklist style reset.
