@@ -297,7 +297,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			comment_score: newOption("checkbox", false, "Comment Scores", "Make comment scores visible by adding them as direct links to their respective comments."),
 			custom_status_borders: newOption("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail borders for deleted, flagged, pending, parent, and child images."),
 			custom_tag_borders: newOption("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to posts with specific tags."),
-			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, popular, and favorite group listings."),
+			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, popular, and favorite group listings. <tiphead>Note</tiphead>Posts filtered out by the blacklist or quick search will not provide direct downloads until the blacklist entry or quick search affecting them is disabled."),
 			disable_embedded_notes: newOption("checkbox", false, "Disable Embedded Notes", "Force posts with embedded notes to display with the original note styling. <tiphead>Notes</tiphead>While notes will display with the original styling, the actual post settings will still have embedded notes set to enabled. <br><br>Due to the actual settings, users that may wish to edit notes will have to edit the notes with the embedded note styling so that nothing ends up breaking in unexpected ways. When toggling translation mode or opening the edit note dialog box, the notes will automatically revert back to the original embedded notes until the page is reloaded. <br><br>Note resizing and moving will be allowed without the reversion to embedded notes since this ability is sometimes necessary for badly positioned notes. Any note resizing or moving done as a part of intended note editing should be done <b>after</b> triggering the embedded note reversion since any changes before it will be lost."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
 			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, notes, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"load more\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
@@ -495,10 +495,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	customCSS(); // Contains the portions related to notices.
 
-	delayMe(formatThumbnails); // Delayed to allow Danbooru to run first.
-
-	delayMe(blacklistInit); // Delayed to allow Danbooru to run first.
-
 	thumbInfo();
 
 	removeTagHeaders();
@@ -516,12 +512,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	modifyPage();
 
 	autohideSidebar();
-
-	delayMe(fixedSidebar); // Delayed to allow Danbooru layout to finalize.
-
-	delayMe(collapseSidebar); // Delayed to allow Danbooru layout to finalize.
-
-	delayMe(fixedPaginator); // Delayed to allow Danbooru layout to finalize.
 
 	moveSaveSearch();
 
@@ -544,6 +534,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	bbbHotkeys();
 
 	endlessInit();
+
+	delayMe(formatThumbnails); // Delayed to allow Danbooru to run first.
+
+	delayMe(blacklistInit); // Delayed to allow Danbooru to run first.
+
+	delayMe(fixedSidebar); // Delayed to allow Danbooru layout to finalize.
+
+	delayMe(collapseSidebar); // Delayed to allow Danbooru layout to finalize.
+
+	delayMe(fixedPaginator); // Delayed to allow Danbooru layout to finalize.
 
 	/* Functions */
 
@@ -858,22 +858,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var newWidth = 0;
 			var newHeight = 0;
 			var newUrl = "";
-			var altTxt = "";
 
 			if (load_sample_first && post.has_large) {
 				newWidth = post.sample_width;
 				newHeight = post.sample_height;
 				newUrl = post.large_file_url;
-				altTxt = "Sample";
 			}
 			else {
 				newWidth = post.image_width;
 				newHeight = post.image_height;
 				newUrl = post.file_url;
-				altTxt = post.md5;
 			}
 
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + post.tag_string + '" title="' + post.tag_string + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 
 			bbb.el.bbbLoader = document.getElementById("bbb-loader");
 
@@ -3820,7 +3817,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			resizeLink.href = post.large_file_url;
 			swapLink.innerHTML = "View sample";
 			swapLink.href = post.large_file_url;
-			img.alt = post.md5;
 			img.setAttribute("height", post.image_height);
 			img.setAttribute("width", post.image_width);
 			bbbResizeNotice.style.display = (showResNot === "original" || showResNot === "all" ? "block" : "none");
@@ -3831,7 +3827,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			resizeLink.href = post.file_url;
 			swapLink.innerHTML = "View original";
 			swapLink.href = post.file_url;
-			img.alt = "Sample";
 			img.setAttribute("height", post.sample_height);
 			img.setAttribute("width", post.sample_width);
 			bbbResizeNotice.style.display = (showResNot === "sample" || showResNot === "all" ? "block" : "none");
@@ -4648,17 +4643,45 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var postId = post.getAttribute("data-id");
 			var ddlLink = post.getElementsByClassName("bbb-ddl")[0];
 
-			if (!ddlLink) { // If the direct download doesn't already exist, create it.
+			// If the direct download doesn't already exist, create it.
+			if (!ddlLink) {
 				ddlLink = document.createElement("a");
 				ddlLink.innerHTML = "Direct Download";
-				ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
-				ddlLink.id = "bbb-ddl-" + postId;
 				ddlLink.className = "bbb-ddl";
 				post.appendChild(ddlLink);
 			}
-			else if (ddlLink.href.indexOf("/data/") < 0) // Fix existing links for hidden thumbs.
-				ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
+
+			ddlLink.href = postUrl || "/data/DDL unavailable for post " + postId + ".jpg";
+
+			// Disable filtered posts.
+			if (post.bbbHasClass("blacklisted-active", "bbb-quick-search-filtered"))
+				unsetDDL(ddlLink);
 		}
+	}
+
+	function enablePostDDL(post) {
+		// Enable a post's DDL.
+		var ddlLink = post.getElementsByClassName("bbb-ddl")[0];
+
+		if (!direct_downloads || !ddlLink || post.bbbHasClass("blacklisted-active", "bbb-quick-search-filtered"))
+			return;
+
+		ddlLink.href = ddlLink.href.replace("donmai.us/#data", "donmai.us/data");
+	}
+
+	function disablePostDDL(post) {
+		// Disable a post's DDL.
+		var ddlLink = post.getElementsByClassName("bbb-ddl")[0];
+
+		if (!direct_downloads || !ddlLink)
+			return;
+
+		unsetDDL(ddlLink);
+	}
+
+	function unsetDDL(ddlLink) {
+		// Disable a DDL URL with an anchor.
+		ddlLink.href = ddlLink.href.replace("donmai.us/data", "donmai.us/#data");
 	}
 
 	function cleanLinks(target) {
@@ -5294,8 +5317,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Reset any blacklisted thumbnails.
-		while (blacklistedPosts[0])
-			blacklistedPosts[0].bbbRemoveClass("blacklisted blacklisted-active");
+		var blacklistedPost = blacklistedPosts[0];
+
+		while (blacklistedPost) {
+			blacklistedPost.bbbRemoveClass("blacklisted blacklisted-active");
+			enablePostDDL(blacklistedPost);
+			blacklistedPost = blacklistedPosts[0];
+		}
 
 		// Check if there actually are any tags.
 		if (!blacklistTags || !/[^\s,]/.test(blacklistTags))
@@ -5455,7 +5483,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						els = document.getElementsByClassName(id);
 
 						for (j = 0, jl = els.length; j < jl; j++)
-							els[j].bbbRemoveClass("blacklisted-active");
+							blacklistShowPost(els[j]);
 					}
 				}
 			}
@@ -5482,7 +5510,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						els = document.getElementsByClassName(id);
 
 						for (j = 0, jl = els.length; j < jl; j++)
-							els[j].bbbAddClass("blacklisted-active");
+							blacklistHidePost(els[j]);
 					}
 				}
 			}
@@ -5534,19 +5562,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var id = el.id;
 		var matchList = bbb.blacklist.match_list[id];
 
-		if (typeof(matchList) === "undefined") { // Post hasn't been tested yet.
+		// Test posts that haven't been tested yet.
+		if (typeof(matchList) === "undefined") {
 			matchList = bbb.blacklist.match_list[id] = {count: undefined, matches: [], override: undefined};
 
 			for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
 				var entry = bbb.blacklist.entries[i];
 
 				if (thumbSearchMatch(el, entry.search)) {
-					el.bbbAddClass("blacklisted");
-
-					if (entry.active) {
-						el.bbbAddClass("blacklisted-active");
+					if (entry.active)
 						matchList.count = ++matchList.count || 1;
-					}
 					else
 						matchList.count = matchList.count || 0;
 
@@ -5557,20 +5582,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (matchList.count === undefined) // No match.
 				matchList.count = false;
-			else if (el.id !== "image-container") { // Match found so prepare the thumbnail.
-				if (blacklist_thumb_controls)
-					blacklistPostControl(el, matchList);
-
-				if (blacklist_smart_view)
-					blacklistSmartView(el);
-			}
-
 		}
-		else if (matchList.count !== false && !el.bbbHasClass("blacklisted")) { // Post is already tested, but needs to be set up again.
+
+		// Check the saved blacklist info for the post and change the thumbnail as needed.
+		if (matchList.count !== false && !el.bbbHasClass("blacklisted")) {
+			el.bbbAddClass("blacklisted");
+
 			if (matchList.count > 0 && matchList.override !== true)
-				el.bbbAddClass("blacklisted blacklisted-active");
-			else
-				el.bbbAddClass("blacklisted");
+				blacklistHidePost(el);
 
 			if (el.id !== "image-container") {
 				if (blacklist_thumb_controls)
@@ -5660,7 +5679,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					var els = document.getElementsByClassName(id);
 
 					for (i = 0, il = els.length; i < il; i++)
-						els[i].bbbRemoveClass("blacklisted-active");
+						blacklistShowPost(els[i]);
 
 					blacklistHideTip();
 					bbb.blacklist.match_list[id].override = true;
@@ -5683,7 +5702,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				var els = document.getElementsByClassName(id);
 
 				for (var i = 0, il = els.length; i < il; i++)
-					els[i].bbbAddClass("blacklisted-active");
+					blacklistHidePost(els[i]);
 
 				bbb.blacklist.match_list[id].override = false;
 			}, false);
@@ -5782,6 +5801,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		return true;
+	}
+
+	function blacklistHidePost(post) {
+		// Hide blacklisted post content and adjust related content.
+		post.bbbAddClass("blacklisted-active");
+		disablePostDDL(post);
+	}
+
+	function blacklistShowPost(post) {
+		// Reveal blacklisted post content and adjust related content.
+		post.bbbRemoveClass("blacklisted-active");
+		enablePostDDL(post);
 	}
 
 	/* Other functions */
@@ -7452,7 +7483,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function quickSearchReset() {
 		// Completely reset the quick search.
-		var filtered = document.getElementsByClassName("bbb-quick-search-filtered");
+		var filteredPosts = document.getElementsByClassName("bbb-quick-search-filtered");
+		var filteredPost = filteredPosts[0];
 
 		bbb.quick_search = "";
 		bbb.el.quickSearchInput.value = "";
@@ -7461,8 +7493,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		sessionStorage.removeItem("bbb_quick_search");
 		bbb.el.quickSearchDiv.bbbRemoveClass("bbb-quick-search-active bbb-quick-search-pinned");
 
-		while (filtered[0])
-			filtered[0].bbbRemoveClass("bbb-quick-search-filtered");
+		while (filteredPost) {
+			filteredPost.bbbRemoveClass("bbb-quick-search-filtered");
+			enablePostDDL(filteredPost);
+			filteredPost = filteredPosts[0];
+		}
 	}
 
 	function quickSearchTest(target) {
@@ -7482,10 +7517,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		for (var i = 0, il = posts.length; i < il; i++) {
 			var post = posts[i];
 
-			if (!thumbSearchMatch(post, search))
+			if (!thumbSearchMatch(post, search)) {
 				post.bbbAddClass("bbb-quick-search-filtered");
-			else
+				disablePostDDL(post);
+			}
+			else {
 				post.bbbRemoveClass("bbb-quick-search-filtered");
+				enablePostDDL(post);
+			}
 		}
 	}
 
@@ -7503,7 +7542,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Toggle the quick search between pinned and not pinned for the session.
 		var searchDiv = bbb.el.quickSearchDiv;
 
-		if (searchDiv.bbbHasClass("bbb-quick-search-show") || searchDiv.bbbHasClass("bbb-quick-search-active")) {
+		if (searchDiv.bbbHasClass("bbb-quick-search-show", "bbb-quick-search-active")) {
 			if (!searchDiv.bbbHasClass("bbb-quick-search-pinned"))
 				quickSearchPinEnable();
 			else
