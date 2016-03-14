@@ -133,6 +133,21 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			this.addEventListener("DOMNodeInserted", func, false);
 	};
 
+	Element.prototype.bbbOverrideClick = function(func) {
+		// Override Danbooru's click event listeners by capturing clicks on the parent node and stopping them.
+		var target = this;
+
+		var wrapperFunc = function(event) {
+			if (event.target !== target || event.button !== 0)
+				return;
+
+			func(event);
+			event.stopPropagation();
+		};
+
+		target.parentNode.addEventListener("click", wrapperFunc, true);
+	};
+
 	Storage.prototype.bbbSetItem = function(key, value) {
 		// Store a value in storage and warn if it is full.
 		try {
@@ -690,6 +705,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						if (xmlhttp.status === 403 || xmlhttp.status === 401) {
 							bbbNotice('Error retrieving post information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', -1);
 							document.getElementById("bbb-bypass-api-link").addEventListener("click", function(event) {
+								if (event.button !== 0)
+									return;
+
 								updateSettings("bypass_api", true);
 								this.parentNode.innerHTML = "Settings updated. You may change this setting under the preferences tab in the settings panel.";
 								event.preventDefault();
@@ -712,6 +730,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 								bbbStatus("posts", "error");
 
 								document.getElementById(linkId).addEventListener("click", function(event) {
+									if (event.button !== 0)
+										return;
+
 									closeBbbNoticeMsg(noticeMsg);
 									searchJSON(mode, optArg);
 									event.preventDefault();
@@ -1116,10 +1137,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			activeThumb.bbbAddClass("current-post");
 
 		// Make the show/hide links work.
-		newNotice.addEventListener("click", function(event) {
-			if (event.target !== previewLink)
-				return;
-
+		previewLink.bbbOverrideClick(function(event) {
 			if (thumbDiv.style.display === "block") {
 				thumbDiv.style.display = "none";
 				previewLink.innerHTML = "show &raquo;";
@@ -1132,8 +1150,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 
 			event.preventDefault();
-			event.stopPropagation();
-		}, true);
+		});
 
 		// Prepare thumbnails.
 		prepThumbnails(newNotice);
@@ -1299,6 +1316,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							var noticeMsg = bbbNotice(msg + ' (HTML Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
 
 							document.getElementById(linkId).addEventListener("click", function(event) {
+								if (event.button !== 0)
+									return;
+
 								closeBbbNoticeMsg(noticeMsg);
 								searchPages(mode, optArg);
 								event.preventDefault();
@@ -1836,8 +1856,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
 		link.addEventListener("click", function(event) {
-			openMenu();
+			if (event.button !== 0)
+				return;
 
+			openMenu();
 			event.preventDefault();
 		}, false);
 
@@ -1882,6 +1904,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var tabBar = document.createElement("div");
 		tabBar.style.padding = "0px 15px";
 		tabBar.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			var target = event.target;
 
 			if (target.href)
@@ -1993,6 +2018,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		close.className = "bbb-button";
 		close.style.marginRight = "15px";
 		close.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			removeMenu();
 			saveSettings();
 			event.preventDefault();
@@ -2003,6 +2031,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		cancel.href = "#";
 		cancel.className = "bbb-button";
 		cancel.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			removeMenu();
 			loadSettings();
 			event.preventDefault();
@@ -2015,6 +2046,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		reset.style.cssFloat = "right";
 		reset.style.color = "#ff1100";
 		reset.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			loadDefaults();
 			reloadMenu();
 			event.preventDefault();
@@ -2197,7 +2231,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 				item.type = "checkbox";
 				item.checked = userSetting;
-				item.addEventListener("click", function() {
+				item.addEventListener("click", function(event) {
+					if (event.button !== 0)
+						return;
+
 					bbb.user[settingName] = this.checked;
 					bbb.settings.changed[settingName] = true;
 				}, false);
@@ -2220,6 +2257,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					tagExpand.className = "bbb-edit-link";
 					tagExpand.innerHTML = "&raquo;";
 					tagExpand.addEventListener("click", function(event) {
+						if (event.button !== 0)
+							return;
+
 						tagEditWindow(item, bbb.user, settingName);
 						event.preventDefault();
 					}, false);
@@ -2282,7 +2322,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var enableBox = document.createElement("input");
 		enableBox.type = "checkbox";
 		enableBox.checked = borderItem.is_enabled;
-		enableBox.addEventListener("click", function() { borderItem.is_enabled = this.checked; }, false);
+		enableBox.addEventListener("click", function(event) {
+			if (event.button === 0)
+				borderItem.is_enabled = this.checked;
+		}, false);
 		enableLabel.appendChild(enableBox);
 
 		var editSpan = document.createElement("span");
@@ -2294,6 +2337,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		moveButton.innerHTML = "Move";
 		moveButton.className = "bbb-border-button";
 		moveButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			moveBorder(borderSettings, indexWrapper);
 			event.preventDefault();
 		}, false);
@@ -2304,7 +2350,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		previewButton.href = "#";
 		previewButton.innerHTML = "Preview";
 		previewButton.className = "bbb-border-button";
-		previewButton.addEventListener("click", function(event) { event.preventDefault(); }, false);
 		previewButton.bbbBorderPreview(borderItem);
 		editSpan.appendChild(previewButton);
 
@@ -2314,6 +2359,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			deleteButton.innerHTML = "Delete";
 			deleteButton.className = "bbb-border-button";
 			deleteButton.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				deleteBorder(borderSettings, indexWrapper);
 				event.preventDefault();
 			}, false);
@@ -2324,6 +2372,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			newButton.innerHTML = "New";
 			newButton.className = "bbb-border-button";
 			newButton.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				createBorder(borderSettings, indexWrapper);
 				event.preventDefault();
 			}, false);
@@ -2364,6 +2415,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			nameExpand.className = "bbb-edit-link";
 			nameExpand.innerHTML = "&raquo;";
 			nameExpand.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				tagEditWindow(nameInput, borderItem, "tags");
 				event.preventDefault();
 			}, false);
@@ -2472,6 +2526,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		textBackup.className = "bbb-button";
 		textBackup.style.marginRight = "15px";
 		textBackup.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			createBackupText();
 			event.preventDefault();
 		}, false);
@@ -2483,6 +2540,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		pageBackup.className = "bbb-button";
 		pageBackup.style.marginRight = "15px";
 		pageBackup.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			createBackupPage();
 			event.preventDefault();
 		}, false);
@@ -2498,6 +2558,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		restoreBackup.href = "#";
 		restoreBackup.className = "bbb-button";
 		restoreBackup.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			restoreBackupText();
 			event.preventDefault();
 		}, false);
@@ -2544,6 +2607,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		formatButton.href = "#";
 		formatButton.className = "bbb-button";
 		formatButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			var textareaString = searchMultiToSingle(blacklistTextarea.value);
 
 			blacklistTextarea.value = searchSingleToMulti(textareaString);
@@ -2595,14 +2661,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		tocList.addEventListener("click", function (event) {
-			var target = event.target;
-			var targetValue = target.href;
+			var targetValue = event.target.href;
 
-			if (targetValue) {
-				var sectionTop = pageSections[targetValue.split("#")[1]].offsetTop;
-				bbb.el.menu.scrollDiv.scrollTop = sectionTop;
-				event.preventDefault();
-			}
+			if (event.button !== 0 || !targetValue)
+				return;
+
+			var sectionTop = pageSections[targetValue.split("#")[1]].offsetTop;
+
+			bbb.el.menu.scrollDiv.scrollTop = sectionTop;
+			event.preventDefault();
 		}, false);
 
 		return sectionFrag;
@@ -2742,7 +2809,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var target = event.target;
 		var section = bbb.borderEdit.section;
 
-		if (target.className === "bbb-border-divider") {
+		if (target.className === "bbb-border-divider" && event.button === 0) {
 			var newIndex = Number(target.parentNode.getAttribute("data-bbb-index"));
 			var borderSettings = bbb.borderEdit.settings;
 
@@ -2793,7 +2860,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	Element.prototype.bbbBorderPreview = function(borderItem) {
-		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + bbb.user.border_width + "px; padding:" + bbb.user.border_spacing + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
+		this.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
+			showTip(event, "<img src=\"http://danbooru.donmai.us/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + bbb.user.border_width + "px; padding:" + bbb.user.border_spacing + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;");
+			event.preventDefault();
+		}, false);
 		this.addEventListener("mouseout", hideTip, false);
 	};
 
@@ -2801,6 +2874,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var tip = bbb.el.menu.tip;
 
 		this.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			showTip(event, text, false);
 			event.preventDefault();
 		}, false);
@@ -3159,7 +3235,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLink = bbb.el.resizeLink = getId("bbb-resize-link", bbbResizeNotice);
 		var closeResizeNotice = bbb.el.closeResizeNotice = getId("close-resize-notice", bbbResizeNotice);
 
-		closeResizeNotice.addEventListener("click", function() {
+		closeResizeNotice.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			var showResNot = bbb.user.show_resized_notice;
 
 			bbbResizeNotice.style.display = "none";
@@ -3196,6 +3275,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		swapListItem.appendChild(swapLink);
 
 		swapLink.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			swapPost();
 			event.preventDefault();
 		}, false);
@@ -3224,10 +3306,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var swapLink = bbb.el.swapLink;
 
 		resizeLink.addEventListener("click", function(event) {
-			if (event.button === 0) {
-				swapPost();
-				event.preventDefault();
-			}
+			if (event.button !== 0)
+				return;
+
+			swapPost();
+			event.preventDefault();
 		}, false);
 		bbbLoader.addEventListener("load", function() { // Change the image to the successfully loaded sample/original image.
 			if (!bbb.post.swapped)
@@ -3276,10 +3359,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var swapLink = bbb.el.swapLink;
 
 		resizeLink.addEventListener("click", function(event) {
-			if (event.button === 0) {
-				swapPost();
-				event.preventDefault();
-			}
+			if (event.button !== 0)
+				return;
+
+			swapPost();
+			event.preventDefault();
 		}, false);
 		img.addEventListener("error", function(event) { // State the image has failed loading and provide a link to the other image.
 			if (img.src !== "about:blank") {
@@ -3297,14 +3381,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function noteToggleInit() {
 		// Override Danbooru's image click handler for toggling notes with a custom one.
-		document.addEventListener("click", function(event) {
-			if (event.target.id === "image" && event.button === 0) {
-				if (!bbb.post.translation_mode && !bbb.drag_scroll.moved)
-					Danbooru.Note.Box.toggle_all();
+		var image = document.getElementById("image");
 
-				event.stopPropagation();
-			}
-		}, true);
+		if (!image)
+			return;
+
+		image.bbbOverrideClick(function(event) {
+			if (!bbb.post.translation_mode && !bbb.drag_scroll.moved)
+				Danbooru.Note.Box.toggle_all();
+		});
 	}
 
 	function noteToggleLinkInit() {
@@ -3324,6 +3409,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (toggleLink) {
 			document.getElementById("bbb-note-toggle").addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				Danbooru.Note.Box.toggle_all();
 				event.preventDefault();
 			}, false);
@@ -3339,7 +3427,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var translateLink = document.getElementById("translate");
 		var toggleFunction;
 
-		if (post.file_ext !== "webm" && post.file_ext !== "mp4" && post.file_ext !== "swf") { // Don't allow translation functions on webm videos or flash.
+		if (post.file_ext !== "webm" && post.file_ext !== "mp4" && post.file_ext !== "swf") { // Don't allow translation functions on videos or flash.
 			if (postTag !== "VIDEO") { // Make translation mode work on non-video content.
 				// Allow the translation note functions if notes aren't locked.
 				if (document.getElementById("note-locked-notice"))
@@ -3348,20 +3436,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				// Script translation mode events and tracking used to resolve timing issues.
 				bbb.post.translation_mode = Danbooru.Note.TranslationMode.active;
 
-				// Override Danbooru's toggle function which may or may not exist depending on caching.
+				// Override Danbooru's toggle function.
 				if (translateLink) {
 					toggleFunction = function(event) {
-						if (event.target !== translateLink)
-							return;
-
 						Danbooru.Note.TranslationMode.toggle(event);
 						translationModeToggle();
 
 						event.preventDefault();
-						event.stopPropagation();
 					};
 
-					translateLink.parentNode.addEventListener("click", toggleFunction, true);
+					translateLink.bbbOverrideClick(toggleFunction);
 				}
 			}
 			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
@@ -3374,13 +3458,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				Danbooru.Note.Edit.show = toggleFunction;
 
 				if (translateLink)
-					translateLink.addEventListener("click", toggleFunction, false);
+					translateLink.bbbOverrideClick(toggleFunction);
 
 				// Override the hotkey for "N".
 				createHotkey("78", toggleFunction);
 			}
 		}
-		else if (translateLink) { // If the translate link exists on videos or flash, provide a warning.
+		else { // Provide a warning for unsupported content.
 			toggleFunction = function(event) {
 				bbbNotice('Note editing is not allowed on flash/video content.', -1);
 				event.preventDefault();
@@ -3388,7 +3472,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			Danbooru.Note.TranslationMode.toggle = toggleFunction;
 			Danbooru.Note.Edit.show = toggleFunction;
-			translateLink.addEventListener("click", toggleFunction, false);
+
+			if (translateLink)
+				translateLink.bbbOverrideClick(toggleFunction);
+
 			createHotkey("78", toggleFunction); // Override the hotkey for "N".
 		}
 	}
@@ -3415,14 +3502,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 
 		// Save the original note functions.
-		var origToggleFunction = bbb.hotkeys.post[78];
+		var origToggleFunction = bbb.hotkeys.post[78].func;
 		var origEditFunction = Danbooru.Note.Edit.show;
 
 		// Create override functions.
 		var toggleFunction = function(event) {
 			var translateLink = document.getElementById("translate");
 
-			if (event.type === "click" && event.target !== translateLink)
+			if (event.type === "click" && (event.target !== translateLink || event.button !== 0))
 				return;
 
 			resetFunction();
@@ -3459,16 +3546,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function alternateImageSwap() {
 		// Override Danbooru's image click handler for toggling notes with a custom one that swaps the image.
 		var post = bbb.post.info;
+		var image = document.getElementById("image");
 
-		if (post.has_large) {
-			document.addEventListener("click", function(event) {
-				if (event.target.id === "image" && event.button === 0) {
-					if (!bbb.post.translation_mode && !bbb.drag_scroll.moved)
+		if (post.has_large && image) {
+			image.bbbOverrideClick(function(event) {
+				if (!bbb.post.translation_mode && !bbb.drag_scroll.moved)
 						swapPost();
-
-					event.stopPropagation();
-				}
-			}, true);
+			});
 		}
 
 		// Set up the "toggle notes" link since the image won't be used for toggling.
@@ -3547,6 +3631,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLinkAll = bbb.el.resizeLinkAll = document.createElement("a");
 		resizeLinkAll.href = "#";
 		resizeLinkAll.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			resizePost("all");
 			event.preventDefault();
 		}, false);
@@ -3554,6 +3641,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLinkWidth = bbb.el.resizeLinkWidth = document.createElement("a");
 		resizeLinkWidth.href = "#";
 		resizeLinkWidth.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			resizePost("width");
 			event.preventDefault();
 		}, false);
@@ -3561,6 +3651,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLinkHeight = bbb.el.resizeLinkHeight = document.createElement("a");
 		resizeLinkHeight.href = "#";
 		resizeLinkHeight.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			resizePost("height");
 			event.preventDefault();
 		}, false);
@@ -3595,6 +3688,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			resizeLabelLink.innerHTML = "Resize:";
 			resizeLabelLink.style.marginRight = "2px";
 			resizeLabelLink.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				if (bbb.post.resize.mode === "none")
 					resizePost("all");
 				else
@@ -3893,6 +3989,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function requestRelations(event) {
 		// Start the parent/child notice JSON request when the user chooses to display the thumbs in a notice.
+		if (event.button !== 0)
+			return;
+
 		var post = bbb.post.info;
 		var target = event.target;
 
@@ -4046,8 +4145,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function statusLinkEvents(link, notice) {
 		// Attach events to the status links to enable a tooltip style notice.
-		link.addEventListener("click", function(event) { showStatusNotice(event, notice); }, false);
-		link.addEventListener("mouseout", function() { bbb.timers.minNotice = window.setTimeout(function() { notice.style.display = "none"; }, 200); }, false);
+		link.addEventListener("click", function(event) {
+			if (event.button === 0)
+				showStatusNotice(event, notice);
+		}, false);
+		link.addEventListener("mouseout", function() {
+			bbb.timers.minNotice = window.setTimeout(function() {
+				notice.style.display = "none";
+			}, 200);
+		}, false);
 		notice.addEventListener("mouseover", function() { window.clearTimeout(bbb.timers.minNotice); }, false);
 		notice.addEventListener("mouseleave", function() { notice.style.display = "none"; }, false);
 	}
@@ -4090,7 +4196,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			// Disable click behavior when dragging the video around.
 			if (targetTag === "VIDEO") {
-				document.addEventListener("click", function(event) {
+				target.parentNode.addEventListener("click", function(event) {
 					if (event.button === 0 && event.target.id === "image" && bbb.drag_scroll.moved)
 						event.preventDefault();
 				}, true);
@@ -4863,6 +4969,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			link.href = "#";
 			link.innerHTML = "Endless";
 			link.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				endlessToggle();
 				event.preventDefault();
 			}, false);
@@ -4901,6 +5010,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			loadButton.id = "bbb-endless-load-button";
 			loadButton.style.display = "none";
 			loadButton.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				loadButton.style.display = "none";
 				loadButton.blur();
 				bbb.endless.paused = false;
@@ -4920,6 +5032,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			enableButton.href = "#";
 			enableButton.id = "bbb-endless-enable-button";
 			enableButton.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				enableButton.blur();
 				endlessToggle();
 				event.preventDefault();
@@ -5995,6 +6110,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			noticeMsg = bbb.el.noticeMsg = getId("bbb-notice-msg", notice);
 
 			getId("bbb-notice-close", notice).addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				closeBbbNotice();
 				event.preventDefault();
 			}, false);
@@ -6209,6 +6327,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (cancelButton)
 				buttonDiv.appendChild(cancelButton);
+
+			// Only allow left clicks to trigger the prompt buttons.
+			buttonDiv.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					event.stopPropagation();
+			}, true);
 		}
 
 		if (typeof(content) === "string")
@@ -6699,10 +6823,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			link.href = "/posts?new_posts=redirect&page=b1";
 			link.innerHTML = "New";
 			link.addEventListener("click", function(event) {
-				if (event.button === 0) {
-					trackNewLoad();
-					event.preventDefault();
-				}
+				if (event.button !== 0)
+					return;
+
+				trackNewLoad();
+				event.preventDefault();
 			}, false);
 
 			var item = document.createElement("li");
@@ -6766,6 +6891,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					postSections.appendChild(markSection);
 
 					markLink.addEventListener("click", function(event) {
+						if (event.button !== 0)
+							return;
+
 						trackNewMark();
 						event.preventDefault();
 					}, false);
@@ -6781,6 +6909,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					postSections.appendChild(resetSection);
 
 					resetLink.addEventListener("click", function(event) {
+						if (event.button !== 0)
+							return;
+
 						trackNewReset();
 						event.preventDefault();
 					}, false);
@@ -8064,7 +8195,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		sidebar.addEventListener("click", function(event) {
 			var target = event.target;
 
-			if (target.id !== "tags")
+			if (event.button === 0 && target.id !== "tags")
+				target.blur();
+		}, false);
+		sidebar.addEventListener("mouseup", function(event) {
+			var target = event.target;
+
+			if (event.button !== 0 && target.id !== "tags")
 				target.blur();
 		}, false);
 		sidebar.addEventListener("focus", function() {
@@ -8803,10 +8940,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var angleQuotes = String.fromCharCode(187);
 		var enDash = String.fromCharCode(8211);
 
+		if ((type === "mouseup" && button !== 2) || (type === "click" && button !== 0)) // Don't respond to middle click and filter out duplicate user actions.
+			return;
+
 		if (button === 2) // Immediately remove the tag upon a right click.
 			linkType = "~";
-		else if (button !== 0 || (type === "mouseup" && button !== 2) || (type === "click" && button !== 0))
-			return;
 
 		// Each case changes the tag's toggle link display and updates the search box.
 		switch (linkType) {
@@ -8880,6 +9018,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		content.appendChild(domainDiv);
 
 		var cbFunc = function(event) {
+			if (event.button !== 0)
+				return;
+
 			var target = event.target;
 
 			target.nextSibling.style.textDecoration = (target.checked ? "none" : "line-through");
