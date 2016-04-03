@@ -1531,7 +1531,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postEl = postContent.el;
 		var postTag = (postEl ? postEl.tagName : undefined);
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
-		var directLink = getId("image-resize-link", target) || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
+		var directLink = getId("image-resize-link", target) || target.querySelector("#post-information ul li a[href^='/data/']");
 		var twitterInfo = getMeta("twitter:image", target);
 		var previewInfo = getMeta("og:image", target);
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
@@ -1658,7 +1658,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var swfEmb = (swfObj ? swfObj.getElementsByTagName("embed")[0] : undefined);
 		var video = imgContainer.getElementsByTagName("video")[0];
 		var ugoira = imgContainer.getElementsByTagName("canvas")[0];
-		var other = document.evaluate('.//a[starts-with(@href, "/data/")]', imgContainer, null, 9, null).singleNodeValue;
+		var other = imgContainer.querySelector("a[href^='/data/']");
 		var el = swfEmb || video || ugoira || img || other;
 		var secondaryEl = swfObj; // Other elements related to the main element. Only applies to flash for now.
 
@@ -7342,36 +7342,41 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (hide_comment_notice) {
 			var commentGuide;
+			var commentGuideParent;
 
 			if (gLoc === "post") {
-				commentGuide = document.evaluate('//section[@id="comments"]/h2/a[contains(@href,"/wiki_pages")]/..', document, null, 9, null).singleNodeValue;
+				commentGuide = document.querySelector("#comments h2 a[href*='howto']");
+				commentGuideParent = (commentGuide ? commentGuide.parentNode : undefined);
 
-				if (commentGuide && commentGuide.textContent === "Before commenting, read the how to comment guide.")
-					commentGuide.style.display = "none";
+				if (commentGuideParent && commentGuideParent.textContent === "Before commenting, read the how to comment guide.")
+					commentGuideParent.style.display = "none";
 			}
 			else if (gLoc === "comments") {
-				commentGuide = document.evaluate('//div[@id="a-index"]/div/h2/a[contains(@href,"/wiki_pages")]/..', document, null, 9, null).singleNodeValue;
+				commentGuide = document.querySelector("#a-index div h2 a[href*='howto']");
+				commentGuideParent = (commentGuide ? commentGuide.parentNode : undefined);
 
-				if (commentGuide && commentGuide.textContent === "Before commenting, read the how to comment guide.")
-					commentGuide.style.display = "none";
+				if (commentGuideParent && commentGuideParent.textContent === "Before commenting, read the how to comment guide.")
+					commentGuideParent.style.display = "none";
 			}
 		}
 
 		if (hide_tag_notice && gLoc === "post") {
-			var tagGuide = document.evaluate('//section[@id="edit"]/div/p/a[contains(@href,"/howto:tag")]/..', document, null, 9, null).singleNodeValue;
+			var tagGuide = document.querySelector("#edit div p a[href*='howto']");
+			var tagGuideParent = (tagGuide ? tagGuide.parentNode : undefined);
 
-				if (tagGuide && tagGuide.textContent === "Before editing, read the how to tag guide.")
-					tagGuide.style.display = "none";
+				if (tagGuideParent && tagGuideParent.textContent === "Before editing, read the how to tag guide.")
+					tagGuideParent.style.display = "none";
 		}
 
 		if (hide_upload_notice && gLoc === "upload")
 			styles += '#upload-guide-notice {display: none !important;}';
 
 		if (hide_pool_notice && gLoc === "new_pool") {
-			var poolGuide = document.evaluate('//div[@id="c-new"]/p/a[contains(@href,"/howto:pools")]/..', document, null, 9, null).singleNodeValue;
+			var poolGuide = document.querySelector("#c-new p a[href*='howto']");
+			var poolGuideParent = (poolGuide ? poolGuide.parentNode : undefined);
 
-				if (poolGuide && poolGuide.textContent === "Before creating a pool, read the pool guidelines.")
-					poolGuide.style.display = "none";
+				if (poolGuideParent && poolGuideParent.textContent === "Before creating a pool, read the pool guidelines.")
+					poolGuideParent.style.display = "none";
 		}
 
 		customStyles.innerHTML = styles;
