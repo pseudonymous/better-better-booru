@@ -275,10 +275,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				51: {func: resizeHotkey, custom_handler: true}, // 3
 				52: {func: resizeHotkey, custom_handler: true}, // 4
 				66: {func: openMenu}, // B
-				78: {func: function(event) { // N
-					Danbooru.Note.TranslationMode.toggle(event);
-					translationModeToggle();
-				}},
 				86: {func: swapPost} // V
 			}
 		},
@@ -288,8 +284,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				mode: "none",
 				ratio: 1
 			},
-			swapped: false, // Whether the post content has been changed between the original and sample versions.
-			translation_mode: false
+			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
 			bbb_version: "7.2.3",
@@ -3387,7 +3382,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 
 		image.bbbOverrideClick(function(event) {
-			if (!bbb.post.translation_mode && !bbb.drag_scroll.moved)
+			if (!Danbooru.Note.TranslationMode.active && !bbb.drag_scroll.moved)
 				Danbooru.Note.Box.toggle_all();
 		});
 	}
@@ -3429,23 +3424,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (post.file_ext !== "webm" && post.file_ext !== "mp4" && post.file_ext !== "swf") { // Don't allow translation functions on videos or flash.
 			if (postTag !== "VIDEO") { // Make translation mode work on non-video content.
-				// Allow the translation note functions if notes aren't locked.
-				if (document.getElementById("note-locked-notice"))
-					return;
-
-				// Script translation mode events and tracking used to resolve timing issues.
-				bbb.post.translation_mode = Danbooru.Note.TranslationMode.active;
-
-				// Override Danbooru's toggle function.
-				if (translateLink) {
-					toggleFunction = function(event) {
-						Danbooru.Note.TranslationMode.toggle(event);
-						translationModeToggle();
-
-						event.preventDefault();
-					};
-
-					translateLink.bbbOverrideClick(toggleFunction);
+				// Set up/override the translate link and hotkey if notes aren't locked.
+				if (!document.getElementById("note-locked-notice") && translateLink) {
+					translateLink.bbbOverrideClick(Danbooru.Note.TranslationMode.toggle);
+					createHotkey("78", Danbooru.Note.TranslationMode.toggle);
 				}
 			}
 			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
@@ -3454,14 +3436,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					event.preventDefault();
 				};
 
-				Danbooru.Note.TranslationMode.toggle = toggleFunction;
+				Danbooru.Note.TranslationMode.start = toggleFunction;
 				Danbooru.Note.Edit.show = toggleFunction;
 
 				if (translateLink)
 					translateLink.bbbOverrideClick(toggleFunction);
 
-				// Override the hotkey for "N".
-				createHotkey("78", toggleFunction);
+				createHotkey("78", toggleFunction); // Override the hotkey for "N".
 			}
 		}
 		else { // Provide a warning for unsupported content.
@@ -3470,7 +3451,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				event.preventDefault();
 			};
 
-			Danbooru.Note.TranslationMode.toggle = toggleFunction;
+			Danbooru.Note.TranslationMode.start = toggleFunction;
 			Danbooru.Note.Edit.show = toggleFunction;
 
 			if (translateLink)
@@ -3502,7 +3483,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 
 		// Save the original note functions.
-		var origToggleFunction = bbb.hotkeys.post[78].func;
 		var origEditFunction = Danbooru.Note.Edit.show;
 
 		// Create override functions.
@@ -3513,9 +3493,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				return;
 
 			resetFunction();
-
 			Danbooru.Note.TranslationMode.toggle(event);
-			translationModeToggle();
 
 			event.preventDefault();
 			event.stopPropagation();
@@ -3530,7 +3508,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			// Remove all overrides/overwrites.
 			Danbooru.Note.Edit.show = origEditFunction;
 			document.removeEventListener("click", toggleFunction, true);
-			createHotkey("78", origToggleFunction);
+
+			if (!document.getElementById("note-locked-notice"))
+				createHotkey("78", Danbooru.Note.TranslationMode.toggle);
 
 			// Reset notes with embedded notes enabled.
 			Danbooru.Note.embed = true;
@@ -3550,7 +3530,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (post.has_large && image) {
 			image.bbbOverrideClick(function(event) {
-				if (!bbb.post.translation_mode && !bbb.drag_scroll.moved)
+				if (!Danbooru.Note.TranslationMode.active && !bbb.drag_scroll.moved)
 						swapPost();
 			});
 		}
@@ -4191,8 +4171,21 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (targetTag === "IMG" || targetTag === "VIDEO" || targetTag === "CANVAS") {
 			bbb.drag_scroll.target = target;
 
-			if (!bbb.post.translation_mode)
+			if (!Danbooru.Note.TranslationMode.active)
 				dragScrollEnable();
+
+			var startFunction = Danbooru.Note.TranslationMode.start;
+			var stopFunction = Danbooru.Note.TranslationMode.stop;
+
+			Danbooru.Note.TranslationMode.start = function(event) {
+				startFunction(event);
+				dragScrollToggle();
+			};
+
+			Danbooru.Note.TranslationMode.stop = function(event) {
+				stopFunction(event);
+				dragScrollToggle();
+			};
 
 			// Disable click behavior when dragging the video around.
 			if (targetTag === "VIDEO") {
@@ -4209,7 +4202,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!post_drag_scroll || !bbb.drag_scroll.target)
 			return;
 
-		if (bbb.post.translation_mode)
+		if (Danbooru.Note.TranslationMode.active)
 			dragScrollDisable();
 		else
 			dragScrollEnable();
@@ -4268,13 +4261,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function disableEvent(event) {
 		// removeEventListener friendly function for stopping an event.
 		event.preventDefault();
-	}
-
-	function translationModeToggle() {
-		// Toggle the translation mode status and drag scrolling.
-		bbb.post.translation_mode = !bbb.post.translation_mode;
-
-		dragScrollToggle();
 	}
 
 	function autoscrollPost() {
