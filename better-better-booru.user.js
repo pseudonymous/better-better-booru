@@ -7922,7 +7922,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var activeTag = active.tagName;
 			var activeType = active.type;
 
-			if (activeTag === "SELECT" || activeTag === "TEXTAREA" || (activeTag === "INPUT" && !/^(:?button|checkbox|file|hidden|image|radio|reset|submit)$/.test(activeType))) // Input types: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#Attributes
+			if (activeTag === "SELECT" || activeTag === "TEXTAREA" || (activeTag === "INPUT" && !/^(?:button|checkbox|file|hidden|image|radio|reset|submit)$/.test(activeType))) // Input types: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#Attributes
 				return;
 
 			var loc = (gLoc === "post" ? "post" : "other");
