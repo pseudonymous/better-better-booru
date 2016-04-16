@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        7.2.3
+// @version        7.2.4
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -133,6 +133,21 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			this.addEventListener("DOMNodeInserted", func, false);
 	};
 
+	Element.prototype.bbbOverrideClick = function(func) {
+		// Override Danbooru's click event listeners by capturing clicks on the parent node and stopping them.
+		var target = this;
+
+		var wrapperFunc = function(event) {
+			if (event.target !== target || event.button !== 0)
+				return;
+
+			func(event);
+			event.stopPropagation();
+		};
+
+		target.parentNode.addEventListener("click", wrapperFunc, true);
+	};
+
 	Storage.prototype.bbbSetItem = function(key, value) {
 		// Store a value in storage and warn if it is full.
 		try {
@@ -260,10 +275,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				51: {func: resizeHotkey, custom_handler: true}, // 3
 				52: {func: resizeHotkey, custom_handler: true}, // 4
 				66: {func: openMenu}, // B
-				78: {func: function(event) { // N
-					Danbooru.Note.TranslationMode.toggle(event);
-					translationModeToggle();
-				}},
 				86: {func: swapPost} // V
 			}
 		},
@@ -273,11 +284,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				mode: "none",
 				ratio: 1
 			},
-			swapped: false, // Whether the post content has been changed between the original and sample versions.
-			translation_mode: false
+			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "7.2.3",
+			bbb_version: "7.2.4",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
@@ -297,7 +307,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			comment_score: newOption("checkbox", false, "Comment Scores", "Make comment scores visible by adding them as direct links to their respective comments."),
 			custom_status_borders: newOption("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail borders for deleted, flagged, pending, parent, and child images."),
 			custom_tag_borders: newOption("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to posts with specific tags."),
-			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, popular, and favorite group listings."),
+			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, popular, and favorite group listings. <tiphead>Note</tiphead>Posts filtered out by the blacklist or quick search will not provide direct downloads until the blacklist entry or quick search affecting them is disabled."),
 			disable_embedded_notes: newOption("checkbox", false, "Disable Embedded Notes", "Force posts with embedded notes to display with the original note styling. <tiphead>Notes</tiphead>While notes will display with the original styling, the actual post settings will still have embedded notes set to enabled. <br><br>Due to the actual settings, users that may wish to edit notes will have to edit the notes with the embedded note styling so that nothing ends up breaking in unexpected ways. When toggling translation mode or opening the edit note dialog box, the notes will automatically revert back to the original embedded notes until the page is reloaded. <br><br>Note resizing and moving will be allowed without the reversion to embedded notes since this ability is sometimes necessary for badly positioned notes. Any note resizing or moving done as a part of intended note editing should be done <b>after</b> triggering the embedded note reversion since any changes before it will be lost."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
 			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, notes, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"load more\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
@@ -495,10 +505,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	customCSS(); // Contains the portions related to notices.
 
-	delayMe(formatThumbnails); // Delayed to allow Danbooru to run first.
-
-	delayMe(blacklistInit); // Delayed to allow Danbooru to run first.
-
 	thumbInfo();
 
 	removeTagHeaders();
@@ -516,12 +522,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	modifyPage();
 
 	autohideSidebar();
-
-	delayMe(fixedSidebar); // Delayed to allow Danbooru layout to finalize.
-
-	delayMe(collapseSidebar); // Delayed to allow Danbooru layout to finalize.
-
-	delayMe(fixedPaginator); // Delayed to allow Danbooru layout to finalize.
 
 	moveSaveSearch();
 
@@ -544,6 +544,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	bbbHotkeys();
 
 	endlessInit();
+
+	delayMe(formatThumbnails); // Delayed to allow Danbooru to run first.
+
+	delayMe(blacklistInit); // Delayed to allow Danbooru to run first.
+
+	delayMe(fixedSidebar); // Delayed to allow Danbooru layout to finalize.
+
+	delayMe(collapseSidebar); // Delayed to allow Danbooru layout to finalize.
+
+	delayMe(fixedPaginator); // Delayed to allow Danbooru layout to finalize.
 
 	/* Functions */
 
@@ -690,6 +700,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						if (xmlhttp.status === 403 || xmlhttp.status === 401) {
 							bbbNotice('Error retrieving post information. Access denied. You must be logged in to a Danbooru account to access the API for hidden image information and direct downloads. <br><span style="font-size: smaller;">(<span><a href="#" id="bbb-bypass-api-link">Do not warn me again and automatically bypass API features in the future.</a></span>)</span>', -1);
 							document.getElementById("bbb-bypass-api-link").addEventListener("click", function(event) {
+								if (event.button !== 0)
+									return;
+
 								updateSettings("bypass_api", true);
 								this.parentNode.innerHTML = "Settings updated. You may change this setting under the preferences tab in the settings panel.";
 								event.preventDefault();
@@ -712,6 +725,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 								bbbStatus("posts", "error");
 
 								document.getElementById(linkId).addEventListener("click", function(event) {
+									if (event.button !== 0)
+										return;
+
 									closeBbbNoticeMsg(noticeMsg);
 									searchJSON(mode, optArg);
 									event.preventDefault();
@@ -858,22 +874,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var newWidth = 0;
 			var newHeight = 0;
 			var newUrl = "";
-			var altTxt = "";
 
 			if (load_sample_first && post.has_large) {
 				newWidth = post.sample_width;
 				newHeight = post.sample_height;
 				newUrl = post.large_file_url;
-				altTxt = "Sample";
 			}
 			else {
 				newWidth = post.image_width;
 				newHeight = post.image_height;
 				newUrl = post.file_url;
-				altTxt = post.md5;
 			}
 
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + altTxt + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + post.tag_string + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
 
 			bbb.el.bbbLoader = document.getElementById("bbb-loader");
 
@@ -1119,10 +1132,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			activeThumb.bbbAddClass("current-post");
 
 		// Make the show/hide links work.
-		newNotice.addEventListener("click", function(event) {
-			if (event.target !== previewLink)
-				return;
-
+		previewLink.bbbOverrideClick(function(event) {
 			if (thumbDiv.style.display === "block") {
 				thumbDiv.style.display = "none";
 				previewLink.innerHTML = "show &raquo;";
@@ -1135,8 +1145,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 
 			event.preventDefault();
-			event.stopPropagation();
-		}, true);
+		});
 
 		// Prepare thumbnails.
 		prepThumbnails(newNotice);
@@ -1302,6 +1311,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 							var noticeMsg = bbbNotice(msg + ' (HTML Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
 
 							document.getElementById(linkId).addEventListener("click", function(event) {
+								if (event.button !== 0)
+									return;
+
 								closeBbbNoticeMsg(noticeMsg);
 								searchPages(mode, optArg);
 								event.preventDefault();
@@ -1514,7 +1526,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postEl = postContent.el;
 		var postTag = (postEl ? postEl.tagName : undefined);
 		var dataInfo = [imgContainer.getAttribute("data-file-url"), imgContainer.getAttribute("data-md5"), imgContainer.getAttribute("data-file-ext")];
-		var directLink = getId("image-resize-link", target) || document.evaluate('.//section[@id="post-information"]/ul/li/a[starts-with(@href, "/data/")]', target, null, 9, null).singleNodeValue;
+		var directLink = getId("image-resize-link", target) || target.querySelector("#post-information ul li a[href^='/data/']");
 		var twitterInfo = getMeta("twitter:image", target);
 		var previewInfo = getMeta("og:image", target);
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
@@ -1641,7 +1653,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var swfEmb = (swfObj ? swfObj.getElementsByTagName("embed")[0] : undefined);
 		var video = imgContainer.getElementsByTagName("video")[0];
 		var ugoira = imgContainer.getElementsByTagName("canvas")[0];
-		var other = document.evaluate('.//a[starts-with(@href, "/data/")]', imgContainer, null, 9, null).singleNodeValue;
+		var other = imgContainer.querySelector("a[href^='/data/']");
 		var el = swfEmb || video || ugoira || img || other;
 		var secondaryEl = swfObj; // Other elements related to the main element. Only applies to flash for now.
 
@@ -1839,8 +1851,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		link.href = "#";
 		link.innerHTML = "BBB Settings";
 		link.addEventListener("click", function(event) {
-			openMenu();
+			if (event.button !== 0)
+				return;
 
+			openMenu();
 			event.preventDefault();
 		}, false);
 
@@ -1885,6 +1899,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var tabBar = document.createElement("div");
 		tabBar.style.padding = "0px 15px";
 		tabBar.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			var target = event.target;
 
 			if (target.href)
@@ -1985,7 +2002,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses coupled with percent signs:<ul><li><b>(% ~tag1 ~tag2 %) (% ~tag3 ~tag3 %)</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 (% tag2, tag3 tag4 %)</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -(% tag2 tag3 %)</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~(% tag3 tag4 %)</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts not in an any active pools.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses coupled with percent signs:<ul><li><b>(% ~tag1 ~tag2 %) (% ~tag3 ~tag3 %)</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 (% tag2, tag3 tag4 %)</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -(% tag2 tag3 %)</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~(% tag3 tag4 %)</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
@@ -1996,6 +2013,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		close.className = "bbb-button";
 		close.style.marginRight = "15px";
 		close.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			removeMenu();
 			saveSettings();
 			event.preventDefault();
@@ -2006,6 +2026,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		cancel.href = "#";
 		cancel.className = "bbb-button";
 		cancel.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			removeMenu();
 			loadSettings();
 			event.preventDefault();
@@ -2018,6 +2041,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		reset.style.cssFloat = "right";
 		reset.style.color = "#ff1100";
 		reset.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			loadDefaults();
 			reloadMenu();
 			event.preventDefault();
@@ -2200,7 +2226,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				item.name = settingName;
 				item.type = "checkbox";
 				item.checked = userSetting;
-				item.addEventListener("click", function() {
+				item.addEventListener("click", function(event) {
+					if (event.button !== 0)
+						return;
+
 					bbb.user[settingName] = this.checked;
 					bbb.settings.changed[settingName] = true;
 				}, false);
@@ -2223,6 +2252,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					tagExpand.className = "bbb-edit-link";
 					tagExpand.innerHTML = "&raquo;";
 					tagExpand.addEventListener("click", function(event) {
+						if (event.button !== 0)
+							return;
+
 						tagEditWindow(item, bbb.user, settingName);
 						event.preventDefault();
 					}, false);
@@ -2285,7 +2317,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var enableBox = document.createElement("input");
 		enableBox.type = "checkbox";
 		enableBox.checked = borderItem.is_enabled;
-		enableBox.addEventListener("click", function() { borderItem.is_enabled = this.checked; }, false);
+		enableBox.addEventListener("click", function(event) {
+			if (event.button === 0)
+				borderItem.is_enabled = this.checked;
+		}, false);
 		enableLabel.appendChild(enableBox);
 
 		var editSpan = document.createElement("span");
@@ -2297,6 +2332,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		moveButton.innerHTML = "Move";
 		moveButton.className = "bbb-border-button";
 		moveButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			moveBorder(borderSettings, indexWrapper);
 			event.preventDefault();
 		}, false);
@@ -2307,7 +2345,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		previewButton.href = "#";
 		previewButton.innerHTML = "Preview";
 		previewButton.className = "bbb-border-button";
-		previewButton.addEventListener("click", function(event) { event.preventDefault(); }, false);
 		previewButton.bbbBorderPreview(borderItem);
 		editSpan.appendChild(previewButton);
 
@@ -2317,6 +2354,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			deleteButton.innerHTML = "Delete";
 			deleteButton.className = "bbb-border-button";
 			deleteButton.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				deleteBorder(borderSettings, indexWrapper);
 				event.preventDefault();
 			}, false);
@@ -2327,6 +2367,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			newButton.innerHTML = "New";
 			newButton.className = "bbb-border-button";
 			newButton.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				createBorder(borderSettings, indexWrapper);
 				event.preventDefault();
 			}, false);
@@ -2367,6 +2410,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			nameExpand.className = "bbb-edit-link";
 			nameExpand.innerHTML = "&raquo;";
 			nameExpand.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				tagEditWindow(nameInput, borderItem, "tags");
 				event.preventDefault();
 			}, false);
@@ -2475,6 +2521,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		textBackup.className = "bbb-button";
 		textBackup.style.marginRight = "15px";
 		textBackup.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			createBackupText();
 			event.preventDefault();
 		}, false);
@@ -2486,6 +2535,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		pageBackup.className = "bbb-button";
 		pageBackup.style.marginRight = "15px";
 		pageBackup.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			createBackupPage();
 			event.preventDefault();
 		}, false);
@@ -2501,6 +2553,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		restoreBackup.href = "#";
 		restoreBackup.className = "bbb-button";
 		restoreBackup.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			restoreBackupText();
 			event.preventDefault();
 		}, false);
@@ -2547,6 +2602,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		formatButton.href = "#";
 		formatButton.className = "bbb-button";
 		formatButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			var textareaString = searchMultiToSingle(blacklistTextarea.value);
 
 			blacklistTextarea.value = searchSingleToMulti(textareaString);
@@ -2559,7 +2617,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		helpButton.href = "#";
 		helpButton.className = "bbb-button";
 		helpButton.style.cssFloat = "right";
-		helpButton.bbbSetTip("Hide posts that match the specified tag(s).<tiphead>Directions</tiphead>Please read the \"thumbnail matching rules\" section under the help tab for information about creating matching rules for posts you wish to blacklist. Blank lines will be ignored and are only used for improved readability.<br><br> All commas will be converted to new lines and all extra spaces and extra blank lines will be removed the next time the settings are opened. By using the \"format\" button, you can manually perform this action on the blacklist rules. <tiphead>Note</tiphead>When logged in, the account's \"blacklisted tags\" list will override this option. This behavior can be changed with the \"override blacklist\" option under the preferences tab.");
+		helpButton.bbbSetTip("Hide posts that match the specified tag(s).<tiphead>Directions</tiphead>Please read the \"thumbnail matching rules\" section under the help tab for information about creating matching rules for posts you wish to blacklist. Blank lines will be ignored and are only used for improved readability.<br><br> All commas outside of tag groups will be converted to new lines and all extra spaces and extra blank lines will be removed the next time the settings are opened. By using the \"format\" button, you can manually perform this action on the blacklist rules. <tiphead>Note</tiphead>When logged in, the account's \"blacklisted tags\" list will override this option. This behavior can be changed with the \"override blacklist\" option under the preferences tab.");
 		buttonDiv.appendChild(helpButton);
 
 		return sectionFrag;
@@ -2598,14 +2656,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		tocList.addEventListener("click", function (event) {
-			var target = event.target;
-			var targetValue = target.href;
+			var targetValue = event.target.href;
 
-			if (targetValue) {
-				var sectionTop = pageSections[targetValue.split("#")[1]].offsetTop;
-				bbb.el.menu.scrollDiv.scrollTop = sectionTop;
-				event.preventDefault();
-			}
+			if (event.button !== 0 || !targetValue)
+				return;
+
+			var sectionTop = pageSections[targetValue.split("#")[1]].offsetTop;
+
+			bbb.el.menu.scrollDiv.scrollTop = sectionTop;
+			event.preventDefault();
 		}, false);
 
 		return sectionFrag;
@@ -2745,7 +2804,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var target = event.target;
 		var section = bbb.borderEdit.section;
 
-		if (target.className === "bbb-border-divider") {
+		if (target.className === "bbb-border-divider" && event.button === 0) {
 			var newIndex = Number(target.parentNode.getAttribute("data-bbb-index"));
 			var borderSettings = bbb.borderEdit.settings;
 
@@ -2796,7 +2855,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	Element.prototype.bbbBorderPreview = function(borderItem) {
-		this.addEventListener("click", function(event) { showTip(event, "<img src=\"http://danbooru.donmai.us/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + bbb.user.border_width + "px; padding:" + bbb.user.border_spacing + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;"); }, false);
+		this.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
+			showTip(event, "<img src=\"http://danbooru.donmai.us/data/preview/d34e4cf0a437a5d65f8e82b7bcd02606.jpg\" alt=\"IMAGE\" style=\"width: 105px; height: 150px; border-color: " + borderItem.border_color + "; border-style: " + borderItem.border_style + "; border-width: " + bbb.user.border_width + "px; padding:" + bbb.user.border_spacing + "px; line-height: 150px; text-align: center; vertical-align: middle;\">", "background-color: #FFFFFF;");
+			event.preventDefault();
+		}, false);
 		this.addEventListener("mouseout", hideTip, false);
 	};
 
@@ -2804,6 +2869,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var tip = bbb.el.menu.tip;
 
 		this.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			showTip(event, text, false);
 			event.preventDefault();
 		}, false);
@@ -3066,6 +3134,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				case "7.2":
 				case "7.2.1":
 				case "7.2.2":
+				case "7.2.3":
 					break;
 			}
 
@@ -3162,7 +3231,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLink = bbb.el.resizeLink = getId("bbb-resize-link", bbbResizeNotice);
 		var closeResizeNotice = bbb.el.closeResizeNotice = getId("close-resize-notice", bbbResizeNotice);
 
-		closeResizeNotice.addEventListener("click", function() {
+		closeResizeNotice.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			var showResNot = bbb.user.show_resized_notice;
 
 			bbbResizeNotice.style.display = "none";
@@ -3199,6 +3271,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		swapListItem.appendChild(swapLink);
 
 		swapLink.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			swapPost();
 			event.preventDefault();
 		}, false);
@@ -3227,10 +3302,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var swapLink = bbb.el.swapLink;
 
 		resizeLink.addEventListener("click", function(event) {
-			if (event.button === 0) {
-				swapPost();
-				event.preventDefault();
-			}
+			if (event.button !== 0)
+				return;
+
+			swapPost();
+			event.preventDefault();
 		}, false);
 		bbbLoader.addEventListener("load", function() { // Change the image to the successfully loaded sample/original image.
 			if (!bbb.post.swapped)
@@ -3279,10 +3355,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var swapLink = bbb.el.swapLink;
 
 		resizeLink.addEventListener("click", function(event) {
-			if (event.button === 0) {
-				swapPost();
-				event.preventDefault();
-			}
+			if (event.button !== 0)
+				return;
+
+			swapPost();
+			event.preventDefault();
 		}, false);
 		img.addEventListener("error", function(event) { // State the image has failed loading and provide a link to the other image.
 			if (img.src !== "about:blank") {
@@ -3300,14 +3377,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function noteToggleInit() {
 		// Override Danbooru's image click handler for toggling notes with a custom one.
-		document.addEventListener("click", function(event) {
-			if (event.target.id === "image" && event.button === 0) {
-				if (!bbb.post.translation_mode && !bbb.drag_scroll.moved)
-					Danbooru.Note.Box.toggle_all();
+		var image = document.getElementById("image");
 
-				event.stopPropagation();
-			}
-		}, true);
+		if (!image)
+			return;
+
+		image.bbbOverrideClick(function(event) {
+			if (!Danbooru.Note.TranslationMode.active && !bbb.drag_scroll.moved)
+				Danbooru.Note.Box.toggle_all();
+		});
 	}
 
 	function noteToggleLinkInit() {
@@ -3327,6 +3405,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (toggleLink) {
 			document.getElementById("bbb-note-toggle").addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				Danbooru.Note.Box.toggle_all();
 				event.preventDefault();
 			}, false);
@@ -3342,29 +3423,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var translateLink = document.getElementById("translate");
 		var toggleFunction;
 
-		if (post.file_ext !== "webm" && post.file_ext !== "mp4" && post.file_ext !== "swf") { // Don't allow translation functions on webm videos or flash.
+		if (post.file_ext !== "webm" && post.file_ext !== "mp4" && post.file_ext !== "swf") { // Don't allow translation functions on videos or flash.
 			if (postTag !== "VIDEO") { // Make translation mode work on non-video content.
-				// Allow the translation note functions if notes aren't locked.
-				if (document.getElementById("note-locked-notice"))
-					return;
-
-				// Script translation mode events and tracking used to resolve timing issues.
-				bbb.post.translation_mode = Danbooru.Note.TranslationMode.active;
-
-				// Override Danbooru's toggle function which may or may not exist depending on caching.
-				if (translateLink) {
-					toggleFunction = function(event) {
-						if (event.target !== translateLink)
-							return;
-
-						Danbooru.Note.TranslationMode.toggle(event);
-						translationModeToggle();
-
-						event.preventDefault();
-						event.stopPropagation();
-					};
-
-					translateLink.parentNode.addEventListener("click", toggleFunction, true);
+				// Set up/override the translate link and hotkey if notes aren't locked.
+				if (!document.getElementById("note-locked-notice") && translateLink) {
+					translateLink.bbbOverrideClick(Danbooru.Note.TranslationMode.toggle);
+					createHotkey("78", Danbooru.Note.TranslationMode.toggle);
 				}
 			}
 			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
@@ -3373,25 +3437,27 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					event.preventDefault();
 				};
 
-				Danbooru.Note.TranslationMode.toggle = toggleFunction;
+				Danbooru.Note.TranslationMode.start = toggleFunction;
 				Danbooru.Note.Edit.show = toggleFunction;
 
 				if (translateLink)
-					translateLink.addEventListener("click", toggleFunction, false);
+					translateLink.bbbOverrideClick(toggleFunction);
 
-				// Override the hotkey for "N".
-				createHotkey("78", toggleFunction);
+				createHotkey("78", toggleFunction); // Override the hotkey for "N".
 			}
 		}
-		else if (translateLink) { // If the translate link exists on videos or flash, provide a warning.
+		else { // Provide a warning for unsupported content.
 			toggleFunction = function(event) {
 				bbbNotice('Note editing is not allowed on flash/video content.', -1);
 				event.preventDefault();
 			};
 
-			Danbooru.Note.TranslationMode.toggle = toggleFunction;
+			Danbooru.Note.TranslationMode.start = toggleFunction;
 			Danbooru.Note.Edit.show = toggleFunction;
-			translateLink.addEventListener("click", toggleFunction, false);
+
+			if (translateLink)
+				translateLink.bbbOverrideClick(toggleFunction);
+
 			createHotkey("78", toggleFunction); // Override the hotkey for "N".
 		}
 	}
@@ -3418,20 +3484,17 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 
 		// Save the original note functions.
-		var origToggleFunction = bbb.hotkeys.post[78];
 		var origEditFunction = Danbooru.Note.Edit.show;
 
 		// Create override functions.
 		var toggleFunction = function(event) {
 			var translateLink = document.getElementById("translate");
 
-			if (event.type === "click" && event.target !== translateLink)
+			if (event.type === "click" && (event.target !== translateLink || event.button !== 0))
 				return;
 
 			resetFunction();
-
 			Danbooru.Note.TranslationMode.toggle(event);
-			translationModeToggle();
 
 			event.preventDefault();
 			event.stopPropagation();
@@ -3446,7 +3509,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			// Remove all overrides/overwrites.
 			Danbooru.Note.Edit.show = origEditFunction;
 			document.removeEventListener("click", toggleFunction, true);
-			createHotkey("78", origToggleFunction);
+
+			if (!document.getElementById("note-locked-notice"))
+				createHotkey("78", Danbooru.Note.TranslationMode.toggle);
 
 			// Reset notes with embedded notes enabled.
 			Danbooru.Note.embed = true;
@@ -3462,16 +3527,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function alternateImageSwap() {
 		// Override Danbooru's image click handler for toggling notes with a custom one that swaps the image.
 		var post = bbb.post.info;
+		var image = document.getElementById("image");
 
-		if (post.has_large) {
-			document.addEventListener("click", function(event) {
-				if (event.target.id === "image" && event.button === 0) {
-					if (!bbb.post.translation_mode && !bbb.drag_scroll.moved)
+		if (post.has_large && image) {
+			image.bbbOverrideClick(function(event) {
+				if (!Danbooru.Note.TranslationMode.active && !bbb.drag_scroll.moved)
 						swapPost();
-
-					event.stopPropagation();
-				}
-			}, true);
+			});
 		}
 
 		// Set up the "toggle notes" link since the image won't be used for toggling.
@@ -3550,6 +3612,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLinkAll = bbb.el.resizeLinkAll = document.createElement("a");
 		resizeLinkAll.href = "#";
 		resizeLinkAll.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			resizePost("all");
 			event.preventDefault();
 		}, false);
@@ -3557,6 +3622,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLinkWidth = bbb.el.resizeLinkWidth = document.createElement("a");
 		resizeLinkWidth.href = "#";
 		resizeLinkWidth.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			resizePost("width");
 			event.preventDefault();
 		}, false);
@@ -3564,6 +3632,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var resizeLinkHeight = bbb.el.resizeLinkHeight = document.createElement("a");
 		resizeLinkHeight.href = "#";
 		resizeLinkHeight.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
 			resizePost("height");
 			event.preventDefault();
 		}, false);
@@ -3598,6 +3669,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			resizeLabelLink.innerHTML = "Resize:";
 			resizeLabelLink.style.marginRight = "2px";
 			resizeLabelLink.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				if (bbb.post.resize.mode === "none")
 					resizePost("all");
 				else
@@ -3820,7 +3894,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			resizeLink.href = post.large_file_url;
 			swapLink.innerHTML = "View sample";
 			swapLink.href = post.large_file_url;
-			img.alt = post.md5;
 			img.setAttribute("height", post.image_height);
 			img.setAttribute("width", post.image_width);
 			bbbResizeNotice.style.display = (showResNot === "original" || showResNot === "all" ? "block" : "none");
@@ -3831,7 +3904,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			resizeLink.href = post.file_url;
 			swapLink.innerHTML = "View original";
 			swapLink.href = post.file_url;
-			img.alt = "Sample";
 			img.setAttribute("height", post.sample_height);
 			img.setAttribute("width", post.sample_width);
 			bbbResizeNotice.style.display = (showResNot === "sample" || showResNot === "all" ? "block" : "none");
@@ -3898,6 +3970,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function requestRelations(event) {
 		// Start the parent/child notice JSON request when the user chooses to display the thumbs in a notice.
+		if (event.button !== 0)
+			return;
+
 		var post = bbb.post.info;
 		var target = event.target;
 
@@ -4051,8 +4126,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function statusLinkEvents(link, notice) {
 		// Attach events to the status links to enable a tooltip style notice.
-		link.addEventListener("click", function(event) { showStatusNotice(event, notice); }, false);
-		link.addEventListener("mouseout", function() { bbb.timers.minNotice = window.setTimeout(function() { notice.style.display = "none"; }, 200); }, false);
+		link.addEventListener("click", function(event) {
+			if (event.button === 0)
+				showStatusNotice(event, notice);
+		}, false);
+		link.addEventListener("mouseout", function() {
+			bbb.timers.minNotice = window.setTimeout(function() {
+				notice.style.display = "none";
+			}, 200);
+		}, false);
 		notice.addEventListener("mouseover", function() { window.clearTimeout(bbb.timers.minNotice); }, false);
 		notice.addEventListener("mouseleave", function() { notice.style.display = "none"; }, false);
 	}
@@ -4090,12 +4172,25 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (targetTag === "IMG" || targetTag === "VIDEO" || targetTag === "CANVAS") {
 			bbb.drag_scroll.target = target;
 
-			if (!bbb.post.translation_mode)
+			if (!Danbooru.Note.TranslationMode.active)
 				dragScrollEnable();
+
+			var startFunction = Danbooru.Note.TranslationMode.start;
+			var stopFunction = Danbooru.Note.TranslationMode.stop;
+
+			Danbooru.Note.TranslationMode.start = function(event) {
+				startFunction(event);
+				dragScrollToggle();
+			};
+
+			Danbooru.Note.TranslationMode.stop = function(event) {
+				stopFunction(event);
+				dragScrollToggle();
+			};
 
 			// Disable click behavior when dragging the video around.
 			if (targetTag === "VIDEO") {
-				document.addEventListener("click", function(event) {
+				target.parentNode.addEventListener("click", function(event) {
 					if (event.button === 0 && event.target.id === "image" && bbb.drag_scroll.moved)
 						event.preventDefault();
 				}, true);
@@ -4108,7 +4203,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!post_drag_scroll || !bbb.drag_scroll.target)
 			return;
 
-		if (bbb.post.translation_mode)
+		if (Danbooru.Note.TranslationMode.active)
 			dragScrollDisable();
 		else
 			dragScrollEnable();
@@ -4167,13 +4262,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function disableEvent(event) {
 		// removeEventListener friendly function for stopping an event.
 		event.preventDefault();
-	}
-
-	function translationModeToggle() {
-		// Toggle the translation mode status and drag scrolling.
-		bbb.post.translation_mode = !bbb.post.translation_mode;
-
-		dragScrollToggle();
 	}
 
 	function autoscrollPost() {
@@ -4648,17 +4736,45 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var postId = post.getAttribute("data-id");
 			var ddlLink = post.getElementsByClassName("bbb-ddl")[0];
 
-			if (!ddlLink) { // If the direct download doesn't already exist, create it.
+			// If the direct download doesn't already exist, create it.
+			if (!ddlLink) {
 				ddlLink = document.createElement("a");
 				ddlLink.innerHTML = "Direct Download";
-				ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
-				ddlLink.id = "bbb-ddl-" + postId;
 				ddlLink.className = "bbb-ddl";
 				post.appendChild(ddlLink);
 			}
-			else if (ddlLink.href.indexOf("/data/") < 0) // Fix existing links for hidden thumbs.
-				ddlLink.href = postUrl || "DDL unavailable for post " + postId + ".jpg";
+
+			ddlLink.href = postUrl || "/data/DDL unavailable for post " + postId + ".jpg";
+
+			// Disable filtered posts.
+			if (post.bbbHasClass("blacklisted-active", "bbb-quick-search-filtered"))
+				unsetDDL(ddlLink);
 		}
+	}
+
+	function enablePostDDL(post) {
+		// Enable a post's DDL.
+		var ddlLink = post.getElementsByClassName("bbb-ddl")[0];
+
+		if (!direct_downloads || !ddlLink || post.bbbHasClass("blacklisted-active", "bbb-quick-search-filtered"))
+			return;
+
+		ddlLink.href = ddlLink.href.replace("donmai.us/#data", "donmai.us/data");
+	}
+
+	function disablePostDDL(post) {
+		// Disable a post's DDL.
+		var ddlLink = post.getElementsByClassName("bbb-ddl")[0];
+
+		if (!direct_downloads || !ddlLink)
+			return;
+
+		unsetDDL(ddlLink);
+	}
+
+	function unsetDDL(ddlLink) {
+		// Disable a DDL URL with an anchor.
+		ddlLink.href = ddlLink.href.replace("donmai.us/data", "donmai.us/#data");
 	}
 
 	function cleanLinks(target) {
@@ -4840,6 +4956,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			link.href = "#";
 			link.innerHTML = "Endless";
 			link.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				endlessToggle();
 				event.preventDefault();
 			}, false);
@@ -4878,6 +4997,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			loadButton.id = "bbb-endless-load-button";
 			loadButton.style.display = "none";
 			loadButton.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				loadButton.style.display = "none";
 				loadButton.blur();
 				bbb.endless.paused = false;
@@ -4897,6 +5019,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			enableButton.href = "#";
 			enableButton.id = "bbb-endless-enable-button";
 			enableButton.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				enableButton.blur();
 				endlessToggle();
 				event.preventDefault();
@@ -5294,8 +5419,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Reset any blacklisted thumbnails.
-		while (blacklistedPosts[0])
-			blacklistedPosts[0].bbbRemoveClass("blacklisted blacklisted-active");
+		var blacklistedPost = blacklistedPosts[0];
+
+		while (blacklistedPost) {
+			blacklistedPost.bbbRemoveClass("blacklisted blacklisted-active");
+			enablePostDDL(blacklistedPost);
+			blacklistedPost = blacklistedPosts[0];
+		}
 
 		// Check if there actually are any tags.
 		if (!blacklistTags || !/[^\s,]/.test(blacklistTags))
@@ -5455,7 +5585,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						els = document.getElementsByClassName(id);
 
 						for (j = 0, jl = els.length; j < jl; j++)
-							els[j].bbbRemoveClass("blacklisted-active");
+							blacklistShowPost(els[j]);
 					}
 				}
 			}
@@ -5482,7 +5612,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						els = document.getElementsByClassName(id);
 
 						for (j = 0, jl = els.length; j < jl; j++)
-							els[j].bbbAddClass("blacklisted-active");
+							blacklistHidePost(els[j]);
 					}
 				}
 			}
@@ -5534,19 +5664,16 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var id = el.id;
 		var matchList = bbb.blacklist.match_list[id];
 
-		if (typeof(matchList) === "undefined") { // Post hasn't been tested yet.
+		// Test posts that haven't been tested yet.
+		if (typeof(matchList) === "undefined") {
 			matchList = bbb.blacklist.match_list[id] = {count: undefined, matches: [], override: undefined};
 
 			for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
 				var entry = bbb.blacklist.entries[i];
 
 				if (thumbSearchMatch(el, entry.search)) {
-					el.bbbAddClass("blacklisted");
-
-					if (entry.active) {
-						el.bbbAddClass("blacklisted-active");
+					if (entry.active)
 						matchList.count = ++matchList.count || 1;
-					}
 					else
 						matchList.count = matchList.count || 0;
 
@@ -5557,20 +5684,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (matchList.count === undefined) // No match.
 				matchList.count = false;
-			else if (el.id !== "image-container") { // Match found so prepare the thumbnail.
-				if (blacklist_thumb_controls)
-					blacklistPostControl(el, matchList);
-
-				if (blacklist_smart_view)
-					blacklistSmartView(el);
-			}
-
 		}
-		else if (matchList.count !== false && !el.bbbHasClass("blacklisted")) { // Post is already tested, but needs to be set up again.
+
+		// Check the saved blacklist info for the post and change the thumbnail as needed.
+		if (matchList.count !== false && !el.bbbHasClass("blacklisted")) {
+			el.bbbAddClass("blacklisted");
+
 			if (matchList.count > 0 && matchList.override !== true)
-				el.bbbAddClass("blacklisted blacklisted-active");
-			else
-				el.bbbAddClass("blacklisted");
+				blacklistHidePost(el);
 
 			if (el.id !== "image-container") {
 				if (blacklist_thumb_controls)
@@ -5660,7 +5781,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					var els = document.getElementsByClassName(id);
 
 					for (i = 0, il = els.length; i < il; i++)
-						els[i].bbbRemoveClass("blacklisted-active");
+						blacklistShowPost(els[i]);
 
 					blacklistHideTip();
 					bbb.blacklist.match_list[id].override = true;
@@ -5683,7 +5804,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				var els = document.getElementsByClassName(id);
 
 				for (var i = 0, il = els.length; i < il; i++)
-					els[i].bbbAddClass("blacklisted-active");
+					blacklistHidePost(els[i]);
 
 				bbb.blacklist.match_list[id].override = false;
 			}, false);
@@ -5782,6 +5903,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		return true;
+	}
+
+	function blacklistHidePost(post) {
+		// Hide blacklisted post content and adjust related content.
+		post.bbbAddClass("blacklisted-active");
+		disablePostDDL(post);
+	}
+
+	function blacklistShowPost(post) {
+		// Reveal blacklisted post content and adjust related content.
+		post.bbbRemoveClass("blacklisted-active");
+		enablePostDDL(post);
 	}
 
 	/* Other functions */
@@ -5964,6 +6097,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			noticeMsg = bbb.el.noticeMsg = getId("bbb-notice-msg", notice);
 
 			getId("bbb-notice-close", notice).addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
+
 				closeBbbNotice();
 				event.preventDefault();
 			}, false);
@@ -6178,6 +6314,12 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (cancelButton)
 				buttonDiv.appendChild(cancelButton);
+
+			// Only allow left clicks to trigger the prompt buttons.
+			buttonDiv.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					event.stopPropagation();
+			}, true);
 		}
 
 		if (typeof(content) === "string")
@@ -6668,10 +6810,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			link.href = "/posts?new_posts=redirect&page=b1";
 			link.innerHTML = "New";
 			link.addEventListener("click", function(event) {
-				if (event.button === 0) {
-					trackNewLoad();
-					event.preventDefault();
-				}
+				if (event.button !== 0)
+					return;
+
+				trackNewLoad();
+				event.preventDefault();
 			}, false);
 
 			var item = document.createElement("li");
@@ -6735,6 +6878,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					postSections.appendChild(markSection);
 
 					markLink.addEventListener("click", function(event) {
+						if (event.button !== 0)
+							return;
+
 						trackNewMark();
 						event.preventDefault();
 					}, false);
@@ -6750,6 +6896,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					postSections.appendChild(resetSection);
 
 					resetLink.addEventListener("click", function(event) {
+						if (event.button !== 0)
+							return;
+
 						trackNewReset();
 						event.preventDefault();
 					}, false);
@@ -7180,36 +7329,41 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		if (hide_comment_notice) {
 			var commentGuide;
+			var commentGuideParent;
 
 			if (gLoc === "post") {
-				commentGuide = document.evaluate('//section[@id="comments"]/h2/a[contains(@href,"/wiki_pages")]/..', document, null, 9, null).singleNodeValue;
+				commentGuide = document.querySelector("#comments h2 a[href*='howto']");
+				commentGuideParent = (commentGuide ? commentGuide.parentNode : undefined);
 
-				if (commentGuide && commentGuide.textContent === "Before commenting, read the how to comment guide.")
-					commentGuide.style.display = "none";
+				if (commentGuideParent && commentGuideParent.textContent === "Before commenting, read the how to comment guide.")
+					commentGuideParent.style.display = "none";
 			}
 			else if (gLoc === "comments") {
-				commentGuide = document.evaluate('//div[@id="a-index"]/div/h2/a[contains(@href,"/wiki_pages")]/..', document, null, 9, null).singleNodeValue;
+				commentGuide = document.querySelector("#a-index div h2 a[href*='howto']");
+				commentGuideParent = (commentGuide ? commentGuide.parentNode : undefined);
 
-				if (commentGuide && commentGuide.textContent === "Before commenting, read the how to comment guide.")
-					commentGuide.style.display = "none";
+				if (commentGuideParent && commentGuideParent.textContent === "Before commenting, read the how to comment guide.")
+					commentGuideParent.style.display = "none";
 			}
 		}
 
 		if (hide_tag_notice && gLoc === "post") {
-			var tagGuide = document.evaluate('//section[@id="edit"]/div/p/a[contains(@href,"/howto:tag")]/..', document, null, 9, null).singleNodeValue;
+			var tagGuide = document.querySelector("#edit div p a[href*='howto']");
+			var tagGuideParent = (tagGuide ? tagGuide.parentNode : undefined);
 
-				if (tagGuide && tagGuide.textContent === "Before editing, read the how to tag guide.")
-					tagGuide.style.display = "none";
+				if (tagGuideParent && tagGuideParent.textContent === "Before editing, read the how to tag guide.")
+					tagGuideParent.style.display = "none";
 		}
 
 		if (hide_upload_notice && gLoc === "upload")
 			styles += '#upload-guide-notice {display: none !important;}';
 
 		if (hide_pool_notice && gLoc === "new_pool") {
-			var poolGuide = document.evaluate('//div[@id="c-new"]/p/a[contains(@href,"/howto:pools")]/..', document, null, 9, null).singleNodeValue;
+			var poolGuide = document.querySelector("#c-new p a[href*='howto']");
+			var poolGuideParent = (poolGuide ? poolGuide.parentNode : undefined);
 
-				if (poolGuide && poolGuide.textContent === "Before creating a pool, read the pool guidelines.")
-					poolGuide.style.display = "none";
+				if (poolGuideParent && poolGuideParent.textContent === "Before creating a pool, read the pool guidelines.")
+					poolGuideParent.style.display = "none";
 		}
 
 		customStyles.innerHTML = styles;
@@ -7452,7 +7606,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function quickSearchReset() {
 		// Completely reset the quick search.
-		var filtered = document.getElementsByClassName("bbb-quick-search-filtered");
+		var filteredPosts = document.getElementsByClassName("bbb-quick-search-filtered");
+		var filteredPost = filteredPosts[0];
 
 		bbb.quick_search = "";
 		bbb.el.quickSearchInput.value = "";
@@ -7461,8 +7616,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		sessionStorage.removeItem("bbb_quick_search");
 		bbb.el.quickSearchDiv.bbbRemoveClass("bbb-quick-search-active bbb-quick-search-pinned");
 
-		while (filtered[0])
-			filtered[0].bbbRemoveClass("bbb-quick-search-filtered");
+		while (filteredPost) {
+			filteredPost.bbbRemoveClass("bbb-quick-search-filtered");
+			enablePostDDL(filteredPost);
+			filteredPost = filteredPosts[0];
+		}
 	}
 
 	function quickSearchTest(target) {
@@ -7482,10 +7640,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		for (var i = 0, il = posts.length; i < il; i++) {
 			var post = posts[i];
 
-			if (!thumbSearchMatch(post, search))
+			if (!thumbSearchMatch(post, search)) {
 				post.bbbAddClass("bbb-quick-search-filtered");
-			else
+				disablePostDDL(post);
+			}
+			else {
 				post.bbbRemoveClass("bbb-quick-search-filtered");
+				enablePostDDL(post);
+			}
 		}
 	}
 
@@ -7503,7 +7665,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Toggle the quick search between pinned and not pinned for the session.
 		var searchDiv = bbb.el.quickSearchDiv;
 
-		if (searchDiv.bbbHasClass("bbb-quick-search-show") || searchDiv.bbbHasClass("bbb-quick-search-active")) {
+		if (searchDiv.bbbHasClass("bbb-quick-search-show", "bbb-quick-search-active")) {
 			if (!searchDiv.bbbHasClass("bbb-quick-search-pinned"))
 				quickSearchPinEnable();
 			else
@@ -7761,7 +7923,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var activeTag = active.tagName;
 			var activeType = active.type;
 
-			if (activeTag === "SELECT" || activeTag === "TEXTAREA" || (activeTag === "INPUT" && !/^(:?button|checkbox|file|hidden|image|radio|reset|submit)$/.test(activeType))) // Input types: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#Attributes
+			if (activeTag === "SELECT" || activeTag === "TEXTAREA" || (activeTag === "INPUT" && !/^(?:button|checkbox|file|hidden|image|radio|reset|submit)$/.test(activeType))) // Input types: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#Attributes
 				return;
 
 			var loc = (gLoc === "post" ? "post" : "other");
@@ -8025,7 +8187,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		sidebar.addEventListener("click", function(event) {
 			var target = event.target;
 
-			if (target.id !== "tags")
+			if (event.button === 0 && target.id !== "tags")
+				target.blur();
+		}, false);
+		sidebar.addEventListener("mouseup", function(event) {
+			var target = event.target;
+
+			if (event.button !== 0 && target.id !== "tags")
 				target.blur();
 		}, false);
 		sidebar.addEventListener("focus", function() {
@@ -8764,10 +8932,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var angleQuotes = String.fromCharCode(187);
 		var enDash = String.fromCharCode(8211);
 
+		if ((type === "mouseup" && button !== 2) || (type === "click" && button !== 0)) // Don't respond to middle click and filter out duplicate user actions.
+			return;
+
 		if (button === 2) // Immediately remove the tag upon a right click.
 			linkType = "~";
-		else if (button !== 0 || (type === "mouseup" && button !== 2) || (type === "click" && button !== 0))
-			return;
 
 		// Each case changes the tag's toggle link display and updates the search box.
 		switch (linkType) {
@@ -8841,6 +9010,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		content.appendChild(domainDiv);
 
 		var cbFunc = function(event) {
+			if (event.button !== 0)
+				return;
+
 			var target = event.target;
 
 			target.nextSibling.style.textDecoration = (target.checked ? "none" : "line-through");
