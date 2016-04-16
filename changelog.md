@@ -1,5 +1,11 @@
 Changelog
 ----------
+* Version 7.2.4:
+ * Fixed the "direct downloads" option not excluding posts filtered out by the blacklist/quick search.
+ * Fixed the "post drag scrolling" option being broken by the translation mode notice link for turning translation mode off.
+ * Fixed the translation mode hotkey breaking while using the "disable embedded notes" option.
+ * Fixed the translation mode hotkey being available when it shouldn't be.
+ * Fixed various problems where middle and right click were causing unexpected and/or undesirable effects.
 * Version 7.2.3:
  * Fixed the retry link for retrieving hidden thumbnails.
 * Version 7.2.2:
