@@ -264,10 +264,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		flags: {},
 		hotkeys: {
 			other: { // Hotkeys for misc locations.
-				66: {func: openMenu}, // B
-				69: {func: endlessToggle}, // E
-				70: {func: quickSearchOpen}, // F
-				s70: {func: quickSearchReset} // SHIFT + F
+				66: {func: openMenu} // B
 			},
 			post: { // Post hotkeys.
 				49: {func: resizeHotkey, custom_handler: true}, // 1
@@ -4926,7 +4923,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Set up and start endless pages.
 		removeInheritedStorage("bbb_endless_default");
 
-		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
+		var paginator = getPaginator();
+
+		if (endless_default === "disabled" || !paginator || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
 			return;
 
 		// Add the endless link to the menu.
@@ -4978,58 +4977,57 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			link.style.fontWeight = "normal";
 		}
 
-		var paginator = getPaginator();
+		var paginatorParent = paginator.parentNode;
 
-		if (paginator) {
-			var paginatorParent = paginator.parentNode;
+		// Set up the load more button.
+		var buttonDiv = document.createElement("div");
+		buttonDiv.id = "bbb-endless-button-div";
 
-			// Set up the load more button.
-			var buttonDiv = document.createElement("div");
-			buttonDiv.id = "bbb-endless-button-div";
+		var loadButtonDiv = bbb.el.endlessLoadDiv = document.createElement("div");
+		loadButtonDiv.id = "bbb-endless-load-div";
+		buttonDiv.appendChild(loadButtonDiv);
 
-			var loadButtonDiv = bbb.el.endlessLoadDiv = document.createElement("div");
-			loadButtonDiv.id = "bbb-endless-load-div";
-			buttonDiv.appendChild(loadButtonDiv);
+		var loadButton = bbb.el.endlessLoadButton = document.createElement("a");
+		loadButton.innerHTML = "Load More";
+		loadButton.href = "#";
+		loadButton.id = "bbb-endless-load-button";
+		loadButton.style.display = "none";
+		loadButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
 
-			var loadButton = bbb.el.endlessLoadButton = document.createElement("a");
-			loadButton.innerHTML = "Load More";
-			loadButton.href = "#";
-			loadButton.id = "bbb-endless-load-button";
 			loadButton.style.display = "none";
-			loadButton.addEventListener("click", function(event) {
-				if (event.button !== 0)
-					return;
+			loadButton.blur();
+			bbb.endless.paused = false;
+			bbb.endless.append_page = true;
+			endlessCheck();
+			event.preventDefault();
+		}, false);
+		loadButtonDiv.appendChild(loadButton);
 
-				loadButton.style.display = "none";
-				loadButton.blur();
-				bbb.endless.paused = false;
-				bbb.endless.append_page = true;
-				endlessCheck();
-				event.preventDefault();
-			}, false);
-			loadButtonDiv.appendChild(loadButton);
+		// Set up the enable button.
+		var enableButtonDiv = bbb.el.endlessEnableDiv = document.createElement("div");
+		enableButtonDiv.id = "bbb-endless-enable-div";
+		buttonDiv.appendChild(enableButtonDiv);
 
-			// Set up the enable button.
-			var enableButtonDiv = bbb.el.endlessEnableDiv = document.createElement("div");
-			enableButtonDiv.id = "bbb-endless-enable-div";
-			buttonDiv.appendChild(enableButtonDiv);
+		var enableButton = document.createElement("a");
+		enableButton.innerHTML = "Endless";
+		enableButton.href = "#";
+		enableButton.id = "bbb-endless-enable-button";
+		enableButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
 
-			var enableButton = document.createElement("a");
-			enableButton.innerHTML = "Endless";
-			enableButton.href = "#";
-			enableButton.id = "bbb-endless-enable-button";
-			enableButton.addEventListener("click", function(event) {
-				if (event.button !== 0)
-					return;
+			enableButton.blur();
+			endlessToggle();
+			event.preventDefault();
+		}, false);
+		enableButtonDiv.appendChild(enableButton);
 
-				enableButton.blur();
-				endlessToggle();
-				event.preventDefault();
-			}, false);
-			enableButtonDiv.appendChild(enableButton);
+		paginatorParent.insertBefore(buttonDiv, paginator);
 
-			paginatorParent.insertBefore(buttonDiv, paginator);
-		}
+		// Create the hotkey.
+		createHotkey("69", endlessToggle); // E
 
 		// Check the session default or original default value to see if endless pages should be enabled.
 		var sessionDefault = sessionStorage.getItem("bbb_endless_default");
@@ -7580,7 +7578,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 		}
 
-		// Checked if the quick search has been pinned for this session.
+		// Check if the quick search has been pinned for this session.
 		var pinnedSearch = sessionStorage.getItem("bbb_quick_search");
 
 		if (pinnedSearch) {
@@ -7589,6 +7587,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			searchDiv.bbbAddClass("bbb-quick-search-pinned");
 			quickSearchTest();
 		}
+
+		// Create the hotkeys.
+		createHotkey("70", quickSearchOpen); // F
+		createHotkey("s70", quickSearchReset); // SHIFT + F
 	}
 
 	function quickSearchCheck() {
