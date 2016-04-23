@@ -406,7 +406,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var show_shota = bbb.user.show_shota;
 	var show_toddlercon = bbb.user.show_toddlercon;
 	var show_banned = bbb.user.show_banned;
-	var show_deleted = bbb.user.show_deleted;
+	var deleted_shown = (gLoc === "search" && /^(any|deleted)$/i.test(getTagVar("status"))); // Check whether deleted posts are shown by default.
+	var show_deleted = deleted_shown || bbb.user.show_deleted;
 	var direct_downloads = bbb.user.direct_downloads;
 	var post_link_new_window = bbb.user.post_link_new_window;
 
@@ -8590,7 +8591,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function useAPI() {
 		// Determine whether any options that require the API are enabled.
-		if ((show_loli || show_shota || show_toddlercon || show_deleted || show_banned) && (isLoggedIn() || !bypass_api))
+		if ((show_loli || show_shota || show_toddlercon || (show_deleted && !deleted_shown) || show_banned) && (isLoggedIn() || !bypass_api))
 			return true;
 		else
 			return false;
