@@ -743,46 +743,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function parseListing(xml, optArg) {
 		// Use JSON results for thumbnail listings.
 		var posts = xml;
-		var thumbContainer = getThumbContainer(gLoc);
 		var orderedIds = (gLoc === "pool" || gLoc === "favorite_group" ? optArg : undefined);
-		var before = getThumbSibling(gLoc);
 
 		if (!posts[0])
 			return;
 
-		if (!thumbContainer) {
-			bbbNotice("Thumbnail section could not be located.", -1);
-			return;
-		}
-
 		// Thumb preparation.
 		var newThumbs = createThumbListing(posts, orderedIds);
 
-		// New thumbnail container preparation.
-		var replacement = thumbContainer.cloneNode(false);
-		var childIndex = 0;
+		// Update the existing thumbnails with new ones.
+		updateThumbListing(newThumbs);
 
-		while (thumbContainer.children[childIndex]) {
-			var child = thumbContainer.children[childIndex];
-
-			if (child.tagName !== "ARTICLE")
-				replacement.appendChild(child);
-			else
-				childIndex++;
-		}
-
-		if (!before)
-			replacement.appendChild(newThumbs);
-		else
-			replacement.insertBefore(newThumbs, before);
-
-		// Prepare thumbnails.
-		prepThumbnails(replacement);
-
-		// Replace results with new results.
-		thumbContainer.parentNode.replaceChild(replacement, thumbContainer);
-
-		// Fix the paginator. The paginator isn't always in the replacement, so run this on the whole page after the replacement is inserted.
+		// Fix the paginator. The paginator isn't always in the new container, so run this on the whole page after the new container is inserted.
 		fixPaginator();
 
 		// Fix hidden thumbnails.
@@ -1382,14 +1354,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function replaceThumbnails(docEl) {
 		// Replace the thumbnails and paginator with new ones.
-		var thumbContainer = getThumbContainer(gLoc);
-		var before = getThumbSibling(gLoc);
-
-		if (!thumbContainer) {
-			bbbNotice("Thumbnail section could not be located.", -1);
-			return;
-		}
-
 		// Thumb preparation.
 		var newThumbs = document.createDocumentFragment();
 		var newPosts = getPosts(docEl);
@@ -1397,29 +1361,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		while (newPosts[0])
 			newThumbs.appendChild(newPosts[0]);
 
-		// New thumbnail container preparation.
-		var replacement = thumbContainer.cloneNode(false);
-		var childIndex = 0;
-
-		while (thumbContainer.children[childIndex]) {
-			var child = thumbContainer.children[childIndex];
-
-			if (child.tagName !== "ARTICLE")
-				replacement.appendChild(child);
-			else
-				childIndex++;
-		}
-
-		if (!before)
-			replacement.appendChild(newThumbs);
-		else
-			replacement.insertBefore(newThumbs, before);
-
-		// Prepare thumbnails.
-		prepThumbnails(replacement);
-
-		// Replace results with new results.
-		thumbContainer.parentNode.replaceChild(replacement, thumbContainer);
+		// Update the existing thumbnails with new ones.
+		updateThumbListing(newThumbs);
 
 		// Replace paginator with new paginator.
 		replacePaginator(docEl);
@@ -1805,8 +1748,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			url = location.search;
 
 		var tags = getVar("tags", url);
-		var tag;
-		var result;
 
 		// If the tags parameter isn't provided or has no value, the metatag is undefined.
 		if (tags === null || tags === undefined)
@@ -1815,13 +1756,43 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		tags = tags.split(/\+|%20/g);
 
 		for (var i = 0, il = tags.length; i < il; i++) {
-			tag = decodeURIComponent(tags[i]);
+			var tag = decodeURIComponent(tags[i]);
 
 			if (tag.indexOf(urlVar + ":") === 0)
-				result = encodeURIComponent(tag.split(":")[1]); // Let the calling function decide whether it wants the decoded tag or not.
+				return encodeURIComponent(tag.split(":")[1]); // Let the calling function decide whether it wants the decoded tag or not.
 		}
 
-		return result;
+		return undefined;
+	}
+
+	function getThumbQuery() {
+		// Return the thumbnail URL query value.
+		var query = "";
+
+		if (gLoc === "search" || gLoc === "favorites") {
+			query = getCurTags();
+			query = (query ? "?tags=" + query : "");
+		}
+		else if (gLoc === "pool")
+			query = "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1];
+		else if (gLoc === "favorite_group")
+			query = "?favgroup_id=" + /\/favorite_groups\/(\d+)/.exec(location.pathname)[1];
+
+		return query;
+	}
+
+	function getCurTags() {
+		// Retrieve the current search tags for URL use.
+		var tags;
+
+		if (gLoc === "search")
+			tags = getVar("tags") || "";
+		else if (gLoc === "favorites") {
+			tags = document.getElementById("tags");
+			tags = (tags ? tags.getAttribute("value").replace("fav:", "ordfav:").bbbSpaceClean() : ""); // Use getAttribute to avoid potential user changes to the input.
+		}
+
+		return tags;
 	}
 
 	/* Functions for the settings panel */
@@ -4596,6 +4567,94 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return thumbs;
 	}
 
+	function updateThumbListing(thumbs) {
+		// Take a collection of thumbnails and use them to update the original thumbnail listing as appropriate.
+		var thumbContainer = getThumbContainer(gLoc);
+		var before = getThumbSibling(gLoc);
+		var newContainer;
+
+		if (!thumbContainer) {
+			bbbNotice("Thumbnail section could not be located.", -1);
+			return;
+		}
+
+		if ((getTagVar("order") || "").toLowerCase() !== "random") {
+			// New thumbnail container replacement preparation.
+			var childIndex = 0;
+
+			newContainer = thumbContainer.cloneNode(false);
+
+			while (thumbContainer.children[childIndex]) {
+				var child = thumbContainer.children[childIndex];
+
+				if (child.tagName !== "ARTICLE")
+					newContainer.appendChild(child);
+				else
+					childIndex++;
+			}
+
+			if (!before)
+				newContainer.appendChild(thumbs);
+			else
+				newContainer.insertBefore(thumbs, before);
+
+			// Prepare thumbnails.
+			prepThumbnails(newContainer);
+
+			// Replace results with new results.
+			thumbContainer.parentNode.replaceChild(newContainer, thumbContainer);
+		}
+		else {
+			// Fill out a random search by appending thumbnails.
+			var testSpan = document.createElement("span");
+			testSpan.appendChild(thumbs);
+
+			var testThumbs = getPosts(testSpan);
+			var i, curThumb; // Loop variables.
+
+			newContainer = document.createElement("span");
+
+			// Remove existing posts.
+			for (i = testThumbs.length - 1; i >= 0; i--) {
+				curThumb = testThumbs[i];
+
+				if (getId(curThumb.id))
+					testSpan.removeChild(curThumb);
+			}
+
+			// Favor hidden posts since they're the most likely reason for the API request.
+			var hiddenSearch = createSearch("~loli ~shota ~toddlercon ~status:deleted ~status:banned");
+			var limit = getLimit() || (allowUserLimit() ? thumbnail_count : thumbnail_count_default);
+			var numMissing = limit - getPosts().length;
+
+			for (i = testThumbs.length - 1; i >= 0; i--) {
+				curThumb = testThumbs[i];
+
+				if (numMissing === 0)
+					break;
+				else if (thumbSearchMatch(curThumb, hiddenSearch)) {
+					newContainer.appendChild(curThumb);
+					numMissing--;
+				}
+			}
+
+			// Try to fix any shortage of thumbnails.
+			while (numMissing > 0 && testSpan.firstElementChild) {
+				newContainer.appendChild(testSpan.firstElementChild);
+				numMissing--;
+			}
+
+			// Prepare thumbnails.
+			prepThumbnails(newContainer);
+
+			// Append listing with new thumbnails.
+			if (!before)
+				thumbContainer.appendChild(newContainer);
+			else
+				thumbContainer.insertBefore(newContainer, before);
+		}
+	}
+
 	function loadThumbCache() {
 		// Initialize or load up the thumbnail cache.
 		var thumbCache = localStorage.getItem("bbb_thumb_cache");
@@ -4688,37 +4747,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return idCache.join(" ");
 	}
 
-	function getThumbQuery() {
-		// Return the thumbnail URL query value.
-		var query = "";
-
-		if (gLoc === "search" || gLoc === "favorites") {
-			query = getCurTags();
-			query = (query ? "?tags=" + query : "");
-		}
-		else if (gLoc === "pool")
-			query = "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1];
-		else if (gLoc === "favorite_group")
-			query = "?favgroup_id=" + /\/favorite_groups\/(\d+)/.exec(location.pathname)[1];
-
-		return query;
-	}
-
-	function getCurTags() {
-		// Retrieve the current search tags for URL use.
-		var tags;
-
-		if (gLoc === "search") {
-			tags = getVar("tags") || "";
-		}
-		else if (gLoc === "favorites") {
-			tags = document.getElementById("tags");
-			tags = (tags ? tags.getAttribute("value").replace("fav:", "ordfav:").bbbSpaceClean() : ""); // Use getAttribute to avoid potential user changes to the input.
-		}
-
-		return tags;
-	}
-
 	function postDDL(target) {
 		// Add direct downloads to thumbnails.
 		if (!direct_downloads || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "popular_view" && gLoc !== "favorites" && gLoc !== "favorite_group"))
@@ -4781,9 +4809,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 
 		var targetContainer;
-		var links;
-		var link;
-		var linkParent;
 
 		if (target)
 			targetContainer = target;
@@ -4799,11 +4824,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			targetContainer = document.getElementById("a-intro");
 
 		if (targetContainer) {
-			links = targetContainer.getElementsByTagName("a");
+			var links = targetContainer.getElementsByTagName("a");
 
 			for (var i = 0, il = links.length; i < il; i++) {
-				link = links[i];
-				linkParent = link.parentNode;
+				var link = links[i];
+				var linkParent = link.parentNode;
 
 				if (linkParent.tagName === "ARTICLE" || linkParent.id.indexOf("nav-link-for-pool-") === 0)
 					link.href = link.href.split("?", 1)[0];
@@ -4835,11 +4860,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var limit = getLimit();
 
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
-			var numDesired;
-			var numExpected;
-
-			numExpected = (limit !== undefined ? limit : thumbnail_count_default);
-			numDesired = (allowUserLimit() ? thumbnail_count : numExpected);
+			var numExpected = (limit !== undefined ? limit : thumbnail_count_default);
+			var numDesired = (allowUserLimit() ? thumbnail_count : numExpected);
 
 			if (!noResults && (numPosts !== numDesired || numPosts < numExpected))
 				return true;
@@ -6010,10 +6032,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (/\d/.test(paginator.textContent)) { // Fix numbered paginators.
 			// Fix existing paginator with user's custom limit.
 			var pageLinks = paginator.getElementsByTagName("a");
-			var pageLink;
 
 			for (var i = 0, il = pageLinks.length; i < il; i++) {
-				pageLink = pageLinks[i];
+				var pageLink = pageLinks[i];
 				pageLink.href = updateURLQuery(pageLink.href, {limit: thumbnail_count});
 			}
 
@@ -6389,8 +6410,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else
 			postInfo = post;
 
-		var anyResult;
-		var allResult;
 		var searchTerm = "";
 		var j, jl; // Loop variables.
 
@@ -6404,7 +6423,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				continue;
 
 			if (any.total) {
-				anyResult = false;
+				var anyResult = false;
 
 				// Loop until one positive match is found.
 				for (j = 0, jl = any.includes.length; j < jl; j++) {
@@ -6434,7 +6453,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 
 			if (all.total) {
-				allResult = true;
+				var allResult = true;
 
 				// Loop until a negative match is found.
 				for (j = 0, jl = all.includes.length; j < jl; j++) {
@@ -6532,7 +6551,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			// Divide the tags into any and all sets with excluded and included tags.
 			for (var j = 0, jl = searchString.length; j < jl; j++) {
 				var searchTerm = searchString[j];
-				var mode;
 				var primaryMode = "all";
 				var secondaryMode = "includes";
 
@@ -6552,7 +6570,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (!searchTerm.length) // Stop if there is no actual tag.
 					continue;
 
-				mode = searchObject[primaryMode][secondaryMode];
+				var mode = searchObject[primaryMode][secondaryMode];
 
 				if (isNumMetatag(searchTerm)) { // Parse numeric metatags and turn them into objects.
 					var tagArray = searchTerm.split(":");
@@ -7968,7 +7986,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (event.keyCode)
 			hotkeycode += event.keyCode;
 
-		return hotkeycode || undefined;
+		return (hotkeycode || undefined);
 	}
 
 	function createHotkey(hotkeyCode, func, propObject) {
@@ -8564,7 +8582,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var limit = getLimit();
 		var pageNum = getVar("page");
 		var paginator = getPaginator();
-		var thumbContainer = getThumbContainer();
+		var thumbContainer = getThumbContainer(gLoc);
 		var imgContainer = getPostContent().container;
 
 		if (!paginator && !thumbContainer && !imgContainer)
@@ -9299,7 +9317,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var queryName;
 		var queryValue;
 		var queryObj = {};
-		var newUrl;
 		var i, il; // Loop variables.
 
 		for (i = 0, il = queries.length; i < il; i++) {
@@ -9335,9 +9352,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		urlQuery = queries.join("&");
-		newUrl = urlParts[0] + (urlQuery ? "?" + urlQuery : "");
 
-		return newUrl;
+		return (urlParts[0] + (urlQuery ? "?" + urlQuery : ""));
 	}
 
 	function timestamp(format) {
