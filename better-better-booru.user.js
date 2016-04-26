@@ -406,7 +406,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var show_shota = bbb.user.show_shota;
 	var show_toddlercon = bbb.user.show_toddlercon;
 	var show_banned = bbb.user.show_banned;
-	var deleted_shown = (gLoc === "search" && /^(any|deleted)$/i.test(getTagVar("status"))); // Check whether deleted posts are shown by default.
+	var deleted_shown = (gLoc === "search" && /^(?:any|deleted)$/i.test(getTagVar("status"))); // Check whether deleted posts are shown by default.
 	var show_deleted = deleted_shown || bbb.user.show_deleted;
 	var direct_downloads = bbb.user.direct_downloads;
 	var post_link_new_window = bbb.user.post_link_new_window;
@@ -761,8 +761,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		fixHiddenThumbs();
 
 		// Update the URL with the limit value.
-		if (allowUserLimit())
-			history.replaceState((history.state || {}), "", updateURLQuery(location.search, {limit: thumbnail_count}));
+		fixURLLimit();
 	}
 
 	function parsePost(postInfo) {
@@ -1368,8 +1367,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		replacePaginator(docEl);
 
 		// Update the URL with the limit value.
-		if (allowUserLimit())
-			history.replaceState((history.state || {}), "", updateURLQuery(location.search, {limit: thumbnail_count}));
+		fixURLLimit();
 	}
 
 	function replaceHidden(docEl) {
@@ -8112,6 +8110,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				else
 					limitInput.value = newLimit || thumbnail_count_default;
 			}
+		}
+	}
+
+	function fixURLLimit() {
+		// Update the URL limit value with the user's limit.
+		if (allowUserLimit()) {
+			var state = history.state || {};
+			var url = updateURLQuery(location.search, {limit: thumbnail_count});
+
+			history.replaceState(state, "", url);
+			location.replace(location.href.split("#", 1)[0] + "#"); // Force browser caching to cooperate.
+			history.replaceState(state, "", url);
 		}
 	}
 
