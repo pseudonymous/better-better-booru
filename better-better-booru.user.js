@@ -287,11 +287,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bbb_version: "7.2.4",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
-			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
+			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the \"thumbnail count\" option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
 			blacklist_add_bars: newOption("checkbox", false, "Additional Bars", "Add a blacklist bar to the comment search listing and individually linked comments so that blacklist entries can be toggled as needed."),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
-			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
+			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using \"hidden\" or \"replaced\" for the \"post display\" option, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
 			blacklist_post_display: newOption("dropdown", "disabled", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> Posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Disabled:disabled", "Removed:removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
 			blacklist_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling an individual blacklist entry on and off, the mode it's toggled to will persist across other pages in the same browsing session until it ends.<tiphead>Note</tiphead>For blacklists with many entries, this option can cause unexpected behavior (ex: getting logged out) if too many entries are toggled off at the same time."),
@@ -307,7 +307,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, popular, and favorite group listings. <tiphead>Note</tiphead>Posts filtered out by the blacklist or quick search will not provide direct downloads until the blacklist entry or quick search affecting them is disabled."),
 			disable_embedded_notes: newOption("checkbox", false, "Disable Embedded Notes", "Force posts with embedded notes to display with the original note styling. <tiphead>Notes</tiphead>While notes will display with the original styling, the actual post settings will still have embedded notes set to enabled. <br><br>Due to the actual settings, users that may wish to edit notes will have to edit the notes with the embedded note styling so that nothing ends up breaking in unexpected ways. When toggling translation mode or opening the edit note dialog box, the notes will automatically revert back to the original embedded notes until the page is reloaded. <br><br>Note resizing and moving will be allowed without the reversion to embedded notes since this ability is sometimes necessary for badly positioned notes. Any note resizing or moving done as a part of intended note editing should be done <b>after</b> triggering the embedded note reversion since any changes before it will be lost."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
-			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, notes, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"load more\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
+			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, notes, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"load more\" button is clicked. <tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu. <tiphead>Tip</tiphead>The \"new tab/window\" and \"fixed paginator\" options can provide additional customization for endless pages.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
 			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and add them to the new page until the desired number of thumbnails is reached. <tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
 			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
 			endless_preload: newOption("checkbox", false, "Preload Next Page", "Start loading the next page as soon as possible.<tiphead>Note</tiphead>A preloaded page will not be appended until the scroll limit is reached."),
@@ -328,7 +328,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			image_swap_mode: newOption("dropdown", "load", "Image Swap Mode", "Set how swapping between the sample and original image is done.<tipdesc>Load First:</tipdesc> Display the image being swapped in after it has finished downloading. <tipdesc>View While Loading:</tipdesc> Immediately display the image being swapped in while it is downloading.", {txtOptions:["Load First (Default):load", "View While Loading:view"]}),
 			search_tag_scrollbars: newOption("dropdown", 0, "Search Tag Scrollbars", "Limit the length of the sidebar tag list for the search listing by restricting it to a set height in pixels. When the list exceeds the set height, a scrollbar will be added to allow the rest of the list to be viewed.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option. This behavior can be changed with the \"override sample setting\" option under the preferences tab."),
-			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
+			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the \"hide upgrade notice\", \"hide sign up notice\", and/or \"hide TOS notice\" options, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			move_save_search: newOption("checkbox", false, "Move Save Search", "Move the \"save this search\" button into the related section in the sidebar."),
 			override_blacklist: newOption("dropdown", "logged_out", "Override Blacklist", "Allow the \"blacklist\" setting to override the default blacklist for logged out users and/or account blacklist for logged in users. <tipdesc>Logged out:</tipdesc> Override the default blacklist for logged out users. <tipdesc>Always:</tipdesc> Override the default blacklist for logged out users and account blacklist for logged in users.", {txtOptions:["Disabled:disabled", "Logged out:logged_out", "Always:always"]}),
@@ -565,40 +565,34 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var page;
 
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
-			if (potentialHiddenPosts(mode)) {
-				url = (allowUserLimit() ? updateURLQuery(url, {limit: thumbnail_count}) : url);
-				bbb.flags.thumbs_xml = true;
+			url = (allowUserLimit() ? updateURLQuery(url, {limit: thumbnail_count}) : url);
+			bbb.flags.thumbs_xml = true;
 
-				if (mode === "search")
-					fetchJSON(url.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?"), "search");
-				else if (mode === "notes")
-					fetchJSON(url.replace(/\/notes\/?(?:\?|$)/, "/notes.json?"), "notes");
-				else if (mode === "favorites")
-					fetchJSON(url.replace(/\/favorites\/?(?:\?|$)/, "/favorites.json?"), "favorites");
+			if (mode === "search")
+				fetchJSON(url.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?"), "search");
+			else if (mode === "notes")
+				fetchJSON(url.replace(/\/notes\/?(?:\?|$)/, "/notes.json?"), "notes");
+			else if (mode === "favorites")
+				fetchJSON(url.replace(/\/favorites\/?(?:\?|$)/, "/favorites.json?"), "favorites");
 
-				bbbStatus("posts", "new");
-			}
+			bbbStatus("posts", "new");
 		}
 		else if (mode === "popular" || mode === "popular_view") {
-			if (potentialHiddenPosts(mode)) {
-				bbb.flags.thumbs_xml = true;
+			bbb.flags.thumbs_xml = true;
 
-				fetchJSON(url.replace(/\/(popular_view|popular)\/?/, "/$1.json"), mode);
-				bbbStatus("posts", "new");
-			}
+			fetchJSON(url.replace(/\/(popular_view|popular)\/?/, "/$1.json"), mode);
+			bbbStatus("posts", "new");
 		}
 		else if (mode === "pool" || mode === "favorite_group") {
-			if (potentialHiddenPosts(mode)) {
-				idCache = getIdCache();
-				bbb.flags.thumbs_xml = true;
+			idCache = getIdCache();
+			bbb.flags.thumbs_xml = true;
 
-				if (idCache)
-					searchJSON(mode + "_search", {post_ids: idCache});
-				else // Get a new cache.
-					fetchJSON(url.replace(/\/(pools|favorite_groups)\/(\d+)/, "/$1/$2.json"), mode + "_cache", mode + "_search");
+			if (idCache)
+				searchJSON(mode + "_search", {post_ids: idCache});
+			else // Get a new cache.
+				fetchJSON(url.replace(/\/(pools|favorite_groups)\/(\d+)/, "/$1/$2.json"), mode + "_cache", mode + "_search");
 
-				bbbStatus("posts", "new");
-			}
+			bbbStatus("posts", "new");
 		}
 		else if (mode === "pool_search" || mode === "favorite_group_search") {
 			page = Number(getVar("page")) || 1;
@@ -634,10 +628,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			fetchJSON("/posts.json?tags=status:any+id:" + idSearch.join(","), "endless", idSearch);
 		}
 		else if (mode === "comments") {
-			if (potentialHiddenPosts(mode)) {
-				fetchJSON(url.replace(/\/comments\/?/, "/comments.json"), "comments");
-				bbbStatus("posts", "new");
-			}
+			fetchJSON(url.replace(/\/comments\/?/, "/comments.json"), "comments");
+			bbbStatus("posts", "new");
 		}
 		else if (mode === "parent" || mode === "child") {
 			var parentUrl = "/posts.json?limit=200&tags=status:any+parent:" + optArg;
@@ -1173,13 +1165,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var url;
 
 		if (mode === "search" || mode === "notes" || mode === "favorites" || mode === "thumbnails") {
-			if (allowUserLimit()) {
-				url = updateURLQuery(location.href, {limit: thumbnail_count});
-				bbb.flags.thumbs_xml = true;
+			url = updateURLQuery(location.href, {limit: thumbnail_count});
+			bbb.flags.thumbs_xml = true;
 
-				fetchPages(url, "thumbnails");
-				bbbStatus("posts", "new");
-			}
+			fetchPages(url, "thumbnails");
+			bbbStatus("posts", "new");
 		}
 		else if (mode === "endless") {
 			url = endlessNexURL();
@@ -1426,7 +1416,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Take thumbnails from a page and pass them to the queue or retrieve hidden posts as necessary.
 		bbb.endless.new_paginator = getPaginator(docEl);
 
-		if (potentialHiddenPosts(gLoc, docEl) && useAPI())
+		if (useAPI() && potentialHiddenPosts(gLoc, docEl))
 			searchJSON("endless");
 		else {
 			var posts = getPosts(docEl);
@@ -1791,6 +1781,61 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		return tags;
+	}
+
+	function getLimit(url) {
+		// Retrieve the current specified limit value. The query limit overrides the search limit.
+		var loc = danbLoc(url);
+		var limit;
+
+		if (loc === "pool" || loc === "popular" || loc === "favorite_group")
+			limit = thumbnail_count_default;
+		else if (loc === "comments")
+			limit = 5;
+		else if (loc === "popular_view")
+			limit = 101;
+		else {
+			var queryLimit = getQueryLimit(url);
+			var searchLimit = getSearchLimit(url);
+
+			limit = (queryLimit !== undefined ? queryLimit : searchLimit);
+		}
+
+		return limit;
+	}
+
+	function getQueryLimit(url) {
+		// Retrieve the limit from a URL's query portion. Always use the default for certain areas where the limit is not allowed.
+		var queryLimit = getVar("limit", url);
+
+		if (queryLimit !== null && queryLimit !== undefined) { // Treat the limit as undefined when the limit parameter is declared with no value.
+			queryLimit = decodeURIComponent(queryLimit);
+
+			if (queryLimit === "" || !/^\s*\d+/.test(queryLimit)) // No thumbnails show up when the limit is declared with a blank value or has no number directly after any potential white space.
+				return 0;
+			else // The query limit finds its value in a manner similar to parseInt. Dump leading spaces and grab numbers until a non-numerical character is hit.
+				return parseInt(queryLimit, 10);
+		}
+
+		return undefined;
+	}
+
+	function getSearchLimit(url) {
+		// Retrieve the limit from the search/limit tag used in a search.
+		var searchLimit = getTagVar("limit", url);
+
+		if (searchLimit !== undefined) {
+			searchLimit = decodeURIComponent(searchLimit);
+
+			if (searchLimit === "") // No thumbnails show up when the limit is declared but left blank.
+				return 0;
+			else if (!bbbIsNum(searchLimit.replace(/\s/g, "")) || searchLimit.indexOf(".") > -1 || Number(searchLimit) < 0) // Non-numerical, negative, and decimal values are ignored. Treat the limit as undefined.
+				return undefined;
+			else
+				return Number(searchLimit);
+		}
+
+		return undefined;
 	}
 
 	/* Functions for the settings panel */
@@ -5952,17 +5997,19 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function modifyPage() {
-		// Determine what function may be needed to fix/update content.
+		// Determine what function may be needed to fix/update original content.
 		if (noXML())
 			return;
+
+		var allowAPI = useAPI();
 
 		if (gLoc === "post")
 			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 		else if (gLoc === "comment_search" || gLoc === "comment")
 			delayMe(fixCommentSearch);
-		else if (useAPI()) // API only features.
+		else if (allowAPI && potentialHiddenPosts(gLoc)) // API only features.
 			searchJSON(gLoc);
-		else // Alternate mode for features.
+		else if (!allowAPI && allowUserLimit()) // Alternate mode for features.
 			searchPages(gLoc);
 	}
 
@@ -8125,61 +8172,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function getLimit(url) {
-		// Retrieve the current specified limit value. The query limit overrides the search limit.
-		var loc = danbLoc(url);
-		var limit;
-
-		if (loc === "pool" || loc === "popular" || loc === "favorite_group")
-			limit = thumbnail_count_default;
-		else if (loc === "comments")
-			limit = 5;
-		else if (loc === "popular_view")
-			limit = 101;
-		else {
-			var queryLimit = getQueryLimit(url);
-			var searchLimit = getSearchLimit(url);
-
-			limit = (queryLimit !== undefined ? queryLimit : searchLimit);
-		}
-
-		return limit;
-	}
-
-	function getQueryLimit(url) {
-		// Retrieve the limit from a URL's query portion. Always use the default for certain areas where the limit is not allowed.
-		var queryLimit = getVar("limit", url);
-
-		if (queryLimit !== null && queryLimit !== undefined) { // Treat the limit as undefined when the limit parameter is declared with no value.
-			queryLimit = decodeURIComponent(queryLimit);
-
-			if (queryLimit === "" || !/^\s*\d+/.test(queryLimit)) // No thumbnails show up when the limit is declared with a blank value or has no number directly after any potential white space.
-				return 0;
-			else // The query limit finds its value in a manner similar to parseInt. Dump leading spaces and grab numbers until a non-numerical character is hit.
-				return parseInt(queryLimit, 10);
-		}
-
-		return undefined;
-	}
-
-	function getSearchLimit(url) {
-		// Retrieve the limit from the search/limit tag used in a search.
-		var searchLimit = getTagVar("limit", url);
-
-		if (searchLimit !== undefined) {
-			searchLimit = decodeURIComponent(searchLimit);
-
-			if (searchLimit === "") // No thumbnails show up when the limit is declared but left blank.
-				return 0;
-			else if (!bbbIsNum(searchLimit.replace(/\s/g, "")) || searchLimit.indexOf(".") > -1 || Number(searchLimit) < 0) // Non-numerical, negative, and decimal values are ignored. Treat the limit as undefined.
-				return undefined;
-			else
-				return Number(searchLimit);
-		}
-
-		return undefined;
-	}
-
 	function arrowNav() {
 		// Bind the arrow keys to Danbooru's page navigation.
 		var paginator = getPaginator();
@@ -8634,7 +8626,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			if (!state[stateProperty]) {
 				sessionStorage.removeItem(key);
 				state[stateProperty] = true;
-				history.replaceState(state, "", location.href);
+				history.replaceState(state, "");
 			}
 		}
 	}
@@ -9320,7 +9312,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function updateURLQuery(url, newQueries) {
 		// Update the query portion of a URL. If a param isn't declared, it will be added. If it is, it will be updated.
 		// Assigning undefined to a param that exists will remove it. Assigning null to a param that exists will completely remove its value. Assigning null to a new param will leave it with no assigned value.
-		var urlParts = url.split(/[?#]/g, 2);
+		var urlParts = url.split("#", 1)[0].split("?", 2);
 		var urlQuery = urlParts[1] || "";
 		var queries = urlQuery.split("&");
 		var query;
