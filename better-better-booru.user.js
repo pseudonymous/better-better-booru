@@ -833,6 +833,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
 		else { // Create image
 			var newWidth, newHeight, newUrl; // If/else variables.
+			var imgDesc = (getMeta("og:title") || "").replace(" - Danbooru", "");
 
 			if (load_sample_first && post.has_large) {
 				newWidth = post.sample_width;
@@ -845,7 +846,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				newUrl = post.file_url;
 			}
 
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + post.tag_string + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + post.tag_string + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/> <p class="desc">' + imgDesc + '</p>';
 
 			bbb.el.bbbLoader = document.getElementById("bbb-loader");
 
@@ -3618,8 +3619,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (optionsSection) {
 			var optionItems = optionsSection.getElementsByTagName("li");
 			var downloadRegex = /^\s*Download\s*$/i;
-			var title = getMeta("og:title");
-			var downloadName = (title ? title.replace(" - Danbooru", " - ") : "");
+			var downloadName = (getMeta("og:title") || "").replace(" - Danbooru", " - ");
 
 			for (i = 0, il = optionItems.length; i < il; i++) {
 				var optionItem = optionItems[i];
