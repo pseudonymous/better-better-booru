@@ -754,6 +754,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Update the URL with the limit value.
 		fixURLLimit();
+
+		// Cache thumbnails to the history for random searches.
+		saveStateCache();
 	}
 
 	function parsePost(postInfo) {
@@ -1358,6 +1361,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Update the URL with the limit value.
 		fixURLLimit();
+
+		// Cache thumbnails to the history for random searches.
+		saveStateCache();
 	}
 
 	function replaceHidden(docEl) {
@@ -1557,6 +1563,38 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return imgInfo;
 	}
 
+	function scrapeThumb(article) {
+		// Retrieve info from a thumbnail. Mainly for remaking thumbnails.
+		var imgInfo = {
+			md5: article.getAttribute("data-md5") || "",
+			file_ext: article.getAttribute("data-file-ext") || "",
+			file_url: article.getAttribute("data-file-url") || "",
+			large_file_url: article.getAttribute("data-large-file-url") || "",
+			preview_file_url: article.getAttribute("data-preview-file-url") || "",
+			has_sound: (article.getAttribute("data-has-sound") === "true" ? true : false),
+			id: Number(article.getAttribute("data-id")),
+			pixiv_id: Number(article.getAttribute("data-pixiv-id")) || null,
+			fav_count: Number(article.getAttribute("data-fav-count")),
+			has_children: (article.getAttribute("data-has-children") === "true" ? true : false),
+			has_active_children: article.bbbHasClass("post-status-has-children"), // Assumption. Basically a flag for the children class.
+			parent_id: (article.getAttribute("data-parent-id") ? Number(article.getAttribute("data-parent-id")) : null),
+			rating: article.getAttribute("data-rating"),
+			score: Number(article.getAttribute("data-score")),
+			tag_string: article.getAttribute("data-tags"),
+			pool_string: article.getAttribute("data-pools"),
+			uploader_name: article.getAttribute("data-uploader"),
+			approver_id: article.getAttribute("data-approver-id") || null,
+			is_deleted: (article.getAttribute("data-flags").indexOf("deleted") < 0 ? false : true),
+			is_flagged: (article.getAttribute("data-flags").indexOf("flagged") < 0 ? false : true),
+			is_pending: (article.getAttribute("data-flags").indexOf("pending") < 0 ? false : true),
+			is_banned: (article.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
+			image_height: Number(article.getAttribute("data-height")) || null,
+			image_width: Number(article.getAttribute("data-width")) || null
+		};
+
+		return imgInfo;
+	}
+
 	function getId(elId, target) {
 		// Retrieve an element by ID from either the current document or an element containing it.
 		if (!target || target === document)
@@ -1629,8 +1667,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Can't always depend on the first post so it's used as a fallback.
 		if (!container) {
-			var posts = getPosts(target);
-			var firstPost = posts[0];
+			var firstPost = getPosts(target)[0];
 
 			if (firstPost)
 				container = firstPost.parentNode;
@@ -4621,7 +4658,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 		}
 
-		if ((getTagVar("order") || "").toLowerCase() !== "random") {
+		if ((history.state && history.state.bbb_posts_cache) || !isRandomSearch()) {
 			// New thumbnail container replacement preparation.
 			var childIndex = 0;
 
@@ -5998,19 +6035,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function modifyPage() {
 		// Determine what function may be needed to fix/update original content.
+		checkStateCache();
+
 		if (noXML())
 			return;
 
 		var allowAPI = useAPI();
+		var stateCache = (history.state || {}).bbb_posts_cache;
 
 		if (gLoc === "post")
 			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 		else if (gLoc === "comment_search" || gLoc === "comment")
 			delayMe(fixCommentSearch);
+		else if (stateCache) // Use a cached set of thumbnails.
+			delayMe(function() { parseListing(JSON.parse(stateCache)); });
 		else if (allowAPI && potentialHiddenPosts(gLoc)) // API only features.
 			searchJSON(gLoc);
 		else if (!allowAPI && allowUserLimit()) // Alternate mode for features.
 			searchPages(gLoc);
+		else
+			saveStateCache();
 	}
 
 	function formatInfo(post) {
@@ -8163,13 +8207,52 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function fixURLLimit() {
 		// Update the URL limit value with the user's limit.
 		if (allowUserLimit()) {
-			var state = history.state || {};
+			var state = history.state;
 			var url = updateURLQuery(location.search, {limit: thumbnail_count});
 
 			history.replaceState(state, "", url);
 			location.replace(location.href.split("#", 1)[0] + "#"); // Force browser caching to cooperate.
 			history.replaceState(state, "", url);
 		}
+	}
+
+	function saveStateCache() {
+		// Cache a search's thumbnails to history state to prevent replaceState/browser caching issues.
+		var state = history.state || {};
+
+		if (isRandomSearch() && !state.bbb_posts_cache) {
+			var curPosts = getPosts();
+			var postsObject = [];
+
+			for (var i = 0, il = curPosts.length; i < il; i++)
+				postsObject.push(scrapeThumb(curPosts[i]));
+
+			state.bbb_posts_cache = JSON.stringify(postsObject);
+			sessionStorage.bbbSetItem("bbb_posts_cache", state.bbb_posts_cache.bbbHash()); // Key used to detect if the page is reloaded/re-entered.
+			history.replaceState(state, "");
+		}
+	}
+
+	function checkStateCache() {
+		// Check for the history state cache and erase it if the page is reloaded or re-entered.
+		removeInheritedStorage("bbb_posts_cache");
+
+		var historyHash = sessionStorage.getItem("bbb_posts_cache") || "";
+		var state = history.state || {};
+
+		if (state.bbb_posts_cache) {
+			var stateHash = state.bbb_posts_cache.bbbHash();
+
+			if (historyHash === String(stateHash)) { // Reloaded. Remove everything since we're on the same page.
+				delete state.bbb_posts_cache;
+				history.replaceState(state, "");
+				sessionStorage.removeItem("bbb_posts_cache");
+			}
+			else // Returned. Set the hash again since we're back.
+				sessionStorage.bbbSetItem("bbb_posts_cache", stateHash);
+		}
+		else if (historyHash) // Back/forward. Remove the hash since we're on a new page.
+			sessionStorage.removeItem("bbb_posts_cache");
 	}
 
 	function arrowNav() {
@@ -8615,6 +8698,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return true;
 		else
 			return false;
+	}
+
+	function isRandomSearch() {
+		// Check whether the search uses "order:random" in it.
+		return ((getTagVar("order") || "").toLowerCase() === "random");
 	}
 
 	function removeInheritedStorage(key) {
@@ -9203,7 +9291,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			bbb.flags.local_storage_full = true; // Keep the cycled domains from triggering storage problems
 			bbbDialog("Currently cleaning local storage and loading the next domain. Please wait...", {ok: false, important: true});
-			history.replaceState((history.state || {}), "", updateURLQuery(location.href, {clean_storage: undefined, clean_urls: undefined, clean_origurl: undefined, clean_session: undefined}));
+			history.replaceState(history.state, "", updateURLQuery(location.href, {clean_storage: undefined, clean_urls: undefined, clean_origurl: undefined, clean_session: undefined}));
 			cleanLocalStorage(cleanMode);
 
 			if (nextURL)
@@ -9212,7 +9300,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				window.setTimeout(function() { location.href = updateURLQuery(decodeURIComponent(origURL), {clean_storage: "save", clean_session: session}); }, 2000);
 		}
 		else if (cleanMode === "save") {
-			history.replaceState((history.state || {}), "", updateURLQuery(location.href, {clean_storage: undefined, clean_session: undefined}));
+			history.replaceState(history.state, "", updateURLQuery(location.href, {clean_storage: undefined, clean_session: undefined}));
 			retryLocalStorage();
 		}
 	}
