@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        7.2.4
+// @version        7.2.5
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -284,7 +284,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "7.2.4",
+			bbb_version: "7.2.5",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the \"thumbnail count\" option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
@@ -3170,6 +3170,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				case "7.2.1":
 				case "7.2.2":
 				case "7.2.3":
+				case "7.2.4":
 					break;
 			}
 
