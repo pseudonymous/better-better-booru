@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        7.2.4
+// @version        7.2.5
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -264,10 +264,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		flags: {},
 		hotkeys: {
 			other: { // Hotkeys for misc locations.
-				66: {func: openMenu}, // B
-				69: {func: endlessToggle}, // E
-				70: {func: quickSearchOpen}, // F
-				s70: {func: quickSearchReset} // SHIFT + F
+				66: {func: openMenu} // B
 			},
 			post: { // Post hotkeys.
 				49: {func: resizeHotkey, custom_handler: true}, // 1
@@ -287,14 +284,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "7.2.4",
+			bbb_version: "7.2.5",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
-			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the thumbnail count option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
+			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the \"thumbnail count\" option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
 			blacklist_add_bars: newOption("checkbox", false, "Additional Bars", "Add a blacklist bar to the comment search listing and individually linked comments so that blacklist entries can be toggled as needed."),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
-			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using the \"hidden\" or \"replaced\" post display options, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
+			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using \"hidden\" or \"replaced\" for the \"post display\" option, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
 			blacklist_post_display: newOption("dropdown", "disabled", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> Posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Disabled:disabled", "Removed:removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
 			blacklist_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling an individual blacklist entry on and off, the mode it's toggled to will persist across other pages in the same browsing session until it ends.<tiphead>Note</tiphead>For blacklists with many entries, this option can cause unexpected behavior (ex: getting logged out) if too many entries are toggled off at the same time."),
@@ -310,7 +307,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, popular, and favorite group listings. <tiphead>Note</tiphead>Posts filtered out by the blacklist or quick search will not provide direct downloads until the blacklist entry or quick search affecting them is disabled."),
 			disable_embedded_notes: newOption("checkbox", false, "Disable Embedded Notes", "Force posts with embedded notes to display with the original note styling. <tiphead>Notes</tiphead>While notes will display with the original styling, the actual post settings will still have embedded notes set to enabled. <br><br>Due to the actual settings, users that may wish to edit notes will have to edit the notes with the embedded note styling so that nothing ends up breaking in unexpected ways. When toggling translation mode or opening the edit note dialog box, the notes will automatically revert back to the original embedded notes until the page is reloaded. <br><br>Note resizing and moving will be allowed without the reversion to embedded notes since this ability is sometimes necessary for badly positioned notes. Any note resizing or moving done as a part of intended note editing should be done <b>after</b> triggering the embedded note reversion since any changes before it will be lost."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
-			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, notes, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"load more\" button is clicked.<tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
+			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, notes, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"load more\" button is clicked. <tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu. <tiphead>Tip</tiphead>The \"new tab/window\" and \"fixed paginator\" options can provide additional customization for endless pages.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
 			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and add them to the new page until the desired number of thumbnails is reached. <tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
 			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
 			endless_preload: newOption("checkbox", false, "Preload Next Page", "Start loading the next page as soon as possible.<tiphead>Note</tiphead>A preloaded page will not be appended until the scroll limit is reached."),
@@ -331,7 +328,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			image_swap_mode: newOption("dropdown", "load", "Image Swap Mode", "Set how swapping between the sample and original image is done.<tipdesc>Load First:</tipdesc> Display the image being swapped in after it has finished downloading. <tipdesc>View While Loading:</tipdesc> Immediately display the image being swapped in while it is downloading.", {txtOptions:["Load First (Default):load", "View While Loading:view"]}),
 			search_tag_scrollbars: newOption("dropdown", 0, "Search Tag Scrollbars", "Limit the length of the sidebar tag list for the search listing by restricting it to a set height in pixels. When the list exceeds the set height, a scrollbar will be added to allow the rest of the list to be viewed.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option. This behavior can be changed with the \"override sample setting\" option under the preferences tab."),
-			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the options to hide the upgrade, sign up, and/or TOS notice, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
+			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the \"hide upgrade notice\", \"hide sign up notice\", and/or \"hide TOS notice\" options, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
 			move_save_search: newOption("checkbox", false, "Move Save Search", "Move the \"save this search\" button into the related section in the sidebar."),
 			override_blacklist: newOption("dropdown", "logged_out", "Override Blacklist", "Allow the \"blacklist\" setting to override the default blacklist for logged out users and/or account blacklist for logged in users. <tipdesc>Logged out:</tipdesc> Override the default blacklist for logged out users. <tipdesc>Always:</tipdesc> Override the default blacklist for logged out users and account blacklist for logged in users.", {txtOptions:["Disabled:disabled", "Logged out:logged_out", "Always:always"]}),
@@ -409,7 +406,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	var show_shota = bbb.user.show_shota;
 	var show_toddlercon = bbb.user.show_toddlercon;
 	var show_banned = bbb.user.show_banned;
-	var show_deleted = bbb.user.show_deleted;
+	var deleted_shown = (gLoc === "search" && /^(?:any|deleted)$/i.test(getTagVar("status"))); // Check whether deleted posts are shown by default.
+	var show_deleted = deleted_shown || bbb.user.show_deleted;
 	var direct_downloads = bbb.user.direct_downloads;
 	var post_link_new_window = bbb.user.post_link_new_window;
 
@@ -561,46 +559,37 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function searchJSON(mode, optArg) {
 		// Figure out the desired URL for a JSON API request, trigger any necessary xml flag, and update the status message.
 		var url = location.href.split("#", 1)[0];
-		var idCache;
-		var idList;
-		var idSearch;
-		var page;
+		var idCache, idList, idSearch, page; // If/else variables.
 
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
-			if (potentialHiddenPosts(mode)) {
-				url = (allowUserLimit() ? updateURLQuery(url, {limit: thumbnail_count}) : url);
-				bbb.flags.thumbs_xml = true;
+			url = (allowUserLimit() ? updateURLQuery(url, {limit: thumbnail_count}) : url);
+			bbb.flags.thumbs_xml = true;
 
-				if (mode === "search")
-					fetchJSON(url.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?"), "search");
-				else if (mode === "notes")
-					fetchJSON(url.replace(/\/notes\/?(?:\?|$)/, "/notes.json?"), "notes");
-				else if (mode === "favorites")
-					fetchJSON(url.replace(/\/favorites\/?(?:\?|$)/, "/favorites.json?"), "favorites");
+			if (mode === "search")
+				fetchJSON(url.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?"), "search");
+			else if (mode === "notes")
+				fetchJSON(url.replace(/\/notes\/?(?:\?|$)/, "/notes.json?"), "notes");
+			else if (mode === "favorites")
+				fetchJSON(url.replace(/\/favorites\/?(?:\?|$)/, "/favorites.json?"), "favorites");
 
-				bbbStatus("posts", "new");
-			}
+			bbbStatus("posts", "new");
 		}
 		else if (mode === "popular" || mode === "popular_view") {
-			if (potentialHiddenPosts(mode)) {
-				bbb.flags.thumbs_xml = true;
+			bbb.flags.thumbs_xml = true;
 
-				fetchJSON(url.replace(/\/(popular_view|popular)\/?/, "/$1.json"), mode);
-				bbbStatus("posts", "new");
-			}
+			fetchJSON(url.replace(/\/(popular_view|popular)\/?/, "/$1.json"), mode);
+			bbbStatus("posts", "new");
 		}
 		else if (mode === "pool" || mode === "favorite_group") {
-			if (potentialHiddenPosts(mode)) {
-				idCache = getIdCache();
-				bbb.flags.thumbs_xml = true;
+			idCache = getIdCache();
+			bbb.flags.thumbs_xml = true;
 
-				if (idCache)
-					searchJSON(mode + "_search", {post_ids: idCache});
-				else // Get a new cache.
-					fetchJSON(url.replace(/\/(pools|favorite_groups)\/(\d+)/, "/$1/$2.json"), mode + "_cache", mode + "_search");
+			if (idCache)
+				searchJSON(mode + "_search", {post_ids: idCache});
+			else // Get a new cache.
+				fetchJSON(url.replace(/\/(pools|favorite_groups)\/(\d+)/, "/$1/$2.json"), mode + "_cache", mode + "_search");
 
-				bbbStatus("posts", "new");
-			}
+			bbbStatus("posts", "new");
 		}
 		else if (mode === "pool_search" || mode === "favorite_group_search") {
 			page = Number(getVar("page")) || 1;
@@ -636,10 +625,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			fetchJSON("/posts.json?tags=status:any+id:" + idSearch.join(","), "endless", idSearch);
 		}
 		else if (mode === "comments") {
-			if (potentialHiddenPosts(mode)) {
-				fetchJSON(url.replace(/\/comments\/?/, "/comments.json"), "comments");
-				bbbStatus("posts", "new");
-			}
+			fetchJSON(url.replace(/\/comments\/?/, "/comments.json"), "comments");
+			bbbStatus("posts", "new");
 		}
 		else if (mode === "parent" || mode === "child") {
 			var parentUrl = "/posts.json?limit=200&tags=status:any+parent:" + optArg;
@@ -745,54 +732,28 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function parseListing(xml, optArg) {
 		// Use JSON results for thumbnail listings.
 		var posts = xml;
-		var thumbContainer = getThumbContainer(gLoc);
 		var orderedIds = (gLoc === "pool" || gLoc === "favorite_group" ? optArg : undefined);
-		var before = getThumbSibling(gLoc);
 
 		if (!posts[0])
 			return;
 
-		if (!thumbContainer) {
-			bbbNotice("Thumbnail section could not be located.", -1);
-			return;
-		}
-
 		// Thumb preparation.
 		var newThumbs = createThumbListing(posts, orderedIds);
 
-		// New thumbnail container preparation.
-		var replacement = thumbContainer.cloneNode(false);
-		var childIndex = 0;
+		// Update the existing thumbnails with new ones.
+		updateThumbListing(newThumbs);
 
-		while (thumbContainer.children[childIndex]) {
-			var child = thumbContainer.children[childIndex];
-
-			if (child.tagName !== "ARTICLE")
-				replacement.appendChild(child);
-			else
-				childIndex++;
-		}
-
-		if (!before)
-			replacement.appendChild(newThumbs);
-		else
-			replacement.insertBefore(newThumbs, before);
-
-		// Prepare thumbnails.
-		prepThumbnails(replacement);
-
-		// Replace results with new results.
-		thumbContainer.parentNode.replaceChild(replacement, thumbContainer);
-
-		// Fix the paginator. The paginator isn't always in the replacement, so run this on the whole page after the replacement is inserted.
+		// Fix the paginator. The paginator isn't always in the new container, so run this on the whole page after the new container is inserted.
 		fixPaginator();
 
 		// Fix hidden thumbnails.
 		fixHiddenThumbs();
 
 		// Update the URL with the limit value.
-		if (allowUserLimit())
-			history.replaceState((history.state || {}), "", updateURLQuery(location.search, {limit: thumbnail_count}));
+		fixURLLimit();
+
+		// Cache thumbnails to the history for random searches.
+		saveStateCache();
 	}
 
 	function parsePost(postInfo) {
@@ -871,9 +832,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (!post.image_height) // Create manual download.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + post.file_url + '">Save this file (right click and save)</a></p>';
 		else { // Create image
-			var newWidth = 0;
-			var newHeight = 0;
-			var newUrl = "";
+			var newWidth, newHeight, newUrl; // If/else variables.
+			var imgDesc = (getMeta("og:title") || "").replace(" - Danbooru", "");
 
 			if (load_sample_first && post.has_large) {
 				newWidth = post.sample_width;
@@ -886,7 +846,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				newUrl = post.file_url;
 			}
 
-			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + post.tag_string + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/>';
+			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + post.tag_string + '" data-fav-count="' + post.fav_count + '" data-flags="' + post.flags + '" data-has-active-children="' + post.has_active_children + '" data-has-children="' + post.has_children + '" data-large-height="' + post.sample_height + '" data-large-width="' + post.sample_width + '" data-original-height="' + post.image_height + '" data-original-width="' + post.image_width + '" data-rating="' + post.rating + '" data-score="' + post.score + '" data-tags="' + post.tag_string + '" data-pools="' + post.pool_string + '" data-uploader="' + post.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/> <p class="desc">' + imgDesc + '</p>';
 
 			bbb.el.bbbLoader = document.getElementById("bbb-loader");
 
@@ -930,7 +890,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var posts = xml;
 		var numPosts = posts.length;
 		var expectedPosts = numPosts;
-		var existingPosts = getPosts(); // Live node list so adding/removing a "post-preview" class item immediately changes this.
+		var existingPosts = getPosts();
 		var eci = 0;
 
 		for (var i = 0; i < numPosts; i++) {
@@ -952,8 +912,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				var copyrightTags = post.tag_string_copyright.split(" ");
 				var characterTags = post.tag_string_character.split(" ");
 				var limit = (thumbnail_count ? "&limit=" + thumbnail_count : "");
-				var tag;
-				var j, jl; // Loop variables.
+				var j, jl, tag; // Loop variables.
 
 				for (j = 0, jl = generalTags.length; j < jl; j++) {
 					tag = generalTags[j];
@@ -1003,25 +962,18 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function parseRelations(xml, mode, parentId) {
 		// Create a new parent/child notice.
 		var posts = xml;
-		var post;
 		var activePost = bbb.post.info;
 		var numPosts = posts.length;
 		var relationCookie = getCookie()["show-relationship-previews"];
 		var showPreview = (relationCookie === undefined || relationCookie === "1" ? true : false);
 		var childSpan = document.createElement("span");
-		var target;
-		var previewLinkId;
-		var previewLinkTxt;
-		var previewId;
-		var classes;
-		var msg;
 		var query = "?tags=parent:" + parentId + (show_deleted ? "+status:any" : "") + (thumbnail_count ? "&limit=" + thumbnail_count : "");
 		var thumbs = "";
-		var displayStyle;
 		var forceShowDeleted = activePost.is_deleted; // If the parent is deleted or the active post is deleted, all deleted posts are shown.
 		var parentDeleted = false;
 		var isSafebooru = (location.host.indexOf("safebooru") > -1 ? true : false);
-		var i; // Loop variable.
+		var target, previewLinkId, previewLinkTxt, previewId, classes, msg, displayStyle; // If/else variables.
+		var i, post; // Loop variables.
 
 		// Figure out if the parent is deleted.
 		for (i = 0; i < numPosts; i++) {
@@ -1201,16 +1153,14 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	/* Functions for XML page info */
 	function searchPages(mode, optArg) {
 		// Let other functions that don't require the API run (alternative to searchJSON) and retrieve various pages for info.
-		var url;
+		var url; // If/else variable.
 
 		if (mode === "search" || mode === "notes" || mode === "favorites" || mode === "thumbnails") {
-			if (allowUserLimit()) {
-				url = updateURLQuery(location.href, {limit: thumbnail_count});
-				bbb.flags.thumbs_xml = true;
+			url = updateURLQuery(location.href, {limit: thumbnail_count});
+			bbb.flags.thumbs_xml = true;
 
-				fetchPages(url, "thumbnails");
-				bbbStatus("posts", "new");
-			}
+			fetchPages(url, "thumbnails");
+			bbbStatus("posts", "new");
 		}
 		else if (mode === "endless") {
 			url = endlessNexURL();
@@ -1291,7 +1241,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						}
 						else {
 							var linkId = uniqueIdNum(); // Create a unique ID.
-							var msg;
+							var msg; // If/else variable.
 
 							if (mode === "hidden") {
 								msg = "Error retrieving hidden thumbnails";
@@ -1384,51 +1334,24 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function replaceThumbnails(docEl) {
 		// Replace the thumbnails and paginator with new ones.
-		var thumbContainer = getThumbContainer(gLoc);
-		var before = getThumbSibling(gLoc);
-
-		if (!thumbContainer) {
-			bbbNotice("Thumbnail section could not be located.", -1);
-			return;
-		}
-
 		// Thumb preparation.
 		var newThumbs = document.createDocumentFragment();
 		var newPosts = getPosts(docEl);
 
-		while (newPosts[0])
-			newThumbs.appendChild(newPosts[0]);
+		for (var i = 0, il = newPosts.length; i < il; i++)
+			newThumbs.appendChild(newPosts[i]);
 
-		// New thumbnail container preparation.
-		var replacement = thumbContainer.cloneNode(false);
-		var childIndex = 0;
-
-		while (thumbContainer.children[childIndex]) {
-			var child = thumbContainer.children[childIndex];
-
-			if (child.tagName !== "ARTICLE")
-				replacement.appendChild(child);
-			else
-				childIndex++;
-		}
-
-		if (!before)
-			replacement.appendChild(newThumbs);
-		else
-			replacement.insertBefore(newThumbs, before);
-
-		// Prepare thumbnails.
-		prepThumbnails(replacement);
-
-		// Replace results with new results.
-		thumbContainer.parentNode.replaceChild(replacement, thumbContainer);
+		// Update the existing thumbnails with new ones.
+		updateThumbListing(newThumbs);
 
 		// Replace paginator with new paginator.
 		replacePaginator(docEl);
 
 		// Update the URL with the limit value.
-		if (allowUserLimit())
-			history.replaceState((history.state || {}), "", updateURLQuery(location.search, {limit: thumbnail_count}));
+		fixURLLimit();
+
+		// Cache thumbnails to the history for random searches.
+		saveStateCache();
 	}
 
 	function replaceHidden(docEl) {
@@ -1487,15 +1410,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Take thumbnails from a page and pass them to the queue or retrieve hidden posts as necessary.
 		bbb.endless.new_paginator = getPaginator(docEl);
 
-		if (potentialHiddenPosts(gLoc, docEl) && useAPI())
+		if (useAPI() && potentialHiddenPosts(gLoc, docEl))
 			searchJSON("endless");
 		else {
 			var posts = getPosts(docEl);
 			var newPage = document.createElement("div");
 			newPage.className = "bbb-endless-page";
 
-			while (posts[0])
-				newPage.appendChild(posts[0]);
+			for (var i = 0, il = posts.length; i < il; i++)
+				newPage.appendChild(posts[i]);
 
 			endlessQueuePage(newPage);
 		}
@@ -1531,9 +1454,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var previewInfo = getMeta("og:image", target);
 		var imgHeight = Number(imgContainer.getAttribute("data-height"));
 		var imgWidth = Number(imgContainer.getAttribute("data-width"));
-		var md5 = "";
-		var ext = "";
-		var infoValues;
 		var imgInfo = {
 			md5: "",
 			file_ext: "",
@@ -1560,6 +1480,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			image_width: imgWidth || null,
 			is_hidden: !postEl
 		};
+		var infoValues; // If/else variable.
 
 		// Try to extract the file's name and extension.
 		if (dataInfo[1])
@@ -1572,8 +1493,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			infoValues = /data\/preview\/(\w+?)\.\w/.exec(previewInfo);
 
 		if (infoValues) {
-			md5 = infoValues[1];
-			ext = infoValues[2];
+			var md5 = infoValues[1];
+			var ext = infoValues[2];
 
 			// Test for the original image file extension if it is unknown.
 			if (!ext && imgWidth) {
@@ -1628,6 +1549,38 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		return imgInfo;
 	}
 
+	function scrapeThumb(article) {
+		// Retrieve info from a thumbnail. Mainly for remaking thumbnails.
+		var imgInfo = {
+			md5: article.getAttribute("data-md5") || "",
+			file_ext: article.getAttribute("data-file-ext") || "",
+			file_url: article.getAttribute("data-file-url") || "",
+			large_file_url: article.getAttribute("data-large-file-url") || "",
+			preview_file_url: article.getAttribute("data-preview-file-url") || "",
+			has_sound: (article.getAttribute("data-has-sound") === "true" ? true : false),
+			id: Number(article.getAttribute("data-id")),
+			pixiv_id: Number(article.getAttribute("data-pixiv-id")) || null,
+			fav_count: Number(article.getAttribute("data-fav-count")),
+			has_children: (article.getAttribute("data-has-children") === "true" ? true : false),
+			has_active_children: article.bbbHasClass("post-status-has-children"), // Assumption. Basically a flag for the children class.
+			parent_id: (article.getAttribute("data-parent-id") ? Number(article.getAttribute("data-parent-id")) : null),
+			rating: article.getAttribute("data-rating"),
+			score: Number(article.getAttribute("data-score")),
+			tag_string: article.getAttribute("data-tags"),
+			pool_string: article.getAttribute("data-pools"),
+			uploader_name: article.getAttribute("data-uploader"),
+			approver_id: article.getAttribute("data-approver-id") || null,
+			is_deleted: (article.getAttribute("data-flags").indexOf("deleted") < 0 ? false : true),
+			is_flagged: (article.getAttribute("data-flags").indexOf("flagged") < 0 ? false : true),
+			is_pending: (article.getAttribute("data-flags").indexOf("pending") < 0 ? false : true),
+			is_banned: (article.getAttribute("data-flags").indexOf("banned") < 0 ? false : true),
+			image_height: Number(article.getAttribute("data-height")) || null,
+			image_width: Number(article.getAttribute("data-width")) || null
+		};
+
+		return imgInfo;
+	}
+
 	function getId(elId, target) {
 		// Retrieve an element by ID from either the current document or an element containing it.
 		if (!target || target === document)
@@ -1663,9 +1616,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function getPosts(target) {
 		// Return a list of posts depending from the document or a specific element.
 		if (!target || target === document) // All posts in the document.
-			return document.getElementsByClassName("post-preview");
-		else if (!target.bbbHasClass("post-preview")) // All posts in a specific element.
-			return target.getElementsByClassName("post-preview");
+			return document.querySelectorAll(".post-preview");
+		else if (target instanceof DocumentFragment || !target.bbbHasClass("post-preview")) // All posts in a specific element.
+			return target.querySelectorAll(".post-preview");
 		else // Single specific post.
 			return [target];
 	}
@@ -1683,7 +1636,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function getThumbContainer(mode, pageEl) {
 		// Retrieve the element that contains the thumbnails.
 		var target = pageEl || document;
-		var container;
+		var container; // If/else variable.
 
 		if (mode === "search") {
 			container = getId("posts", target);
@@ -1700,8 +1653,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Can't always depend on the first post so it's used as a fallback.
 		if (!container) {
-			var posts = getPosts(target);
-			var firstPost = posts[0];
+			var firstPost = getPosts(target)[0];
 
 			if (firstPost)
 				container = firstPost.parentNode;
@@ -1713,7 +1665,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function getThumbSibling(mode, pageEl) {
 		// If it exists, retrieve the element that thumbnails should be added before.
 		var target = pageEl || document;
-		var sibling;
+		var sibling; // If/else variable.
 
 		var posts = getPosts(target);
 		var numPosts = posts.length;
@@ -1807,8 +1759,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			url = location.search;
 
 		var tags = getVar("tags", url);
-		var tag;
-		var result;
 
 		// If the tags parameter isn't provided or has no value, the metatag is undefined.
 		if (tags === null || tags === undefined)
@@ -1817,13 +1767,98 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		tags = tags.split(/\+|%20/g);
 
 		for (var i = 0, il = tags.length; i < il; i++) {
-			tag = decodeURIComponent(tags[i]);
+			var tag = decodeURIComponent(tags[i]);
 
 			if (tag.indexOf(urlVar + ":") === 0)
-				result = encodeURIComponent(tag.split(":")[1]); // Let the calling function decide whether it wants the decoded tag or not.
+				return encodeURIComponent(tag.split(":")[1]); // Let the calling function decide whether it wants the decoded tag or not.
 		}
 
-		return result;
+		return undefined;
+	}
+
+	function getThumbQuery() {
+		// Return the thumbnail URL query value.
+		var query = "";
+
+		if (gLoc === "search" || gLoc === "favorites") {
+			query = getCurTags();
+			query = (query ? "?tags=" + query : "");
+		}
+		else if (gLoc === "pool")
+			query = "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1];
+		else if (gLoc === "favorite_group")
+			query = "?favgroup_id=" + /\/favorite_groups\/(\d+)/.exec(location.pathname)[1];
+
+		return query;
+	}
+
+	function getCurTags() {
+		// Retrieve the current search tags for URL use.
+		var tags; // If/else variable.
+
+		if (gLoc === "search")
+			tags = getVar("tags") || "";
+		else if (gLoc === "favorites") {
+			tags = document.getElementById("tags");
+			tags = (tags ? tags.getAttribute("value").replace("fav:", "ordfav:").bbbSpaceClean() : ""); // Use getAttribute to avoid potential user changes to the input.
+		}
+
+		return tags;
+	}
+
+	function getLimit(url) {
+		// Retrieve the current specified limit value. The query limit overrides the search limit.
+		var loc = danbLoc(url);
+		var limit; // If/else variable.
+
+		if (loc === "pool" || loc === "popular" || loc === "favorite_group")
+			limit = thumbnail_count_default;
+		else if (loc === "comments")
+			limit = 5;
+		else if (loc === "popular_view")
+			limit = 101;
+		else {
+			var queryLimit = getQueryLimit(url);
+			var searchLimit = getSearchLimit(url);
+
+			limit = (queryLimit !== undefined ? queryLimit : searchLimit);
+		}
+
+		return limit;
+	}
+
+	function getQueryLimit(url) {
+		// Retrieve the limit from a URL's query portion. Always use the default for certain areas where the limit is not allowed.
+		var queryLimit = getVar("limit", url);
+
+		if (queryLimit !== null && queryLimit !== undefined) { // Treat the limit as undefined when the limit parameter is declared with no value.
+			queryLimit = decodeURIComponent(queryLimit);
+
+			if (queryLimit === "" || !/^\s*\d+/.test(queryLimit)) // No thumbnails show up when the limit is declared with a blank value or has no number directly after any potential white space.
+				return 0;
+			else // The query limit finds its value in a manner similar to parseInt. Dump leading spaces and grab numbers until a non-numerical character is hit.
+				return parseInt(queryLimit, 10);
+		}
+
+		return undefined;
+	}
+
+	function getSearchLimit(url) {
+		// Retrieve the limit from the search/limit tag used in a search.
+		var searchLimit = getTagVar("limit", url);
+
+		if (searchLimit !== undefined) {
+			searchLimit = decodeURIComponent(searchLimit);
+
+			if (searchLimit === "") // No thumbnails show up when the limit is declared but left blank.
+				return 0;
+			else if (!bbbIsNum(searchLimit.replace(/\s/g, "")) || searchLimit.indexOf(".") > -1 || Number(searchLimit) < 0) // Non-numerical, negative, and decimal values are ignored. Treat the limit as undefined.
+				return undefined;
+			else
+				return Number(searchLimit);
+		}
+
+		return undefined;
 	}
 
 	/* Functions for the settings panel */
@@ -2158,7 +2193,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		inputSpan.className = "bbb-general-input";
 		label.appendChild(inputSpan);
 
-		var item;
+		var item; // Switch variable.
 		var itemFrag = document.createDocumentFragment();
 
 		switch (optionObject.type) {
@@ -2166,7 +2201,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				var txtOptions = optionObject.txtOptions;
 				var numRange = optionObject.numRange;
 				var numList = optionObject.numList;
-				var selectOption;
+				var selectOption; // If/else variable.
 
 				item = document.createElement("select");
 				item.name = settingName;
@@ -3135,6 +3170,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				case "7.2.1":
 				case "7.2.2":
 				case "7.2.3":
+				case "7.2.4":
 					break;
 			}
 
@@ -3421,7 +3457,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postEl = postContent.el;
 		var postTag = (postEl ? postEl.tagName : undefined);
 		var translateLink = document.getElementById("translate");
-		var toggleFunction;
+		var toggleFunction; // If/else variable.
 
 		if (post.file_ext !== "webm" && post.file_ext !== "mp4" && post.file_ext !== "swf") { // Don't allow translation functions on videos or flash.
 			if (postTag !== "VIDEO") { // Make translation mode work on non-video content.
@@ -3584,8 +3620,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (optionsSection) {
 			var optionItems = optionsSection.getElementsByTagName("li");
 			var downloadRegex = /^\s*Download\s*$/i;
-			var title = getMeta("og:title");
-			var downloadName = (title ? title.replace(" - Danbooru", " - ") : "");
+			var downloadName = (getMeta("og:title") || "").replace(" - Danbooru", " - ");
 
 			for (i = 0, il = optionItems.length; i < il; i++) {
 				var optionItem = optionItems[i];
@@ -3913,8 +3948,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function checkRelations() {
 		// Test whether the parent/child notice could have hidden posts.
 		var post = bbb.post.info;
-		var thumbCount;
-		var deletedCount;
 		var loggedIn = isLoggedIn();
 		var fixParent = false;
 		var fixChild = false;
@@ -3922,6 +3955,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var showPreview = (relationCookie === undefined || relationCookie === "1" ? true : false);
 		var parentLink = document.getElementById("has-children-relationship-preview-link");
 		var childLink = document.getElementById("has-parent-relationship-preview-link");
+		var thumbCount, deletedCount; // If/else variable.
 
 		if (post.has_children) {
 			var parentNotice = document.getElementsByClassName("notice-parent")[0];
@@ -3994,7 +4028,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		var tagHolder = document.createDocumentFragment();
 		var childIndex = 0;
-		var mainList;
+		var mainList; // If/else variable.
 
 		while (tagList.children[childIndex]) {
 			var header = tagList.children[childIndex];
@@ -4041,15 +4075,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		var infoSection = document.getElementById("post-information");
 		var infoListItems = (infoSection ? infoSection.getElementsByTagName("li") : null);
-		var statusListItem;
-		var newStatusContent;
 		var flaggedNotice = document.getElementsByClassName("notice-flagged")[0];
 		var appealedNotice = document.getElementsByClassName("notice-appealed")[0];
 		var pendingNotice = document.getElementsByClassName("notice-pending")[0];
 		var deletedNotices = document.getElementsByClassName("notice-deleted");
-		var deletedNotice;
-		var bannedNotice;
-		var i, il; // Loop variables.
+		var i, il, statusListItem, newStatusContent, deletedNotice, bannedNotice; // Loop variables.
 
 		if (infoListItems) {
 			// Locate the status portion of the information section.
@@ -4412,8 +4442,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var hasChildren = (post.getAttribute("data-has-children") === "true" ? true : false);
 			var secondary = [];
 			var secondaryLength = 0;
-			var borderStyle;
 			var styleList = bbb.custom_tag.style_list;
+			var borderStyle; // If/else variable.
 
 			// Skip thumbnails that have already been done.
 			if (link.bbbHasClass("bbb-thumb-link"))
@@ -4561,8 +4591,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var thumbs = document.createDocumentFragment();
 		var postHolder = {};
 		var query = getThumbQuery();
-		var thumb;
-		var i, il; // Loop variables;
+		var i, il, thumb; // Loop variables;
 
 		// Generate thumbnails.
 		for (i = 0, il = posts.length; i < il; i++) {
@@ -4596,6 +4625,98 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		return thumbs;
+	}
+
+	function updateThumbListing(thumbs) {
+		// Take a collection of thumbnails and use them to update the original thumbnail listing as appropriate.
+		var thumbContainer = getThumbContainer(gLoc);
+		var before = getThumbSibling(gLoc);
+		var newContainer; // If/else variable.
+
+		if (!thumbContainer) {
+			bbbNotice("Thumbnail section could not be located.", -1);
+			return;
+		}
+
+		if ((history.state && history.state.bbb_posts_cache) || !isRandomSearch()) {
+			// New thumbnail container replacement preparation.
+			var childIndex = 0;
+
+			newContainer = thumbContainer.cloneNode(false);
+
+			while (thumbContainer.children[childIndex]) {
+				var child = thumbContainer.children[childIndex];
+
+				if (child.tagName !== "ARTICLE")
+					newContainer.appendChild(child);
+				else
+					childIndex++;
+			}
+
+			if (!before)
+				newContainer.appendChild(thumbs);
+			else
+				newContainer.insertBefore(thumbs, before);
+
+			// Prepare thumbnails.
+			prepThumbnails(newContainer);
+
+			// Replace results with new results.
+			thumbContainer.parentNode.replaceChild(newContainer, thumbContainer);
+		}
+		else {
+			// Fill out a random search by appending thumbnails.
+			var origThumbs = getPosts(thumbs);
+			var i, il, curThumb; // Loop variables.
+
+			newContainer = document.createDocumentFragment();
+
+			// Remove existing posts.
+			for (i = 0, il = origThumbs.length; i < il; i++) {
+				curThumb = origThumbs[i];
+
+				if (getId(curThumb.id))
+					thumbs.removeChild(curThumb);
+			}
+
+			// Favor hidden posts since they're the most likely reason for the API request.
+			var noDupThumbs = getPosts(thumbs);
+			var hiddenSearch = createSearch("~loli ~shota ~toddlercon ~status:deleted ~status:banned");
+			var limit = getLimit() || (allowUserLimit() ? thumbnail_count : thumbnail_count_default);
+			var numMissing = limit - getPosts().length;
+
+			for (i = 0, il = noDupThumbs.length - 1; i < il; i++) {
+				curThumb = noDupThumbs[i];
+
+				if (numMissing === 0)
+					break;
+				else if (thumbSearchMatch(curThumb, hiddenSearch)) {
+					newContainer.appendChild(curThumb);
+					numMissing--;
+				}
+			}
+
+			// Try to fix any shortage of thumbnails.
+			var leftoverThumbs = getPosts(thumbs);
+
+			for (i = 0, il = leftoverThumbs.length - 1; i < il; i++) {
+				if (numMissing === 0)
+					break;
+				else {
+					newContainer.appendChild(leftoverThumbs[i]);
+					numMissing--;
+				}
+			}
+
+			// Prepare thumbnails.
+			prepThumbnails(newContainer);
+
+			// Append listing with new thumbnails.
+			if (!before)
+				thumbContainer.appendChild(newContainer);
+			else
+				thumbContainer.insertBefore(newContainer, before);
+		}
 	}
 
 	function loadThumbCache() {
@@ -4675,8 +4796,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var collId = /\/(?:pools|favorite_groups)\/(\d+)/.exec(location.href)[1];
 		var idCache = sessionStorage.getItem("bbb_" + gLoc + "_cache_" + collId);
 		var curTime = new Date().getTime();
-		var cacheTime;
-		var timeDiff;
+		var cacheTime, timeDiff; // If/else variables.
 
 		if (idCache) {
 			idCache = idCache.split(" ");
@@ -4688,37 +4808,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return undefined;
 		else
 			return idCache.join(" ");
-	}
-
-	function getThumbQuery() {
-		// Return the thumbnail URL query value.
-		var query = "";
-
-		if (gLoc === "search" || gLoc === "favorites") {
-			query = getCurTags();
-			query = (query ? "?tags=" + query : "");
-		}
-		else if (gLoc === "pool")
-			query = "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1];
-		else if (gLoc === "favorite_group")
-			query = "?favgroup_id=" + /\/favorite_groups\/(\d+)/.exec(location.pathname)[1];
-
-		return query;
-	}
-
-	function getCurTags() {
-		// Retrieve the current search tags for URL use.
-		var tags;
-
-		if (gLoc === "search") {
-			tags = getVar("tags") || "";
-		}
-		else if (gLoc === "favorites") {
-			tags = document.getElementById("tags");
-			tags = (tags ? tags.getAttribute("value").replace("fav:", "ordfav:").bbbSpaceClean() : ""); // Use getAttribute to avoid potential user changes to the input.
-		}
-
-		return tags;
 	}
 
 	function postDDL(target) {
@@ -4782,10 +4871,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!clean_links)
 			return;
 
-		var targetContainer;
-		var links;
-		var link;
-		var linkParent;
+		var targetContainer; // If/else variable.
 
 		if (target)
 			targetContainer = target;
@@ -4801,11 +4887,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			targetContainer = document.getElementById("a-intro");
 
 		if (targetContainer) {
-			links = targetContainer.getElementsByTagName("a");
+			var links = targetContainer.getElementsByTagName("a");
 
 			for (var i = 0, il = links.length; i < il; i++) {
-				link = links[i];
-				linkParent = link.parentNode;
+				var link = links[i];
+				var linkParent = link.parentNode;
 
 				if (linkParent.tagName === "ARTICLE" || linkParent.id.indexOf("nav-link-for-pool-") === 0)
 					link.href = link.href.split("?", 1)[0];
@@ -4837,11 +4923,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var limit = getLimit();
 
 		if (mode === "search" || mode === "notes" || mode === "favorites") {
-			var numDesired;
-			var numExpected;
-
-			numExpected = (limit !== undefined ? limit : thumbnail_count_default);
-			numDesired = (allowUserLimit() ? thumbnail_count : numExpected);
+			var numExpected = (limit !== undefined ? limit : thumbnail_count_default);
+			var numDesired = (allowUserLimit() ? thumbnail_count : numExpected);
 
 			if (!noResults && (numPosts !== numDesired || numPosts < numExpected))
 				return true;
@@ -4926,7 +5009,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Set up and start endless pages.
 		removeInheritedStorage("bbb_endless_default");
 
-		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
+		var paginator = getPaginator();
+
+		if (endless_default === "disabled" || !paginator || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
 			return;
 
 		// Add the endless link to the menu.
@@ -4978,58 +5063,57 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			link.style.fontWeight = "normal";
 		}
 
-		var paginator = getPaginator();
+		var paginatorParent = paginator.parentNode;
 
-		if (paginator) {
-			var paginatorParent = paginator.parentNode;
+		// Set up the load more button.
+		var buttonDiv = document.createElement("div");
+		buttonDiv.id = "bbb-endless-button-div";
 
-			// Set up the load more button.
-			var buttonDiv = document.createElement("div");
-			buttonDiv.id = "bbb-endless-button-div";
+		var loadButtonDiv = bbb.el.endlessLoadDiv = document.createElement("div");
+		loadButtonDiv.id = "bbb-endless-load-div";
+		buttonDiv.appendChild(loadButtonDiv);
 
-			var loadButtonDiv = bbb.el.endlessLoadDiv = document.createElement("div");
-			loadButtonDiv.id = "bbb-endless-load-div";
-			buttonDiv.appendChild(loadButtonDiv);
+		var loadButton = bbb.el.endlessLoadButton = document.createElement("a");
+		loadButton.innerHTML = "Load More";
+		loadButton.href = "#";
+		loadButton.id = "bbb-endless-load-button";
+		loadButton.style.display = "none";
+		loadButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
 
-			var loadButton = bbb.el.endlessLoadButton = document.createElement("a");
-			loadButton.innerHTML = "Load More";
-			loadButton.href = "#";
-			loadButton.id = "bbb-endless-load-button";
 			loadButton.style.display = "none";
-			loadButton.addEventListener("click", function(event) {
-				if (event.button !== 0)
-					return;
+			loadButton.blur();
+			bbb.endless.paused = false;
+			bbb.endless.append_page = true;
+			endlessCheck();
+			event.preventDefault();
+		}, false);
+		loadButtonDiv.appendChild(loadButton);
 
-				loadButton.style.display = "none";
-				loadButton.blur();
-				bbb.endless.paused = false;
-				bbb.endless.append_page = true;
-				endlessCheck();
-				event.preventDefault();
-			}, false);
-			loadButtonDiv.appendChild(loadButton);
+		// Set up the enable button.
+		var enableButtonDiv = bbb.el.endlessEnableDiv = document.createElement("div");
+		enableButtonDiv.id = "bbb-endless-enable-div";
+		buttonDiv.appendChild(enableButtonDiv);
 
-			// Set up the enable button.
-			var enableButtonDiv = bbb.el.endlessEnableDiv = document.createElement("div");
-			enableButtonDiv.id = "bbb-endless-enable-div";
-			buttonDiv.appendChild(enableButtonDiv);
+		var enableButton = document.createElement("a");
+		enableButton.innerHTML = "Endless";
+		enableButton.href = "#";
+		enableButton.id = "bbb-endless-enable-button";
+		enableButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
 
-			var enableButton = document.createElement("a");
-			enableButton.innerHTML = "Endless";
-			enableButton.href = "#";
-			enableButton.id = "bbb-endless-enable-button";
-			enableButton.addEventListener("click", function(event) {
-				if (event.button !== 0)
-					return;
+			enableButton.blur();
+			endlessToggle();
+			event.preventDefault();
+		}, false);
+		enableButtonDiv.appendChild(enableButton);
 
-				enableButton.blur();
-				endlessToggle();
-				event.preventDefault();
-			}, false);
-			enableButtonDiv.appendChild(enableButton);
+		paginatorParent.insertBefore(buttonDiv, paginator);
 
-			paginatorParent.insertBefore(buttonDiv, paginator);
-		}
+		// Create the hotkey.
+		createHotkey("69", endlessToggle); // E
 
 		// Check the session default or original default value to see if endless pages should be enabled.
 		var sessionDefault = sessionStorage.getItem("bbb_endless_default");
@@ -5070,7 +5154,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (numPosts < limit) {
 				var newPageObject = {
-					page: document.createElement("span"),
+					page: document.createDocumentFragment(),
 					page_num: [(getVar("page") || "1")],
 					paginator: bbb.endless.last_paginator,
 					ready: false
@@ -5149,26 +5233,27 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var paginator = bbb.endless.last_paginator = bbb.endless.new_paginator;
 		var badPaginator = (paginator.textContent.indexOf("Go back") > -1); // Sometimes the paginator sends us to a page with no results.
 		var lastPage = endlessLastPage() || badPaginator;
-		var posts = getPosts(newPage);
+		var origPosts = getPosts(newPage);
+		var i, il; // Loop variables.
 
 		bbb.endless.new_paginator = undefined;
 
 		// Remove duplicates.
 		if (endless_remove_dup) {
-			for (var i = 0; i < posts.length; i++) {
-				var post = posts[i];
+			for (i = 0; i < origPosts.length; i++) {
+				var post = origPosts[i];
 				var postId = post.id;
 
-				if (bbb.endless.posts[postId]) {
+				if (bbb.endless.posts[postId])
 					newPage.removeChild(post);
-					i--;
-				}
 				else
 					bbb.endless.posts[postId] = post;
 			}
 		}
 
 		// Fill up existing page objects with thumbnails.
+		var fillPosts = getPosts(newPage);
+		var leftoverPosts = fillPosts;
 		var lastPageObject = bbb.endless.pages[bbb.endless.pages.length - 1];
 
 		if (endless_fill && lastPageObject && !lastPageObject.ready) {
@@ -5177,21 +5262,26 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			else {
 				var lastQueuePage = lastPageObject.page;
 				var lastQueuePosts = getPosts(lastQueuePage);
-				var fillLimit = (bbb.endless.fill_first_page ? limit - getPosts().length : limit);
+				var fillLimit = (bbb.endless.fill_first_page ? limit - getPosts().length : limit - lastQueuePosts.length);
 
-				while (!lastPageObject.ready && posts[0]) {
-					lastQueuePage.appendChild(posts[0]);
+				for (i = 0, il = fillPosts.length; i < il; i++) {
+					lastQueuePage.appendChild(fillPosts[i]);
+					fillLimit--;
 
-					if (lastQueuePosts.length === fillLimit)
+					if (fillLimit === 0) {
 						lastPageObject.ready = true;
+						break;
+					}
 				}
 
 				// If there are no more posts and pages, mark the last page as ready.
-				if (!lastPageObject.ready && !posts[0] && lastPage)
+				leftoverPosts = getPosts(newPage);
+
+				if (!lastPageObject.ready && !leftoverPosts[0] && lastPage)
 					lastPageObject.ready = true;
 
 				// Make sure the displayed paginator is always the one from the last retrieved page to have all of it's thumbnails used so the user doesn't click to the next page and skip queued thumbnails that haven't been displayed yet.
-				if (!posts[0])
+				if (!leftoverPosts[0])
 					lastPageObject.paginator = paginator;
 
 				lastPageObject.page_num.push(pageNum);
@@ -5199,7 +5289,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		// Queue up a new page object.
-		var numNewPosts = posts.length;
+		var numNewPosts = leftoverPosts.length;
 
 		if (numNewPosts > 0 || (!endless_fill && !badPaginator) || (endless_fill && !bbb.endless.pages[0] && !lastPage)) { // Queue the page if: 1) There are thumbnails. 2) It's normal mode and not a "no results" page. 3) It's fill mode and there is no object to work with for future pages.
 			var newPageObject = {
@@ -5381,8 +5471,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 		}
 		else if (blacklist_add_bars) {
-			var target;
-			var before;
+			var target, before; // If/else variables.
 
 			if (gLoc === "comment_search") {
 				target = document.getElementById("a-index");
@@ -5558,10 +5647,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var matches = entry.matches;
 		var links = document.getElementsByClassName("bbb-blacklist-entry-" + entryIndex);
 		var blacklistDisabled = (getCookie().dab === "1");
-		var id;
-		var els;
-		var matchList;
-		var i, il, j, jl; // Loop variables.
+		var i, il, j, jl, id, els, matchList; // Loop variables.
 
 		if (entry.active) {
 			entry.active = false;
@@ -5933,18 +6019,27 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	}
 
 	function modifyPage() {
-		// Determine what function may be needed to fix/update content.
+		// Determine what function may be needed to fix/update original content.
+		checkStateCache();
+
 		if (noXML())
 			return;
+
+		var allowAPI = useAPI();
+		var stateCache = (history.state || {}).bbb_posts_cache;
 
 		if (gLoc === "post")
 			delayMe(parsePost); // Delay is needed to force the script to pause and allow Danbooru to do whatever. It essentially mimics the async nature of the API call.
 		else if (gLoc === "comment_search" || gLoc === "comment")
 			delayMe(fixCommentSearch);
-		else if (useAPI()) // API only features.
+		else if (stateCache) // Use a cached set of thumbnails.
+			delayMe(function() { parseListing(JSON.parse(stateCache)); });
+		else if (allowAPI && potentialHiddenPosts(gLoc)) // API only features.
 			searchJSON(gLoc);
-		else // Alternate mode for features.
+		else if (!allowAPI && allowUserLimit()) // Alternate mode for features.
 			searchPages(gLoc);
+		else
+			saveStateCache();
 	}
 
 	function formatInfo(post) {
@@ -6011,10 +6106,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (/\d/.test(paginator.textContent)) { // Fix numbered paginators.
 			// Fix existing paginator with user's custom limit.
 			var pageLinks = paginator.getElementsByTagName("a");
-			var pageLink;
 
 			for (var i = 0, il = pageLinks.length; i < il; i++) {
-				pageLink = pageLinks[i];
+				var pageLink = pageLinks[i];
 				pageLink.href = updateURLQuery(pageLink.href, {limit: thumbnail_count});
 			}
 
@@ -6357,7 +6451,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (!searchArray[0])
 			return false;
 
-		var postInfo;
+		var postInfo; // If/else variable.
 
 		if (post instanceof Element) {
 			var tags = post.getAttribute("data-tags");
@@ -6390,10 +6484,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else
 			postInfo = post;
 
-		var anyResult;
-		var allResult;
-		var searchTerm = "";
-		var j, jl; // Loop variables.
+		var j, jl, searchTerm; // Loop variables.
 
 		for (var i = 0, il = searchArray.length; i < il; i++) {
 			var searchObject = searchArray[i];
@@ -6405,7 +6496,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				continue;
 
 			if (any.total) {
-				anyResult = false;
+				var anyResult = false;
 
 				// Loop until one positive match is found.
 				for (j = 0, jl = any.includes.length; j < jl; j++) {
@@ -6435,7 +6526,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 
 			if (all.total) {
-				allResult = true;
+				var allResult = true;
 
 				// Loop until a negative match is found.
 				for (j = 0, jl = all.includes.length; j < jl; j++) {
@@ -6474,7 +6565,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function thumbTagMatch(postInfo, tag) {
 		// Test thumbnail info for a tag match.
-		var targetTags;
+		var targetTags; // If/else variable.
 
 		if (typeof(tag) === "string") { // Check regular tags and metatags with string values.
 			targetTags = (isMetatag(tag) ? postInfo.metatags : postInfo.tags);
@@ -6533,7 +6624,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			// Divide the tags into any and all sets with excluded and included tags.
 			for (var j = 0, jl = searchString.length; j < jl; j++) {
 				var searchTerm = searchString[j];
-				var mode;
 				var primaryMode = "all";
 				var secondaryMode = "includes";
 
@@ -6553,7 +6643,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (!searchTerm.length) // Stop if there is no actual tag.
 					continue;
 
-				mode = searchObject[primaryMode][secondaryMode];
+				var mode = searchObject[primaryMode][secondaryMode];
 
 				if (isNumMetatag(searchTerm)) { // Parse numeric metatags and turn them into objects.
 					var tagArray = searchTerm.split(":");
@@ -6564,10 +6654,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 						less: undefined
 					};
 					var numSearch = tagArray[1];
-					var numArray;
-					var equals;
-					var greater;
-					var less;
+					var numArray, equals, greater, less; // If/else variables.
 
 					if (numSearch.indexOf("<=") === 0 || numSearch.indexOf("..") === 0) { // Less than or equal to. (tag:<=# & tag:..#)
 						less = parseInt(numSearch.slice(2), 10);
@@ -6831,8 +6918,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var mode = getVar("new_posts");
 			var postsDiv = document.getElementById("posts");
 			var postSections = document.getElementById("post-sections");
-			var posts = getPosts();
-			var firstPost = posts[0];
+			var firstPost = getPosts()[0];
 
 			if (mode === "init" && !info.viewed && !getVar("tags") && !getVar("page")) { // Initialize.
 				if (firstPost) {
@@ -7054,7 +7140,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		// Border setup.
 		var sbsl = status_borders.length;
-		var statusBorderItem;
+		var statusBorderItem; // Loop variable.
 
 		styles += 'article.post-preview a.bbb-thumb-link, .post-preview div.preview a.bbb-thumb-link {display: inline-block !important;}' +
 		'article.post-preview {height: ' + thumbMaxHeight + 'px !important; width: ' + thumbMaxWidth + 'px !important; margin: 0px ' + listingExtraSpace + 'px ' + listingExtraSpace + 'px 0px !important;}' +
@@ -7328,8 +7414,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			styles += '#ban-notice {display: none !important;}';
 
 		if (hide_comment_notice) {
-			var commentGuide;
-			var commentGuideParent;
+			var commentGuide, commentGuideParent; // If/else variables.
 
 			if (gLoc === "post") {
 				commentGuide = document.querySelector("#comments h2 a[href*='howto']");
@@ -7379,7 +7464,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 
 		var numString = "";
-		var lastNumString;
+		var lastNumString; // If/else variable.
 
 		// Provide page number info if available.
 		if (/\d/.test(paginator.textContent)) {
@@ -7388,7 +7473,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var numPageItems = pageItems.length;
 			var lastPageItem = pageItems[numPageItems - 1];
 			var activeNum = activePage.textContent.bbbSpaceClean();
-			var lastNum;
+			var lastNum; // If/else variable.
 
 			if (activePage.parentNode === lastPageItem) // Last/only page case.
 				lastNum = activeNum;
@@ -7580,7 +7665,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			}
 		}
 
-		// Checked if the quick search has been pinned for this session.
+		// Check if the quick search has been pinned for this session.
 		var pinnedSearch = sessionStorage.getItem("bbb_quick_search");
 
 		if (pinnedSearch) {
@@ -7589,6 +7674,10 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			searchDiv.bbbAddClass("bbb-quick-search-pinned");
 			quickSearchTest();
 		}
+
+		// Create the hotkeys.
+		createHotkey("70", quickSearchOpen); // F
+		createHotkey("s70", quickSearchReset); // SHIFT + F
 	}
 
 	function quickSearchCheck() {
@@ -7778,7 +7867,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Add score, favorite count, and rating info to thumbnails.
 		var posts = getPosts(target);
 
-		if (thumb_info === "disabled" || !posts[0])
+		if (thumb_info === "disabled")
 			return;
 
 		for (var i = 0, il = posts.length; i < il; i++) {
@@ -7854,7 +7943,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			var target = event.target;
 			var targetTag = target.tagName;
-			var url;
+			var url; // If/else variable.
 
 			if (targetTag === "IMG" && target.parentNode)
 				url = target.parentNode.href;
@@ -7965,7 +8054,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		if (event.keyCode)
 			hotkeycode += event.keyCode;
 
-		return hotkeycode || undefined;
+		return (hotkeycode || undefined);
 	}
 
 	function createHotkey(hotkeyCode, func, propObject) {
@@ -7998,7 +8087,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return;
 
 		var keyCode = event.keyCode;
-		var mode;
+		var mode; // Switch variable.
 
 		switch (keyCode) {
 			case 49:
@@ -8030,10 +8119,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var page = document.getElementById("page");
 		var header = document.getElementById("top");
 		var searchParent = document.getElementById("search-box") || document.getElementById("a-intro");
-		var links;
-		var link;
-		var linkHref;
-		var i, il; // Loop variables.
+		var i, il, links, link, linkHref; // Loop variables.
 
 		if (page) {
 			links = page.getElementsByTagName("a");
@@ -8094,59 +8180,55 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 	}
 
-	function getLimit(url) {
-		// Retrieve the current specified limit value. The query limit overrides the search limit.
-		var loc = danbLoc(url);
-		var limit;
+	function fixURLLimit() {
+		// Update the URL limit value with the user's limit.
+		if (allowUserLimit()) {
+			var state = history.state;
+			var url = updateURLQuery(location.search, {limit: thumbnail_count});
 
-		if (loc === "pool" || loc === "popular" || loc === "favorite_group")
-			limit = thumbnail_count_default;
-		else if (loc === "comments")
-			limit = 5;
-		else if (loc === "popular_view")
-			limit = 101;
-		else {
-			var queryLimit = getQueryLimit(url);
-			var searchLimit = getSearchLimit(url);
-
-			limit = (queryLimit !== undefined ? queryLimit : searchLimit);
+			history.replaceState(state, "", url);
+			location.replace(location.href.split("#", 1)[0] + "#"); // Force browser caching to cooperate.
+			history.replaceState(state, "", url);
 		}
-
-		return limit;
 	}
 
-	function getQueryLimit(url) {
-		// Retrieve the limit from a URL's query portion. Always use the default for certain areas where the limit is not allowed.
-		var queryLimit = getVar("limit", url);
+	function saveStateCache() {
+		// Cache a search's thumbnails to history state to prevent replaceState/browser caching issues.
+		var state = history.state || {};
 
-		if (queryLimit !== null && queryLimit !== undefined) { // Treat the limit as undefined when the limit parameter is declared with no value.
-			queryLimit = decodeURIComponent(queryLimit);
+		if (isRandomSearch() && !state.bbb_posts_cache) {
+			var posts = getPosts();
+			var postsObject = [];
 
-			if (queryLimit === "" || !/^\s*\d+/.test(queryLimit)) // No thumbnails show up when the limit is declared with a blank value or has no number directly after any potential white space.
-				return 0;
-			else // The query limit finds its value in a manner similar to parseInt. Dump leading spaces and grab numbers until a non-numerical character is hit.
-				return parseInt(queryLimit, 10);
+			for (var i = 0, il = posts.length; i < il; i++)
+				postsObject.push(scrapeThumb(posts[i]));
+
+			state.bbb_posts_cache = JSON.stringify(postsObject);
+			sessionStorage.bbbSetItem("bbb_posts_cache", state.bbb_posts_cache.bbbHash()); // Key used to detect if the page is reloaded/re-entered.
+			history.replaceState(state, "");
 		}
-
-		return undefined;
 	}
 
-	function getSearchLimit(url) {
-		// Retrieve the limit from the search/limit tag used in a search.
-		var searchLimit = getTagVar("limit", url);
+	function checkStateCache() {
+		// Check for the history state cache and erase it if the page is reloaded or re-entered.
+		removeInheritedStorage("bbb_posts_cache");
 
-		if (searchLimit !== undefined) {
-			searchLimit = decodeURIComponent(searchLimit);
+		var historyHash = sessionStorage.getItem("bbb_posts_cache") || "";
+		var state = history.state || {};
 
-			if (searchLimit === "") // No thumbnails show up when the limit is declared but left blank.
-				return 0;
-			else if (!bbbIsNum(searchLimit.replace(/\s/g, "")) || searchLimit.indexOf(".") > -1 || Number(searchLimit) < 0) // Non-numerical, negative, and decimal values are ignored. Treat the limit as undefined.
-				return undefined;
-			else
-				return Number(searchLimit);
+		if (state.bbb_posts_cache) {
+			var stateHash = state.bbb_posts_cache.bbbHash();
+
+			if (historyHash === String(stateHash)) { // Reloaded. Remove everything since we're on the same page.
+				delete state.bbb_posts_cache;
+				history.replaceState(state, "");
+				sessionStorage.removeItem("bbb_posts_cache");
+			}
+			else // Returned. Set the hash again since we're back.
+				sessionStorage.bbbSetItem("bbb_posts_cache", stateHash);
 		}
-
-		return undefined;
+		else if (historyHash) // Back/forward. Remove the hash since we're on a new page.
+			sessionStorage.removeItem("bbb_posts_cache");
 	}
 
 	function arrowNav() {
@@ -8498,7 +8580,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function danbLoc(url) {
 		// Test a URL to find which section of Danbooru the script is running on.
-		var target;
+		var target; // If/else variable.
 
 		if (url) {
 			target = document.createElement("a");
@@ -8561,7 +8643,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var limit = getLimit();
 		var pageNum = getVar("page");
 		var paginator = getPaginator();
-		var thumbContainer = getThumbContainer();
+		var thumbContainer = getThumbContainer(gLoc);
 		var imgContainer = getPostContent().container;
 
 		if (!paginator && !thumbContainer && !imgContainer)
@@ -8588,10 +8670,15 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function useAPI() {
 		// Determine whether any options that require the API are enabled.
-		if ((show_loli || show_shota || show_toddlercon || show_deleted || show_banned) && (isLoggedIn() || !bypass_api))
+		if ((show_loli || show_shota || show_toddlercon || (show_deleted && !deleted_shown) || show_banned) && (isLoggedIn() || !bypass_api))
 			return true;
 		else
 			return false;
+	}
+
+	function isRandomSearch() {
+		// Check whether the search uses "order:random" in it.
+		return ((getTagVar("order") || "").toLowerCase() === "random");
 	}
 
 	function removeInheritedStorage(key) {
@@ -8603,7 +8690,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			if (!state[stateProperty]) {
 				sessionStorage.removeItem(key);
 				state[stateProperty] = true;
-				history.replaceState(state, "", location.href);
+				history.replaceState(state, "");
 			}
 		}
 	}
@@ -8611,7 +8698,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function accountSettingCheck(scriptSetting) {
 		// Determine whether the script setting or account/anonymous setting should be used.
 		var loggedIn = isLoggedIn();
-		var setting;
+		var setting; // If/else variable.
 
 		if (scriptSetting === "script_blacklisted_tags") {
 			if ((loggedIn && override_blacklist === "always") || (!loggedIn && override_blacklist !== "disabled"))
@@ -8665,8 +8752,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			return false;
 
 		var tags = getVar("tags");
-		var tag;
-		var i, il; // Loop variables.
+		var i, il, tag; // Loop variables.
 
 		if (!tags)
 			return false;
@@ -8808,7 +8894,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		var tagItems = tagList.getElementsByTagName("li");
 		var firstItem = tagItems[0];
-		var toggleWidth;
+		var toggleWidth; // If/else variable.
 
 		// Find a set width for the toggle link.
 		if (firstItem) {
@@ -9064,9 +9150,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			var mode = (compCheckbox.checked ? "complete" : "normal");
 			var selectedURLs = [];
 			var origURL = location.href;
-			var nextURL;
 			var cleanCur = false;
 			var session = new Date().getTime();
+			var nextURL; // Loop variable.
 
 			for (var i = 0, il = options.length; i < il; i++) {
 				var option = options[i];
@@ -9107,8 +9193,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function cleanLocalStorage(mode) {
 		// Clean out various values in local storage.
-		var keyName;
-		var i;
+		var i, keyName; // Loop variables.
 
 		if (mode === "autocomplete") {
 			for (i = localStorage.length - 1; i >= 0; i--) {
@@ -9138,7 +9223,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function retryLocalStorage() {
 		// Try to save items to local storage that failed to get saved before.
-		var sessLocal;
+		var sessLocal; // If/else variable.
 
 		if (sessionStorage.getItem("bbb_local_storage_queue")) {
 			// Retrieve the local storage values from session storage after cycling through other domains.
@@ -9180,7 +9265,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			bbb.flags.local_storage_full = true; // Keep the cycled domains from triggering storage problems
 			bbbDialog("Currently cleaning local storage and loading the next domain. Please wait...", {ok: false, important: true});
-			history.replaceState((history.state || {}), "", updateURLQuery(location.href, {clean_storage: undefined, clean_urls: undefined, clean_origurl: undefined, clean_session: undefined}));
+			history.replaceState(history.state, "", updateURLQuery(location.href, {clean_storage: undefined, clean_urls: undefined, clean_origurl: undefined, clean_session: undefined}));
 			cleanLocalStorage(cleanMode);
 
 			if (nextURL)
@@ -9189,7 +9274,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				window.setTimeout(function() { location.href = updateURLQuery(decodeURIComponent(origURL), {clean_storage: "save", clean_session: session}); }, 2000);
 		}
 		else if (cleanMode === "save") {
-			history.replaceState((history.state || {}), "", updateURLQuery(location.href, {clean_storage: undefined, clean_session: undefined}));
+			history.replaceState(history.state, "", updateURLQuery(location.href, {clean_storage: undefined, clean_session: undefined}));
 			retryLocalStorage();
 		}
 	}
@@ -9289,15 +9374,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	function updateURLQuery(url, newQueries) {
 		// Update the query portion of a URL. If a param isn't declared, it will be added. If it is, it will be updated.
 		// Assigning undefined to a param that exists will remove it. Assigning null to a param that exists will completely remove its value. Assigning null to a new param will leave it with no assigned value.
-		var urlParts = url.split(/[?#]/g, 2);
+		var urlParts = url.split("#", 1)[0].split("?", 2);
 		var urlQuery = urlParts[1] || "";
 		var queries = urlQuery.split("&");
-		var query;
-		var queryName;
-		var queryValue;
 		var queryObj = {};
-		var newUrl;
-		var i, il; // Loop variables.
+		var i, il, query, queryName, queryValue; // Loop variables.
 
 		for (i = 0, il = queries.length; i < il; i++) {
 			query = queries[i].split("=");
@@ -9332,9 +9413,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		}
 
 		urlQuery = queries.join("&");
-		newUrl = urlParts[0] + (urlQuery ? "?" + urlQuery : "");
 
-		return newUrl;
+		return (urlParts[0] + (urlQuery ? "?" + urlQuery : ""));
 	}
 
 	function timestamp(format) {

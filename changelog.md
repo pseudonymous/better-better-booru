@@ -1,5 +1,10 @@
 Changelog
 ----------
+* Version 7.2.5:
+ * Updated to support Danbooru displaying the image description below images.
+ * Fixed the "show deleted" option's compatibility with the "status:" metatag.
+ * Fixed various problems when using the "order:random" metatag.
+ * Fixed various browser caching problems.
 * Version 7.2.4:
  * Fixed the "direct downloads" option not excluding posts filtered out by the blacklist/quick search.
  * Fixed the "post drag scrolling" option being broken by the translation mode notice link for turning translation mode off.
