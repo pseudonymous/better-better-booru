@@ -3514,6 +3514,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		var postContent = getPostContent();
 		var postEl = postContent.el;
 		var postTag = (postEl ? postEl.tagName : undefined);
+		var notLocked = !document.getElementById("note-locked-notice");
 
 		// Stop here for content that doesn't allow note editing.
 		if (post.file_ext === "webm" || post.file_ext === "mp4" || post.file_ext === "swf" || postTag === "VIDEO")
@@ -3530,7 +3531,9 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				return;
 
 			resetFunction();
-			Danbooru.Note.TranslationMode.toggle(event);
+
+			if (notLocked)
+				Danbooru.Note.TranslationMode.toggle(event);
 
 			event.preventDefault();
 			event.stopPropagation();
@@ -3546,7 +3549,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			Danbooru.Note.Edit.show = origEditFunction;
 			document.removeEventListener("click", toggleFunction, true);
 
-			if (!document.getElementById("note-locked-notice"))
+			if (notLocked)
 				createHotkey("78", Danbooru.Note.TranslationMode.toggle);
 
 			// Reset notes with embedded notes enabled.
