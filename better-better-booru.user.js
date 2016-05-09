@@ -195,7 +195,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 					for (var i = sessionStorage.length - 1; i >= 0; i--) {
 						var keyName = sessionStorage.key(i);
 
-						if (keyName !== "bbb_endless_default" && keyName !== "bbb_quick_search")
+						if (keyName !== "bbb_endless_default" && keyName !== "bbb_quick_search" && keyName !== "bbb_posts_cache")
 							sessionStorage.removeItem(keyName);
 					}
 
