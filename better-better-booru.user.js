@@ -3033,7 +3033,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var domain = location.protocol + "//" + location.hostname;
 			var localSettings = localStorage.getItem("bbb_settings");
 
-			if (localSettings !== null && isOldVersion("7.2.5")) {
+			if (localSettings !== null) {
 				// Load up the localStorage settings.
 				bbb.user = JSON.parse(localSettings);
 				checkUser(bbb.user, bbb.options);
