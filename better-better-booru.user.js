@@ -8,13 +8,16 @@
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
 // @run-at         document-end
-// @grant          none
+// @grant          GM_setValue
+// @grant          GM_getValue
+// @grant          GM_deleteValue
+// @grant          GM_listValues
 // @icon           data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAAAAABWESUoAAAA9klEQVQ4y2NgGBgQu/Dau1/Pt/rhVPAfCkpwKXhUZ8Al2vT//yu89vDjV8AkP/P//zY0K//+eHVmoi5YyB7I/VDGiKYADP60wRT8P6aKTcH//0lgQcHS//+PYFdwFu7Ib8gKGBgYOQ22glhfGO7mqbEpzv///xyqAiAQAbGewIz8aoehQArEWsyQsu7O549XJiowoCpg4rM9CGS8V8UZ9GBwy5wBr4K/teL4Ffz//8mHgIL/v82wKgA6kkXE+zKIuRaHAhDQATFf4lHABmL+xKPAFhKUOBQwSyU+AzFXEvDFf3sCCnrxh8O3Ujwh+fXZvjoZ+udTAERqR5IgKEBRAAAAAElFTkSuQmCC
 // ==/UserScript==
 
 // Have a nice day. - A Pseudonymous Coder
 
-function bbbScript() { // This is needed to make this script work in Chrome.
+function bbbScript() { // Wrapper for injecting the script into the document.
 	/*
 	 * NOTE: You no longer need to edit this script to change settings!
 	 * Use the "BBB Settings" button in the menu instead.
@@ -262,6 +265,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			top: undefined
 		},
 		flags: {},
+		gm_data: undefined,
 		hotkeys: {
 			other: { // Hotkeys for misc locations.
 				66: {func: openMenu} // B
@@ -382,6 +386,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 		},
+		session: new Date().getTime(), // Provide a session ID in order to detect XML requests carrying over from other pages.
 		settings: {
 			changed: {}
 		},
@@ -392,9 +397,6 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 	localStorageCheck();
 
 	loadSettings(); // Load user settings.
-
-	// Provide a session ID in order to detect XML requests carrying over from other pages.
-	window.bbbSession = new Date().getTime();
 
 	// Location variables.
 	var gLoc = danbLoc(); // Current location
@@ -644,11 +646,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Retrieve JSON.
 		var xmlhttp = new XMLHttpRequest();
 		var xmlRetries = retries || 0;
-		var xmlSession = session || window.bbbSession;
+		var xmlSession = session || bbb.session;
 
 		if (xmlhttp !== null) {
 			xmlhttp.onreadystatechange = function() {
-				if (xmlSession !== window.bbbSession) // If we end up receiving an xml response from a different page, reject it.
+				if (xmlSession !== bbb.session) // If we end up receiving an xml response from a different page, reject it.
 					xmlhttp.abort();
 				else if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
@@ -1194,11 +1196,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		// Retrieve an actual page for certain pieces of information.
 		var xmlhttp = new XMLHttpRequest();
 		var xmlRetries = retries || 0;
-		var xmlSession = session || window.bbbSession;
+		var xmlSession = session || bbb.session;
 
 		if (xmlhttp !== null) {
 			xmlhttp.onreadystatechange = function() {
-				if (xmlSession !== window.bbbSession) // If we end up receiving an xml response form a different page, reject it.
+				if (xmlSession !== bbb.session) // If we end up receiving an xml response form a different page, reject it.
 					xmlhttp.abort();
 				else if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
@@ -2032,6 +2034,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 		prefPage.bbbSection(bbb.sections.script_settings);
 		prefPage.bbbBackupSection();
+		prefPage.bbbEraseSection();
 
 		var helpPage = bbb.el.menu.helpPage = document.createElement("div");
 		helpPage.className = "bbb-page";
@@ -2610,6 +2613,51 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		this.appendChild(createBackupSection());
 	};
 
+	function createEraseSection() {
+		var sectionFrag = document.createDocumentFragment();
+
+		var sectionHeader = document.createElement("h2");
+		sectionHeader.innerHTML = "Erase Settings";
+		sectionHeader.className = "bbb-header";
+		sectionFrag.appendChild(sectionHeader);
+
+		var sectionDiv = document.createElement("div");
+		sectionDiv.innerHTML = "By clicking the button below, you can erase BBB's stored information (settings, cache, etc.) from your browser. Please remember to create a backup if you intend to reinstall.";
+		sectionDiv.className = "bbb-section-options";
+		sectionFrag.appendChild(sectionDiv);
+
+		var buttonDiv = document.createElement("div");
+		buttonDiv.className = "bbb-section-options";
+		sectionFrag.appendChild(buttonDiv);
+
+		var eraseButton = document.createElement("a");
+		eraseButton.innerHTML = "Erase BBB Settings";
+		eraseButton.href = "#";
+		eraseButton.className = "bbb-button";
+		eraseButton.style.marginRight = "15px";
+		eraseButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
+			var confirmErase = function() {
+				eraseSettings();
+				removeMenu();
+				location.replace(updateURLQuery(location.href, {limit:undefined}));
+			};
+
+			bbbDialog("Are you sure you want to erase all BBB information?", {ok: confirmErase, cancel: true});
+
+			event.preventDefault();
+		}, false);
+		buttonDiv.appendChild(eraseButton);
+
+		return sectionFrag;
+	}
+
+	Element.prototype.bbbEraseSection = function() {
+		this.appendChild(createEraseSection());
+	};
+
 	function createBlacklistSection() {
 		var sectionFrag = document.createDocumentFragment();
 
@@ -2979,17 +3027,40 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function loadSettings() {
 		// Load stored settings.
-		var settings = localStorage.getItem("bbb_settings");
+		var settings = loadData("bbb_settings");
 
 		if (settings === null) {
-			if (!getCookie().bbb_no_settings && !bbb.flags.local_storage_full) {
+			var domain = location.protocol + "//" + location.hostname;
+			var localSettings = localStorage.getItem("bbb_settings");
+
+			if (localSettings !== null && isOldVersion("7.2.5")) {
+				// Load up the localStorage settings.
+				bbb.user = JSON.parse(localSettings);
+				checkUser(bbb.user, bbb.options);
+
+				if (bbb.user.bbb_version !== bbb.options.bbb_version)
+					convertSettings("load");
+
+				if (!bbb.flags.new_storage_notice) {
+					// Alert the user when there are no GM storage settings but there are localStorage settings.
+					bbb.flags.new_storage_notice = true;
+
+					var newStorageNotice = function() {
+						bbbDialog('As of version 7.3, BBB has changed the way it saves information. You currently don\'t have any settings saved with the new method, but do have settings saved with the old method. Before clicking anything, please read the following:<ul><li>Please check the BBB settings menu and confirm that everything is correct. If it is, click "save & close" to transfer your settings over. If your settings are not correct, you may restore from a backup and then save.</li><li>Alternatively, if ' + domain + ' (' + (/^https/.test(domain) ? '' : 'not ') + 'secure/https) is not the Danbooru domain you usually use, you should change to your usual domain and retry checking your settings there.</li><li>Finally, if neither of those steps work, you should <a href="https://sleazyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js?version=123120&d=.user.js">revert to version 7.2.5</a>, refresh/reload Danbooru, create a backup, and then update back to version 7.3.</li></ul>');
+						openMenu();
+
+						document.removeEventListener("mousemove", newStorageNotice, false);
+					};
+
+					document.addEventListener("mousemove", newStorageNotice, false);
+				}
+			}
+			else if (!getCookie().bbb_no_settings && !bbb.flags.local_storage_full) {
 				// Alert the user when there are no settings so that new users know what to do and other users are aware their usual settings aren't in effect.
 				var noSettingsNotice = function() {
 					if (!getCookie().bbb_no_settings) {
 						// Trigger the notice if it hasn't been displayed in another tab/window.
-						var domain = location.protocol + "//" + location.hostname;
-
-						bbbNotice("No settings could be detected for " + domain + ". Please take a moment to set/restore your options by using the \"BBB Settings\" link in the Danbooru navigation bar.", 15);
+						bbbNotice("No settings could be detected for " + domain + ". Please take a moment to set/restore your options by using the \"BBB settings\" link in the Danbooru navigation bar.", 15);
 						createCookie("bbb_no_settings", 1);
 					}
 
@@ -2997,11 +3068,11 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				};
 
 				document.addEventListener("mousemove", noSettingsNotice, false);
-			}
 
-			loadDefaults();
+				loadDefaults();
+			}
 		}
-		else {
+		else if (typeof(settings) === "string") {
 			bbb.user = JSON.parse(settings);
 			checkUser(bbb.user, bbb.options);
 
@@ -3057,7 +3128,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 			bbb.user.blacklist_highlight_color = "#CCCCCC";
 
 		bbb.settings.changed = {};
-		localStorage.bbbSetItem("bbb_settings", JSON.stringify(bbb.user));
+
+		saveData("bbb_settings", JSON.stringify(bbb.user));
 	}
 
 	function updateSettings() {
@@ -3190,6 +3262,29 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				if (typeof(bbb.options[i]) === "undefined")
 					delete user[i];
 			}
+		}
+	}
+
+	function eraseSettings() {
+		// Try to erase everything.
+		var gmList = listData();
+		var i, il, keyName; // Loop variables.
+
+		for (i = 0, il = gmList.length; i < il; i++)
+			deleteData(gmList[i]);
+
+		for (i = localStorage.length - 1; i >= 0; i--) {
+			keyName = localStorage.key(i);
+
+			if (keyName.indexOf("bbb_") === 0)
+				localStorage.removeItem(keyName);
+		}
+
+		for (i = sessionStorage.length - 1; i >= 0; i--) {
+			keyName = sessionStorage.key(i);
+
+			if (keyName.indexOf("bbb_") === 0)
+				sessionStorage.removeItem(keyName);
 		}
 	}
 
@@ -3551,6 +3646,8 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 			if (notLocked)
 				createHotkey("78", Danbooru.Note.TranslationMode.toggle);
+			else
+				removeHotkey("78");
 
 			// Reset notes with embedded notes enabled.
 			Danbooru.Note.embed = true;
@@ -4724,13 +4821,13 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 
 	function loadThumbCache() {
 		// Initialize or load up the thumbnail cache.
-		var thumbCache = localStorage.getItem("bbb_thumb_cache");
+		var thumbCache = loadData("bbb_thumb_cache");
 
 		if (thumbCache !== null)
 			bbb.cache.stored = JSON.parse(thumbCache);
 		else {
 			bbb.cache.stored = {history: [], names: {}};
-			localStorage.bbbSetItem("bbb_thumb_cache", JSON.stringify(bbb.cache.stored));
+			saveData("bbb_thumb_cache", JSON.stringify(bbb.cache.stored));
 		}
 	}
 
@@ -4772,7 +4869,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				delete bcs.names[removedIds[i]];
 		}
 
-		localStorage.bbbSetItem("bbb_thumb_cache", JSON.stringify(bcs));
+		saveData("bbb_thumb_cache", JSON.stringify(bcs));
 		bbb.cache.current = {history: [], names: {}};
 	}
 
@@ -4791,7 +4888,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 				delete bcs.names[removedIds[i]];
 		}
 
-		localStorage.bbbSetItem("bbb_thumb_cache", JSON.stringify(bcs));
+		saveData("bbb_thumb_cache", JSON.stringify(bcs));
 	}
 
 	function getIdCache() {
@@ -9091,7 +9188,7 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		content.appendChild(header);
 
 		var introText = document.createElement("div");
-		introText.innerHTML = "While trying to save some settings, BBB has detected that your browser's local storage is full for the donmai.us domain and was unable to automatically fix the problem. In order for BBB to function properly, the storage needs to be cleaned out.<br><br> BBB can cycle through the various donmai locations and clear out Danbooru's autocomplete cache and BBB's thumbnail info cache for each. Please select the domains/subdomains you'd like to clean from below and click OK to continue. If you click cancel, BBB will ignore the storage problems for the rest of this browsing session, but features may not work as expected.<br><br> <b>Notes:</b><ul><li>Three options in the domain list are not selected by default (marked as untrusted) since they require special permission from the user to accept invalid security certificates. However, if BBB detects you're already on one of these untrusted domains, then it will be automatically selected.</li><li>If you encounter this warning again right after storage has been cleaned, you may have to check domains you didn't check before or use the \"delete everything\" option to clear items in local storage besides autocomplete and thumbnail info.</li></ul><br> <b>Donmai.us domains/subdomains:</b><br>";
+		introText.innerHTML = "While trying to save some settings, BBB has detected that your browser's local storage is full for the donmai.us domain and was unable to automatically fix the problem. In order for BBB to function properly, the storage needs to be cleaned out.<br><br> BBB can cycle through the various donmai locations and clear out Danbooru's autocomplete cache " + (window.bbbGMFunc ? "" : "and BBB's thumbnail info cache ") + "for each. Please select the domains/subdomains you'd like to clean from below and click OK to continue. If you click cancel, BBB will ignore the storage problems for the rest of this browsing session, but features may not work as expected.<br><br> <b>Notes:</b><ul><li>Three options in the domain list are not selected by default (marked as untrusted) since they require special permission from the user to accept invalid security certificates. However, if BBB detects you're already on one of these untrusted domains, then it will be automatically selected.</li><li>If you encounter this warning again right after storage has been cleaned, you may have to check domains you didn't check before or use the \"delete everything\" option to clear items in local storage besides autocomplete " + (window.bbbGMFunc ? "" : "and thumbnail ") + "info.</li></ul><br> <b>Donmai.us domains/subdomains:</b><br>";
 		content.appendChild(introText);
 
 		var domainDiv = document.createElement("div");
@@ -9279,6 +9376,85 @@ function bbbScript() { // This is needed to make this script work in Chrome.
 		else if (cleanMode === "save") {
 			history.replaceState(history.state, "", updateURLQuery(location.href, {clean_storage: undefined, clean_session: undefined}));
 			retryLocalStorage();
+		}
+	}
+
+	function loadData(key) {
+		// Request info from GM_getValue and return it.
+		var settings;
+
+		try {
+			// If GM functions aren't available, throw an error.
+			if (window.bbbGMFunc === false)
+				throw false;
+
+			sendCustomEvent("bbbRequestLoad", {key: key, bbb: bbb});
+			settings = bbb.gm_data;
+			bbb.gm_data = undefined;
+		}
+		catch (error) {
+			settings = localStorage.getItem(key);
+		}
+
+		return settings || null;
+	}
+
+	function saveData(key, value) {
+		// Request saving info with GM_setValue.
+		try {
+			// If GM functions aren't available, throw an error.
+			if (window.bbbGMFunc === false)
+				throw false;
+
+			sendCustomEvent("bbbRequestSave", {key: key, value: value});
+		}
+		catch (error) {
+			localStorage.bbbSetItem(key, value);
+		}
+	}
+
+	function deleteData(key) {
+		// Request deleting info with GM_deleteValue.
+		try {
+			// If GM functions aren't available, throw an error.
+			if (window.bbbGMFunc === false)
+				throw false;
+
+			sendCustomEvent("bbbRequestDelete", {key: key});
+		}
+		catch (error) {
+			localStorage.removeItem(key);
+		}
+	}
+
+	function listData() {
+		// Request an info list array with GM_listValues.
+		try {
+			// If GM functions aren't available, throw an error.
+			if (window.bbbGMFunc === false)
+				throw false;
+
+			sendCustomEvent("bbbRequestList", {bbb: bbb});
+
+			var list = bbb.gm_data.split(",");
+			bbb.gm_data = undefined;
+
+			return list;
+		}
+		catch (error) {
+			return [];
+		}
+	}
+
+	function sendCustomEvent(type, detail) {
+		// Try to send a custom event with the newest method and then the older method.
+		try {
+			window.dispatchEvent(new CustomEvent(type, {detail: detail, bubbles: false, cancelable: false}));
+		}
+		catch (error) {
+			var customEvent = document.createEvent("CustomEvent");
+			customEvent.initCustomEvent(type, false, false, detail);
+			window.dispatchEvent(customEvent);
 		}
 	}
 
@@ -9500,30 +9676,68 @@ function runBBBScript() {
 		bbbScript();
 }
 
-function testBBBAccess() {
-	// Check whether the script has access to the page.
-	if (!document.body)
-		return;
+function bbbInit() {
+	var bbbGMFunc; // If/else variable;
 
-	function testFunc() {
-		window.bbb_access = true;
+	// Set up the data storage.
+	if (typeof(GM_getValue) === "undefined" || typeof(GM_getValue("bbbdoesntexist", "default")) === "undefined")
+		bbbGMFunc = false;
+	else {
+		bbbGMFunc = true;
+
+		if (typeof(GM_deleteValue) === "undefined") {
+			GM_deleteValue = function(key) {
+				GM_setValue(key, "");
+			};
+		}
+
+		if (typeof(GM_listValues) === "undefined") {
+			GM_listValues = function() {
+				return ["bbb_settings", "bbb_thumb_cache"];
+			};
+		}
+
+		window.addEventListener("bbbRequestLoad", function(event) {
+			var key = event.detail.key;
+			var bbbObj = event.detail.bbb;
+
+			if (typeof(key) === "string" && (key === "bbb_settings" || key === "bbb_thumb_cache") && typeof(bbbObj) === "object") {
+				var value = GM_getValue(key);
+
+				if (typeof(value) === "string")
+					bbbObj.gm_data = value;
+			}
+		}, false);
+
+		window.addEventListener("bbbRequestSave", function(event) {
+			var key = event.detail.key;
+			var value = event.detail.value;
+
+			if (typeof(key) === "string" && (key === "bbb_settings" || key === "bbb_thumb_cache") && typeof(value) === "string" && value.length <= 2500000)
+				GM_setValue(key, value);
+		}, false);
+
+		window.addEventListener("bbbRequestDelete", function(event) {
+			var key = event.detail.key;
+
+			if (typeof(key) === "string")
+				GM_deleteValue(key);
+		}, false);
+
+		window.addEventListener("bbbRequestList", function(event) {
+			var bbbObj = event.detail.bbb;
+
+			if (typeof(bbbObj) === "object")
+				bbbObj.gm_data = GM_listValues().join(","); // Can't pass an array/object back to the page scope, so change it into a string for now.
+		}, false);
 	}
 
-	var testScript = document.createElement('script');
-	testScript.type = "text/javascript";
-	testScript.appendChild(document.createTextNode('(' + testFunc + ')();'));
-	document.body.appendChild(testScript);
-	window.setTimeout(function() { document.body.removeChild(testScript); }, 0);
-
-	if (!window.bbb_access) { // Embed the script since it can't get to Danbooru's JS.
-		var script = document.createElement('script');
-		script.type = "text/javascript";
-		script.appendChild(document.createTextNode(bbbScript));
-		script.appendChild(document.createTextNode('(' + runBBBScript + ')();'));
-		document.body.appendChild(script);
-	}
-	else // Operate normally.
-		runBBBScript();
+	// Inject the script.
+	var script = document.createElement('script');
+	script.type = "text/javascript";
+	script.appendChild(document.createTextNode('window.bbbGMFunc = ' + bbbGMFunc + '; ' + bbbScript + '(' + runBBBScript + ')();'));
+	document.body.appendChild(script);
+	window.setTimeout(function() { document.body.removeChild(script); }, 0);
 }
 
-testBBBAccess();
+bbbInit();
