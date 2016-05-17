@@ -3071,6 +3071,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 				loadDefaults();
 			}
+			else // Load defaults if not handling the lack of settings in a special manner.
+				loadDefaults();
 		}
 		else if (typeof(settings) === "string") {
 			bbb.user = JSON.parse(settings);
