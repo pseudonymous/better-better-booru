@@ -3030,11 +3030,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var settings = loadData("bbb_settings");
 
 		if (settings === null) {
+			// Settings not found in the expected place.
 			var domain = location.protocol + "//" + location.hostname;
 			var localSettings = localStorage.getItem("bbb_settings");
 
 			if (localSettings !== null) {
-				// Load up the localStorage settings.
+				// Load up the localStorage settings if they exist.
 				bbb.user = JSON.parse(localSettings);
 				checkUser(bbb.user, bbb.options);
 
@@ -3055,24 +3056,24 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					document.addEventListener("mousemove", newStorageNotice, false);
 				}
 			}
-			else if (!getCookie().bbb_no_settings && !bbb.flags.local_storage_full) {
-				// Alert the user when there are no settings so that new users know what to do and other users are aware their usual settings aren't in effect.
-				var noSettingsNotice = function() {
-					if (!getCookie().bbb_no_settings) {
-						// Trigger the notice if it hasn't been displayed in another tab/window.
-						bbbNotice("No settings could be detected for " + domain + ". Please take a moment to set/restore your options by using the \"BBB settings\" link in the Danbooru navigation bar.", 15);
-						createCookie("bbb_no_settings", 1);
-					}
+			else {
+				// Load defaults.
+				if (!getCookie().bbb_no_settings && !bbb.flags.local_storage_full) {
+					// Alert the user so that new users know what to do and other users are know their usual settings aren't in effect.
+					var noSettingsNotice = function() {
+						if (!getCookie().bbb_no_settings) { // Trigger the notice if it hasn't been displayed in another tab/window.
+							bbbNotice("No settings could be detected for " + domain + ". Please take a moment to set/restore your options by using the \"BBB settings\" link in the Danbooru navigation bar.", 15);
+							createCookie("bbb_no_settings", 1);
+						}
 
-					document.removeEventListener("mousemove", noSettingsNotice, false);
-				};
+						document.removeEventListener("mousemove", noSettingsNotice, false);
+					};
 
-				document.addEventListener("mousemove", noSettingsNotice, false);
+					document.addEventListener("mousemove", noSettingsNotice, false);
+				}
 
 				loadDefaults();
 			}
-			else // Load defaults if not handling the lack of settings in a special manner.
-				loadDefaults();
 		}
 		else if (typeof(settings) === "string") {
 			bbb.user = JSON.parse(settings);
@@ -3130,6 +3131,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			bbb.user.blacklist_highlight_color = "#CCCCCC";
 
 		bbb.settings.changed = {};
+
+		// Remove the no settings cookie so that it can display again.
+		createCookie("bbb_no_settings", 0, -1);
 
 		saveData("bbb_settings", JSON.stringify(bbb.user));
 	}
