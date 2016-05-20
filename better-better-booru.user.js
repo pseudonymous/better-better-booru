@@ -184,7 +184,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					else {
 						// Temporarily store additional local storage values until they can be retried.
 						if (sessionStorage.getItem("bbb_local_storage_queue")) {
-							var sessLocal = JSON.parse(sessionStorage.getItem("bbb_local_storage_queue"));
+							var sessLocal = parseJson(sessionStorage.getItem("bbb_local_storage_queue"), {});
 
 							sessLocal[key] = value;
 							sessionStorage.bbbSetItem("bbb_local_storage_queue", JSON.stringify(sessLocal));
@@ -654,7 +654,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					xmlhttp.abort();
 				else if (xmlhttp.readyState === 4) { // 4 = "loaded"
 					if (xmlhttp.status === 200) { // 200 = "OK"
-						var xml = JSON.parse(xmlhttp.responseText);
+						var xml = parseJson(xmlhttp.responseText, {});
 
 						// Update status message.
 						if (mode === "search" || mode === "popular" || mode === "popular_view" || mode === "notes" || mode === "favorites" || mode === "pool_search" || mode === "favorite_group_search") {
@@ -1518,7 +1518,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					imgInfo.pixiv_ugoira_frame_data = {
 						id: undefined, // Don't have this value.
 						post_id: imgInfo.id,
-						data: JSON.parse(postEl.getAttribute("data-ugoira-frames")),
+						data: parseJson(postEl.getAttribute("data-ugoira-frames"), []),
 						content_type: postEl.getAttribute("data-ugoira-content-type").replace(/"/gi, "")
 					};
 				}
@@ -3036,7 +3036,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			if (localSettings !== null) {
 				// Load up the localStorage settings if they exist.
-				bbb.user = JSON.parse(localSettings);
+				bbb.user = parseJson(localSettings, jsonSettingsErrorHandler);
 				checkUser(bbb.user, bbb.options);
 
 				if (bbb.user.bbb_version !== bbb.options.bbb_version)
@@ -3076,7 +3076,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			}
 		}
 		else if (typeof(settings) === "string") {
-			bbb.user = JSON.parse(settings);
+			bbb.user = parseJson(settings, jsonSettingsErrorHandler);
 			checkUser(bbb.user, bbb.options);
 
 			if (bbb.user.bbb_version !== bbb.options.bbb_version) {
@@ -3088,16 +3088,23 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function loadDefaults() {
 		// Load the default settings.
-		bbb.user = {};
+		bbb.user = defaultSettings();
+	}
+
+	function defaultSettings() {
+		// Create a copy of the default settings.
+		var defaults = {};
 
 		for (var i in bbb.options) {
 			if (bbb.options.hasOwnProperty(i)) {
 				if (typeof(bbb.options[i].def) !== "undefined")
-					bbb.user[i] = bbb.options[i].def;
+					defaults[i] = bbb.options[i].def;
 				else
-					bbb.user[i] = bbb.options[i];
+					defaults[i] = bbb.options[i];
 			}
 		}
+
+		return defaults;
 	}
 
 	function checkUser(user, options) {
@@ -3314,7 +3321,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		if (backupString) {
 			try {
-				bbb.user = JSON.parse(backupString); // This is where we expect an error.
+				bbb.user = parseJson(backupString); // This is where we expect an error.
 				checkUser(bbb.user, bbb.options);
 				convertSettings("backup");
 				reloadMenu();
@@ -4830,7 +4837,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var thumbCache = loadData("bbb_thumb_cache");
 
 		if (thumbCache !== null)
-			bbb.cache.stored = JSON.parse(thumbCache);
+			bbb.cache.stored = parseJson(thumbCache, {history: [], names: {}});
 		else {
 			bbb.cache.stored = {history: [], names: {}};
 			saveData("bbb_thumb_cache", JSON.stringify(bbb.cache.stored));
@@ -6057,7 +6064,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		if (smartView === null) // Initialize the object if it doesn't exist.
 			smartView = {last: time};
 		else {
-			smartView = JSON.parse(smartView);
+			smartView = parseJson(smartView, {last: time});
 
 			if (time - smartView.last > 60000) // Reset the object if it hasn't been changed within a minute.
 				smartView = {last: time};
@@ -6082,7 +6089,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else {
 			var time = new Date().getTime();
 
-			smartView = JSON.parse(smartView);
+			smartView = parseJson(smartView, {last: time});
 
 			if (time - smartView.last > 60000) { // Delete the ids if the object hasn't been changed within a minute.
 				localStorage.removeItem("bbb_smart_view");
@@ -6139,7 +6146,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else if (gLoc === "comment_search" || gLoc === "comment")
 			delayMe(fixCommentSearch);
 		else if (stateCache) // Use a cached set of thumbnails.
-			delayMe(function() { parseListing(JSON.parse(stateCache)); });
+			delayMe(function() { parseListing(parseJson(stateCache, [])); });
 		else if (allowAPI && potentialHiddenPosts(gLoc)) // API only features.
 			searchJSON(gLoc);
 		else if (!allowAPI && allowUserLimit()) // Alternate mode for features.
@@ -6259,6 +6266,48 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			prepThumbnails(post);
 		}
+	}
+
+	function parseJson(jsonString, fallback) {
+		// Try to parse a JSON string and catch any error that pops up.
+		try {
+			return JSON.parse(jsonString);
+		}
+		catch (error) {
+			if (fallback && typeof(jsonString) === "string") {
+				if (typeof(fallback) === "function")
+					fallback(error, jsonString);
+				else
+					return fallback;
+			}
+			else
+				throw error;
+		}
+	}
+
+	function jsonSettingsErrorHandler(error, jsonString) {
+		// Default function for "bbb_settings" in parseJson that alerts the user of a problem and returns the default settings instead.
+		function corruptSettingsDialog() {
+			var textarea = document.createElement("textarea");
+			textarea.style.width = "900px";
+			textarea.style.height = "300px";
+			textarea.value = "Corrupt Better Better Booru Settings (" + timestamp() + ") (Error: " + error.message + "):\r\n\r\n" + jsonString + "\r\n";
+			bbbDialog(textarea);
+		}
+
+		var linkId = uniqueIdNum();
+		var noticeMsg = bbbNotice('BBB was unable to load your settings due to an unexpected error potentially caused by corrupted information. If you would like a copy of your corrupt settings, please click <a id="' + linkId + '" href="#">here</a>. (Error: ' + error.message + ')', -1);
+
+		document.getElementById(linkId).addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
+			closeBbbNoticeMsg(noticeMsg);
+			corruptSettingsDialog();
+			event.preventDefault();
+		}, false);
+
+		return defaultSettings();
 	}
 
 	function bbbNotice(txt, noticeType) {
@@ -9333,7 +9382,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		if (sessionStorage.getItem("bbb_local_storage_queue")) {
 			// Retrieve the local storage values from session storage after cycling through other domains.
-			sessLocal = JSON.parse(sessionStorage.getItem("bbb_local_storage_queue"));
+			sessLocal = parseJson(sessionStorage.getItem("bbb_local_storage_queue"), {});
 			sessionStorage.removeItem("bbb_local_storage_queue");
 		}
 		else if (bbb.local_storage_queue) {
