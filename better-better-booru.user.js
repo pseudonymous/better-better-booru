@@ -364,7 +364,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"], ["status:banned", true, "#000000", "solid"]),
 			thumb_cache_limit: newOption("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<tiphead>Note</tiphead>No actual thumbnails are cached. Only filename information used to speed up the display of hidden thumbnails is stored. Every 1000 entries is approximately equal to 0.1 megabytes of space.", {txtOptions:["Disabled:0"], numList:[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000]}),
 			collapse_sidebar_data: {post: {}, thumb: {}},
-			track_new_data: {viewed: 0, viewing: 1}
+			track_new_data: {viewed: 0, viewing: 1},
+			video_volume_data: {level: 1, muted: false},
+			video_volume: newOption("dropdown", "disabled", "Video Volume", "Set the initial volume of video posts. <tipdesc>Remember:</tipdesc> Set the video to the last volume level and muted status used. <tipdesc>Muted:</tipdesc> Always set the video volume to muted. <tipdesc>5% - 100%:</tipdesc> Always set the video volume level to the specified percent. <tiphead>Note</tiphead>This option can not control the volume of flash videos.", {txtOptions:["Disabled:disabled", "Remember:remember", "Muted:muted", "5%:0.05", "10%:0.1", "15%:0.15", "20%:0.2", "25%:0.25", "30%:0.30", "35%:0.35", "40%:0.4", "45%:0.45", "50%:0.5", "55%:0.55", "60%:0.6", "65%:0.65", "70%:0.7", "75%:0.75", "80%:0.8", "85%:0.85", "90%:0.9", "95%:0.95", "100%:1"]})
 		},
 		quick_search: "",
 		search_add: {
@@ -376,7 +378,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			blacklist_options: newSection("general", ["blacklist_session_toggle", "blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
-			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes"], "Post Control"),
+			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes", "video_volume"], "Post Control"),
 			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
@@ -477,6 +479,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var autoscroll_post = bbb.user.autoscroll_post;
 	var image_swap_mode = bbb.user.image_swap_mode;
 	var disable_embedded_notes = bbb.user.disable_embedded_notes;
+	var video_volume = bbb.user.video_volume;
 
 	// Endless
 	var endless_default = bbb.user.endless_default;
@@ -493,6 +496,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var tag_borders = bbb.user.tag_borders;
 	var collapse_sidebar_data = bbb.user.collapse_sidebar_data;
 	var track_new_data = bbb.user.track_new_data;
+	var video_volume_data = bbb.user.video_volume_data;
 	var script_blacklisted_tags = bbb.user.script_blacklisted_tags;
 
 	// Other data
@@ -802,6 +806,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var playerLoop = (post.has_sound ? '' : ' loop="loop"'); // No looping for videos with sound.
 
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay"' + playerLoop + ' controls="controls" src="' + post.file_url + '" height="' + post.image_height + '" width="' + post.image_width + '"></video> <p><a href="' + post.file_url + '">Save this video (right click and save)</a></p>';
+
+			videoVolume();
 		}
 		else if (post.file_ext === "zip" && /(?:^|\s)ugoira(?:$|\s)/.test(post.tag_string)) { // Create ugoira
 			var useUgoiraOrig = getVar("original");
@@ -4512,6 +4518,37 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		catch (error) {
 			bbbNotice("Unexpected error creating the ugoira post. (Error: " + error.message + ")", -1);
 		}
+	}
+
+	function videoVolume() {
+		// Set the volume of video posts to a specified level.
+		var vid = document.getElementById("image");
+
+		if (video_volume === "disabled" || !vid || vid.tagName !== "VIDEO")
+			return;
+
+		if (video_volume === "muted")
+			vid.muted = true;
+		else if (video_volume === "remember") {
+			vid.volume = video_volume_data.level;
+			vid.muted = video_volume_data.muted;
+
+			vid.addEventListener("volumechange", function() {
+				// Save volume changes half a second after changes stop.
+				if (bbb.timers.saveVideoVolume)
+					window.clearTimeout(bbb.timers.saveVideoVolume);
+
+				bbb.timers.saveVideoVolume = window.setTimeout( function() {
+					loadSettings();
+					bbb.user.video_volume_data.level = vid.volume;
+					bbb.user.video_volume_data.muted = vid.muted;
+					bbb.timers.saveVideoVolume = 0;
+					saveSettings();
+				}, 500);
+			}, false);
+		}
+		else // Percent values.
+			vid.volume = video_volume;
 	}
 
 	/* Thumbnail functions */
