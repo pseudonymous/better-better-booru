@@ -861,8 +861,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else if (!postInfo.image_height) // Create manual download.
 			imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + postInfo.file_img_src + '">Save this file (right click and save)</a></p>';
 		else { // Create image
-			var newWidth, newHeight, newUrl; // If/else variables.
 			var imgDesc = (getMeta("og:title") || "").replace(" - Danbooru", "");
+			var newWidth, newHeight, newUrl; // If/else variables.
 
 			if (load_sample_first && postInfo.has_large) {
 				newWidth = postInfo.large_width;
@@ -1767,15 +1767,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var paginator = getPaginator(target);
 
 		if (paginator) {
-			var paginatorLinks = paginator.getElementsByTagName("a");
+			var nextLink = paginator.querySelector("a[rel='next'][href]");
 
-			for (var i = paginatorLinks.length - 1; i >= 0; i--) {
-				var paginatorLink = paginatorLinks[i];
-
-				if (paginatorLink.rel.toLowerCase() === "next" && paginatorLink.href) {
-					return paginatorLink.href;
-				}
-			}
+			if (nextLink)
+				return nextLink.href;
 		}
 
 		return undefined;
@@ -1784,20 +1779,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function getMeta(meta, docEl) {
 		// Get a value from an HTML meta tag.
 		var target = docEl || document;
-		var metaTags = target.getElementsByTagName("meta");
+		var metaTag = target.querySelector("meta[name='" + meta + "'][content], meta[property='" + meta + "'][content]");
 
-		for (var i = 0, il = metaTags.length; i < il; i++) {
-			var tag = metaTags[i];
-
-			if (tag.name === meta || tag.getAttribute("property") === meta) {
-				if (tag.hasAttribute("content"))
-					return tag.content;
-				else
-					return undefined;
-			}
-		}
-
-		return undefined;
+		if (metaTag)
+			return metaTag.content;
+		else
+			return undefined;
 	}
 
 	function getVar(urlVar, targetUrl) {
@@ -3470,32 +3457,30 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		}, false);
 
 		// Create a swap image link in the sidebar options section.
-		var optionsSectionList = document.getElementById("post-options");
-		optionsSectionList = (optionsSectionList ? optionsSectionList.getElementsByTagName("ul")[0] : undefined);
+		var firstOption = document.querySelector("#post-options ul li");
 
-		var firstOption = (optionsSectionList ? optionsSectionList.getElementsByTagName("li")[0] : undefined);
+		if (firstOption) {
+			var swapListItem = document.createElement("li");
 
-		var swapListItem = document.createElement("li");
+			var swapLink = bbb.el.swapLink = document.createElement("a");
+			swapListItem.appendChild(swapLink);
 
-		var swapLink = bbb.el.swapLink = document.createElement("a");
-		swapListItem.appendChild(swapLink);
+			swapLink.addEventListener("click", function(event) {
+				if (event.button !== 0)
+					return;
 
-		swapLink.addEventListener("click", function(event) {
-			if (event.button !== 0)
-				return;
+				swapPost();
+				event.preventDefault();
+			}, false);
 
-			swapPost();
-			event.preventDefault();
-		}, false);
+			// Prepare the element text, etc.
+			swapImageUpdate((load_sample_first ? "sample" : "original"));
 
-		// Prepare the element text, etc.
-		swapImageUpdate((load_sample_first ? "sample" : "original"));
+			// Add the elements to the document.
+			imgContainer.parentNode.insertBefore(bbbResizeNotice, imgContainer);
 
-		// Add the elements to the document.
-		imgContainer.parentNode.insertBefore(bbbResizeNotice, imgContainer);
-
-		if (optionsSectionList && firstOption)
-			optionsSectionList.insertBefore(swapListItem, firstOption);
+			firstOption.parentNode.insertBefore(swapListItem, firstOption);
+		}
 	}
 
 	function swapImageLoad() {
@@ -8845,29 +8830,25 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		var dataLoc = (gLoc === "post" ? "post" : "thumb");
 		var data = collapse_sidebar_data[dataLoc];
-		var tagTypes = ["h1", "h2"]; // Tags that will be allowed to toggle.
+		var headers = sidebar.querySelectorAll("h1, h2");
 		var nameList = " ";
 		var removedOld = false;
 		var i, il; // Loop variables.
 
 		// Grab the desired tags and turn them into toggle elements for their section.
-		for (i = 0, il = tagTypes.length; i < il; i++) {
-			var tags = sidebar.getElementsByTagName(tagTypes[i]);
+		for (i = 0, il = headers.length; i < il; i++) {
+			var header = headers[i];
+			var name = header.textContent.bbbSpaceClean().replace(" ", "_");
+			var collapse = data[name];
+			var sibling = header.nextElementSibling;
+			nameList += name + " ";
 
-			for (var j = 0, jl = tags.length; j < jl; j++) {
-				var tag = tags[j];
-				var name = tag.textContent.bbbSpaceClean().replace(" ", "_");
-				var collapse = data[name];
-				var sibling = tag.nextElementSibling;
-				nameList += name + " ";
+			header.addEventListener("click", collapseSidebarToggle, false);
+			header.addEventListener("mouseup", collapseSidebarDefaultToggle.bind(null, name), false);
+			header.addEventListener("contextmenu", disableEvent, false);
 
-				tag.addEventListener("click", collapseSidebarToggle, false);
-				tag.addEventListener("mouseup", collapseSidebarDefaultToggle.bind(null, name), false);
-				tag.addEventListener("contextmenu", disableEvent, false);
-
-				if (collapse && sibling)
-					sibling.bbbAddClass("bbb-collapsed-sidebar");
-			}
+			if (collapse && sibling)
+				sibling.bbbAddClass("bbb-collapsed-sidebar");
 		}
 
 		// Clean up potential old section names.
@@ -9935,17 +9916,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 function runBBBScript() {
 	// Run the script or prep it to run when Danbooru's JS is ready.
 	if (document.readyState === "interactive" && typeof(Danbooru) === "undefined") {
-		var danbScripts = document.getElementsByTagName("script");
+		var danbScript = document.querySelector("script[src^='/assets/application-']");
 
-		for (var i = 0, il = danbScripts.length; i < il; i++) {
-			var curScript = danbScripts[i];
-			var curScriptSrc = curScript.src || "";
-
-			if (curScriptSrc.indexOf("donmai.us/assets/application-") > -1) {
-				curScript.addEventListener("load", bbbScript, true);
-				break;
-			}
-		}
+		if (danbScript)
+			danbScript.addEventListener("load", bbbScript, true);
 	}
 	else
 		bbbScript();
