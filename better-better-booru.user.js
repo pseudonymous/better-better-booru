@@ -4509,13 +4509,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			Danbooru.Ugoira.player = null;
 
 			$(function() {
-				Danbooru.Ugoira.create_player();
-				$(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) {
-					$("#seek-slider").progressbar("value", Math.floor(progress * 100));
-				});
-
 				var player_manually_paused = false;
 
+				Danbooru.Ugoira.create_player();
+				$(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) { $("#seek-slider").progressbar("value", Math.floor(progress * 100)); });
 				$("#ugoira-play").click(function(event) {
 					Danbooru.Ugoira.player.play();
 					$(this).hide();
@@ -4530,32 +4527,22 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					player_manually_paused = true;
 					event.preventDefault();
 				});
-
-				$("#seek-slider").progressbar({
-					value: 0
-				});
-
+				$("#seek-slider").progressbar({value: 0});
 				$("#seek-slider").slider({
 					min: 0,
 					max: Danbooru.Ugoira.player._frameCount-1,
-					start: function() {
-						// Need to pause while slider is being dragged or playback speed will bug out
-						Danbooru.Ugoira.player.pause();
-					},
+					start: function() { Danbooru.Ugoira.player.pause(); },
 					slide: function(event, ui) {
 						Danbooru.Ugoira.player._frame = ui.value;
 						Danbooru.Ugoira.player._displayFrame();
 					},
 					stop: function() {
-						// Resume playback when dragging stops, but only if player was not paused by the user earlier
 						if (!(player_manually_paused)) {
 							Danbooru.Ugoira.player.play();
 						}
 					}
 				});
-				$(Danbooru.Ugoira.player).on("frame", function(frame, frame_number) {
-					$("#seek-slider").slider("option", "value", frame_number);
-				});
+				$(Danbooru.Ugoira.player).on("frame", function(frame, frame_number) { $("#seek-slider").slider("option", "value", frame_number); });
 			});
 		}
 		catch (error) {
@@ -8004,14 +7991,85 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		searchSubmit.style.width = searchSubmit.offsetWidth + "px";
 		searchDiv.bbbRemoveClass("bbb-quick-search-show");
 
-		// Take of a copy of Danbooru's autocomplete and modify it for the search.
-		if (allowAutocomplete && Danbooru.Autocomplete && Danbooru.Autocomplete.initialize_tag_autocomplete) {
+		// Use a simplified copy of Danbooru's autocomplete for the search.
+		if (allowAutocomplete && Danbooru.Autocomplete) {
 			try {
-				var autoComplete = Danbooru.Autocomplete.initialize_tag_autocomplete.toString().match(/\{([\s\S]*)\}/)[1];
-				var searchAutoComplete = autoComplete.replace(/(,)#tags|#tags(,)/, "$1#tags,#bbb-quick-search-input$2"); // /\$\([\s\S]*?#tags[\s\S]*?\)([\s\S]*?)\$\([\s\S]*?#artist_name[\s\S]*?\)/, '$("#bbb-quick-search-input")$1$()'
-				var autoInit = new Function(searchAutoComplete);
+				var $fields_multiple = $(searchInput);
 
-				autoInit();
+				var prefixes = "-|~";
+				var metatags = "-status|status|-rating|rating|child|-user|user|-pool|pool";
+
+				$fields_multiple.autocomplete({
+					delay: 100,
+					autoFocus: true,
+					focus: function() { return false; },
+					select: function(event, ui) {
+						var before_caret_text = this.value.substring(0, this.selectionStart);
+						var after_caret_text = this.value.substring(this.selectionStart);
+						var regexp = new RegExp("(" + prefixes + ")?\\S+$", "g");
+						var original_start = this.selectionStart;
+
+						this.value = before_caret_text.replace(regexp, "$1" + ui.item.value + " ");
+						this.value += after_caret_text;
+						this.selectionStart = this.selectionEnd = original_start;
+
+						return false;
+					},
+					source: function(req, resp) {
+						var before_caret_text = req.term.substring(0, this.element.get(0).selectionStart);
+
+						if (before_caret_text.match(/ $/)) {
+							this.close();
+							return;
+						}
+
+						var term = before_caret_text.match(/\S+/g).pop();
+						var regexp = new RegExp("^(?:" + prefixes + ")(.*)$", "i");
+						var match = term.match(regexp);
+						var metatag;
+
+						if (match)
+							term = match[1];
+
+						if (term === "")
+							return;
+
+						regexp = new RegExp("^(" + metatags + "):(.*)$", "i");
+						match = term.match(regexp);
+
+						if (match) {
+							metatag = match[1].toLowerCase();
+							term = match[2];
+						}
+
+						switch(metatag) {
+							case "status":
+							case "-status":
+							case "rating":
+							case "-rating":
+							case "child":
+								Danbooru.Autocomplete.static_metatag_source(term, resp, metatag);
+								return;
+						}
+
+						if (term === "")
+							return;
+
+						switch(metatag) {
+							case "user":
+							case "-user":
+								Danbooru.Autocomplete.user_source(term, resp, metatag);
+								break;
+							default:
+								Danbooru.Autocomplete.normal_source(term, resp);
+								break;
+						}
+					}
+				});
+
+				$fields_multiple.on("autocompleteselect", function() { Danbooru.autocompleting = true; });
+				$fields_multiple.on("autocompleteclose", function() { setTimeout(function() {Danbooru.autocompleting = false;}, 100); });
+				$fields_multiple.each(function(i, field) { $(field).data("uiAutocomplete")._renderItem = Danbooru.Autocomplete.render_item; });
 
 				// Counter normal autocomplete getting turned back on after submitting an input.
 				document.body.addEventListener("focus", function(event) {
