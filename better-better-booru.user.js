@@ -2675,31 +2675,24 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		sectionFrag.appendChild(sectionHeader);
 
 		var sectionDiv = document.createElement("div");
-		sectionDiv.innerHTML = "By clicking the button below, you can erase BBB's stored information (settings, cache, etc.) from your browser. Please remember to create a backup if you intend to reinstall.";
+		sectionDiv.innerHTML = "By clicking the button below, you can choose to erase various BBB information from your browser. Please remember to create a backup if you intend to reinstall.";
 		sectionDiv.className = "bbb-section-options";
 		sectionFrag.appendChild(sectionDiv);
 
 		var buttonDiv = document.createElement("div");
 		buttonDiv.className = "bbb-section-options";
+		buttonDiv.style.padding = "5px 0px";
 		sectionFrag.appendChild(buttonDiv);
 
 		var eraseButton = document.createElement("a");
-		eraseButton.innerHTML = "Erase BBB Settings";
+		eraseButton.innerHTML = "Erase Options";
 		eraseButton.href = "#";
 		eraseButton.className = "bbb-button";
-		eraseButton.style.marginRight = "15px";
 		eraseButton.addEventListener("click", function(event) {
 			if (event.button !== 0)
 				return;
 
-			var confirmErase = function() {
-				eraseSettings();
-				removeMenu();
-				location.replace(updateURLQuery(location.href, {limit:undefined}));
-			};
-
-			bbbDialog("Are you sure you want to erase all BBB information?", {ok: confirmErase, cancel: true});
-
+			eraseSettingDialog();
 			event.preventDefault();
 		}, false);
 		buttonDiv.appendChild(eraseButton);
@@ -3324,16 +3317,15 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var user = bbb.user;
 
 		for (var i in user) {
-			if (user.hasOwnProperty(i)) {
-				if (typeof(bbb.options[i]) === "undefined")
-					delete user[i];
-			}
+			if (user.hasOwnProperty(i) && typeof(bbb.options[i]) === "undefined")
+				delete user[i];
 		}
 	}
 
 	function eraseSettings() {
 		// Try to erase everything.
 		var gmList = listData();
+		var cookies = getCookie();
 		var i, il, keyName; // Loop variables.
 
 		for (i = 0, il = gmList.length; i < il; i++)
@@ -3351,6 +3343,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			if (keyName.indexOf("bbb_") === 0)
 				sessionStorage.removeItem(keyName);
+		}
+
+		for (i in cookies) {
+			if (cookies.hasOwnProperty(i) && i.indexOf("bbb_") === 0)
+				createCookie(i, 0, -1);
 		}
 	}
 
@@ -4929,9 +4926,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		// Add the new thumbnail info in.
 		for (i in bcc.names) {
-			if (bcc.names.hasOwnProperty(i)) {
+			if (bcc.names.hasOwnProperty(i))
 				bcs.names[i] = bcc.names[i];
-			}
 		}
 
 		bcs.history = bcs.history.concat(bcc.history);
@@ -8911,11 +8907,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		// Clean up potential old section names.
 		for (i in data) {
-			if (data.hasOwnProperty(i)) {
-				if (nameList.indexOf(i.bbbSpacePad()) < 0) {
-					removedOld = true;
-					delete data[i];
-				}
+			if (data.hasOwnProperty(i) && nameList.indexOf(i.bbbSpacePad()) < 0) {
+				removedOld = true;
+				delete data[i];
 			}
 		}
 
@@ -9475,6 +9469,69 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		event.preventDefault();
 	}
 
+	function eraseSettingDialog() {
+		// Open a dialog box for erasing various BBB information.
+		var options = [
+			{text: "Settings", func: function() { deleteData("bbb_settings"); }},
+			{text: "Thumbnail Info Cache", func: function() { deleteData("bbb_thumb_cache"); }},
+			{text: "All Information", func: function() { eraseSettings(); removeMenu(); location.reload(); }}
+		];
+
+		var content = document.createDocumentFragment();
+
+		var header = document.createElement("h2");
+		header.innerHTML = "Erase BBB Information";
+		header.className = "bbb-header";
+		content.appendChild(header);
+
+		var introText = document.createElement("div");
+		introText.innerHTML = "Please select which information you would like to erase from below:";
+		content.appendChild(introText);
+
+		var optionDiv = document.createElement("div");
+		optionDiv.style.lineHeight = "1.5em";
+		content.appendChild(optionDiv);
+
+		var cbFunc = function(checkbox, label, event) {
+			if (event.button !== 0)
+				return;
+
+			label.style.textDecoration = (checkbox.checked ? "none" : "line-through");
+		};
+
+		for (var i = 0, il = options.length; i < il; i++) {
+			var option = options[i];
+
+			var listLabel = document.createElement("label");
+			listLabel.style.textDecoration = "line-through";
+			optionDiv.appendChild(listLabel);
+
+			var listCheckbox = document.createElement("input");
+			listCheckbox.type = "checkbox";
+			listCheckbox.style.marginRight = "5px";
+			listLabel.appendChild(listCheckbox);
+
+			var listText = document.createTextNode(option.text);
+			listLabel.appendChild(listText);
+
+			var br = document.createElement("br");
+			optionDiv.appendChild(br);
+
+			listLabel.addEventListener("click", cbFunc.bind(null, listCheckbox, listLabel), false);
+		}
+
+		var okFunc = function() {
+			var inputs = optionDiv.getElementsByTagName("input");
+
+			for (var i = 0, il = inputs.length; i < il; i++) {
+				if (inputs[i].checked)
+					options[i].func();
+			}
+		};
+
+		bbbDialog(content, {ok: okFunc, cancel: true});
+	}
+
 	function localStorageDialog() {
 		// Open a dialog box for cleaning out local storage for donmai.us.
 		if (getCookie().bbb_ignore_storage)
@@ -9780,7 +9837,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return false;
 
 		data = data.split("; ");
-		var out = [];
+		var out = {};
 
 		for (var i = 0, il = data.length; i < il; i++) {
 			var temp = data[i].split("=");
