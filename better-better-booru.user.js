@@ -324,6 +324,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
 			blacklist_session_toggle: newOption("checkbox", false, "Session Toggle", "When toggling an individual blacklist entry on and off, the mode it's toggled to will persist across other pages in the same browsing session until it ends.<tiphead>Note</tiphead>For blacklists with many entries, this option can cause unexpected behavior (ex: getting logged out) if too many entries are toggled off at the same time."),
 			blacklist_thumb_mark: newOption("dropdown", "none", "Thumbnail Marking", "Mark the thumbnails of blacklisted posts that have been revealed to make them easier to distinguish from other thumbnails. <tipdesc>Highlight:</tipdesc> Change the background color of blacklisted thumbnails. <tipdesc>Icon Overlay:</tipdesc> Add an icon to the lower right corner of blacklisted thumbnails.", {txtOptions:["Disabled:none", "Highlight:highlight", "Icon Overlay:icon"]}),
+			blacklist_video_playback: newOption("dropdown", "none", "Video Playback", "Allow the blacklist to control the playback of video content. <tipdesc>Pause:</tipdesc> Video content will pause when it is hidden. <tipdesc>Pause and Resume:</tipdesc> Video content will pause when it is hidden and resume playing when unhidden.", {txtOptions:["Disabled:disabled", "Pause:pause", "Pause & Resume:pause resume"]}),
 			border_spacing: newOption("dropdown", 0, "Border Spacing", "Set the amount of blank space between a border and thumbnail and between a custom tag border and status border. <tiphead>Note</tiphead>Even when set to 0, status borders and custom tag borders will always have a minimum value of 1 between them. <tiphead>Tip</tiphead>Use this option if you often have trouble distinguishing a border from the thumbnail image.", {txtOptions:["0 (Default):0", "1:1", "2:2", "3:3"]}),
 			border_width: newOption("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3", "4:4", "5:5"]}),
 			bypass_api: newOption("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
@@ -400,7 +401,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			old: ""
 		},
 		sections: { // Setting sections and ordering.
-			blacklist_options: newSection("general", ["blacklist_session_toggle", "blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars"], "Options"),
+			blacklist_options: newSection("general", ["blacklist_session_toggle", "blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars", "blacklist_video_playback"], "Options"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes", "video_volume"], "Post Control"),
@@ -447,6 +448,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var blacklist_add_bars = bbb.user.blacklist_add_bars;
 	var blacklist_thumb_controls = bbb.user.blacklist_thumb_controls;
 	var blacklist_smart_view = bbb.user.blacklist_smart_view;
+	var blacklist_video_playback = bbb.user.blacklist_video_playback;
 
 	var custom_tag_borders = bbb.user.custom_tag_borders;
 	var custom_status_borders = bbb.user.custom_status_borders;
@@ -5857,7 +5859,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 				if (!matchList.count && matchList.override !== false) {
 					if (id === "image-container")
-						document.getElementById("image-container").bbbRemoveClass("blacklisted-active");
+						blacklistShowPost(document.getElementById("image-container"));
 					else {
 						els = document.getElementsByClassName(id);
 
@@ -5884,7 +5886,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 				if (matchList.override !== true) {
 					if (id === "image-container")
-						document.getElementById("image-container").bbbAddClass("blacklisted-active");
+						blacklistHidePost(document.getElementById("image-container"));
 					else {
 						els = document.getElementsByClassName(id);
 
@@ -6184,12 +6186,26 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function blacklistHidePost(post) {
 		// Hide blacklisted post content and adjust related content.
+		if (blacklist_video_playback.indexOf("pause") > -1 && gLoc === "post") {
+			var postEl = getPostContent(post).el;
+
+			if (postEl && postEl.tagName === "VIDEO")
+				postEl.pause();
+		}
+
 		post.bbbAddClass("blacklisted-active");
 		disablePostDDL(post);
 	}
 
 	function blacklistShowPost(post) {
 		// Reveal blacklisted post content and adjust related content.
+		if (blacklist_video_playback.indexOf("resume") > -1 && gLoc === "post") {
+			var postEl = getPostContent(post).el;
+
+			if (postEl && postEl.tagName === "VIDEO")
+				postEl.play();
+		}
+
 		post.bbbRemoveClass("blacklisted-active");
 		enablePostDDL(post);
 	}
@@ -8003,9 +8019,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						var before_caret_text = this.value.substring(0, this.selectionStart);
 						var after_caret_text = this.value.substring(this.selectionStart);
 						var regexp = new RegExp("(" + prefixes + ")?\\S+$", "g");
-						var original_start = this.selectionStart;
 
 						this.value = before_caret_text.replace(regexp, "$1" + ui.item.value + " ");
+
+						var original_start = this.selectionStart;
+
 						this.value += after_caret_text;
 						this.selectionStart = this.selectionEnd = original_start;
 
