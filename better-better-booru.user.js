@@ -1160,11 +1160,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			ugoira.bbbInfo("ugoira-content-type", postInfo.pixiv_ugoira_frame_data.content_type);
 			ugoira.bbbInfo("ugoira-frames", JSON.stringify(postInfo.pixiv_ugoira_frame_data.data));
 
-			// Append the necessary script.
-			var mainScript = document.createElement("script");
-			mainScript.addEventListener("load", ugoiraInit, true); // Wait for this script to load before running the JavaScript that requires it.
-			mainScript.src = "/assets/ugoira_player.js";
-			document.head.appendChild(mainScript);
+			// Set up the post.
+			ugoiraInit();
 		}
 	}
 
