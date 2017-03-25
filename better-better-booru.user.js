@@ -7643,6 +7643,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			'.ui-autocomplete {z-index: 2002 !important;}';
 		}
 
+		// Tweak the "+" buttom so it works with the autohide and fixed sidebar options.
+		if (autohide_sidebar || fixed_sidebar)
+			styles += '#search-dropdown {position: absolute !important; top: auto !important; bottom: auto !important; left: auto !important; right: auto !important;}';
+
 		// Collapse sidebar sections.
 		if (collapse_sidebar) {
 			styles += '#sidebar ul.bbb-collapsed-sidebar, #sidebar form.bbb-collapsed-sidebar {display: block !important; height: 0px !important; margin: 0px !important; padding: 0px !important; overflow: hidden !important;}' + // Hide the element without changing the display to "none" since that interferes with some of Danbooru's JS.
