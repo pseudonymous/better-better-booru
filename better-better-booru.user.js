@@ -354,6 +354,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			hide_tos_notice: newOption("checkbox", false, "Hide TOS Notice", "Hide the Danbooru terms of service agreement notice."),
 			hide_upgrade_notice: newOption("checkbox", false, "Hide Upgrade Notice", "Hide the Danbooru upgrade account notice."),
 			hide_upload_notice: newOption("checkbox", false, "Hide Upload Guide Notice", "Hide the Danbooru upload guide notice."),
+			hide_hidden_notice: newOption("checkbox", false, "Hide Hidden Posts Notice", "Hide the Danbooru hidden posts notice."),
 			image_swap_mode: newOption("dropdown", "load", "Image Swap Mode", "Set how swapping between the sample and original image is done.<tipdesc>Load First:</tipdesc> Display the image being swapped in after it has finished downloading. <tipdesc>View While Loading:</tipdesc> Immediately display the image being swapped in while it is downloading.", {txtOptions:["Load First (Default):load", "View While Loading:view"]}),
 			search_tag_scrollbars: newOption("dropdown", 0, "Search Tag Scrollbars", "Limit the length of the sidebar tag list for the search listing by restricting it to a set height in pixels. When the list exceeds the set height, a scrollbar will be added to allow the rest of the list to be viewed.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option. This behavior can be changed with the \"override sample setting\" option under the preferences tab."),
@@ -405,7 +406,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes", "video_volume"], "Post Control"),
 			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
-			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
+			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_hidden_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
 			misc_layout: newSection("general", ["fixed_paginator"], "Misc."),
@@ -484,6 +485,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var hide_upload_notice = bbb.user.hide_upload_notice;
 	var hide_pool_notice = bbb.user.hide_pool_notice;
 	var hide_ban_notice = bbb.user.hide_ban_notice;
+	var hide_hidden_notice = bbb.user.hide_hidden_notice;
 
 	// Search
 	var arrow_nav = bbb.user.arrow_nav;
@@ -7799,6 +7801,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				if (poolGuideParent && poolGuideParent.textContent === "Before creating a pool, read the pool guidelines.")
 					poolGuideParent.style.display = "none";
 		}
+
+		if (hide_hidden_notice)
+			styles += '.hidden-posts-notice {display: none !important;}';
 
 		customStyles.innerHTML = styles;
 		document.getElementsByTagName("head")[0].appendChild(customStyles);
