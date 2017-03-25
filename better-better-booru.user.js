@@ -359,7 +359,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option. This behavior can be changed with the \"override sample setting\" option under the preferences tab."),
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the \"hide upgrade notice\", \"hide sign up notice\", and/or \"hide TOS notice\" options, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
-			move_save_search: newOption("checkbox", false, "Move Save Search", "Move the \"save this search\" button into the related section in the sidebar."),
 			override_blacklist: newOption("dropdown", "logged_out", "Override Blacklist", "Allow the \"blacklist\" setting to override the default blacklist for logged out users and/or account blacklist for logged in users. <tipdesc>Logged out:</tipdesc> Override the default blacklist for logged out users. <tipdesc>Always:</tipdesc> Override the default blacklist for logged out users and account blacklist for logged in users.", {txtOptions:["Disabled:disabled", "Logged out:logged_out", "Always:always"]}),
 			override_resize: newOption("checkbox", false, "Override Resize Setting", "Allow the \"resize post\" setting to override the account \"fit images to window\" setting when logged in."),
 			override_sample: newOption("checkbox", false, "Override Sample Setting", "Allow the \"load sample first\" setting to override the account \"default image width\" setting when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
@@ -409,7 +408,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
-			misc_layout: newSection("general", ["fixed_paginator", "move_save_search"], "Misc."),
+			misc_layout: newSection("general", ["fixed_paginator"], "Misc."),
 			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumb_cache_limit"], "Script Settings"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
@@ -462,7 +461,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var fixed_sidebar = gLocRegex.test(bbb.user.fixed_sidebar);
 	var fixed_paginator = bbb.user.fixed_paginator;
 	var collapse_sidebar = bbb.user.collapse_sidebar;
-	var move_save_search = bbb.user.move_save_search;
 	var page_counter = bbb.user.page_counter;
 	var quick_search = bbb.user.quick_search;
 
@@ -554,8 +552,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	modifyPage();
 
 	autohideSidebar();
-
-	moveSaveSearch();
 
 	pageCounter();
 
@@ -7706,13 +7702,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			'article.post-preview.blacklisted .bbb-close-circle, div.post.post-preview.blacklisted div.preview .bbb-close-circle {display: none;}';
 		}
 
-		// Move save search to the sidebar.
-		if (move_save_search) {
-			styles += '.bbb-saved-search-item #saved-searches-nav, .bbb-saved-search-item #saved-searches-nav * {background-color: transparent; color: #0073FF; display: inline; font-family: Verdana,Helvetica,sans-serif; line-height: 1.25em; padding: 0px; margin: 0px; border: none;}' +
-			'.bbb-saved-search-item #saved-searches-nav input:hover, .bbb-saved-search-item #saved-searches-nav button:hover {color: #80b9ff;}' +
-			'.bbb-saved-search-item #saved-searches-nav input:focus, .bbb-saved-search-item #saved-searches-nav button:focus {outline: thin dotted;}';
-		}
-
 		// Quick search styles.
 		if (quick_search !== "disabled") {
 			styles += '#bbb-quick-search {position: fixed; top: 0px; right: 0px; z-index: 2001; overflow: auto; padding: 2px; background-color: #FFFFFF; border-bottom: 1px solid #CCCCCC; border-left: 1px solid #CCCCCC; border-bottom-left-radius: 10px;}' +
@@ -8207,25 +8196,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Disable the quick search pin.
 		bbb.el.quickSearchDiv.bbbRemoveClass("bbb-quick-search-pinned");
 		sessionStorage.removeItem("bbb_quick_search");
-	}
-
-	function moveSaveSearch() {
-		// Move the "save search" div into the sidebar related section and style it as a link.
-		var saveSearchDiv = document.getElementById("saved-searches-nav");
-		var relatedSection = document.getElementById("related-box");
-
-		if (!move_save_search || !saveSearchDiv || !relatedSection)
-			return;
-
-		saveSearchDiv.parentNode.removeChild(saveSearchDiv);
-
-		var relatedSectionMenu = relatedSection.getElementsByTagName("ul")[0];
-
-		var saveSearchItem = document.createElement("li");
-		saveSearchItem.className = "bbb-saved-search-item";
-		saveSearchItem.appendChild(saveSearchDiv);
-
-		relatedSectionMenu.insertBefore(saveSearchItem, relatedSectionMenu.firstElementChild);
 	}
 
 	function commentScoreInit() {
