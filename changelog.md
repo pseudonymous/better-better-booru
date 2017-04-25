@@ -1,5 +1,18 @@
 Changelog
 ----------
+* Version 7.3:
+ * Added a "video volume" option for adjusting the starting volume of video posts.
+ * Added a "disable tagged filenames" option to allow filename control for logged out users and manual (as needed) correction for logged in users.
+ * Added a "video playback" blacklist option to allow control over the play/pause state of video posts.
+ * Added a "hide hidden posts notice" option for hiding the Danbooru notice about hidden posts and gold accounts.
+ * Added an "erase settings" section to the preferences tab for easily deleting BBB information.
+ * Removed the "move save search" option since the save search button has been replaced by a link in the "+" search button.
+ * Updated to support Danbooru's changes to the "Notes" section of the site.
+ * Updated the "quick search" option to support Danbooru's autocomplete changes.
+ * Updated the "auto-hide sidebar" and "fixed sidebar" options to make them compatible with the "+" search button.
+ * Updated to add back support for Danbooru's post to post hotkey navigation for searches while logged out.
+ * Updated the methods for saving information so that settings can persist across all Danbooru domains and during private browsing.
+ * Fixed various random search issues related to hidden posts.
 * Version 7.2.5:
  * Updated to support Danbooru displaying the image description below images.
  * Fixed the "show deleted" option's compatibility with the "status:" metatag.
