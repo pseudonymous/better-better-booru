@@ -593,14 +593,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var url = location.href.split("#", 1)[0];
 		var idCache, idList, idSearch, page; // If/else variables.
 
-		if (mode === "search" || mode === "notes" || mode === "favorites") {
+		if (mode === "search" || mode === "favorites") {
 			url = (allowUserLimit() ? updateURLQuery(url, {limit: thumbnail_count}) : url);
 			bbb.flags.thumbs_xml = true;
 
 			if (mode === "search")
 				fetchJSON(url.replace(/\/?(?:posts)?\/?(?:\?|$)/, "/posts.json?"), "search");
-			else if (mode === "notes")
-				fetchJSON(url.replace(/\/notes\/?(?:\?|$)/, "/notes.json?"), "notes");
 			else if (mode === "favorites")
 				fetchJSON(url.replace(/\/favorites\/?(?:\?|$)/, "/favorites.json?"), "favorites");
 
@@ -687,7 +685,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						var xml = parseJson(xmlhttp.responseText, {});
 
 						// Update status message.
-						if (mode === "search" || mode === "popular" || mode === "popular_view" || mode === "notes" || mode === "favorites" || mode === "pool_search" || mode === "favorite_group_search") {
+						if (mode === "search" || mode === "popular" || mode === "popular_view" || mode === "favorites" || mode === "pool_search" || mode === "favorite_group_search") {
 							bbb.flags.thumbs_xml = false;
 
 							parseListing(formatInfoArray(xml), optArg);
@@ -1179,7 +1177,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Let other functions that don't require the API run (alternative to searchJSON) and retrieve various pages for info.
 		var url; // If/else variable.
 
-		if (mode === "search" || mode === "notes" || mode === "favorites" || mode === "thumbnails") {
+		if (mode === "search" || mode === "favorites" || mode === "thumbnails") {
 			url = updateURLQuery(location.href, {limit: thumbnail_count});
 			bbb.flags.thumbs_xml = true;
 
@@ -1707,7 +1705,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			container = getId("posts", target);
 			container = (container ? container.getElementsByTagName("div")[0] : undefined);
 		}
-		else if (mode === "popular" || mode === "notes" || mode === "popular_view")
+		else if (mode === "popular" || mode === "popular_view")
 			container = getId("a-index", target);
 		else if (mode === "pool" || mode === "favorite_group") {
 			container = getId("a-show", target);
@@ -1749,7 +1747,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				}
 			}
 		}
-		else if (mode === "pool" || mode === "notes" || mode === "favorites" || mode === "favorite_group") {
+		else if (mode === "pool" || mode === "favorites" || mode === "favorite_group") {
 			var paginator = getPaginator(target);
 			var endlessDiv = getId("bbb-endless-button-div", target);
 
@@ -5110,7 +5108,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var noResults = noResultsPage(target);
 		var limit = getLimit();
 
-		if (mode === "search" || mode === "notes" || mode === "favorites") {
+		if (mode === "search" || mode === "favorites") {
 			var numExpected = (limit !== undefined ? limit : thumbnail_count_default);
 			var numDesired = (allowUserLimit() ? thumbnail_count : numExpected);
 
@@ -5132,7 +5130,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	/* Endless Page functions */
 	function endlessToggle(event) {
 		// Toggle endless pages on and off.
-		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
+		if (endless_default === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "favorites" && gLoc !== "favorite_group"))
 			return;
 
 		// Change the default for the duration of the session if necessary.
@@ -5199,7 +5197,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		var paginator = getPaginator();
 
-		if (endless_default === "disabled" || !paginator || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
+		if (endless_default === "disabled" || !paginator || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "favorites" && gLoc !== "favorite_group"))
 			return;
 
 		// Add the endless link to the menu.
@@ -7480,7 +7478,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		'#bbb-dialog-window .bbb-edit-area {height: 300px; width: 800px;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
-		if (thumbnail_count && (gLoc === "search" || gLoc === "notes" || gLoc === "favorites")) {
+		if (thumbnail_count && (gLoc === "search" || gLoc === "favorites")) {
 			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
 			'section#content {padding: 0px !important;}';
 		}
@@ -7879,7 +7877,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Set up quick search.
 		removeInheritedStorage("bbb_quick_search");
 
-		if (quick_search === "disabled" || (gLoc !== "search" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "popular_view" && gLoc !== "favorite_group"))
+		if (quick_search === "disabled" || (gLoc !== "search" && gLoc !== "favorites" && gLoc !== "pool" && gLoc !== "popular" && gLoc !== "popular_view" && gLoc !== "favorite_group"))
 			return;
 
 		var allowAutocomplete = (getMeta("enable-auto-complete") === "true");
@@ -8331,7 +8329,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function postLinkNewWindow() {
 		// Make thumbnail clicks open in a new tab/window.
-		if (post_link_new_window === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "popular" && gLoc !== "popular_view" && gLoc !== "favorite_group"))
+		if (post_link_new_window === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "favorites" && gLoc !== "popular" && gLoc !== "popular_view" && gLoc !== "favorite_group"))
 			return;
 
 		document.addEventListener("click", function(event) {
@@ -8780,7 +8778,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function fixedPaginator() {
 		// Set up the fixed paginator.
-		if (fixed_paginator === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "notes" && gLoc !== "favorites" && gLoc !== "favorite_group"))
+		if (fixed_paginator === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "favorites" && gLoc !== "favorite_group"))
 			return;
 
 		var paginator = getPaginator();
@@ -8961,7 +8959,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var queryLimit = getQueryLimit();
 		var searchLimit = getSearchLimit();
 		var limit = (queryLimit !== undefined ? queryLimit : searchLimit) || thumbnail_count_default;
-		var allowedLoc = (gLoc === "search" || gLoc === "notes" || gLoc === "favorites");
+		var allowedLoc = (gLoc === "search" || gLoc === "favorites");
 
 		if (allowedLoc && thumbnail_count && thumbnail_count !== limit && page === 1 && (searchLimit === undefined || queryLimit !== undefined))
 			return true;
@@ -9054,10 +9052,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return true;
 		else if (gLoc === "search" || gLoc === "favorites") {
 			if (limit === 0 || pageNum === "b1" || noResultsPage() || safebSearchTest())
-				return true;
-		}
-		else if (gLoc === "notes") {
-			if (limit === 0 || noResultsPage())
 				return true;
 		}
 		else if (gLoc === "comments") {
