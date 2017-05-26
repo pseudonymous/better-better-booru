@@ -1473,6 +1473,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var directLink = getId("image-resize-link", target) || target.querySelector("#post-information ul li a[href^='/data/']");
 		var otherInfo = getMeta("twitter:image", target) || getMeta("og:image", target);
 		var flags = imgContainer.getAttribute("data-flags");
+		var dataPath = ((dataInfo || directLink || otherInfo || "").indexOf("/cached/") > -1 ? "/cached/data/" : "/data/");
 		var infoValues; // If/else variable.
 
 		var imgInfo = {
@@ -1557,15 +1558,15 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			imgInfo.has_large = (!isAnimatedImg && (isBigImg || isUgoira) ? true : false);
 			imgInfo.md5 = md5;
 			imgInfo.file_ext = ext;
-			imgInfo.file_url = "/data/" + filenameTags + md5 + "." + ext;
+			imgInfo.file_url = dataPath + filenameTags + md5 + "." + ext;
 			imgInfo.preview_file_url = (!imgInfo.image_height || ext === "swf" ? "/images/download-preview.png" : "/data/preview/" + md5 + ".jpg");
 
 			if (isUgoira)
-				imgInfo.large_file_url = "/data/sample/" + filenameTags + "sample-" + md5 + ".webm";
+				imgInfo.large_file_url = dataPath + "sample/" + filenameTags + "sample-" + md5 + ".webm";
 			else if (imgInfo.has_large)
-				imgInfo.large_file_url = "/data/sample/" + filenameTags + "sample-" + md5 + ".jpg";
+				imgInfo.large_file_url = dataPath + "sample/" + filenameTags + "sample-" + md5 + ".jpg";
 			else
-				imgInfo.large_file_url = "/data/" + filenameTags + md5 + "." + ext;
+				imgInfo.large_file_url = dataPath + filenameTags + md5 + "." + ext;
 		}
 		else if (otherInfo === "/images/download-preview.png")
 			imgInfo.preview_file_url = "/images/download-preview.png";
@@ -4715,18 +4716,19 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					var cacheExt = cacheValues[1];
 					var fileDesc = (disable_tagged_filenames ? "" : postFileUrlDesc(postInfo));
 					var isUgoira = (cacheExt === "zip" && /(?:^|\s)ugoira(?:$|\s)/.test(postInfo.tag_string));
+					var dataPath = (postInfo.id <= 250000 ? "/cached/data/" : "/data/");
 
 					postInfo.md5 = cacheMd5;
 					postInfo.file_ext = cacheExt;
 					postInfo.preview_file_url = (!postInfo.image_height || cacheExt === "swf" ? "/images/download-preview.png" : "/data/preview/" + cacheMd5 + ".jpg");
-					postInfo.file_url = "/data/" + fileDesc + cacheName;
+					postInfo.file_url = dataPath + fileDesc + cacheName;
 
 					if (isUgoira)
-						postInfo.large_file_url = "/data/sample/" + fileDesc + "sample-" + cacheMd5 + ".webm";
+						postInfo.large_file_url = dataPath + "sample/" + fileDesc + "sample-" + cacheMd5 + ".webm";
 					else if (postInfo.has_large)
-						postInfo.large_file_url = "/data/sample/" + fileDesc + "sample-" + cacheMd5 + ".jpg";
+						postInfo.large_file_url = dataPath + "sample/" + fileDesc + "sample-" + cacheMd5 + ".jpg";
 					else
-						postInfo.large_file_url = "/data/" + fileDesc + cacheName;
+						postInfo.large_file_url = dataPath + fileDesc + cacheName;
 				}
 			}
 			else // Mark hidden img for fixing.
