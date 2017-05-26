@@ -9464,7 +9464,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function eraseSettingDialog() {
 		// Open a dialog box for erasing various BBB information.
 		var options = [
-			{text: "Settings", func: function() { deleteData("bbb_settings"); }},
+			{text: "Settings", func: function() { deleteData("bbb_settings"); removeMenu(); }},
 			{text: "Thumbnail Info Cache", func: function() { deleteData("bbb_thumb_cache"); }},
 			{text: "All Information", func: function() { eraseSettings(); removeMenu(); location.reload(); }}
 		];
