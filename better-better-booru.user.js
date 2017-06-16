@@ -4716,7 +4716,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					var cacheExt = cacheValues[1];
 					var fileDesc = (disable_tagged_filenames ? "" : postFileUrlDesc(postInfo));
 					var isUgoira = (cacheExt === "zip" && /(?:^|\s)ugoira(?:$|\s)/.test(postInfo.tag_string));
-					var dataPath = (postInfo.id <= 250000 ? "/cached/data/" : "/data/");
+					var dataPath = (postInfo.id <= 1000000 ? "/cached/data/" : "/data/");
 
 					postInfo.md5 = cacheMd5;
 					postInfo.file_ext = cacheExt;
