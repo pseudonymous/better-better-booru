@@ -1488,9 +1488,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
 			has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
 			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent")[0]),
+			fav_string: getMeta("favorites", docEl),
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
 			rating: imgContainer.getAttribute("data-rating"),
 			score: Number(imgContainer.getAttribute("data-score")),
+			source: imgContainer.getAttribute("data-source"),
 			tag_string: imgContainer.getAttribute("data-tags"),
 			tag_string_artist: scrapePostTags("artist", target),
 			tag_string_character: scrapePostTags("character", target),
@@ -1622,9 +1624,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fav_count: Number(post.getAttribute("data-fav-count")),
 			has_children: (post.getAttribute("data-has-children") === "true" ? true : false),
 			has_active_children: post.bbbHasClass("post-status-has-children"), // Assumption. Basically a flag for the children class.
+			fav_string: (post.getAttribute("data-is-favorited") === "true" ? "fav:" + getMeta("current-user-id") : ""), // Faked since thumbnails don't provide the full list of favorites.
 			parent_id: (post.getAttribute("data-parent-id") ? Number(post.getAttribute("data-parent-id")) : null),
 			rating: post.getAttribute("data-rating"),
 			score: Number(post.getAttribute("data-score")),
+			source: post.getAttribute("data-source"),
 			tag_string: post.getAttribute("data-tags"),
 			pool_string: post.getAttribute("data-pools"),
 			uploader_name: post.getAttribute("data-uploader"),
@@ -4749,7 +4753,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function createThumbHTML(postInfo, query) {
 		// Create a thumbnail HTML string.
-		return '<article class="post-preview' + postInfo.thumb_class + '" id="post_' + postInfo.id + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-flags="' + postInfo.flags + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-score="' + postInfo.score + '" data-fav-count="' + postInfo.fav_count + '" data-approver-id="' + postInfo.approver_id + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '"><a href="/posts/' + postInfo.id + query + '"><img src="' + postInfo.preview_img_src + '" alt="' + postInfo.tag_string + '"></a></article>';
+		return '<article class="post-preview' + postInfo.thumb_class + '" id="post_' + postInfo.id + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-flags="' + postInfo.flags + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-score="' + postInfo.score + '" data-fav-count="' + postInfo.fav_count + '" data-approver-id="' + postInfo.approver_id + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '" data-source="' + postInfo.source + '" data-is-favorited="' + postInfo.is_favorited + '"><a href="/posts/' + postInfo.id + query + '"><img src="' + postInfo.preview_img_src + '" alt="' + postInfo.tag_string + '"></a></article>';
 	}
 
 	function createThumb(postInfo, query) {
@@ -6276,6 +6280,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Missing API/data fixes.
 		postInfo.has_sound = /(?:^|\s)(?:video|flash)_with_sound(?:$|\s)/.test(postInfo.tag_string);
 		postInfo.flags = postFlags(postInfo);
+		postInfo.is_favorited = new RegExp("(?:^|\\s)fav:" + getMeta("current-user-id") + "(?:$|\\s)").test(postInfo.fav_string);
 
 		// Custom BBB properties.
 		postInfo.file_url_desc = postFileUrlDesc(postInfo);
