@@ -319,6 +319,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
 			blacklist_add_bars: newOption("checkbox", false, "Additional Bars", "Add a blacklist bar to the comment search listing and individually linked comments so that blacklist entries can be toggled as needed."),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
+			blacklist_ignore_fav: newOption("checkbox", false, "Ignore Favorites", "Allow the blacklist to ignore your favorited posts."),
 			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using \"hidden\" or \"replaced\" for the \"post display\" option, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
 			blacklist_post_display: newOption("dropdown", "disabled", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> Posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Disabled:disabled", "Removed:removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
@@ -402,7 +403,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			old: ""
 		},
 		sections: { // Setting sections and ordering.
-			blacklist_options: newSection("general", ["blacklist_session_toggle", "blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars", "blacklist_video_playback"], "Options"),
+			blacklist_options: newSection("general", ["blacklist_session_toggle", "blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars", "blacklist_video_playback", "blacklist_ignore_fav"], "Options"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes", "video_volume"], "Post Control"),
@@ -446,6 +447,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var blacklist_post_display = bbb.user.blacklist_post_display;
 	var blacklist_thumb_mark = bbb.user.blacklist_thumb_mark;
 	var blacklist_highlight_color = bbb.user.blacklist_highlight_color;
+	var blacklist_ignore_fav = bbb.user.blacklist_ignore_fav;
 	var blacklist_add_bars = bbb.user.blacklist_add_bars;
 	var blacklist_thumb_controls = bbb.user.blacklist_thumb_controls;
 	var blacklist_smart_view = bbb.user.blacklist_smart_view;
@@ -5948,17 +5950,19 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		if (typeof(matchList) === "undefined") {
 			matchList = bbb.blacklist.match_list[id] = {count: undefined, matches: [], override: undefined};
 
-			for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
-				var entry = bbb.blacklist.entries[i];
+			if (!blacklist_ignore_fav || el.bbbInfo("is-favorited") !== "true") {
+				for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
+					var entry = bbb.blacklist.entries[i];
 
-				if (thumbSearchMatch(el, entry.search)) {
-					if (entry.active)
-						matchList.count = ++matchList.count || 1;
-					else
-						matchList.count = matchList.count || 0;
+					if (thumbSearchMatch(el, entry.search)) {
+						if (entry.active)
+							matchList.count = ++matchList.count || 1;
+						else
+							matchList.count = matchList.count || 0;
 
-					matchList.matches.push(entry);
-					entry.matches.push(id);
+						matchList.matches.push(entry);
+						entry.matches.push(id);
+					}
 				}
 			}
 
