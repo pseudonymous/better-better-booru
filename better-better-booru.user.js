@@ -554,6 +554,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	injectSettings();
 
+	accountUpdateWatch();
+
 	modifyPage();
 
 	autohideSidebar();
@@ -1213,6 +1215,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fetchPages(url, "hidden", optArg);
 			bbbStatus("hidden", "new");
 		}
+		else if (mode === "account_check") {
+			url = "/users/" + optArg + "/edit";
+
+			fetchPages(url, "account_check");
+		}
 	}
 
 	function fetchPages(url, mode, optArg, session, retries) {
@@ -1258,6 +1265,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 							endlessXMLPageHandler(docEl);
 							bbbStatus("posts", "done");
 						}
+						else if (mode === "account_check")
+							accountUpdateHandler(docEl);
 					}
 					else if (xmlhttp.status !== 0) {
 						if (xmlRetries < 1) {
@@ -1282,6 +1291,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 							}
 							else if (mode === "paginator")
 								msg = "Error updating paginator";
+							else if (mode === "account_check")
+								msg = "Error checking account settings";
 
 							var noticeMsg = bbbNotice(msg + ' (HTML Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
 
@@ -1445,6 +1456,19 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			endlessQueuePage(newPage);
 		}
+	}
+
+	function accountUpdateHandler(docEl) {
+		// Check the user's settings page for changes and update BBB settings as needed.
+		var perPageInput = docEl.querySelector("#user_per_page option[selected]");
+		var perPage = Number((perPageInput ? perPageInput.value : 20));
+
+		if (thumbnail_count_default !== perPage) {
+			updateSettings("thumbnail_count_default", perPage);
+			bbbNotice("Your \"thumbnail count default\" BBB setting has been automatically changed to \"" + perPage + "\" to match your Danbooru account settings.", 0);
+		}
+
+		createCookie("bbb_acc_check", 0, -1);
 	}
 
 	function isThere(url) {
@@ -3188,8 +3212,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		bbb.settings.changed = {};
 
-		// Remove the no settings cookie so that it can display again.
-		createCookie("bbb_no_settings", 0, -1);
+		// Remove the no settings cookie so that it can display again and signal an account settings check for brand new settings.
+		if (getCookie().bbb_no_settings) {
+			createCookie("bbb_no_settings", 0, -1);
+			createCookie("bbb_acc_check", 1);
+		}
 
 		saveData("bbb_settings", JSON.stringify(bbb.user));
 	}
@@ -9042,6 +9069,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return "topic";
 		else if (path.indexOf("/explore/posts/intro") === 0)
 			return "intro";
+		else if (path.indexOf("/session/new") === 0)
+			return "signin";
+		else if (/\/users\/\d+\/edit/.test(path))
+			return "settings";
 		else
 			return undefined;
 	}
@@ -9132,6 +9163,25 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		}
 
 		return setting;
+	}
+
+	function accountUpdateWatch() {
+		// Signal a Danbooru account setting check upon signing in or submitting settings. Check the settings upon the next page loading.
+		if (gLoc === "signin" || gLoc === "settings") {
+			var submit = document.querySelector("input[type=submit][name=commit]");
+
+			submit.addEventListener("click", function() {
+				createCookie("bbb_acc_check", 1);
+			}, false);
+		}
+		else if (getCookie().bbb_acc_check) {
+			var userId = getMeta("current-user-id");
+
+			if (userId !== "")
+				searchPages("account_check", userId);
+			else
+				createCookie("bbb_acc_check", 0, -1);
+		}
 	}
 
 	function safebPostTest(postObject) {
