@@ -1,5 +1,10 @@
 Changelog
 ----------
+* Version 7.4:
+  * Added an "ignore favorites" blacklist option for excluding favorited posts from the blacklist.
+  * Added a "thumbnail count default" option for compatibility with Danbooru users above the basic account level.
+  * Added an "isfav" metatag to the thumbnail matching rules to allow for queries about favorited posts.
+  * Updated to support old posts that Danbooru has cached.
 * Version 7.3:
   * Added a "video volume" option for adjusting the starting volume of video posts.
   * Added a "disable tagged filenames" option to allow filename control for logged out users and manual (as needed) correction for logged in users.
