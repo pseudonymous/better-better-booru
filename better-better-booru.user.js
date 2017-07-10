@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        7.3
+// @version        7.4
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -312,13 +312,14 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "7.3",
+			bbb_version: "7.4",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the \"thumbnail count\" option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
 			blacklist_add_bars: newOption("checkbox", false, "Additional Bars", "Add a blacklist bar to the comment search listing and individually linked comments so that blacklist entries can be toggled as needed."),
 			blacklist_highlight_color: newOption("text", "#CCCCCC", "Highlight Color", "When using highlighting for \"thumbnail marking\", you may set the color here. <tiphead>Notes</tiphead>Leaving this field blank will result in the default color being used. <br><br>For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values."),
+			blacklist_ignore_fav: newOption("checkbox", false, "Ignore Favorites", "Allow the blacklist to ignore your favorited posts."),
 			blacklist_thumb_controls: newOption("checkbox", false, "Thumbnail Controls", "Allow control over individual blacklisted thumbnails and access to blacklist toggle links from blacklisted thumbnails. <tiphead>Directions</tiphead>For blacklisted thumbnails that have been revealed, hovering over them will reveal a clickable \"X\" icon that can hide them again. <br><br>If using \"hidden\" or \"replaced\" for the \"post display\" option, clicking on the area of a blacklisted thumbnail will pop up a menu that displays what blacklist entries it matches. Clicking the thumbnail area a second time while that menu is open will reveal that single thumbnail. <br><br>The menu that pops up on the first click also allows for toggling any listed blacklist entry for the entire page and navigating to the post without revealing its thumbnail. <tiphead>Note</tiphead>Toggling blacklist entries will have no effect on posts that have been changed via their individual controls."),
 			blacklist_post_display: newOption("dropdown", "disabled", "Post Display", "Set how the display of blacklisted posts in thumbnail listings and the comments section is handled. <tipdesc>Removed:</tipdesc> Posts and the space they take up are completely removed. <tipdesc>Hidden:</tipdesc> Post space is preserved, but thumbnails are hidden. <tipdesc>Replaced:</tipdesc> Thumbnails are replaced by \"blacklisted\" thumbnail placeholders.", {txtOptions:["Disabled:disabled", "Removed:removed", "Hidden:hidden", "Replaced:replaced"]}),
 			blacklist_smart_view: newOption("checkbox", false, "Smart View", "When navigating to a blacklisted post by using its thumbnail, if the thumbnail has already been revealed, the post content will temporarily be exempt from any blacklist checks for 1 minute and be immediately visible. <tiphead>Note</tiphead>Thumbnails in the parent/child notices of posts with exempt content will still be affected by the blacklist."),
@@ -328,13 +329,14 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			border_spacing: newOption("dropdown", 0, "Border Spacing", "Set the amount of blank space between a border and thumbnail and between a custom tag border and status border. <tiphead>Note</tiphead>Even when set to 0, status borders and custom tag borders will always have a minimum value of 1 between them. <tiphead>Tip</tiphead>Use this option if you often have trouble distinguishing a border from the thumbnail image.", {txtOptions:["0 (Default):0", "1:1", "2:2", "3:3"]}),
 			border_width: newOption("dropdown", 2, "Border Width", "Set the width of thumbnail borders.", {txtOptions:["1:1", "2 (Default):2", "3:3", "4:4", "5:5"]}),
 			bypass_api: newOption("checkbox", false, "Automatic API Bypass", "When logged out and API only features are enabled, do not warn about needing to be logged in. Instead, automatically bypass those features."),
-			clean_links: newOption("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail links.<tiphead>Note</tiphead>Enabling this option will disable Danbooru's search navigation and active pool/favorite group detection for posts."),
+			clean_links: newOption("checkbox", false, "Clean Links", "Remove the extra information after the post ID in thumbnail listing post links.<tiphead>Note</tiphead>Enabling this option will disable Danbooru's search navigation and active pool/favorite group detection for posts."),
 			collapse_sidebar: newOption("checkbox", false, "Collapsible Sidebar", "Allow sections in the sidebar to be expanded and collapsed via clicking their header titles.<tiphead>Note</tiphead>Sections can be set to default to expanded or collapsed by right clicking their titles."),
 			comment_score: newOption("checkbox", false, "Comment Scores", "Make comment scores visible by adding them as direct links to their respective comments."),
 			custom_status_borders: newOption("checkbox", false, "Custom Status Borders", "Override Danbooru's thumbnail borders for deleted, flagged, pending, parent, and child images."),
 			custom_tag_borders: newOption("checkbox", true, "Custom Tag Borders", "Add thumbnail borders to posts with specific tags."),
 			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, popular, and favorite group listings. <tiphead>Note</tiphead>Posts filtered out by the blacklist or quick search will not provide direct downloads until the blacklist entry or quick search affecting them is disabled."),
 			disable_embedded_notes: newOption("checkbox", false, "Disable Embedded Notes", "Force posts with embedded notes to display with the original note styling. <tiphead>Notes</tiphead>While notes will display with the original styling, the actual post settings will still have embedded notes set to enabled. <br><br>Due to the actual settings, users that may wish to edit notes will have to edit the notes with the embedded note styling so that nothing ends up breaking in unexpected ways. When toggling translation mode or opening the edit note dialog box, the notes will automatically revert back to the original embedded notes until the page is reloaded. <br><br>Note resizing and moving will be allowed without the reversion to embedded notes since this ability is sometimes necessary for badly positioned notes. Any note resizing or moving done as a part of intended note editing should be done <b>after</b> triggering the embedded note reversion since any changes before it will be lost."),
+			disable_tagged_filenames: newOption("checkbox", false, "Disable Tagged Filenames", "Remove the tag information from post filenames and only leave the original md5 hash. <tiphead>Note</tiphead>For logged in users with their account's \"disable tagged filenames\" setting set to \"yes\", this option must be enabled for consistent behavior on hidden posts. <br><br>For logged in users with their account's \"disable tagged filenames\" setting set to \"no\" and logged out users, this option can be enabled to remove the tags from filenames without having to use an account setting."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
 			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"load more\" button is clicked. <tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu. <tiphead>Tip</tiphead>The \"new tab/window\" and \"fixed paginator\" options can provide additional customization for endless pages.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
 			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and add them to the new page until the desired number of thumbnails is reached. <tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
@@ -356,7 +358,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			hide_upload_notice: newOption("checkbox", false, "Hide Upload Guide Notice", "Hide the Danbooru upload guide notice."),
 			hide_hidden_notice: newOption("checkbox", false, "Hide Hidden Posts Notice", "Hide the Danbooru hidden posts notice."),
 			image_swap_mode: newOption("dropdown", "load", "Image Swap Mode", "Set how swapping between the sample and original image is done.<tipdesc>Load First:</tipdesc> Display the image being swapped in after it has finished downloading. <tipdesc>View While Loading:</tipdesc> Immediately display the image being swapped in while it is downloading.", {txtOptions:["Load First (Default):load", "View While Loading:view"]}),
-			search_tag_scrollbars: newOption("dropdown", 0, "Search Tag Scrollbars", "Limit the length of the sidebar tag list for the search listing by restricting it to a set height in pixels. When the list exceeds the set height, a scrollbar will be added to allow the rest of the list to be viewed.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option. This behavior can be changed with the \"override sample setting\" option under the preferences tab."),
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the \"hide upgrade notice\", \"hide sign up notice\", and/or \"hide TOS notice\" options, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
@@ -371,11 +372,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"remove tag headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			post_tag_titles: newOption("checkbox", false, "Post Tag Titles", "Change the page titles for posts to a full list of the post tags."),
 			quick_search: newOption("dropdown", "disabled", "Quick Search", "Add a new search box to the upper right corner of the window viewport that allows searching through the current thumbnails for specific posts. <tipdesc>Fade:</tipdesc> Fade all posts that don't match in the thumbnail listing. <tipdesc>Remove:</tipdesc> Remove all posts that don't match from the thumbnail listing. <tiphead>Directions</tiphead>Please read the \"thumbnail matching rules\" section under the help tab for information about creating searches. <br><br>The search starts minimized in the upper right corner. Left clicking the main icon will open and close the search. Right clicking the main icon will completely reset the search. Holding down shift while left clicking the main icon will toggle an active search's pinned status. <br><br>While open, the search can be entered/updated in the search box and the pinned status can be toggled by clicking the pushpin icon. If no changes are made to an active search, submitting it a second time will reset the quick search. <tiphead>Notes</tiphead>Options labeled with \"pinned\" will make searches default to being pinned. <br><br>A pinned search will persist across other pages in the same browsing session for that tab until it ends or the search is unpinned. <br><br>When not set to disabled, the quick search can be opened by using the \"F\" hotkey. Additionally, an active search can be reset by using \"Shift + F\". Pressing \"Escape\" while the quick search is open will close it.", {txtOptions:["Disabled:disabled", "Fade:fade", "Fade (Pinned):fade pinned", "Remove:remove", "Remove (Pinned):remove pinned"]}),
-			disable_tagged_filenames: newOption("checkbox", false, "Disable Tagged Filenames", "Remove the tag information from post filenames and only leave the original md5 hash. <tiphead>Note</tiphead>For logged in users with their account's \"disable tagged filenames\" setting set to \"yes\", this option must be enabled for consistent behavior on hidden posts. <br><br>For logged in users with their account's \"disable tagged filenames\" setting set to \"no\" and logged out users, this option can be enabled to remove the tags from filenames without having to use an account setting."),
 			remove_tag_headers: newOption("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
 			resize_link_style: newOption("dropdown", "full", "Resize Link Style", "Set how the resize links in the post sidebar options section will display. <tipdesc>Full:</tipdesc> Show the \"resize to window\", \"resize to window width\", and \"resize to window height\" links on separate lines. <tipdesc>Minimal:</tipdesc> Show the \"resize to window\" (W&H), \"resize to window width\" (W), and \"resize to window height\" (H) links on one line.", {txtOptions:["Full:full", "Minimal:minimal"]}),
-			script_blacklisted_tags: "",
 			search_add: newOption("dropdown", "disabled", "Search Add", "Modify the sidebar tag list by adding, removing, or replacing links in the sidebar tag list that modify the current search's tags. <tipdesc>Remove:</tipdesc> Remove any preexisting \"+\" and \"&ndash;\" links. <tipdesc>Link:</tipdesc> Add \"+\" and \"&ndash;\" links to modified versions of the current search that include or exclude their respective tags. <tipdesc>Toggle:</tipdesc> Add toggle links that modify the search box with their respective tags. Clicking a toggle link will switch between a tag being included (+), excluded (&ndash;), potentially included among other tags (~), and removed (&raquo;). Right clicking a toggle link will immediately remove its tag. If a tag already exists in the search box or gets entered/removed through alternative means, the toggle link will automatically update to reflect the tag's current status. <tiphead>Note</tiphead>The remove option is intended for users above the basic user level that want to remove the links. For users that can't normally see the links and do not wish to see them, this setting should be set to disabled.", {txtOptions:["Disabled:disabled", "Remove:remove", "Link:link", "Toggle:toggle"]}),
+			search_tag_scrollbars: newOption("dropdown", 0, "Search Tag Scrollbars", "Limit the length of the sidebar tag list for the search listing by restricting it to a set height in pixels. When the list exceeds the set height, a scrollbar will be added to allow the rest of the list to be viewed.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			show_banned: newOption("checkbox", false, "Show Banned", "Display all banned posts in the search, pool, popular, favorites, comments, and favorite group listings."),
 			show_deleted: newOption("checkbox", false, "Show Deleted", "Display all deleted posts in the search, pool, popular, favorites, and favorite group listings. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"deleted post filter\" set to no and \"show deleted children\" set to yes in order to function properly and minimize connections to Danbooru."),
 			show_loli: newOption("checkbox", false, "Show Loli", "Display loli posts in the search, pool, popular, favorites, comments, and favorite group listings."),
@@ -383,16 +383,18 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			show_shota: newOption("checkbox", false, "Show Shota", "Display shota posts in the search, pool, popular, favorites, comments, and favorite group listings."),
 			show_toddlercon: newOption("checkbox", false, "Show Toddlercon", "Display toddlercon posts in the search, pool, popular, favorites, comments, and favorite group listings."),
 			single_color_borders: newOption("checkbox", false, "Single Color Borders", "Only use one color for each thumbnail border."),
+			thumb_cache_limit: newOption("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<tiphead>Note</tiphead>No actual thumbnails are cached. Only filename information used to speed up the display of hidden thumbnails is stored. Every 1000 entries is approximately equal to 0.1 megabytes of space.", {txtOptions:["Disabled:0"], numList:[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000]}),
 			thumb_info: newOption("dropdown", "disabled", "Thumbnail Info", "Display the score (&#x2605;), favorite count (&hearts;), and rating (S, Q, or E) for a post with its thumbnail. <tipdesc>Below:</tipdesc> Display the extra information below thumbnails. <tipdesc>Hover:</tipdesc> Display the extra information upon hovering over a thumbnail's area. <tiphead>Note</tiphead>Extra information will not be added to the thumbnails in the comments listing since the score and rating are already visible there. Instead, the number of favorites will be added next to the existing score display.", {txtOptions:["Disabled:disabled", "Below:below", "Hover:hover"]}),
 			thumbnail_count: newOption("dropdown", 0, "Thumbnail Count", "Change the number of thumbnails that display in the search and favorites listings.", {txtOptions:["Disabled:0"], numRange:[1,200]}),
+			thumbnail_count_default: newOption("dropdown", 20, "Thumbnail Count Default", "Change the number of thumbnails that BBB should expect Danbooru to return per a page.<tiphead>Note</tiphead>This option only affects logged in users and should only be changed from 20 by users <b>above the basic account level that have changed their account setting for posts per page</b>.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
 			track_new: newOption("checkbox", false, "Track New Posts", "Add a menu option titled \"new\" to the posts section submenu (between \"listing\" and \"upload\") that links to a customized search focused on keeping track of new posts.<tiphead>Note</tiphead>While browsing the new posts, the current page of posts is also tracked. If the new post listing is left, clicking the \"new\" link later on will attempt to pull up the posts where browsing was left off at.<tiphead>Tip</tiphead>If you would like to bookmark the new post listing, drag and drop the link to your bookmarks or right click it and bookmark/copy the location from the context menu."),
+			video_volume: newOption("dropdown", "disabled", "Video Volume", "Set the default volume of videos or remember your volume settings across videos. <tipdesc>Remember:</tipdesc> Set the video to the last volume level and muted status used. <tipdesc>Muted:</tipdesc> Always set the video volume to muted. <tipdesc>5% - 100%:</tipdesc> Always set the video volume level to the specified percent. <tiphead>Note</tiphead>This option can not control the volume of flash videos.", {txtOptions:["Disabled:disabled", "Remember:remember", "Muted:muted", "5%:0.05", "10%:0.1", "15%:0.15", "20%:0.2", "25%:0.25", "30%:0.30", "35%:0.35", "40%:0.4", "45%:0.45", "50%:0.5", "55%:0.55", "60%:0.6", "65%:0.65", "70%:0.7", "75%:0.75", "80%:0.8", "85%:0.85", "90%:0.9", "95%:0.95", "100%:1"]}),
+			collapse_sidebar_data: {post: {}, thumb: {}},
+			script_blacklisted_tags: "",
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"], ["status:banned", true, "#000000", "solid"]),
-			thumb_cache_limit: newOption("dropdown", 5000, "Thumbnail Info Cache Limit", "Limit the number of thumbnail information entries cached in the browser.<tiphead>Note</tiphead>No actual thumbnails are cached. Only filename information used to speed up the display of hidden thumbnails is stored. Every 1000 entries is approximately equal to 0.1 megabytes of space.", {txtOptions:["Disabled:0"], numList:[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000]}),
-			collapse_sidebar_data: {post: {}, thumb: {}},
 			track_new_data: {viewed: 0, viewing: 1},
-			video_volume_data: {level: 1, muted: false},
-			video_volume: newOption("dropdown", "disabled", "Video Volume", "Set the default volume of videos or remember your volume settings across videos. <tipdesc>Remember:</tipdesc> Set the video to the last volume level and muted status used. <tipdesc>Muted:</tipdesc> Always set the video volume to muted. <tipdesc>5% - 100%:</tipdesc> Always set the video volume level to the specified percent. <tiphead>Note</tiphead>This option can not control the volume of flash videos.", {txtOptions:["Disabled:disabled", "Remember:remember", "Muted:muted", "5%:0.05", "10%:0.1", "15%:0.15", "20%:0.2", "25%:0.25", "30%:0.30", "35%:0.35", "40%:0.4", "45%:0.45", "50%:0.5", "55%:0.55", "60%:0.6", "65%:0.65", "70%:0.7", "75%:0.75", "80%:0.8", "85%:0.85", "90%:0.9", "95%:0.95", "100%:1"]})
+			video_volume_data: {level: 1, muted: false}
 		},
 		quick_search: "",
 		search_add: {
@@ -401,7 +403,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			old: ""
 		},
 		sections: { // Setting sections and ordering.
-			blacklist_options: newSection("general", ["blacklist_session_toggle", "blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars", "blacklist_video_playback"], "Options"),
+			blacklist_options: newSection("general", ["blacklist_session_toggle", "blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars", "blacklist_video_playback", "blacklist_ignore_fav"], "Options"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes", "video_volume"], "Post Control"),
@@ -410,7 +412,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
 			misc_layout: newSection("general", ["fixed_paginator"], "Misc."),
-			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumb_cache_limit"], "Script Settings"),
+			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumbnail_count_default", "thumb_cache_limit"], "Script Settings"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 		},
@@ -445,6 +447,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var blacklist_post_display = bbb.user.blacklist_post_display;
 	var blacklist_thumb_mark = bbb.user.blacklist_thumb_mark;
 	var blacklist_highlight_color = bbb.user.blacklist_highlight_color;
+	var blacklist_ignore_fav = bbb.user.blacklist_ignore_fav;
 	var blacklist_add_bars = bbb.user.blacklist_add_bars;
 	var blacklist_thumb_controls = bbb.user.blacklist_thumb_controls;
 	var blacklist_smart_view = bbb.user.blacklist_smart_view;
@@ -492,7 +495,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var search_add = bbb.user.search_add;
 	var search_tag_scrollbars = bbb.user.search_tag_scrollbars;
 	var thumbnail_count = bbb.user.thumbnail_count;
-	var thumbnail_count_default = 20; // Number of thumbnails BBB should expect Danbooru to return by default.
+	var thumbnail_count_default = (isLoggedIn() ? bbb.user.thumbnail_count_default : 20);
 	var thumb_cache_limit = bbb.user.thumb_cache_limit;
 
 	// Post
@@ -550,6 +553,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	trackNew();
 
 	injectSettings();
+
+	accountUpdateWatch();
 
 	modifyPage();
 
@@ -1210,6 +1215,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fetchPages(url, "hidden", optArg);
 			bbbStatus("hidden", "new");
 		}
+		else if (mode === "account_check") {
+			url = "/users/" + optArg + "/edit";
+
+			fetchPages(url, "account_check");
+		}
 	}
 
 	function fetchPages(url, mode, optArg, session, retries) {
@@ -1255,6 +1265,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 							endlessXMLPageHandler(docEl);
 							bbbStatus("posts", "done");
 						}
+						else if (mode === "account_check")
+							accountUpdateHandler(docEl);
 					}
 					else if (xmlhttp.status !== 0) {
 						if (xmlRetries < 1) {
@@ -1279,6 +1291,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 							}
 							else if (mode === "paginator")
 								msg = "Error updating paginator";
+							else if (mode === "account_check")
+								msg = "Error checking account settings";
 
 							var noticeMsg = bbbNotice(msg + ' (HTML Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
 
@@ -1444,6 +1458,19 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		}
 	}
 
+	function accountUpdateHandler(docEl) {
+		// Check the user's settings page for changes and update BBB settings as needed.
+		var perPageInput = docEl.querySelector("#user_per_page option[selected]");
+		var perPage = Number((perPageInput ? perPageInput.value : 20));
+
+		if (thumbnail_count_default !== perPage) {
+			updateSettings("thumbnail_count_default", perPage);
+			bbbNotice("Your \"thumbnail count default\" BBB setting has been automatically changed to \"" + perPage + "\" to match your Danbooru account settings.", 0);
+		}
+
+		createCookie("bbb_acc_check", 0, -1);
+	}
+
 	function isThere(url) {
 		// Checks if file exists. Thanks to some random forum!
 		var req = new XMLHttpRequest(); // XMLHttpRequest object.
@@ -1472,6 +1499,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var directLink = getId("image-resize-link", target) || target.querySelector("#post-information ul li a[href^='/data/']");
 		var otherInfo = getMeta("twitter:image", target) || getMeta("og:image", target);
 		var flags = imgContainer.getAttribute("data-flags");
+		var dataPath = ((dataInfo || directLink || otherInfo || "").indexOf("/cached/") > -1 ? "/cached/data/" : "/data/");
 		var infoValues; // If/else variable.
 
 		var imgInfo = {
@@ -1486,9 +1514,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
 			has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
 			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent")[0]),
+			fav_string: getMeta("favorites", docEl),
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
 			rating: imgContainer.getAttribute("data-rating"),
 			score: Number(imgContainer.getAttribute("data-score")),
+			source: imgContainer.getAttribute("data-source"),
 			tag_string: imgContainer.getAttribute("data-tags"),
 			tag_string_artist: scrapePostTags("artist", target),
 			tag_string_character: scrapePostTags("character", target),
@@ -1556,15 +1586,15 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			imgInfo.has_large = (!isAnimatedImg && (isBigImg || isUgoira) ? true : false);
 			imgInfo.md5 = md5;
 			imgInfo.file_ext = ext;
-			imgInfo.file_url = "/data/" + filenameTags + md5 + "." + ext;
+			imgInfo.file_url = dataPath + filenameTags + md5 + "." + ext;
 			imgInfo.preview_file_url = (!imgInfo.image_height || ext === "swf" ? "/images/download-preview.png" : "/data/preview/" + md5 + ".jpg");
 
 			if (isUgoira)
-				imgInfo.large_file_url = "/data/sample/" + filenameTags + "sample-" + md5 + ".webm";
+				imgInfo.large_file_url = dataPath + "sample/" + filenameTags + "sample-" + md5 + ".webm";
 			else if (imgInfo.has_large)
-				imgInfo.large_file_url = "/data/sample/" + filenameTags + "sample-" + md5 + ".jpg";
+				imgInfo.large_file_url = dataPath + "sample/" + filenameTags + "sample-" + md5 + ".jpg";
 			else
-				imgInfo.large_file_url = "/data/" + filenameTags + md5 + "." + ext;
+				imgInfo.large_file_url = dataPath + filenameTags + md5 + "." + ext;
 		}
 		else if (otherInfo === "/images/download-preview.png")
 			imgInfo.preview_file_url = "/images/download-preview.png";
@@ -1620,9 +1650,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fav_count: Number(post.getAttribute("data-fav-count")),
 			has_children: (post.getAttribute("data-has-children") === "true" ? true : false),
 			has_active_children: post.bbbHasClass("post-status-has-children"), // Assumption. Basically a flag for the children class.
+			fav_string: (post.getAttribute("data-is-favorited") === "true" ? "fav:" + getMeta("current-user-id") : ""), // Faked since thumbnails don't provide the full list of favorites.
 			parent_id: (post.getAttribute("data-parent-id") ? Number(post.getAttribute("data-parent-id")) : null),
 			rating: post.getAttribute("data-rating"),
 			score: Number(post.getAttribute("data-score")),
+			source: post.getAttribute("data-source"),
 			tag_string: post.getAttribute("data-tags"),
 			pool_string: post.getAttribute("data-pools"),
 			uploader_name: post.getAttribute("data-uploader"),
@@ -2088,7 +2120,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses coupled with percent signs:<ul><li><b>(% ~tag1 ~tag2 %) (% ~tag3 ~tag3 %)</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 (% tag2, tag3 tag4 %)</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -(% tag2 tag3 %)</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~(% tag3 tag4 %)</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses coupled with percent signs:<ul><li><b>(% ~tag1 ~tag2 %) (% ~tag3 ~tag3 %)</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 (% tag2, tag3 tag4 %)</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -(% tag2 tag3 %)</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~(% tag3 tag4 %)</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
@@ -3180,8 +3212,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		bbb.settings.changed = {};
 
-		// Remove the no settings cookie so that it can display again.
-		createCookie("bbb_no_settings", 0, -1);
+		// Remove the no settings cookie so that it can display again and signal an account settings check for brand new settings.
+		if (getCookie().bbb_no_settings) {
+			createCookie("bbb_no_settings", 0, -1);
+			createCookie("bbb_acc_check", 1);
+		}
 
 		saveData("bbb_settings", JSON.stringify(bbb.user));
 	}
@@ -3298,6 +3333,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				case "7.2.3":
 				case "7.2.4":
 				case "7.2.5":
+				case "7.3":
 					break;
 			}
 
@@ -4714,18 +4750,19 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					var cacheExt = cacheValues[1];
 					var fileDesc = (disable_tagged_filenames ? "" : postFileUrlDesc(postInfo));
 					var isUgoira = (cacheExt === "zip" && /(?:^|\s)ugoira(?:$|\s)/.test(postInfo.tag_string));
+					var dataPath = (postInfo.id <= 1000000 ? "/cached/data/" : "/data/");
 
 					postInfo.md5 = cacheMd5;
 					postInfo.file_ext = cacheExt;
 					postInfo.preview_file_url = (!postInfo.image_height || cacheExt === "swf" ? "/images/download-preview.png" : "/data/preview/" + cacheMd5 + ".jpg");
-					postInfo.file_url = "/data/" + fileDesc + cacheName;
+					postInfo.file_url = dataPath + fileDesc + cacheName;
 
 					if (isUgoira)
-						postInfo.large_file_url = "/data/sample/" + fileDesc + "sample-" + cacheMd5 + ".webm";
+						postInfo.large_file_url = dataPath + "sample/" + fileDesc + "sample-" + cacheMd5 + ".webm";
 					else if (postInfo.has_large)
-						postInfo.large_file_url = "/data/sample/" + fileDesc + "sample-" + cacheMd5 + ".jpg";
+						postInfo.large_file_url = dataPath + "sample/" + fileDesc + "sample-" + cacheMd5 + ".jpg";
 					else
-						postInfo.large_file_url = "/data/" + fileDesc + cacheName;
+						postInfo.large_file_url = dataPath + fileDesc + cacheName;
 				}
 			}
 			else // Mark hidden img for fixing.
@@ -4746,7 +4783,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function createThumbHTML(postInfo, query) {
 		// Create a thumbnail HTML string.
-		return '<article class="post-preview' + postInfo.thumb_class + '" id="post_' + postInfo.id + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-flags="' + postInfo.flags + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-score="' + postInfo.score + '" data-fav-count="' + postInfo.fav_count + '" data-approver-id="' + postInfo.approver_id + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '"><a href="/posts/' + postInfo.id + query + '"><img src="' + postInfo.preview_img_src + '" alt="' + postInfo.tag_string + '"></a></article>';
+		return '<article class="post-preview' + postInfo.thumb_class + '" id="post_' + postInfo.id + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-flags="' + postInfo.flags + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-score="' + postInfo.score + '" data-fav-count="' + postInfo.fav_count + '" data-approver-id="' + postInfo.approver_id + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '" data-source="' + postInfo.source + '" data-is-favorited="' + postInfo.is_favorited + '"><a href="/posts/' + postInfo.id + query + '"><img src="' + postInfo.preview_img_src + '" alt="' + postInfo.tag_string + '"></a></article>';
 	}
 
 	function createThumb(postInfo, query) {
@@ -5941,17 +5978,19 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		if (typeof(matchList) === "undefined") {
 			matchList = bbb.blacklist.match_list[id] = {count: undefined, matches: [], override: undefined};
 
-			for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
-				var entry = bbb.blacklist.entries[i];
+			if (!blacklist_ignore_fav || el.bbbInfo("is-favorited") !== "true") {
+				for (var i = 0, il = bbb.blacklist.entries.length; i < il; i++) {
+					var entry = bbb.blacklist.entries[i];
 
-				if (thumbSearchMatch(el, entry.search)) {
-					if (entry.active)
-						matchList.count = ++matchList.count || 1;
-					else
-						matchList.count = matchList.count || 0;
+					if (thumbSearchMatch(el, entry.search)) {
+						if (entry.active)
+							matchList.count = ++matchList.count || 1;
+						else
+							matchList.count = matchList.count || 0;
 
-					matchList.matches.push(entry);
-					entry.matches.push(id);
+						matchList.matches.push(entry);
+						entry.matches.push(id);
+					}
 				}
 			}
 
@@ -6273,6 +6312,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Missing API/data fixes.
 		postInfo.has_sound = /(?:^|\s)(?:video|flash)_with_sound(?:$|\s)/.test(postInfo.tag_string);
 		postInfo.flags = postFlags(postInfo);
+		postInfo.is_favorited = new RegExp("(?:^|\\s)fav:" + getMeta("current-user-id") + "(?:$|\\s)").test(postInfo.fav_string);
 
 		// Custom BBB properties.
 		postInfo.file_url_desc = postFileUrlDesc(postInfo);
@@ -6827,10 +6867,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var pools = " " + (/pool:\d+/.test(postInfo.pool_string) && !/pool:(collection|series)/.test(postInfo.pool_string) ? postInfo.pool_string + " pool:inactive" : postInfo.pool_string);
 			var parent = (postInfo.parent_id ? " parent:" + postInfo.parent_id : "");
 			var child = (postInfo.has_children === true ? " child:true" : "");
+			var isFav = " isfav:" + postInfo.is_favorited;
 
 			postSearchInfo = {
 				tags: postInfo.tag_string.bbbSpacePad(),
-				metatags:(rating + status + user + pools + parent + child).bbbSpacePad(),
+				metatags:(rating + status + user + pools + parent + child + isFav).bbbSpacePad(),
 				score: postInfo.score,
 				favcount: postInfo.fav_count,
 				id: postInfo.id,
@@ -9029,6 +9070,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return "topic";
 		else if (path.indexOf("/explore/posts/intro") === 0)
 			return "intro";
+		else if (path.indexOf("/session/new") === 0)
+			return "signin";
+		else if (/\/users\/\d+\/edit/.test(path))
+			return "settings";
 		else
 			return undefined;
 	}
@@ -9119,6 +9164,25 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		}
 
 		return setting;
+	}
+
+	function accountUpdateWatch() {
+		// Signal a Danbooru account setting check upon signing in or submitting settings. Check the settings upon the next page loading.
+		if (gLoc === "signin" || gLoc === "settings") {
+			var submit = document.querySelector("input[type=submit][name=commit]");
+
+			submit.addEventListener("click", function() {
+				createCookie("bbb_acc_check", 1);
+			}, false);
+		}
+		else if (getCookie().bbb_acc_check) {
+			var userId = getMeta("current-user-id");
+
+			if (userId !== "")
+				searchPages("account_check", userId);
+			else
+				createCookie("bbb_acc_check", 0, -1);
+		}
 	}
 
 	function safebPostTest(postObject) {
@@ -9461,7 +9525,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function eraseSettingDialog() {
 		// Open a dialog box for erasing various BBB information.
 		var options = [
-			{text: "Settings", func: function() { deleteData("bbb_settings"); }},
+			{text: "Settings", func: function() { deleteData("bbb_settings"); removeMenu(); }},
 			{text: "Thumbnail Info Cache", func: function() { deleteData("bbb_thumb_cache"); }},
 			{text: "All Information", func: function() { eraseSettings(); removeMenu(); location.reload(); }}
 		];
@@ -9893,7 +9957,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else {
 			var tagName = tag.split(":", 1)[0].bbbSpaceClean();
 
-			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating" || tagName === "parent" || tagName === "child")
+			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating" || tagName === "parent" || tagName === "child" || tagName === "isfav")
 				return true;
 			else
 				return false;
