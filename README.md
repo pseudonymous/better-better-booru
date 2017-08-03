@@ -12,7 +12,7 @@ Links
 ---
 Features
 --------
-* Allows the viewing of hidden/censored tags and automatic control of the number of thumbnails per a page with a basic account or no account.
+* Allows the automatic control of the number of thumbnails per a page with a basic account or no account.
 * Endless pages support for various thumbnail listings with several customization options.
 * Multiple options and features for improved blacklist functionality:
   * Session toggle - Make individually disabled blacklist entries persist from page to page.
