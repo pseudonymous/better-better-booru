@@ -1,5 +1,7 @@
 Changelog
 ----------
+* Version 7.4.1:
+  * Removed the "show loli", "show shota", "shot toddlercon", "show banned", and "thumbnail info cache limit" options in response to changes on Danbooru that render them useless.
 * Version 7.4:
   * Added an "ignore favorites" blacklist option for excluding favorited posts from the blacklist.
   * Added a "thumbnail count default" option for compatibility with Danbooru users above the basic account level.

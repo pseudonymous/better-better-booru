@@ -2,8 +2,8 @@
 // @name           better_better_booru
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
-// @description    Several changes to make Danbooru much better. Including the viewing of hidden/censored images on non-upgraded accounts and more.
-// @version        7.4
+// @description    Several changes to make Danbooru much better.
+// @version        7.4.1
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -312,7 +312,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "7.4",
+			bbb_version: "7.4.1",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the \"thumbnail count\" option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
@@ -405,14 +405,14 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		sections: { // Setting sections and ordering.
 			blacklist_options: newSection("general", ["blacklist_session_toggle", "blacklist_post_display", "blacklist_thumb_mark", "blacklist_highlight_color", "blacklist_thumb_controls", "blacklist_smart_view", "blacklist_add_bars", "blacklist_video_playback", "blacklist_ignore_fav"], "Options"),
 			border_options: newSection("general", ["custom_tag_borders", "custom_status_borders", "single_color_borders", "border_width", "border_spacing"], "Options"),
-			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
+			browse: newSection("general", ["show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes", "video_volume"], "Post Control"),
 			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_hidden_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
 			misc_layout: newSection("general", ["fixed_paginator"], "Misc."),
-			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumbnail_count_default", "thumb_cache_limit"], "Script Settings"),
+			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumbnail_count_default"], "Script Settings"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 		},
@@ -434,10 +434,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	// Script variables.
 	// Global
-	var show_loli = bbb.user.show_loli;
-	var show_shota = bbb.user.show_shota;
-	var show_toddlercon = bbb.user.show_toddlercon;
-	var show_banned = bbb.user.show_banned;
+	var show_loli = false;
+	var show_shota = false;
+	var show_toddlercon = false;
+	var show_banned = false;
 	var deleted_shown = (gLoc === "search" && /^(?:any|deleted)$/i.test(getTagVar("status"))); // Check whether deleted posts are shown by default.
 	var show_deleted = deleted_shown || bbb.user.show_deleted;
 	var direct_downloads = bbb.user.direct_downloads;
@@ -3334,6 +3334,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				case "7.2.4":
 				case "7.2.5":
 				case "7.3":
+				case "7.4":
+					if (reason !== "backup")
+						bbbNotice("As of version 7.4.1, the options related to hidden/censored posts have been removed due to Danbooru finally fixing their loopholes.", 0);
 					break;
 			}
 
