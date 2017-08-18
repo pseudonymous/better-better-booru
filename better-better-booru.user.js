@@ -314,7 +314,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		options: { // Setting options and data.
 			bbb_version: "7.4.1",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
-			arrow_nav: newOption("checkbox", false, "Arrow Navigation", "Allow the use of the left and right arrow keys to navigate pages. <tiphead>Note</tiphead>This option has no effect on individual posts."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the \"thumbnail count\" option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
 			blacklist_add_bars: newOption("checkbox", false, "Additional Bars", "Add a blacklist bar to the comment search listing and individually linked comments so that blacklist entries can be toggled as needed."),
@@ -410,7 +409,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_hidden_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
-			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "arrow_nav", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
+			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
 			misc_layout: newSection("general", ["fixed_paginator"], "Misc."),
 			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumbnail_count_default"], "Script Settings"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
@@ -491,7 +490,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var hide_hidden_notice = bbb.user.hide_hidden_notice;
 
 	// Search
-	var arrow_nav = bbb.user.arrow_nav;
 	var search_add = bbb.user.search_add;
 	var search_tag_scrollbars = bbb.user.search_tag_scrollbars;
 	var thumbnail_count = bbb.user.thumbnail_count;
@@ -571,8 +569,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	postLinkQuery();
 
 	postDDL();
-
-	arrowNav();
 
 	fixLimit();
 
@@ -8682,34 +8678,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		}
 		else if (historyHash) // Back/forward. Remove the hash since we're on a new page.
 			sessionStorage.removeItem("bbb_posts_cache");
-	}
-
-	function arrowNav() {
-		// Bind the arrow keys to Danbooru's page navigation.
-		var paginator = getPaginator();
-
-		if (!arrow_nav || (!paginator && gLoc !== "popular")) // If the paginator exists, arrow navigation should be applicable.
-			return;
-
-		// Create the hotkeys for the left and right arrows.
-		createHotkey("37", function() { danbooruNav("prev"); });
-		createHotkey("39", function() { danbooruNav("next"); });
-	}
-
-	function danbooruNav(dir) {
-		// Determine the correct Danbooru page function and use it.
-		if (gLoc === "popular") {
-			if (dir === "prev")
-				Danbooru.PostPopular.nav_prev();
-			else if (dir === "next")
-				Danbooru.PostPopular.nav_next();
-		}
-		else {
-			if (dir === "prev")
-				Danbooru.Paginator.prev_page();
-			else if (dir === "next")
-				Danbooru.Paginator.next_page();
-		}
 	}
 
 	function autohideSidebar() {
