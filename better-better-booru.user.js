@@ -152,8 +152,18 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	};
 
 	Element.prototype.bbbInfo = function(name, value) {
-		// Retrieve or set info in post data attributes.
-		if (typeof(value) !== "undefined")
+		// Retrieve or set info in data attributes.
+		if (this.tagName === "HTML") { // Pseudo document.bbbInfo for retrieved pages.
+			var imgContainer = getId("image-container", this);
+
+			if (typeof(value) !== "undefined" && imgContainer)
+				imgContainer.setAttribute("data-" + name, value);
+			else if (name && imgContainer)
+				return imgContainer.getAttribute("data-" + name);
+			else
+				return scrapePost(this);
+		}
+		else if (typeof(value) !== "undefined")
 			this.setAttribute("data-" + name, value);
 		else if (name)
 			return this.getAttribute("data-" + name);
