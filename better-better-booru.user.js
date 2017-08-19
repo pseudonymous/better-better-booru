@@ -1003,13 +1003,13 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var activePost = bbb.post.info;
 		var numPosts = posts.length;
 		var relationCookie = getCookie()["show-relationship-previews"];
-		var showPreview = (relationCookie === undefined || relationCookie === "1" ? true : false);
+		var showPreview = (relationCookie === undefined || relationCookie === "1");
 		var childSpan = document.createElement("span");
 		var query = "?tags=parent:" + parentId + (show_deleted ? "+status:any" : "") + (thumbnail_count ? "&limit=" + thumbnail_count : "");
 		var thumbs = "";
 		var forceShowDeleted = activePost.is_deleted; // If the parent is deleted or the active post is deleted, all deleted posts are shown.
 		var parentDeleted = false;
-		var isSafebooru = (location.host.indexOf("safebooru") > -1 ? true : false);
+		var isSafebooru = (location.host.indexOf("safebooru") > -1);
 		var target, previewLinkId, previewLinkTxt, previewId, classes, msg, displayStyle; // If/else variables.
 		var i, post; // Loop variables.
 
@@ -1518,7 +1518,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			id: Number(imgContainer.getAttribute("data-id")),
 			pixiv_id: Number(imgContainer.getAttribute("data-pixiv-id")) || null,
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
-			has_children: (imgContainer.getAttribute("data-has-children") === "true" ? true : false),
+			has_children: (imgContainer.getAttribute("data-has-children") === "true"),
 			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent")[0]),
 			fav_string: getMeta("favorites", docEl),
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
@@ -1533,10 +1533,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			pool_string: imgContainer.getAttribute("data-pools"),
 			uploader_name: imgContainer.getAttribute("data-uploader"),
 			approver_id: imgContainer.getAttribute("data-approver-id") || null,
-			is_deleted: (flags.indexOf("deleted") < 0 ? false : true),
-			is_flagged: (flags.indexOf("flagged") < 0 ? false : true),
-			is_pending: (flags.indexOf("pending") < 0 ? false : true),
-			is_banned: (flags.indexOf("banned") < 0 ? false : true),
+			is_deleted: (flags.indexOf("deleted") > -1),
+			is_flagged: (flags.indexOf("flagged") > -1),
+			is_pending: (flags.indexOf("pending") > -1),
+			is_banned: (flags.indexOf("banned") > -1),
 			image_height: Number(imgContainer.getAttribute("data-height")) || null,
 			image_width: Number(imgContainer.getAttribute("data-width")) || null
 		};
@@ -1654,7 +1654,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			id: Number(post.getAttribute("data-id")),
 			pixiv_id: Number(post.getAttribute("data-pixiv-id")) || null,
 			fav_count: Number(post.getAttribute("data-fav-count")),
-			has_children: (post.getAttribute("data-has-children") === "true" ? true : false),
+			has_children: (post.getAttribute("data-has-children") === "true"),
 			has_active_children: post.bbbHasClass("post-status-has-children"), // Assumption. Basically a flag for the children class.
 			fav_string: (post.getAttribute("data-is-favorited") === "true" ? "fav:" + getMeta("current-user-id") : ""), // Faked since thumbnails don't provide the full list of favorites.
 			parent_id: (post.getAttribute("data-parent-id") ? Number(post.getAttribute("data-parent-id")) : null),
@@ -1665,10 +1665,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			pool_string: post.getAttribute("data-pools"),
 			uploader_name: post.getAttribute("data-uploader"),
 			approver_id: post.getAttribute("data-approver-id") || null,
-			is_deleted: (flags.indexOf("deleted") < 0 ? false : true),
-			is_flagged: (flags.indexOf("flagged") < 0 ? false : true),
-			is_pending: (flags.indexOf("pending") < 0 ? false : true),
-			is_banned: (flags.indexOf("banned") < 0 ? false : true),
+			is_deleted: (flags.indexOf("deleted") > -1),
+			is_flagged: (flags.indexOf("flagged") > -1),
+			is_pending: (flags.indexOf("pending") > -1),
+			is_banned: (flags.indexOf("banned") > -1),
 			image_height: Number(post.getAttribute("data-height")) || null,
 			image_width: Number(post.getAttribute("data-width")) || null
 		};
@@ -1677,7 +1677,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var isAnimatedImg = /(?:^|\s)animated_(?:gif|png)(?:$|\s)/.test(imgInfo.tag_string);
 		var isBigImg = (imgInfo.image_width > 850 && imgInfo.file_ext !== "swf" && imgInfo.file_ext !== "webm" && imgInfo.file_ext !== "mp4");
 
-		imgInfo.has_large = (!isAnimatedImg && (isBigImg || isUgoira) ? true : false);
+		imgInfo.has_large = (!isAnimatedImg && (isBigImg || isUgoira));
 
 		return formatInfo(imgInfo);
 	}
@@ -3615,7 +3615,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		if (!image)
 			return;
 
-		image.bbbOverrideClick(function(event) {
+		image.bbbOverrideClick(function() {
 			if (!Danbooru.Note.TranslationMode.active && !bbb.drag_scroll.moved)
 				Danbooru.Note.Box.toggle_all();
 		});
@@ -3768,7 +3768,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var image = document.getElementById("image");
 
 		if (postInfo.has_large && image) {
-			image.bbbOverrideClick(function(event) {
+			image.bbbOverrideClick(function() {
 				if (!Danbooru.Note.TranslationMode.active && !bbb.drag_scroll.moved)
 						swapPost();
 			});
@@ -4152,7 +4152,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var fixParent = false;
 		var fixChild = false;
 		var relationCookie = getCookie()["show-relationship-previews"];
-		var showPreview = (relationCookie === undefined || relationCookie === "1" ? true : false);
+		var showPreview = (relationCookie === undefined || relationCookie === "1");
 		var parentLink = document.getElementById("has-children-relationship-preview-link");
 		var childLink = document.getElementById("has-parent-relationship-preview-link");
 		var thumbCount, deletedCount; // If/else variable.
@@ -5529,7 +5529,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				page: newPage,
 				page_num: [pageNum],
 				paginator: paginator,
-				ready: (!endless_fill || numNewPosts === limit || lastPage ? true : false)
+				ready: (!endless_fill || numNewPosts === limit || lastPage)
 			};
 
 			bbb.endless.pages.push(newPageObject);
@@ -5771,7 +5771,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			if (blacklistSearch[0]) {
 				var entryHash = blacklistTag.bbbHash();
-				var entryDisabled = (blacklistDisabled || (blacklist_session_toggle && cookies["b" + entryHash] === "1") ? true : false);
+				var entryDisabled = (blacklistDisabled || (blacklist_session_toggle && cookies["b" + entryHash] === "1"));
 				var newEntry = {active: !entryDisabled, tags:blacklistTag, search:blacklistSearch, matches: [], index: i, hash: entryHash};
 
 				bbb.blacklist.entries.push(newEntry);
