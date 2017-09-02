@@ -338,6 +338,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			direct_downloads: newOption("checkbox", false, "Direct Downloads", "Allow download managers to download the posts displayed in the favorites, search, pool, popular, and favorite group listings. <tiphead>Note</tiphead>Posts filtered out by the blacklist or quick search will not provide direct downloads until the blacklist entry or quick search affecting them is disabled."),
 			disable_embedded_notes: newOption("checkbox", false, "Disable Embedded Notes", "Force posts with embedded notes to display with the original note styling. <tiphead>Notes</tiphead>While notes will display with the original styling, the actual post settings will still have embedded notes set to enabled. <br><br>Due to the actual settings, users that may wish to edit notes will have to edit the notes with the embedded note styling so that nothing ends up breaking in unexpected ways. When toggling translation mode or opening the edit note dialog box, the notes will automatically revert back to the original embedded notes until the page is reloaded. <br><br>Note resizing and moving will be allowed without the reversion to embedded notes since this ability is sometimes necessary for badly positioned notes. Any note resizing or moving done as a part of intended note editing should be done <b>after</b> triggering the embedded note reversion since any changes before it will be lost."),
 			disable_tagged_filenames: newOption("checkbox", false, "Disable Tagged Filenames", "Remove the tag information from post filenames and only leave the original md5 hash. <tiphead>Note</tiphead>For logged in users with their account's \"disable tagged filenames\" setting set to \"yes\", this option must be enabled for consistent behavior on hidden posts. <br><br>For logged in users with their account's \"disable tagged filenames\" setting set to \"no\" and logged out users, this option can be enabled to remove the tags from filenames without having to use an account setting."),
+			enable_menu_autocomplete: newOption("checkbox", true, "Enable Menu Autocomplete", "Allow the BBB menu to use Danbooru's tag autocomplete."),
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
 			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"load more\" button is clicked. <tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu. <tiphead>Tip</tiphead>The \"new tab/window\" and \"fixed paginator\" options can provide additional customization for endless pages.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
 			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and add them to the new page until the desired number of thumbnails is reached. <tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
@@ -412,7 +413,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
 			misc_layout: newSection("general", ["fixed_paginator"], "Misc."),
-			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumbnail_count_default"], "Script Settings"),
+			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "enable_menu_autocomplete", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumbnail_count_default"], "Script Settings"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
 		},
@@ -470,6 +471,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	var bypass_api = bbb.user.bypass_api;
 	var manage_cookies = bbb.user.manage_cookies;
+	var enable_menu_autocomplete = bbb.user.enable_menu_autocomplete;
 	var enable_status_message = bbb.user.enable_status_message;
 	var resize_link_style = bbb.user.resize_link_style;
 	var override_blacklist = bbb.user.override_blacklist;
@@ -575,6 +577,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	bbbHotkeys();
 
 	endlessInit();
+
+	bbbAutocompleteInit();
 
 	delayMe(formatThumbnails); // Delayed to allow Danbooru to run first.
 
@@ -2353,9 +2357,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			var nameInput = document.createElement("input");
 			nameInput.type = "text";
-			nameInput.value = borderItem.tags;
+			nameInput.value = borderItem.tags + " ";
 			nameInput.addEventListener("change", function() { borderItem.tags = this.value.bbbTagClean(); }, false);
 			nameLabel.appendChild(nameInput);
+			menuAutocomplete(nameInput);
 
 			var nameExpand = document.createElement("a");
 			nameExpand.href = "#";
@@ -2579,9 +2584,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		var blacklistTextarea = bbb.el.menu.blacklistTextarea = document.createElement("textarea");
 		blacklistTextarea.className = "bbb-blacklist-area";
-		blacklistTextarea.value = searchSingleToMulti(bbb.user.script_blacklisted_tags);
+		blacklistTextarea.value = searchSingleToMulti(bbb.user.script_blacklisted_tags) + " \r\n\r\n";
 		blacklistTextarea.addEventListener("change", function() { bbb.user.script_blacklisted_tags = searchMultiToSingle(blacklistTextarea.value); }, false);
 		sectionDiv.appendChild(blacklistTextarea);
+		menuAutocomplete(blacklistTextarea);
 
 		var buttonDiv = document.createElement("div");
 		buttonDiv.className = "bbb-section-options";
@@ -2892,18 +2898,22 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		tagEditBlocker.appendChild(tagEditHeader);
 
 		var tagEditArea = bbb.el.menu.tagEditArea = document.createElement("textarea");
-		tagEditArea.value = searchSingleToMulti(input.value);
+		tagEditArea.value = searchSingleToMulti(input.value) + " \r\n\r\n";
 		tagEditArea.className = "bbb-edit-area";
 		tagEditBlocker.appendChild(tagEditArea);
 
 		var tagEditOk = function() {
 			var tags = searchMultiToSingle(tagEditArea.value);
 
-			input.value = tags;
+			input.value = tags + " ";
+			input.focus();
 			object[prop] = tags;
 		};
 
 		bbbDialog(tagEditBlocker, {ok: tagEditOk, cancel: true});
+		tagEditArea.focus();
+
+		menuAutocomplete(tagEditArea);
 	}
 
 	function adjustMenuHeight() {
@@ -6946,7 +6956,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		for (var i = 0, il = searchStrings.length; i < il; i++)
 			searchStrings[i] = cleanSearchGroups(searchStrings[i]);
 
-		var searchString = searchStrings.join(", ");
+		var searchString = searchStrings.join(", ").bbbTagClean();
 
 		return searchString;
 	}
@@ -7728,103 +7738,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		searchSubmit.style.width = searchSubmit.offsetWidth + "px";
 		searchDiv.bbbRemoveClass("bbb-quick-search-show");
 
-		// Use a simplified copy of Danbooru's autocomplete for the search.
-		if (allowAutocomplete && Danbooru.Autocomplete) {
-			try {
-				var $fields_multiple = $(searchInput);
-
-				var prefixes = "-|~";
-				var metatags = "-status|status|-rating|rating|child|-user|user|-pool|pool";
-
-				$fields_multiple.autocomplete({
-					delay: 100,
-					autoFocus: true,
-					focus: function() { return false; },
-					select: function(event, ui) {
-						var before_caret_text = this.value.substring(0, this.selectionStart);
-						var after_caret_text = this.value.substring(this.selectionStart);
-						var regexp = new RegExp("(" + prefixes + ")?\\S+$", "g");
-
-						this.value = before_caret_text.replace(regexp, "$1" + ui.item.value + " ");
-
-						var original_start = this.selectionStart;
-
-						this.value += after_caret_text;
-						this.selectionStart = this.selectionEnd = original_start;
-
-						return false;
-					},
-					source: function(req, resp) {
-						var before_caret_text = req.term.substring(0, this.element.get(0).selectionStart);
-
-						if (before_caret_text.match(/ $/)) {
-							this.close();
-							return;
-						}
-
-						var term = before_caret_text.match(/\S+/g).pop();
-						var regexp = new RegExp("^(?:" + prefixes + ")(.*)$", "i");
-						var match = term.match(regexp);
-						var metatag;
-
-						if (match)
-							term = match[1];
-
-						if (term === "")
-							return;
-
-						regexp = new RegExp("^(" + metatags + "):(.*)$", "i");
-						match = term.match(regexp);
-
-						if (match) {
-							metatag = match[1].toLowerCase();
-							term = match[2];
-						}
-
-						switch(metatag) {
-							case "status":
-							case "-status":
-							case "rating":
-							case "-rating":
-							case "child":
-								Danbooru.Autocomplete.static_metatag_source(term, resp, metatag);
-								return;
-						}
-
-						if (term === "")
-							return;
-
-						switch(metatag) {
-							case "user":
-							case "-user":
-								Danbooru.Autocomplete.user_source(term, resp, metatag);
-								break;
-							default:
-								Danbooru.Autocomplete.normal_source(term, resp);
-								break;
-						}
-					}
-				});
-
-				$fields_multiple.on("autocompleteselect", function() { Danbooru.autocompleting = true; });
-				$fields_multiple.on("autocompleteclose", function() { setTimeout(function() {Danbooru.autocompleting = false;}, 100); });
-				$fields_multiple.each(function(i, field) { $(field).data("uiAutocomplete")._renderItem = Danbooru.Autocomplete.render_item; });
-
-				// Counter normal autocomplete getting turned back on after submitting an input.
-				document.body.addEventListener("focus", function(event) {
-					var target = event.target;
-
-					if (target.bbbHasClass("ui-autocomplete-input"))
-						target.setAttribute("autocomplete", "off");
-				}, true);
-
-				// Make autocomplete fixed like the quick search.
-				$(searchInput).autocomplete("widget").css("position", "fixed");
-			}
-			catch (error) {
-				bbbNotice("Unexpected error while trying to initialize autocomplete for the quick search. (Error: " + error.message + ")", -1);
-			}
-		}
+		// Set up autocomplete.
+		otherAutocomplete(searchInput);
 
 		// Check if the quick search has been pinned for this session.
 		var pinnedSearch = sessionStorage.getItem("bbb_quick_search");
@@ -9743,6 +9658,133 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			bbb.uId++;
 
 		return "bbbuid" + bbb.uId;
+	}
+
+	function bbbAutocompleteInit() {
+		// Add custom tags to Danbooru's autocomplete and fix other issues.
+		if (!Danbooru.Autocomplete)
+			return;
+
+		try {
+			Danbooru.Autocomplete.static_metatags.parent = ["any", "none"];
+			Danbooru.Autocomplete.static_metatags.isfav = ["true", "false"];
+
+			// Counter normal autocomplete getting turned back on after submitting an input.
+			document.body.addEventListener("focus", function(event) {
+				var target = event.target;
+
+				if (target.bbbHasClass("ui-autocomplete-input"))
+					target.setAttribute("autocomplete", "off");
+			}, true);
+		}
+		catch (error) {
+			bbbNotice("Unexpected error while trying to initialize autocomplete. (Error: " + error.message + ")", -1);
+		}
+
+	}
+
+	function bbbAutocomplete(searchInputs) {
+		// Use a modified copy of Danbooru's autocomplete.
+		try {
+			var $fields_multiple = $(searchInputs);
+
+			var prefixes = "-~";
+			var metatags = "status|rating|parent|child|user|pool|isfav";
+
+			$fields_multiple.autocomplete({
+				delay: 100,
+				autoFocus: true,
+				focus: function() { return false; },
+				select: function(event, ui) {
+					var before_caret_text = this.value.substring(0, this.selectionStart);
+					var after_caret_text = this.value.substring(this.selectionStart);
+					var regexp = new RegExp("([" + prefixes + "]*)\\S+$", "g");
+
+					this.value = before_caret_text.replace(regexp, "$1" + ui.item.value + " ");
+
+					var original_start = this.selectionStart;
+
+					this.value += after_caret_text;
+					this.selectionStart = this.selectionEnd = original_start;
+
+					return false;
+				},
+				source: function(req, resp) {
+					var before_caret_text = req.term.substring(req.term.substring(0, this.element.get(0).selectionStart).lastIndexOf("\n"), this.element.get(0).selectionStart);
+
+					if (before_caret_text.match(/ $/)) {
+						this.close();
+						return;
+					}
+
+					var term = before_caret_text.match(/\S+/g).pop();
+					var regexp = new RegExp("^[" + prefixes + "]*(.*)$", "i");
+					var match = term.match(regexp);
+					var metatag;
+
+					if (match)
+						term = match[1];
+
+					if (term === "")
+						return;
+
+					regexp = new RegExp("^(" + metatags + "):(.*)$", "i");
+					match = term.match(regexp);
+
+					if (match) {
+						metatag = match[1].toLowerCase();
+						term = match[2];
+					}
+
+					switch(metatag) {
+						case "status":
+						case "rating":
+						case "parent":
+						case "child":
+						case "isfav":
+							Danbooru.Autocomplete.static_metatag_source(term, resp, metatag);
+							return;
+					}
+
+					if (term === "")
+						return;
+
+					switch(metatag) {
+						case "user":
+							Danbooru.Autocomplete.user_source(term, resp, metatag);
+							break;
+						default:
+							Danbooru.Autocomplete.normal_source(term, resp);
+							break;
+					}
+				}
+			});
+
+			$fields_multiple.on("autocompleteselect", function() { Danbooru.autocompleting = true; });
+			$fields_multiple.on("autocompleteclose", function() { setTimeout(function() {Danbooru.autocompleting = false;}, 100); });
+			$fields_multiple.each(function(i, field) { $(field).data("uiAutocomplete")._renderItem = Danbooru.Autocomplete.render_item; });
+
+			// Make autocomplete fixed like the quick search and menu and allow it to be on top of inputs if there is more space there.
+			$(searchInputs).autocomplete("widget").css("position", "fixed");
+			$(searchInputs).autocomplete("option", "position", {my: "left top", at: "left bottom", collision: "flip"});
+		}
+		catch (error) {
+			bbbNotice("Unexpected error while trying to initialize autocomplete. (Error: " + error.message + ")", -1);
+		}
+	}
+
+	function menuAutocomplete(searchInputs) {
+		// Use autocomplete on a BBB menu input if allowed by the option.
+		if (enable_menu_autocomplete && Danbooru.Autocomplete)
+			bbbAutocomplete(searchInputs);
+	}
+
+	function otherAutocomplete(searchInputs) {
+		// Use autocomplete on an input outside of the BBB menu if allowed for Danbooru.
+		var allowAutocomplete = (getMeta("enable-auto-complete") === "true");
+
+		if (allowAutocomplete && Danbooru.Autocomplete)
+			bbbAutocomplete(searchInputs);
 	}
 
 } // End of bbbScript.
