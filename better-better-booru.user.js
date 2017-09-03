@@ -373,7 +373,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			post_resize_mode: newOption("dropdown", "width", "Resize Mode", "Choose how to shrink large post content to fit the browser window when initially loading a post.", {txtOptions:["Width (Default):width", "Height:height", "Width & Height:all"]}),
 			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"remove tag headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			post_tag_titles: newOption("checkbox", false, "Post Tag Titles", "Change the page titles for posts to a full list of the post tags."),
-			quick_search: newOption("dropdown", "disabled", "Quick Search", "Add a new search box to the upper right corner of the window viewport that allows searching through the current thumbnails for specific posts. <tipdesc>Fade:</tipdesc> Fade all posts that don't match in the thumbnail listing. <tipdesc>Remove:</tipdesc> Remove all posts that don't match from the thumbnail listing. <tiphead>Directions</tiphead>Please read the \"thumbnail matching rules\" section under the help tab for information about creating searches. <br><br>The search starts minimized in the upper right corner. Left clicking the main icon will open and close the search. Right clicking the main icon will completely reset the search. Holding down shift while left clicking the main icon will toggle an active search's pinned status. <br><br>While open, the search can be entered/updated in the search box and the pinned status can be toggled by clicking the pushpin icon. If no changes are made to an active search, submitting it a second time will reset the quick search. <tiphead>Notes</tiphead>Options labeled with \"pinned\" will make searches default to being pinned. <br><br>A pinned search will persist across other pages in the same browsing session for that tab until it ends or the search is unpinned. <br><br>When not set to disabled, the quick search can be opened by using the \"F\" hotkey. Additionally, an active search can be reset by using \"Shift + F\". Pressing \"Escape\" while the quick search is open will close it.", {txtOptions:["Disabled:disabled", "Fade:fade", "Fade (Pinned):fade pinned", "Remove:remove", "Remove (Pinned):remove pinned"]}),
+			quick_search: newOption("dropdown", "disabled", "Quick Search", "Add a new search box to the upper right corner of the window viewport that allows searching through the current thumbnails for specific posts. <tipdesc>Fade:</tipdesc> Fade all posts that don't match in the thumbnail listing. <tipdesc>Remove:</tipdesc> Remove all posts that don't match from the thumbnail listing. <tiphead>Directions</tiphead>Please read the \"thumbnail matching rules\" section under the help tab for information about creating searches. <br><br>The search starts minimized in the upper right corner. Left clicking the main icon will open and close the search. Right clicking the main icon will completely reset the search. Holding down shift while left clicking the main icon will toggle an active search's pinned status. <br><br>While open, the search can be entered/updated in the search box and the pinned status can be toggled by clicking the pushpin icon. Clicking the negative icon next to the pushpin icon will tell quick search to negate/invert the search being submitted. If no changes are made to an active search, submitting it a second time will reset the quick search. <tiphead>Notes</tiphead>Options labeled with \"pinned\" will make searches default to being pinned. <br><br>A pinned search will persist across other pages in the same browsing session for that tab until it ends or the search is unpinned. <br><br>When not set to disabled, the quick search can be opened by using the \"F\" hotkey. Additionally, an active search can be reset by using \"Shift + F\". Pressing \"Escape\" while the quick search is open will close it.", {txtOptions:["Disabled:disabled", "Fade:fade", "Fade (Pinned):fade pinned", "Remove:remove", "Remove (Pinned):remove pinned"]}),
 			remove_tag_headers: newOption("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
 			resize_link_style: newOption("dropdown", "full", "Resize Link Style", "Set how the resize links in the post sidebar options section will display. <tipdesc>Full:</tipdesc> Show the \"resize to window\", \"resize to window width\", and \"resize to window height\" links on separate lines. <tipdesc>Minimal:</tipdesc> Show the \"resize to window\" (W&H), \"resize to window width\" (W), and \"resize to window height\" (H) links on one line.", {txtOptions:["Full:full", "Minimal:minimal"]}),
 			search_add: newOption("dropdown", "disabled", "Search Add", "Modify the sidebar tag list by adding, removing, or replacing links in the sidebar tag list that modify the current search's tags. <tipdesc>Remove:</tipdesc> Remove any preexisting \"+\" and \"&ndash;\" links. <tipdesc>Link:</tipdesc> Add \"+\" and \"&ndash;\" links to modified versions of the current search that include or exclude their respective tags. <tipdesc>Toggle:</tipdesc> Add toggle links that modify the search box with their respective tags. Clicking a toggle link will switch between a tag being included (+), excluded (&ndash;), potentially included among other tags (~), and removed (&raquo;). Right clicking a toggle link will immediately remove its tag. If a tag already exists in the search box or gets entered/removed through alternative means, the toggle link will automatically update to reflect the tag's current status. <tiphead>Note</tiphead>The remove option is intended for users above the basic user level that want to remove the links. For users that can't normally see the links and do not wish to see them, this setting should be set to disabled.", {txtOptions:["Disabled:disabled", "Remove:remove", "Link:link", "Toggle:toggle"]}),
@@ -397,7 +397,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			track_new_data: {viewed: 0, viewing: 1},
 			video_volume_data: {level: 1, muted: false}
 		},
-		quick_search: "",
+		quick_search: {
+			negated: false,
+			tags: ""
+		},
 		search_add: {
 			active_links: {},
 			links: {},
@@ -2907,11 +2910,13 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			input.value = tags + " ";
 			input.focus();
+			input.setSelectionRange(0, 0);
 			object[prop] = tags;
 		};
 
 		bbbDialog(tagEditBlocker, {ok: tagEditOk, cancel: true});
 		tagEditArea.focus();
+		tagEditArea.setSelectionRange(0, 0);
 
 		menuAutocomplete(tagEditArea);
 	}
@@ -5320,7 +5325,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			endlessQueueCheck();
 		}
 
-		if (quick_search.indexOf("remove") > -1 && bbb.quick_search !== "")
+		if (quick_search.indexOf("remove") > -1 && bbb.quick_search.tags !== "")
 			endlessDelay(1100);
 
 		endlessCheck();
@@ -7217,7 +7222,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		'#bbb-dialog-window .bbb-dialog-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 5px; margin: 0px 5px;}' +
 		'#bbb-dialog-window .bbb-dialog-content-div {padding: 5px; overflow-x: hidden; overflow-y: auto;}' +
 		'#bbb-dialog-window .bbb-dialog-button-div {padding-top: 10px; flex-grow: 0; flex-shrink: 0; overflow: hidden;}' +
-		'#bbb-dialog-window .bbb-edit-area {height: 300px; width: 800px;}';
+		'#bbb-dialog-window .bbb-edit-area {height: 300px; width: 800px;}' +
+		'.ui-autocomplete {z-index: 9004 !important;}';
 
 		// Provide a little extra space for listings that allow thumbnail_count.
 		if (thumbnail_count && (gLoc === "search" || gLoc === "favorites")) {
@@ -7379,8 +7385,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
 			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -285px !important; opacity: 0 !important; overflow: hidden !important; padding: 0px 25px !important; top: 0px !important; z-index: 2001 !important;}' +
 			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; left: 0px !important; opacity: 1 !important; overflow-y: auto !important; padding: 0px 15px !important;}' +
-			'section#content {margin-left: 0px !important;}' +
-			'.ui-autocomplete {z-index: 2002 !important;}';
+			'section#content {margin-left: 0px !important;}';
 		}
 
 		// Tweak the "+" buttom so it works with the autohide and fixed sidebar options.
@@ -7453,14 +7458,16 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			styles += '#bbb-quick-search {position: fixed; top: 0px; right: 0px; z-index: 2001; overflow: auto; padding: 2px; background-color: #FFFFFF; border-bottom: 1px solid #CCCCCC; border-left: 1px solid #CCCCCC; border-bottom-left-radius: 10px;}' +
 			'#bbb-quick-search-form {display: none;}' +
 			'.bbb-quick-search-show #bbb-quick-search-form {display: inline;}' +
-			'#bbb-quick-search-status, #bbb-quick-search-pin {border: none; width: 16px; height: 16px; background-color: transparent; background-repeat: no-repeat; background-color: transparent; background-image: url(\'/images/ui-icons_222222_256x240.png\');}' +
+			'#bbb-quick-search-status, #bbb-quick-search-pin, #bbb-quick-search-negate {border: none; width: 17px; height: 17px; background-color: transparent; background-repeat: no-repeat; background-color: transparent; background-image: url(\'/images/ui-icons_222222_256x240.png\');}' +
 			'#bbb-quick-search-status {background-position: -160px -112px;}' + // Magnifying glass.
 			'.bbb-quick-search-active #bbb-quick-search-status, .bbb-quick-search-show.bbb-quick-search-active.bbb-quick-search-pinned #bbb-quick-search-status {background-position: -128px -112px;}' + // Plus magnifying glass.
-			'#bbb-quick-search-pin {background-position: -128px -145px;}' + // Horizontal pin.
-			'.bbb-quick-search-pinned #bbb-quick-search-pin, .bbb-quick-search-active.bbb-quick-search-pinned #bbb-quick-search-status {background-position: -145px -145px;}' + // Vertical pin.
+			'#bbb-quick-search-pin {background-position: -128px -144px;}' + // Horizontal pin.
+			'.bbb-quick-search-pinned #bbb-quick-search-pin, .bbb-quick-search-active.bbb-quick-search-pinned #bbb-quick-search-status {background-position: -144px -144px;}' + // Vertical pin.
+			'#bbb-quick-search-negate {background-position: -48px -129px;}' + // Negative sign.
+			'.bbb-quick-search-negated #bbb-quick-search-negate {background-position: -15px -192px;}' + // Negative sign in a dark circle.
 			'#bbb-quick-search.bbb-quick-search-active {background-color: #DDDDDD;}' +
 			'#bbb-quick-search.bbb-quick-search-active.bbb-quick-search-show {background-color: #FFFFFF;}' +
-			'#bbb-quick-search-pin:focus, #bbb-quick-search-pin:hover {background-color: #CCCCCC;}' +
+			'#bbb-quick-search-pin:focus, #bbb-quick-search-pin:hover, #bbb-quick-search-negate:focus, #bbb-quick-search-negate:hover {background-color: #CCCCCC;}' +
 			'#news-updates {padding-right: 25px !important;}';
 
 			if (quick_search.indexOf("remove") > -1)
@@ -7627,26 +7634,30 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Create the quick search.
 		var searchDiv = bbb.el.quickSearchDiv = document.createElement("div");
 		searchDiv.id = "bbb-quick-search";
-		searchDiv.innerHTML = '<input id="bbb-quick-search-status" type="button" value=""><form id="bbb-quick-search-form"><input id="bbb-quick-search-input" size="75" placeholder="Tags" autocomplete="' + (allowAutocomplete ? "off" : "on") + '" type="text"> <input id="bbb-quick-search-pin" type="button" value=""> <input id="bbb-quick-search-submit" type="submit" value="Go"></form>';
+		searchDiv.innerHTML = '<input id="bbb-quick-search-status" type="button" value=""><form id="bbb-quick-search-form"><input id="bbb-quick-search-input" size="75" placeholder="Tags" autocomplete="' + (allowAutocomplete ? "off" : "on") + '" type="text"> <input id="bbb-quick-search-pin" type="button" value=""> <input id="bbb-quick-search-negate" type="button" value=""> <input id="bbb-quick-search-submit" type="submit" value="Go"></form>';
 
 		var searchForm = bbb.el.quickSearchForm = getId("bbb-quick-search-form", searchDiv);
 		var searchInput = bbb.el.quickSearchInput = getId("bbb-quick-search-input", searchDiv);
 		var searchPin = bbb.el.quickSearchPin = getId("bbb-quick-search-pin", searchDiv);
+		var searchNegate = bbb.el.quickSearchNegate = getId("bbb-quick-search-negate", searchDiv);
 		var searchSubmit = bbb.el.quickSearchSubmit = getId("bbb-quick-search-submit", searchDiv);
 		var searchStatus = bbb.el.quickSearchStatus = getId("bbb-quick-search-status", searchDiv);
 
 		// Make the submit event search posts or reset the search.
 		searchForm.addEventListener("submit", function(event) {
-			var oldValue = bbb.quick_search.bbbSpaceClean();
+			var oldValue = bbb.quick_search.tags.bbbSpaceClean();
+			var oldNegate = bbb.quick_search.negated;
 			var curValue = searchInput.value.bbbSpaceClean();
+			var curNegate = bbb.el.quickSearchDiv.bbbHasClass("bbb-quick-search-negated");
 
-			if (curValue === "" || curValue === oldValue)
+			if (curValue === "" || (curValue === oldValue && curNegate === oldNegate))
 				quickSearchReset();
 			else {
-				bbb.quick_search = bbb.el.quickSearchInput.value;
+				bbb.quick_search.tags = bbb.el.quickSearchInput.value;
+				bbb.quick_search.negated = searchDiv.bbbHasClass("bbb-quick-search-negated");
 
 				if (searchDiv.bbbHasClass("bbb-quick-search-pinned"))
-					sessionStorage.bbbSetItem("bbb_quick_search", bbb.quick_search);
+					sessionStorage.bbbSetItem("bbb_quick_search", JSON.stringify(bbb.quick_search));
 				else if (quick_search.indexOf("pinned") > -1)
 					quickSearchPinEnable();
 
@@ -7667,7 +7678,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			delayMe(function() {
 				var active = document.activeElement;
 
-				if (active === target || (active !== searchInput && active !== searchSubmit && active !== searchStatus && active !== searchPin))
+				if (active === target || (active !== searchInput && active !== searchSubmit && active !== searchStatus && active !== searchPin && active !== searchNegate))
 					searchDiv.bbbRemoveClass("bbb-quick-search-show");
 			});
 		}, true);
@@ -7724,6 +7735,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				quickSearchPinToggle();
 		}, false);
 
+		// Make the negate input toggle the negated status.
+		searchNegate.addEventListener("click", function(event) {
+			if (event.button === 0)
+				quickSearchNegateToggle();
+		}, false);
+
 		// Watch the input value and adjust the quick search as needed.
 		searchInput.addEventListener("input", quickSearchCheck, false);
 		searchInput.addEventListener("keyup", quickSearchCheck, false);
@@ -7742,12 +7759,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		otherAutocomplete(searchInput);
 
 		// Check if the quick search has been pinned for this session.
-		var pinnedSearch = sessionStorage.getItem("bbb_quick_search");
+		var pinnedSearch = parseJson(sessionStorage.getItem("bbb_quick_search"), undefined);
 
 		if (pinnedSearch) {
 			bbb.quick_search = pinnedSearch;
-			searchInput.value = pinnedSearch;
-			searchDiv.bbbAddClass("bbb-quick-search-pinned");
+			searchInput.value = pinnedSearch.tags;
+			searchDiv.bbbAddClass("bbb-quick-search-pinned" + (pinnedSearch.negated ? " bbb-quick-search-negated" : ""));
 			quickSearchTest();
 		}
 
@@ -7760,10 +7777,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Check the input value and adjust the submit button appearance accordingly.
 		var input = bbb.el.quickSearchInput;
 		var submit = bbb.el.quickSearchSubmit;
-		var oldValue = bbb.quick_search.bbbSpaceClean();
+		var oldValue = bbb.quick_search.tags.bbbSpaceClean();
+		var oldNegate = bbb.quick_search.negated;
 		var curValue = input.value.bbbSpaceClean();
+		var curNegate = bbb.el.quickSearchDiv.bbbHasClass("bbb-quick-search-negated");
 
-		if (oldValue === curValue && curValue !== "")
+		if (oldValue === curValue && curValue !== "" && oldNegate === curNegate)
 			submit.value = "X";
 		else
 			submit.value = "Go";
@@ -7774,12 +7793,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var filteredPosts = document.getElementsByClassName("bbb-quick-search-filtered");
 		var filteredPost = filteredPosts[0];
 
-		bbb.quick_search = "";
+		bbb.quick_search = {negated: false, tags: ""};
 		bbb.el.quickSearchInput.value = "";
 		bbb.el.quickSearchSubmit.value = "Go";
 		bbb.el.quickSearchStatus.title = "";
 		sessionStorage.removeItem("bbb_quick_search");
-		bbb.el.quickSearchDiv.bbbRemoveClass("bbb-quick-search-active bbb-quick-search-pinned");
+		bbb.el.quickSearchDiv.bbbRemoveClass("bbb-quick-search-active bbb-quick-search-pinned bbb-quick-search-negated");
 
 		while (filteredPost) {
 			filteredPost.bbbRemoveClass("bbb-quick-search-filtered");
@@ -7790,10 +7809,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function quickSearchTest(target) {
 		// Test posts to see if they match the search.
-		var value = bbb.quick_search.bbbSpaceClean();
+		var value = bbb.quick_search.tags.bbbSpaceClean();
 
 		if (value === "")
 			return;
+		else if (bbb.quick_search.negated)
+			value = "-(% " + value + " %)";
 
 		var posts = getPosts(target);
 		var search = createSearch(value);
@@ -7818,11 +7839,18 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function quickSearchOpen() {
 		// Open the quick search div and place focus on the input.
+		var searchDiv = bbb.el.quickSearchDiv;
 		var searchInput = bbb.el.quickSearchInput;
 
-		searchInput.value = bbb.quick_search;
+		searchInput.value = bbb.quick_search.tags;
+
+		if (bbb.quick_search.negated === true)
+			searchDiv.bbbAddClass("bbb-quick-search-negated");
+		else
+			searchDiv.bbbRemoveClass("bbb-quick-search-negated");
+
 		quickSearchCheck();
-		bbb.el.quickSearchDiv.bbbAddClass("bbb-quick-search-show");
+		searchDiv.bbbAddClass("bbb-quick-search-show");
 		searchInput.focus();
 	}
 
@@ -7842,14 +7870,38 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Enable the quick search pin.
 		bbb.el.quickSearchDiv.bbbAddClass("bbb-quick-search-pinned");
 
-		if (bbb.quick_search)
-			sessionStorage.bbbSetItem("bbb_quick_search", bbb.quick_search);
+		if (bbb.quick_search.tags)
+			sessionStorage.bbbSetItem("bbb_quick_search", JSON.stringify(bbb.quick_search));
 	}
 
 	function quickSearchPinDisable() {
 		// Disable the quick search pin.
 		bbb.el.quickSearchDiv.bbbRemoveClass("bbb-quick-search-pinned");
 		sessionStorage.removeItem("bbb_quick_search");
+	}
+
+	function quickSearchNegateToggle() {
+		// Toggle the quick search between negated and not negated.
+		var searchDiv = bbb.el.quickSearchDiv;
+
+		if (searchDiv.bbbHasClass("bbb-quick-search-show", "bbb-quick-search-active")) {
+			if (!searchDiv.bbbHasClass("bbb-quick-search-negated"))
+				quickSearchNegateEnable();
+			else
+				quickSearchNegateDisable();
+		}
+	}
+
+	function quickSearchNegateEnable() {
+		// Enable the quick search negation.
+		bbb.el.quickSearchDiv.bbbAddClass("bbb-quick-search-negated");
+		quickSearchCheck();
+	}
+
+	function quickSearchNegateDisable() {
+		// Disable the quick search negation.
+		bbb.el.quickSearchDiv.bbbRemoveClass("bbb-quick-search-negated");
+		quickSearchCheck();
 	}
 
 	function commentScoreInit() {
