@@ -41,7 +41,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	String.prototype.bbbTagClean = function() {
 		// Remove extra commas along with leading, trailing, and multiple spaces.
-		return this.replace(/[\s,]*(%\))\s*|\s*([~-]*\(%)[\s,]*/g, " $& ").replace(/[\s,]*,[\s,]*/g, ", ").replace(/[\s,]+$|^[\s,]+/g, "").replace(/\s+/g, " ");
+		return this.replace(/(?:^|[\s,]+)(%?\))(?:$|\s+)/, " $1 ").replace(/(?:^|\s+)([~-]*\(%?)(?:$|[\s,]+)/g, " $1 ").replace(/[\s,]*,[\s,]*/g, ", ").replace(/[\s,]+$|^[\s,]+/g, "").replace(/\s+/g, " ");
 	};
 
 	String.prototype.bbbHash = function() {
@@ -292,6 +292,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		},
 		flags: {},
 		gm_data: undefined,
+		groups: undefined,
 		hotkeys: {
 			other: { // Hotkeys for misc locations.
 				66: {func: openMenu} // B
@@ -394,6 +395,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			script_blacklisted_tags: "",
 			status_borders: borderSet(["deleted", true, "#000000", "solid", "post-status-deleted"], ["flagged", true, "#FF0000", "solid", "post-status-flagged"], ["pending", true, "#0000FF", "solid", "post-status-pending"], ["child", true, "#CCCC00", "solid", "post-status-has-parent"], ["parent", true, "#00FF00", "solid", "post-status-has-children"]),
 			tag_borders: borderSet(["loli", true, "#FFC0CB", "solid"], ["shota", true, "#66CCFF", "solid"], ["toddlercon", true, "#9370DB", "solid"], ["status:banned", true, "#000000", "solid"]),
+			tag_groups: groupSet(["hidden", "~loli ~shota ~toddlercon ~status:banned"]),
 			track_new_data: {viewed: 0, viewing: 1},
 			video_volume_data: {level: 1, muted: false}
 		},
@@ -412,6 +414,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			browse: newSection("general", ["show_loli", "show_shota", "show_toddlercon", "show_banned", "show_deleted", "thumbnail_count", "thumb_info", "post_link_new_window"], "Post Browsing"),
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes", "video_volume"], "Post Control"),
 			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
+			groups: newSection("group", "tag_groups", "Groups", "Tags that are frequently used together or that need to be coordinated between multiple places may be grouped together and saved here for use with the \"group\" metatag."),
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_hidden_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
@@ -529,6 +532,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var status_borders = bbb.user.status_borders;
 	var tag_borders = bbb.user.tag_borders;
 	var collapse_sidebar_data = bbb.user.collapse_sidebar_data;
+	var tag_groups = bbb.user.tag_groups;
 	var track_new_data = bbb.user.track_new_data;
 	var video_volume_data = bbb.user.video_volume_data;
 	var script_blacklisted_tags = accountSettingCheck("script_blacklisted_tags");
@@ -695,7 +699,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 							parseListing(formatInfoArray(xml), optArg);
 						}
 						else if (mode === "pool_cache" || mode === "favorite_group_cache") {
-							var collId = /\/(?:pools|favorite_groups)\/(\d+)/.exec(location.href)[1];
+							var collId = location.href.match(/\/(?:pools|favorite_groups)\/(\d+)/)[1];
 
 							sessionStorage.bbbSetItem("bbb_" + mode + "_" + collId, new Date().getTime() + " " + xml.post_ids);
 							searchJSON(optArg, xml);
@@ -1708,9 +1712,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			query = (query ? "?tags=" + query : "");
 		}
 		else if (gLoc === "pool")
-			query = "?pool_id=" + /\/pools\/(\d+)/.exec(location.pathname)[1];
+			query = "?pool_id=" + location.pathname.match(/\/pools\/(\d+)/)[1];
 		else if (gLoc === "favorite_group")
-			query = "?favgroup_id=" + /\/favorite_groups\/(\d+)/.exec(location.pathname)[1];
+			query = "?favgroup_id=" + location.pathname.match(/\/favorite_groups\/(\d+)/)[1];
 
 		return query;
 	}
@@ -1890,6 +1894,13 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		borderTab.className = "bbb-tab";
 		tabBar.appendChild(borderTab);
 
+		var groupTab = bbb.el.menu.groupTab = document.createElement("a");
+		groupTab.name = "groups";
+		groupTab.href = "#";
+		groupTab.innerHTML = "Groups";
+		groupTab.className = "bbb-tab";
+		tabBar.appendChild(groupTab);
+
 		var layoutTab = bbb.el.menu.layoutTab = document.createElement("a");
 		layoutTab.name = "layout";
 		layoutTab.href = "#";
@@ -1949,6 +1960,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		bordersPage.bbbSection(bbb.sections.status_borders);
 		bordersPage.bbbSection(bbb.sections.tag_borders);
 
+		var groupsPage = bbb.el.menu.groupsPage = document.createElement("div");
+		groupsPage.className = "bbb-page";
+		scrollDiv.appendChild(groupsPage);
+
+		groupsPage.bbbSection(bbb.sections.groups);
+
 		var prefPage = bbb.el.menu.prefPage = document.createElement("div");
 		prefPage.className = "bbb-page";
 		scrollDiv.appendChild(prefPage);
@@ -1961,7 +1978,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses coupled with percent signs:<ul><li><b>(% ~tag1 ~tag2 %) (% ~tag3 ~tag3 %)</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 (% tag2, tag3 tag4 %)</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -(% tag2 tag3 %)</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~(% tag3 tag4 %)</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
@@ -2076,21 +2093,21 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				optionTarget.appendChild(newOption);
 			}
 		}
-		else if (section.type === "border") {
-			var borderSettings = bbb.user[section.settings];
+		else if (section.type === "border" || section.type === "group") {
+			var listSettings = bbb.user[section.settings];
 
-			for (i = 0, il = borderSettings.length; i < il; i++) {
-				var newBorderOption = createBorderOption(borderSettings, i);
-				sectionDiv.appendChild(newBorderOption);
+			for (i = 0, il = listSettings.length; i < il; i++) {
+				var newListOption = (section.type === "border" ? createBorderOption(listSettings, i) : createGroupOption(listSettings, i));
+				sectionDiv.appendChild(newListOption);
 			}
 
 			var indexWrapper = document.createElement("div");
 			indexWrapper.bbbInfo("bbb-index", i);
 			sectionDiv.appendChild(indexWrapper);
 
-			var borderDivider = document.createElement("div");
-			borderDivider.className = "bbb-border-divider";
-			indexWrapper.appendChild(borderDivider);
+			var listDivider = document.createElement("div");
+			listDivider.className = "bbb-list-divider";
+			indexWrapper.appendChild(listDivider);
 		}
 
 		return sectionFrag;
@@ -2252,21 +2269,21 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var isStatus = (borderItem.class_name ? true : false);
 
 		var borderSpacer = document.createElement("span");
-		borderSpacer.className = "bbb-border-spacer";
+		borderSpacer.className = "bbb-list-spacer";
 
 		var indexWrapper = document.createElement("div");
 		indexWrapper.bbbInfo("bbb-index", index);
 
 		var borderDivider = document.createElement("div");
-		borderDivider.className = "bbb-border-divider";
+		borderDivider.className = "bbb-list-divider";
 		indexWrapper.appendChild(borderDivider);
 
 		var borderDiv = document.createElement("div");
-		borderDiv.className = "bbb-border-div";
+		borderDiv.className = "bbb-list-div";
 		indexWrapper.appendChild(borderDiv);
 
 		var borderBarDiv = document.createElement("div");
-		borderBarDiv.className = "bbb-border-bar";
+		borderBarDiv.className = "bbb-list-bar";
 		borderDiv.appendChild(borderBarDiv);
 
 		var enableLabel = document.createElement("label");
@@ -2289,12 +2306,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var moveButton = document.createElement("a");
 		moveButton.href = "#";
 		moveButton.innerHTML = "Move";
-		moveButton.className = "bbb-border-button";
+		moveButton.className = "bbb-list-button";
 		moveButton.addEventListener("click", function(event) {
 			if (event.button !== 0)
 				return;
 
-			moveBorder(borderSettings, indexWrapper);
+			moveListOption(borderSettings, indexWrapper);
 			event.preventDefault();
 		}, false);
 		moveButton.bbbSetTip("Click the blue highlighted area that indicates where you would like to move this border.");
@@ -2303,7 +2320,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var previewButton = document.createElement("a");
 		previewButton.href = "#";
 		previewButton.innerHTML = "Preview";
-		previewButton.className = "bbb-border-button";
+		previewButton.className = "bbb-list-button";
 		previewButton.bbbBorderPreview(borderItem);
 		editSpan.appendChild(previewButton);
 
@@ -2311,12 +2328,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var deleteButton = document.createElement("a");
 			deleteButton.href = "#";
 			deleteButton.innerHTML = "Delete";
-			deleteButton.className = "bbb-border-button";
+			deleteButton.className = "bbb-list-button";
 			deleteButton.addEventListener("click", function(event) {
 				if (event.button !== 0)
 					return;
 
-				deleteBorder(borderSettings, indexWrapper);
+				deleteListOption(borderSettings, indexWrapper, "border");
 				event.preventDefault();
 			}, false);
 			editSpan.appendChild(deleteButton);
@@ -2324,12 +2341,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var newButton = document.createElement("a");
 			newButton.href = "#";
 			newButton.innerHTML = "New";
-			newButton.className = "bbb-border-button";
+			newButton.className = "bbb-list-button";
 			newButton.addEventListener("click", function(event) {
 				if (event.button !== 0)
 					return;
 
-				createBorder(borderSettings, indexWrapper);
+				createListOption(borderSettings, indexWrapper, "border");
 				event.preventDefault();
 			}, false);
 			newButton.bbbSetTip("Click the blue highlighted area that indicates where you would like to create a border.");
@@ -2341,16 +2358,16 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var helpButton = document.createElement("a");
 		helpButton.href = "#";
 		helpButton.innerHTML = "Help";
-		helpButton.className = "bbb-border-button";
+		helpButton.className = "bbb-list-button";
 		helpButton.bbbSetTip("<b>Enabled:</b> When checked, the border will be applied. When unchecked, it won't be applied.<tipdesc>Status/Tags:</tipdesc> Describes the posts that the border should be applied to. For custom tag borders, you may specify the rules the post must match for the border to be applied. Please read the \"thumbnail matching rules\" section under the help tab for information about creating rules.<tipdesc>Color:</tipdesc> Set the color of the border. Hex RGB color codes (#000000, #FFFFFF, etc.) are the recommended values.<tipdesc>Style:</tipdesc> Set how the border looks. Please note that double only works with a border width of 3 or higher.<tipdesc>Move:</tipdesc> Move the border to a new position. Higher borders have higher priority. In the event of a post matching more than 4 borders, the first 4 borders get applied and the rest are ignored. If single color borders are enabled, only the first matching border is applied.<tipdesc>Preview:</tipdesc> Display a preview of the border's current settings.<tipdesc>Delete:</tipdesc> Remove the border and its settings.<tipdesc>New:</tipdesc> Create a new border.");
 		editSpan.appendChild(helpButton);
 
 		var borderSettingsDiv = document.createElement("div");
-		borderSettingsDiv.className = "bbb-border-settings";
+		borderSettingsDiv.className = "bbb-list-settings";
 		borderDiv.appendChild(borderSettingsDiv);
 
 		var nameLabel = document.createElement("label");
-		nameLabel.className = "bbb-border-name";
+		nameLabel.className = "bbb-list-border-name";
 		borderSettingsDiv.appendChild(nameLabel);
 
 		if (isStatus)
@@ -2381,7 +2398,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		var colorLabel = document.createElement("label");
 		colorLabel.innerHTML = "Color:";
-		colorLabel.className = "bbb-border-color";
+		colorLabel.className = "bbb-list-border-color";
 		borderSettingsDiv.appendChild(colorLabel);
 
 		var colorInput = document.createElement("input");
@@ -2392,7 +2409,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		var styleLabel = document.createElement("label");
 		styleLabel.innerHTML = "Style:";
-		styleLabel.className = "bbb-border-style";
+		styleLabel.className = "bbb-list-border-style";
 		borderSettingsDiv.appendChild(styleLabel);
 
 		var styleDrop = document.createElement("select");
@@ -2427,6 +2444,143 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				break;
 			}
 		}
+
+		return indexWrapper;
+	}
+
+	function createGroupOption(groupSettings, index) {
+		var groupItem = groupSettings[index];
+
+		var groupSpacer = document.createElement("span");
+		groupSpacer.className = "bbb-list-spacer";
+
+		var indexWrapper = document.createElement("div");
+		indexWrapper.bbbInfo("bbb-index", index);
+
+		var groupDivider = document.createElement("div");
+		groupDivider.className = "bbb-list-divider";
+		indexWrapper.appendChild(groupDivider);
+
+		var groupDiv = document.createElement("div");
+		groupDiv.className = "bbb-list-div";
+		indexWrapper.appendChild(groupDiv);
+
+		var groupBarDiv = document.createElement("div");
+		groupBarDiv.className = "bbb-list-bar";
+		groupDiv.appendChild(groupBarDiv);
+
+		var nameLabel = document.createElement("label");
+		nameLabel.className = "bbb-list-group-name";
+		nameLabel.innerHTML = "Name:";
+		groupBarDiv.appendChild(nameLabel);
+
+		var nameInput = document.createElement("input");
+		nameInput.type = "text";
+		nameInput.value = groupItem.name;
+		nameInput.addEventListener("input", function() { this.value = this.value.replace(/[\s,]/gi, ""); }, false);
+		nameInput.addEventListener("change", function() {
+			var cleanName = this.value.bbbSpaceClean();
+
+			if (cleanName === "")
+				this.value = cleanName = "New_" + timestamp("y-m-d_hh:mm:ss:ms");
+			else {
+				for (var i = 0, il = groupSettings.length; i < il; i++) {
+					if (cleanName === groupSettings[i].name) {
+						var newName = cleanName + "_" + timestamp("y-m-d_hh:mm:ss:ms");
+
+						this.value = cleanName = newName;
+						bbbDialog("The group name you tried to use is already in use by another group and has been changed to the following:<br>" + newName);
+						break;
+					}
+				}
+			}
+
+			groupItem.name = cleanName;
+		}, false);
+		nameLabel.appendChild(nameInput);
+
+		var editSpan = document.createElement("span");
+		editSpan.style.cssFloat = "right";
+		groupBarDiv.appendChild(editSpan);
+
+		var moveButton = document.createElement("a");
+		moveButton.href = "#";
+		moveButton.innerHTML = "Move";
+		moveButton.className = "bbb-list-button";
+		moveButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
+			moveListOption(groupSettings, indexWrapper);
+			event.preventDefault();
+		}, false);
+		moveButton.bbbSetTip("Click the blue highlighted area that indicates where you would like to move this group.");
+		editSpan.appendChild(moveButton);
+
+		var deleteButton = document.createElement("a");
+		deleteButton.href = "#";
+		deleteButton.innerHTML = "Delete";
+		deleteButton.className = "bbb-list-button";
+		deleteButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
+			deleteListOption(groupSettings, indexWrapper, "group");
+			event.preventDefault();
+		}, false);
+		editSpan.appendChild(deleteButton);
+
+		var newButton = document.createElement("a");
+		newButton.href = "#";
+		newButton.innerHTML = "New";
+		newButton.className = "bbb-list-button";
+		newButton.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
+			createListOption(groupSettings, indexWrapper, "group");
+			event.preventDefault();
+		}, false);
+		newButton.bbbSetTip("Click the blue highlighted area that indicates where you would like to create a group.");
+		editSpan.appendChild(newButton);
+
+		editSpan.appendChild(groupSpacer.cloneNode(false));
+
+		var helpButton = document.createElement("a");
+		helpButton.href = "#";
+		helpButton.innerHTML = "Help";
+		helpButton.className = "bbb-list-button";
+		helpButton.bbbSetTip("<b>Name:</b> The name you want to refer to this group of tags by when using the group metatag. Names may not contain spaces or commas. <tipdesc>Tags:</tipdesc> Describes the posts that the group should match. Please read the \"thumbnail matching rules\" section under the help tab for information about creating rules. When used, all tags in a group are treated as if they're grouped/nested together (enclosed in parentheses). <tipdesc>Move:</tipdesc> Move the group to a new position. The order of groups affects the order they display in for tag autocomplete. <tipdesc>Delete:</tipdesc> Remove the group and its settings.<tipdesc>New:</tipdesc> Create a new group. <tiphead>Example</tiphead>If given a group named\"hidden\" that contains \"~loli ~shota ~toddlercon ~status:banned\" for its tags, a search for \"rating:questionable -group:hidden\" would behave like \"rating:questionable -( ~loli ~shota ~toddlercon ~status:banned )\".<tiphead>Tips</tiphead>The \"group\" metatag can be shortened to \"g\". <br><br>Groups used by themselves with the quick search option can provide a saved search functionality.<br><br>A blacklist or border entry (especially a complex one) that you want to work exclusively from other entries can be assigned to a group and excluded from other entries by using \"-group:entryname\". Updating that group will then update all entries linked to it. Similarly, tags you want shared across multiple entries can just use \"group:entryname\".");
+		editSpan.appendChild(helpButton);
+
+		var groupSettingsDiv = document.createElement("div");
+		groupSettingsDiv.className = "bbb-list-settings";
+		groupDiv.appendChild(groupSettingsDiv);
+
+		var tagsLabel = document.createElement("label");
+		tagsLabel.className = "bbb-list-group-tags";
+		tagsLabel.innerHTML = "Tags:";
+		groupSettingsDiv.appendChild(tagsLabel);
+
+		var tagsInput = document.createElement("input");
+		tagsInput.type = "text";
+		tagsInput.value = groupItem.tags + " ";
+		tagsInput.addEventListener("change", function() { groupItem.tags = this.value.bbbTagClean(); }, false);
+		tagsLabel.appendChild(tagsInput);
+		menuAutocomplete(tagsInput);
+
+		var tagsExpand = document.createElement("a");
+		tagsExpand.href = "#";
+		tagsExpand.className = "bbb-edit-link";
+		tagsExpand.innerHTML = "&raquo;";
+		tagsExpand.addEventListener("click", function(event) {
+			if (event.button !== 0)
+				return;
+
+			tagEditWindow(tagsInput, groupItem, "tags");
+			event.preventDefault();
+		}, false);
+		tagsLabel.appendChild(tagsExpand);
 
 		return indexWrapper;
 	}
@@ -2745,97 +2899,112 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		return formatted;
 	}
 
-	function resetBorderElements(section) {
-		// Reset the list of border items after moving or creating a new border.
-		var borderElements = section.children;
+	function newGroup(name, tags) {
+		return {
+			name: name,
+			tags: tags
+		};
+	}
 
-		for (var i = 0, il = borderElements.length; i < il; i++) {
-			var borderElement = borderElements[i];
+	function groupSet() {
+		var formatted = [];
 
-			borderElement.bbbRemoveClass("bbb-no-highlight");
-			borderElement.bbbInfo("bbb-index", i);
+		for (var i = 0, il = arguments.length; i < il; i++) {
+			var group = arguments[i];
+
+			formatted.push(newGroup(group[0], group[1]));
+		}
+
+		return formatted;
+	}
+
+	function resetListElements(section) {
+		// Reset the list of items after moving or creating a new item.
+		var optionElements = section.children;
+
+		for (var i = 0, il = optionElements.length; i < il; i++) {
+			var optionElement = optionElements[i];
+
+			optionElement.bbbRemoveClass("bbb-no-highlight");
+			optionElement.bbbInfo("bbb-index", i);
 		}
 	}
 
-	function deleteBorder(borderSettings, borderElement) {
-		// Remove a border and if it's the last border, create a blank disabled one.
-		var section = borderElement.parentNode;
-		var index = Number(borderElement.bbbInfo("bbb-index"));
+	function deleteListOption(listSettings, optionElement, type) {
+		// Remove an item and if it's the last one, create a blank one.
+		var section = optionElement.parentNode;
+		var index = Number(optionElement.bbbInfo("bbb-index"));
 
-		section.removeChild(borderElement);
-		borderSettings.splice(index,1);
+		section.removeChild(optionElement);
+		listSettings.splice(index,1);
 
-		if (!borderSettings[0]) {
+		if (!listSettings[0]) {
 			// If no borders are left, add a new blank border.
-			var newBorderItem = newBorder("", false, "#000000", "solid");
-			borderSettings.push(newBorderItem);
+			var newListItem = (type === "border" ? newBorder("", false, "#000000", "solid") : newGroup("New_" + timestamp("y-m-d_hh:mm:ss:ms"), "", false));
+			listSettings.push(newListItem);
 
-			var newBorderElement = createBorderOption(borderSettings, 0);
-			section.insertBefore(newBorderElement, section.firstElementChild);
+			var newOptionElement = (type === "border" ? createBorderOption(listSettings, 0) : createGroupOption(listSettings, 0));
+			section.insertBefore(newOptionElement, section.firstElementChild);
 		}
 
-		resetBorderElements(section);
+		resetListElements(section);
 	}
 
-	function moveBorder(borderSettings, borderElement) {
-		// Prepare to move a border and wait for the user to click where it'll go.
-		var section = borderElement.parentNode;
-		var index = Number(borderElement.bbbInfo("bbb-index"));
+	function moveListOption(listSettings, optionElement) {
+		// Prepare to move an item and wait for the user to click where it'll go.
+		var section = optionElement.parentNode;
+		var index = Number(optionElement.bbbInfo("bbb-index"));
 
-		borderElement.bbbAddClass("bbb-no-highlight");
-		borderElement.nextSibling.bbbAddClass("bbb-no-highlight");
-		bbb.borderEdit = {mode: "move", settings: borderSettings, section: section, index: index, el: borderElement};
+		optionElement.bbbAddClass("bbb-no-highlight");
+		optionElement.nextSibling.bbbAddClass("bbb-no-highlight");
 		section.bbbAddClass("bbb-insert-highlight");
-		bbb.el.menu.window.addEventListener("click", insertBorder, true);
-	}
+		bbb.el.menu.window.addEventListener("click", function insertListOption(event) {
+			var target = event.target;
 
-	function createBorder(borderSettings, borderElement) {
-		// Prepare to create a border and wait for the user to click where it'll go.
-		var section = borderElement.parentNode;
+			if (target.className === "bbb-list-divider" && event.button === 0) {
+				var newIndex = Number(target.parentNode.bbbInfo("bbb-index"));
 
-		bbb.borderEdit = {mode: "new", settings: borderSettings, section: section};
-		section.bbbAddClass("bbb-insert-highlight");
-		bbb.el.menu.window.addEventListener("click", insertBorder, true);
-	}
+				if (newIndex !== index) {
+					var listItem = listSettings.splice(index, 1)[0];
 
-	function insertBorder(event) {
-		// Place either a new or moved border where indicated.
-		var target = event.target;
-		var section = bbb.borderEdit.section;
+					if (newIndex < index)
+						listSettings.splice(newIndex, 0, listItem);
+					else if (newIndex > index)
+						listSettings.splice(newIndex - 1, 0, listItem);
 
-		if (target.className === "bbb-border-divider" && event.button === 0) {
-			var newIndex = Number(target.parentNode.bbbInfo("bbb-index"));
-			var borderSettings = bbb.borderEdit.settings;
-
-			if (bbb.borderEdit.mode === "new") { // Make a new border.
-				var newBorderItem = newBorder("", false, "#000000", "solid");
-				borderSettings.splice(newIndex, 0, newBorderItem);
-
-				var newBorderElement = createBorderOption(borderSettings, newIndex);
-
-				section.insertBefore(newBorderElement, section.children[newIndex]);
-
-			}
-			else if (bbb.borderEdit.mode === "move") { // Move the border.
-				var oldIndex = bbb.borderEdit.index;
-
-				if (newIndex !== oldIndex) {
-					var borderItem = borderSettings.splice(oldIndex, 1)[0];
-					var borderElement = bbb.borderEdit.el;
-
-					if (newIndex < oldIndex)
-						borderSettings.splice(newIndex, 0, borderItem);
-					else if (newIndex > oldIndex)
-						borderSettings.splice(newIndex - 1, 0, borderItem);
-
-					section.insertBefore(borderElement, section.children[newIndex]);
+					section.insertBefore(optionElement, section.children[newIndex]);
 				}
 			}
-		}
 
-		resetBorderElements(section);
-		section.bbbRemoveClass("bbb-insert-highlight");
-		bbb.el.menu.window.removeEventListener("click", insertBorder, true);
+			resetListElements(section);
+			section.bbbRemoveClass("bbb-insert-highlight");
+			bbb.el.menu.window.removeEventListener("click", insertListOption, true);
+		}, true);
+	}
+
+	function createListOption(listSettings, optionElement, type) {
+		// Prepare to create an item and wait for the user to click where it'll go.
+		var section = optionElement.parentNode;
+
+		section.bbbAddClass("bbb-insert-highlight");
+		bbb.el.menu.window.addEventListener("click", function insertListOption(event) {
+			var target = event.target;
+
+			if (target.className === "bbb-list-divider" && event.button === 0) {
+				var newIndex = Number(target.parentNode.bbbInfo("bbb-index"));
+				var newListItem = (type === "border" ? newBorder("", false, "#000000", "solid") : newGroup("New_" + timestamp("y-m-d_hh:mm:ss:ms"), "", false));
+
+				listSettings.splice(newIndex, 0, newListItem);
+
+				var newOptionElement = (type === "border" ? createBorderOption(listSettings, newIndex) : createGroupOption(listSettings, newIndex));
+
+				section.insertBefore(newOptionElement, section.children[newIndex]);
+			}
+
+			resetListElements(section);
+			section.bbbRemoveClass("bbb-insert-highlight");
+			bbb.el.menu.window.removeEventListener("click", insertListOption, true);
+		}, true);
 	}
 
 	function showTip(event, content, styleString) {
@@ -4711,7 +4880,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function getIdCache() {
 		// Retrieve the cached list of post IDs used for the pool/favorite group thumbnails.
-		var collId = /\/(?:pools|favorite_groups)\/(\d+)/.exec(location.href)[1];
+		var collId = location.href.match(/\/(?:pools|favorite_groups)\/(\d+)/)[1];
 		var idCache = sessionStorage.getItem("bbb_" + gLoc + "_cache_" + collId);
 		var curTime = new Date().getTime();
 		var cacheTime, timeDiff; // If/else variables.
@@ -5218,7 +5387,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				if (!lastPageObject.ready && !leftoverPosts[0] && lastPage)
 					lastPageObject.ready = true;
 
-				// Make sure the displayed paginator is always the one from the last retrieved page to have all of it's thumbnails used so the user doesn't click to the next page and skip queued thumbnails that haven't been displayed yet.
+				// Make sure the displayed paginator is always the one from the last retrieved page to have all of its thumbnails used so the user doesn't click to the next page and skip queued thumbnails that haven't been displayed yet.
 				if (!leftoverPosts[0])
 					lastPageObject.paginator = paginator;
 
@@ -5458,9 +5627,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var groupsObject = replaceSearchGroups(blacklistTags);
 		var groups = groupsObject.groups;
 
-		blacklistTags = groupsObject.search.replace(/,/g, "%,%");
+		blacklistTags = groupsObject.search.replace(/,/g, "BBBCOMMASUB");
 		blacklistTags = restoreSearchGroups(blacklistTags, groups);
-		blacklistTags = blacklistTags.split("%,%");
+		blacklistTags = blacklistTags.split("BBBCOMMASUB");
 
 		// Create the blacklist section.
 		var cookies = getCookie();
@@ -6706,27 +6875,33 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		}
 	}
 
-	function createSearch(search) {
+	function createSearch(string) {
 		// Take search strings, turn them into search objects, and pass back the objects in an array.
-		if (!/[^\s,]/.test(search))
+		if (!/[^\s,]/.test(string))
 			return [];
 
-		var groupsObject = replaceSearchGroups(search);
+		var searchString = string;
+		var i, il; // Loop variables.
+
+		// Group handling.
+		searchString = replaceSearchGroupMetatag(searchString);
+
+		var groupsObject = replaceSearchGroups(searchString);
 		var groups = groupsObject.groups;
 		var searchStrings = groupsObject.search.toLowerCase().replace(/\b(rating:[qes])\w+/g, "$1").split(",");
 		var searches = [];
 
 		// Sort through each matching rule.
-		for (var i = 0, il = searchStrings.length; i < il; i++) {
-			var searchString = searchStrings[i].split(" ");
+		for (i = 0, il = searchStrings.length; i < il; i++) {
+			var searchTerms = searchStrings[i].split(" ");
 			var searchObject = {
 				all: {includes: [], excludes: [], total: 0},
 				any: {includes: [], excludes: [], total: 0}
 			};
 
 			// Divide the tags into any and all sets with excluded and included tags.
-			for (var j = 0, jl = searchString.length; j < jl; j++) {
-				var searchTerm = searchString[j];
+			for (var j = 0, jl = searchTerms.length; j < jl; j++) {
+				var searchTerm = searchTerms[j];
 				var primaryMode = "all";
 				var secondaryMode = "includes";
 
@@ -6864,17 +7039,60 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		return searches;
 	}
 
-	function replaceSearchGroups(search) {
-		// Collect all the nested/grouped tags in a search and replace them with placeholders.
-		if (search.indexOf("%") < 0)
-			return {search: search, groups: []};
+	function replaceSearchGroupMetatag(string) {
+		// Replace group metatags in a search string with their respective tags.
+		var searchString = string;
+		
+		if (string.indexOf("g:") > -1 || string.indexOf("group:") > -1) {
+			loadMetaGroups();
 
-		var searchString = search;
-		var parens = searchString.match(/\(%|%\)/g);
+			var groupMetaRegEx = /((?:^|\s)[-~]*)g(?:roup)?:([^\s,]+)/;
+			var groupMetaRecursion = 1;
+			var groupMetaMatches;
+
+			while (groupMetaRecursion <= 99 && (groupMetaMatches = searchString.match(groupMetaRegEx))) {
+				searchString = searchString.replace(groupMetaMatches[0], groupMetaMatches[1] + "( " + (bbb.groups[groupMetaMatches[2]] || "") + " )");
+				groupMetaRecursion++;
+			}
+
+			if (groupMetaRecursion > 99 && groupMetaRegEx.test(searchString)) {
+				var recursiveGroupName = searchString.match(groupMetaRegEx)[0].split(":")[1];
+
+				bbbNotice("While searching thumbnails, BBB encountered what appears to be an infinite loop in your groups. Please check you group titled \"" + recursiveGroupName + "\" to see if it references itself or other groups that eventually end up referencing back to it.", -1);
+				bbb.groups[recursiveGroupName] = ""; // Disable the group.
+			}
+		}
+		
+		return searchString;
+	}
+
+	function replaceSearchGroups(string) {
+		// Collect all the nested/grouped tags in a search string and replace them with placeholders.
+		var searchString = string;
+
+		if (string.indexOf("BBBPARENS") < 0) {
+			// Replace parentheses that are not part of a tag with placeholders.
+			var parensRegex = /(?:^|([\s,]))([-~])*\(%?(?=$|[\s,])|(?:^|([\s,]))%?\)(?=$|[\s,])/;
+
+			if (!parensRegex.test(string))
+				return {search: string, groups: []};
+
+			var parensMatches;
+
+			while ((parensMatches = searchString.match(parensRegex))) {
+				var parensMatch = parensMatches[0];
+				var parensOperators = parensMatches[2] || "";
+				var parensPreceding = parensMatches[1] || parensMatches[3] || "";
+
+				searchString = searchString.replace(parensMatch, parensPreceding + (parensMatch.indexOf("(") > -1 ? parensOperators + "BBBPARENSOPEN" : "BBBPARENSCLOSE"));
+			}
+		}
+
+		var parens = searchString.match(/BBBPARENSOPEN|BBBPARENSCLOSE/g);
 
 		// Remove unpaired opening parentheses near the end of the search.
-		while (parens[parens.length - 1] === "(%") {
-			searchString = searchString.replace(/^(.*\s)?[~-]*\(%/, "$1");
+		while (parens[parens.length - 1] === "BBBPARENSOPEN") {
+			searchString = searchString.replace(/^(.*\s)?[~-]*\BBBPARENSOPEN/, "$1");
 			parens.pop();
 		}
 
@@ -6888,44 +7106,44 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var paren = parens[i];
 			var nextParen = parens[i + 1];
 
-			if (paren === "(%")
+			if (paren === "BBBPARENSOPEN")
 				startCount++;
 			else
 				endCount++;
 
 			if (endCount > startCount) { // Remove unpaired closing parentheses near the start of the string.
-				searchString = searchString.replace(/^(.*?)%\)/, "$1");
+				searchString = searchString.replace(/^(.*?)BBBPARENSCLOSE/, "$1");
 				endCount = 0;
 				groupStartIndex++;
 			}
 			else if (startCount === endCount || (!nextParen && endCount > 0 && startCount > endCount)) { // Replace evenly paired parentheses with a placeholder.
-				var groupRegex = new RegExp(parens.slice(groupStartIndex, i + 1).join(".*?").replace(/[\(\)]/g, "\\$&"));
+				var groupRegex = new RegExp(parens.slice(groupStartIndex, i + 1).join(".*?"));
 				var groupMatch = searchString.match(groupRegex)[0];
 
 				searchString = searchString.replace(groupMatch, "%" + groups.length + "%");
 				startCount = 0;
 				endCount = 0;
 				groupStartIndex = i + 1;
-				groups.push(groupMatch.substring(2, groupMatch.length - 2));
+				groups.push(groupMatch.substring(13, groupMatch.length - 14));
 			}
 			else if (!nextParen && startCount > 0 && endCount === 0 ) // Remove leftover unpaired opening parentheses.
-				searchString = searchString.replace(/^(.*\s)?[~-]*\(%/, "$1");
+				searchString = searchString.replace(/^(.*\s)?[~-]*\BBBPARENSOPEN/, "$1");
 		}
 
 		return {search: searchString, groups: groups};
 	}
 
-	function restoreSearchGroups(search, groups) {
+	function restoreSearchGroups(string, groups) {
 		// Replace all group placeholders with their corresponding group.
-		var restoredSearch = search;
+		var searchString = string;
 
 		for (var i = 0, il = groups.length; i < il; i++) {
 			var groupPlaceholder = new RegExp("%" + i + "%");
 
-			restoredSearch = restoredSearch.replace(groupPlaceholder, "(%" + groups[i] + "%)");
+			searchString = searchString.replace(groupPlaceholder, "( " + groups[i].bbbSpaceClean() + " )");
 		}
 
-		return restoredSearch;
+		return searchString;
 	}
 
 	function cleanSearchGroups(string) {
@@ -6942,16 +7160,16 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		return searchString;
 	}
 
-	function searchSingleToMulti(string) {
+	function searchSingleToMulti(single) {
 		// Take a single line search and format it into multiple lines for a textarea.
-		var groupsObject = replaceSearchGroups(cleanSearchGroups(string));
+		var groupsObject = replaceSearchGroups(cleanSearchGroups(single));
 		var searchString = groupsObject.search;
 		var groups = groupsObject.groups;
-		var searchText = searchString.replace(/,\s*/g, "\r\n\r\n");
+		var multi = searchString.replace(/,\s*/g, " \r\n\r\n");
 
-		searchText = restoreSearchGroups(searchText, groups);
+		multi = restoreSearchGroups(multi, groups);
 
-		return searchText;
+		return multi;
 	}
 
 	function searchMultiToSingle(multi) {
@@ -6961,9 +7179,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		for (var i = 0, il = searchStrings.length; i < il; i++)
 			searchStrings[i] = cleanSearchGroups(searchStrings[i]);
 
-		var searchString = searchStrings.join(", ").bbbTagClean();
+		var single = searchStrings.join(", ").bbbTagClean();
 
-		return searchString;
+		return single;
 	}
 
 	function trackNew() {
@@ -7041,7 +7259,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				var limitNum = getLimit() || thumbnail_count || thumbnail_count_default;
 				var currentPage = Number(getVar("page")) || 1;
 				var savedPage = Math.ceil((info.viewing - limitNum) / limitNum) + 1;
-				var currentViewed = Number(/id:>(\d+)/.exec(decodeURIComponent(location.search))[1]);
+				var currentViewed = Number(decodeURIComponent(location.search).match(/id:>(\d+)/)[1]);
 				var paginator = getPaginator();
 
 				// Replace the chickens message on the first page with a more specific message.
@@ -7165,7 +7383,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		'#bbb-menu h1, #bbb-dialog-window h1 {font-size: 24px; line-height: 42px;}' +
 		'#bbb-menu h2, #bbb-dialog-window h2 {font-size: 16px; line-height: 25px;}' +
 		'#bbb-menu input, #bbb-menu select, #bbb-menu textarea, #bbb-dialog-window input, #bbb-dialog-window select, #bbb-dialog-window textarea {border: #CCCCCC 1px solid;}' +
-		'#bbb-menu input {height: 17px; padding: 1px 0px; margin-top: 4px; vertical-align: top;}' +
+		'#bbb-menu input {height: 18px; padding: 1px 0px; margin-top: 4px; vertical-align: top;}' +
 		'#bbb-menu input[type="checkbox"] {margin: 0px; vertical-align: middle; position: relative; bottom: 2px;}' +
 		'#bbb-menu .bbb-general-input input[type="text"], #bbb-menu .bbb-general-input select {width: 175px;}' +
 		'#bbb-menu select {height: 21px; margin-top: 4px; vertical-align: top;}' +
@@ -7182,28 +7400,32 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		'#bbb-menu .bbb-section-options, #bbb-menu .bbb-section-text {margin-bottom: 5px; max-width: 902px;}' +
 		'#bbb-menu .bbb-section-options-left, #bbb-menu .bbb-section-options-right {display: inline-block; vertical-align: top; width: 435px;}' +
 		'#bbb-menu .bbb-section-options-left {border-right: 1px solid #CCCCCC; margin-right: 15px; padding-right: 15px;}' +
-		'#bbb-menu .bbb-general-label {display: block; height: 29px; padding: 0px 5px;}' +
+		'#bbb-menu .bbb-general-label {display: block; height: 30px; padding: 0px 5px;}' +
 		'#bbb-menu .bbb-general-label:hover {background-color: #EEEEEE;}' +
-		'#bbb-menu .bbb-general-text {line-height: 29px;}' +
-		'#bbb-menu .bbb-general-input {float: right; line-height: 29px;}' +
+		'#bbb-menu .bbb-general-text {line-height: 30px;}' +
+		'#bbb-menu .bbb-general-input {float: right; line-height: 30px;}' +
 		'#bbb-menu .bbb-expl-link {font-size: 12px; font-weight: bold; margin-left: 5px; padding: 2px;}' +
-		'#bbb-menu .bbb-border-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
-		'#bbb-menu .bbb-border-bar, #bbb-menu .bbb-border-settings {height: 29px; padding: 0px 2px; overflow: hidden;}' +
-		'#bbb-menu .bbb-border-settings {background-color: #FFFFFF;}' +
-		'#bbb-menu .bbb-border-div label, #bbb-menu .bbb-border-div span {display: inline-block; line-height: 29px;}' +
-		'#bbb-menu .bbb-border-name {text-align: left; width: 540px;}' +
-		'#bbb-menu .bbb-border-name input {width:460px;}' +
-		'#bbb-menu .bbb-border-color {text-align: center; width: 210px;}' +
-		'#bbb-menu .bbb-border-color input {width: 148px;}' +
-		'#bbb-menu .bbb-border-style {float: right; text-align: right; width: 130px;}' +
-		'#bbb-menu .bbb-border-divider {height: 4px;}' +
-		'#bbb-menu .bbb-insert-highlight .bbb-border-divider {background-color: blue; cursor: pointer;}' +
-		'#bbb-menu .bbb-no-highlight .bbb-border-divider {background-color: transparent; cursor: auto;}' +
-		'#bbb-menu .bbb-border-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 2px; margin: 0px 2px;}' +
-		'#bbb-menu .bbb-border-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}' +
+		'#bbb-menu .bbb-list-div {background-color: #EEEEEE; padding: 2px; margin: 0px 5px 0px 0px;}' +
+		'#bbb-menu .bbb-list-bar, #bbb-menu .bbb-list-settings {height: 30px; padding: 0px 2px; overflow: hidden;}' +
+		'#bbb-menu .bbb-list-settings {background-color: #FFFFFF;}' +
+		'#bbb-menu .bbb-list-div label, #bbb-menu .bbb-list-div span {display: inline-block; line-height: 30px;}' +
+		'#bbb-menu .bbb-list-border-name {text-align: left; width: 540px;}' +
+		'#bbb-menu .bbb-list-border-name input {width:460px;}' +
+		'#bbb-menu .bbb-list-border-color {text-align: center; width: 210px;}' +
+		'#bbb-menu .bbb-list-border-color input {width: 148px;}' +
+		'#bbb-menu .bbb-list-border-style {float: right; text-align: right; width: 130px;}' +
+		'#bbb-menu .bbb-list-group-name {text-align: left; width: 300px;}' +
+		'#bbb-menu .bbb-list-group-name input {width:240px;}' +
+		'#bbb-menu .bbb-list-group-tags {float: right; text-align: center; width: 100%;}' +
+		'#bbb-menu .bbb-list-group-tags input {width:825px;}' +
+		'#bbb-menu .bbb-list-divider {height: 4px;}' +
+		'#bbb-menu .bbb-insert-highlight .bbb-list-divider {background-color: blue; cursor: pointer;}' +
+		'#bbb-menu .bbb-no-highlight .bbb-list-divider {background-color: transparent; cursor: auto;}' +
+		'#bbb-menu .bbb-list-button {border: 1px solid #CCCCCC; border-radius: 5px; display: inline-block; padding: 2px; margin: 0px 2px;}' +
+		'#bbb-menu .bbb-list-spacer {display: inline-block; height: 12px; width: 0px; border-right: 1px solid #CCCCCC; margin: 0px 5px;}' +
 		'#bbb-menu .bbb-backup-area {height: 300px; width: 896px; margin-top: 2px;}' +
 		'#bbb-menu .bbb-blacklist-area {height: 300px; width: 896px; margin-top: 2px;}' +
-		'#bbb-menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 19px; line-height: 19px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
+		'#bbb-menu .bbb-edit-link {background-color: #FFFFFF; border: 1px solid #CCCCCC; display: inline-block; height: 20px; line-height: 20px; margin-left: -1px; padding: 0px 2px; margin-top: 4px; text-align: center; vertical-align: top;}' +
 		'#bbb-expl {background-color: #CCCCCC; border: 1px solid #000000; display: none; font-size: 12px; padding: 5px; position: fixed; max-width: 488px; width: 488px; overflow: hidden; z-index: 9002; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);}' +
 		'#bbb-expl * {font-size: 12px;}' +
 		'#bbb-expl tiphead {display: block; font-weight: bold; text-decoration: underline; font-size: 13px; margin-top: 12px;}' +
@@ -7814,7 +8036,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		if (value === "")
 			return;
 		else if (bbb.quick_search.negated)
-			value = "-(% " + value + " %)";
+			value = "-( " + value + " )";
 
 		var posts = getPosts(target);
 		var search = createSearch(value);
@@ -9654,7 +9876,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	}
 
 	function timestamp(format) {
-		// Returns a simple timestamp based on the format string provided. String placeholders: y = year, m = month, d = day, hh = hours, mm = minutes, ss = seconds
+		// Returns a simple timestamp based on the format string provided. String placeholders: y = year, m = month, d = day, hh = hours, mm = minutes, ss = seconds, ms = milliseconds
 		function padDate(number) {
 			// Adds a leading "0" to single digit values.
 			var numString = String(number);
@@ -9673,8 +9895,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var hours = padDate(time.getHours());
 		var minutes = padDate(time.getMinutes());
 		var seconds = padDate(time.getSeconds());
+		var milliseconds = padDate(time.getMilliseconds());
 
-		stamp = stamp.replace("hh", hours).replace("mm", minutes).replace("ss", seconds).replace("y", year).replace("m", month).replace("d", day);
+		stamp = stamp.replace("hh", hours).replace("mm", minutes).replace("ss", seconds).replace("y", year).replace("m", month).replace("d", day).replace("ms", milliseconds);
 
 		return stamp;
 	}
@@ -9712,12 +9935,32 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		return "bbbuid" + bbb.uId;
 	}
 
+	function loadMetaGroups() {
+		// Load a user's group metatags.
+		if (bbb.groups === undefined) {
+			bbb.groups = {};
+
+			for (var i = 0, il = tag_groups.length; i < il; i++) {
+				var userGroup = tag_groups[i];
+
+				bbb.groups[userGroup.name] = userGroup.tags;
+			}
+		}
+	}
+
 	function bbbAutocompleteInit() {
 		// Add custom tags to Danbooru's autocomplete and fix other issues.
 		if (!Danbooru.Autocomplete)
 			return;
 
 		try {
+			// Add custom metatags.
+			var groups = [];
+
+			for (var i = 0, il = tag_groups.length; i < il; i++)
+				groups.push(tag_groups[i].name);
+
+			Danbooru.Autocomplete.static_metatags.group = Danbooru.Autocomplete.static_metatags.g = groups;
 			Danbooru.Autocomplete.static_metatags.parent = ["any", "none"];
 			Danbooru.Autocomplete.static_metatags.isfav = ["true", "false"];
 
@@ -9741,7 +9984,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var $fields_multiple = $(searchInputs);
 
 			var prefixes = "-~";
-			var metatags = "status|rating|parent|child|user|pool|isfav";
+			var metatags = "status|rating|parent|child|user|pool|group|g|isfav";
 
 			$fields_multiple.autocomplete({
 				delay: 100,
@@ -9793,6 +10036,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						case "rating":
 						case "parent":
 						case "child":
+						case "group":
+						case "g":
 						case "isfav":
 							Danbooru.Autocomplete.static_metatag_source(term, resp, metatag);
 							return;
