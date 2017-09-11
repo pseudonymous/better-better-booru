@@ -7795,7 +7795,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		// Provide page number info if available.
 		if (/\d/.test(paginator.textContent)) {
-			var activePage = paginator.getElementsByTagName("span")[0];
+			var activePage = paginator.getElementsByClassName("current-page")[0];
 			var pageItems = paginator.getElementsByTagName("li");
 			var numPageItems = pageItems.length;
 			var lastPageItem = pageItems[numPageItems - 1];
