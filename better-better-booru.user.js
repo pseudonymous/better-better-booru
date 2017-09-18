@@ -7042,7 +7042,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function replaceSearchGroupMetatag(string) {
 		// Replace group metatags in a search string with their respective tags.
 		var searchString = string;
-		
+
 		if (string.indexOf("g:") > -1 || string.indexOf("group:") > -1) {
 			loadMetaGroups();
 
@@ -7062,7 +7062,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				bbb.groups[recursiveGroupName] = ""; // Disable the group.
 			}
 		}
-		
+
 		return searchString;
 	}
 
@@ -7870,12 +7870,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var oldValue = bbb.quick_search.tags.bbbSpaceClean();
 			var oldNegate = bbb.quick_search.negated;
 			var curValue = searchInput.value.bbbSpaceClean();
-			var curNegate = bbb.el.quickSearchDiv.bbbHasClass("bbb-quick-search-negated");
+			var curNegate = searchDiv.bbbHasClass("bbb-quick-search-negated");
 
 			if (curValue === "" || (curValue === oldValue && curNegate === oldNegate))
 				quickSearchReset();
 			else {
-				bbb.quick_search.tags = bbb.el.quickSearchInput.value;
+				bbb.quick_search.tags = searchInput.value;
 				bbb.quick_search.negated = searchDiv.bbbHasClass("bbb-quick-search-negated");
 
 				if (searchDiv.bbbHasClass("bbb-quick-search-pinned"))
