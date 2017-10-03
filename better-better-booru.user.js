@@ -801,8 +801,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		}
 
 		if (!postInfo.file_url || safebPostTest(postInfo)) { // Modify everything except the post content if we're on Safebooru and the image isn't safe or if the image is hidden.
-			// Enable the "Resize to window", "Toggle Notes", "Random Post", and "Find similar" options for logged out users.
-			createOptionsSection();
+			// Enable the "Toggle Notes", "Random Post", and "Find similar" options for logged out users.
+			fixOptionsSection();
 
 			// Replace the "resize to window" link with new resize links.
 			modifyResizeLink();
@@ -817,8 +817,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			checkRelations();
 		}
 		else {
-			// Enable the "Resize to window", "Toggle Notes", "Random Post", and "Find similar" options for logged out users.
-			createOptionsSection();
+			// Enable the "Toggle Notes", "Random Post", and "Find similar" options for logged out users.
+			fixOptionsSection();
 
 			// Fix the post links in the sidebar.
 			fixPostDownloadLinks();
@@ -3779,17 +3779,15 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		noteToggleLinkInit();
 	}
 
-	function createOptionsSection() {
-		// Create the sidebar options section for logged out users.
+	function fixOptionsSection() {
+		// Fix the sidebar options section for logged out users.
 		if (isLoggedIn())
 			return;
 
 		var postInfo = bbb.post.info;
-		var infoSection = document.getElementById("post-information");
-		var options = document.createElement("section");
-		options.id = "post-options";
-		options.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li><li>Download</li><li><a id="random-post" href="http://danbooru.donmai.us/posts/random">Random post</a></li>' + (postInfo.preview_file_url ? '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + postInfo.preview_file_url + '">Find similar</a></li>' : '') + '</ul>';
-		infoSection.parentNode.insertBefore(options, infoSection.nextElementSibling);
+		var optionsSection = document.getElementById("post-options");
+
+		optionsSection.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li><li>Download</li><li><a id="random-post" href="http://danbooru.donmai.us/posts/random">Random post</a></li>' + (postInfo.preview_file_url ? '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + postInfo.preview_file_url + '">Find similar</a></li>' : '') + '</ul>';
 	}
 
 	function fixPostDownloadLinks() {
