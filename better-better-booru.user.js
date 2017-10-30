@@ -7611,14 +7611,16 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Hide sidebar.
 		if (autohide_sidebar) {
 			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
-			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -285px !important; opacity: 0 !important; overflow: hidden !important; padding: 0px 25px !important; top: 0px !important; z-index: 2001 !important;}' +
+			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -285px !important; opacity: 0 !important; overflow: hidden !important; padding: 0px 25px !important; top: 0px !important; z-index: 2001 !important; word-wrap: break-word !important;}' +
 			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; left: 0px !important; opacity: 1 !important; overflow-y: auto !important; padding: 0px 15px !important;}' +
 			'section#content {margin-left: 0px !important;}';
 		}
 
-		// Tweak the "+" buttom so it works with the autohide and fixed sidebar options.
-		if (autohide_sidebar || fixed_sidebar)
-			styles += '#search-dropdown {position: absolute !important; top: auto !important; bottom: auto !important; left: auto !important; right: auto !important;}';
+		// Tweak the "+" buttom and tags input so they work with the autohide and fixed sidebar options.
+		if (autohide_sidebar || fixed_sidebar) {
+			styles += '#search-dropdown {position: absolute !important; top: auto !important; bottom: auto !important; left: auto !important; right: auto !important;}' +
+			'aside#sidebar input#tags {max-width: ' + (autohide_sidebar ? "240" : document.getElementById("search-box").clientWidth - 10) + 'px;}';
+		}
 
 		// Collapse sidebar sections.
 		if (collapse_sidebar) {
@@ -7714,10 +7716,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			styles += '.bbb-ddl {display: none !important;}';
 
 		if (post_tag_scrollbars)
-			styles += '#tag-list ul {max-height: ' + post_tag_scrollbars + 'px !important; overflow-y: auto !important; font-size: 87.5% !important;}';
+			styles += '#tag-list ul {max-height: ' + post_tag_scrollbars + 'px !important; overflow-y: auto !important; font-size: 87.5% !important; word-wrap: break-word !important;}';
 
 		if (search_tag_scrollbars)
-			styles += '#tag-box ul {max-height: ' + search_tag_scrollbars + 'px !important; overflow-y: auto !important; font-size: 87.5% !important; margin-right: 2px !important;}';
+			styles += '#tag-box ul {max-height: ' + search_tag_scrollbars + 'px !important; overflow-y: auto !important; font-size: 87.5% !important; margin-right: 2px !important; word-wrap: break-word !important;}';
 
 		if (hide_tos_notice && document.getElementById("tos-notice")) {
 			styles += '#tos-notice {display: none !important;}';
@@ -8609,7 +8611,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var sidebarHeight = sidebarRect.height;
 
 		content.style.minHeight = sidebarHeight - 1 + "px";
-		sidebar.style.overflow = "hidden"; // There are some cases where text overflows.
+		
+		// There are some cases where text overflows.
+		sidebar.style.overflow = "hidden";
+		sidebar.style.wordWrap = "break-word";
 
 		if (comments)
 			comments.style.overflow = "auto"; // Force the contained float elements to affect the dimensions.
