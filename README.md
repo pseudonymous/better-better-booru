@@ -31,6 +31,9 @@ Features
   * Auto-scroll image - Automatically scroll the post content into view upon browsing a post.
   * Disable embedded notes - Force notes to display with the original style when viewing a post.
   * Video volume - Set the default volume of videos or remember your volume settings across videos.
+  * Video autoplay - Choose whether videos automatically play.
+  * Video looping - Choose whether videos automatically repeat by default.
+  * Video controls - Choose whether video controls display by default.
   * Improved image resizing that works on flash content and also allows resizing by width, height, or both.
   * Improved ugoira functionality that includes note viewing on sample video versions, an additional "view sample" link for swapping from the original version, and support for swapping between the sample and original with Danbooru's hotkey.
 * Multiple options for altering the layout:
@@ -47,7 +50,6 @@ Features
   * Direct downloads - Let download managers download all the images currently displayed as thumbnails.
   * Track new posts - Create a specialized link focused on tracking and browsing new images.
   * Clean links - Remove extra information from post links in order to reduce history clutter/problems.
-  * Arrow navigation - Allow the use of the arrow keys to navigate pages.
   * Post tag titles - Give posts a page title consisting of all of their tags.
   * Search add - Add/remove links to/from the sidebar tags that allow the easy inclusion or exclusion of additional search tags.
   * Page counter - Add an indicator near the top of listings that displays the page number information and allows for easy jumping to specific pages.
@@ -55,7 +57,7 @@ Features
   * Quick search - Filter the current thumbnails for specific posts that match your search.
 * Improved accessibility for logged out users via several options and features:
   * Control over the blacklist, post sample setting, post resizing setting, and tagged filenames setting.
-  * Adds back the missing sidebar options section with all the options accessible to logged out users.
+  * Adds back missing options to the sidebar options section.
   * Re-enables post to post hotkey navigation for searches.
 
 ---
