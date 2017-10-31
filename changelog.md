@@ -1,5 +1,19 @@
 Changelog
 ----------
+* Version 8.0:
+  * Added thumbnail placeholder options for censored/hidden content.
+  * Added video options for changing autoplay, looping, and control display behavior.
+  * Added autocomplete support to the BBB menu.
+  * Added an "enable menu autocomplete" preferences option.
+  * Added a negate/invert toggle button to the quick search.
+  * Added a "group" metatag to the thumbnail matching rules.
+  * Added a group tab to the BBB menu for creating groups for use with the "group" metatag.
+  * Removed the "arrow navigation" option since Danbooru supports it.
+  * Updated tag nesting/grouping to use parentheses without percent signs since percent signs are now allowed in tags.
+  * Fixed the sidebar search compatibility with the autohide and fixed sidebar options by limiting its width.
+  * Fixed the page counter option not grabbing the correct current page.
+  * Fixed the options section displaying twice for logged out users.
+  * Fixed compatibility with gold level and above accounts.
 * Version 7.4.1:
   * Removed the "show loli", "show shota", "shot toddlercon", "show banned", and "thumbnail info cache limit" options in response to changes on Danbooru that render them useless.
 * Version 7.4:
