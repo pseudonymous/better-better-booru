@@ -7140,7 +7140,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	}
 
 	function restoreSearchGroups(string, groups) {
-		// Replace all group placeholders with their corresponding group.
+		// Replace all group placeholders with their corresponding group and restore leftover parenthesis placeholders.
 		var searchString = string;
 
 		for (var i = 0, il = groups.length; i < il; i++) {
@@ -7149,7 +7149,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			searchString = searchString.replace(groupPlaceholder, "( " + groups[i].bbbSpaceClean() + " )");
 		}
 
-		return searchString;
+		return searchString.replace(/BBBPARENSOPEN/g, "(").replace(/BBBPARENSCLOSE/g, ")");
 	}
 
 	function cleanSearchGroups(string) {
