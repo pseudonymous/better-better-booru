@@ -876,7 +876,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			else if (!postInfo.image_height) // Create manual download.
 				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + postInfo.file_img_src + '">Save this file (right click and save)</a></p>';
 			else { // Create image
-				var imgDesc = (getMeta("og:title") || "").replace(" - Danbooru", "");
 				var newWidth, newHeight, newUrl; // If/else variables.
 
 				if (load_sample_first && postInfo.has_large) {
@@ -9384,6 +9383,14 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				if (tagRegEx.test(inputValue))
 					input.value = inputValue.replace(tagRegEx, "$1").bbbSpaceClean();
 				break;
+		}
+
+		// Trigger the tag input width adjustment.
+		try {
+			$("#tags").keypress();
+		}
+		catch (error) {
+			// Do nothing.
 		}
 
 		event.preventDefault();
