@@ -1,5 +1,9 @@
 Changelog
 ----------
+* Version 8.0.1:
+  * Removed the description text below images since Danbooru no longer displays it.
+  * Fixed nested/grouped tags within other nested/grouped tags not having their parentheses processed properly.
+  * Fixed the "search add" option "toggle" setting not affecting the width of the tag search input.
 * Version 8.0:
   * Added thumbnail placeholder options for censored/hidden content.
   * Added video options for changing autoplay, looping, and control display behavior.
