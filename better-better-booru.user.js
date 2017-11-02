@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better.
-// @version        8.0
+// @version        8.0.1
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -315,7 +315,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "8.0",
+			bbb_version: "8.0.1",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the \"thumbnail count\" option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
@@ -876,7 +876,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			else if (!postInfo.image_height) // Create manual download.
 				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div><p><a href="' + postInfo.file_img_src + '">Save this file (right click and save)</a></p>';
 			else { // Create image
-				var imgDesc = (getMeta("og:title") || "").replace(" - Danbooru", "");
 				var newWidth, newHeight, newUrl; // If/else variables.
 
 				if (load_sample_first && postInfo.has_large) {
@@ -890,7 +889,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					newUrl = postInfo.file_img_src;
 				}
 
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + postInfo.tag_string + '" data-fav-count="' + postInfo.fav_count + '" data-flags="' + postInfo.flags + '" data-has-active-children="' + postInfo.has_active_children + '" data-has-children="' + postInfo.has_children + '" data-large-height="' + postInfo.large_height + '" data-large-width="' + postInfo.large_width + '" data-original-height="' + postInfo.image_height + '" data-original-width="' + postInfo.image_width + '" data-rating="' + postInfo.rating + '" data-score="' + postInfo.score + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;"/> <p class="desc">' + imgDesc + '</p>';
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + postInfo.tag_string + '" data-fav-count="' + postInfo.fav_count + '" data-flags="' + postInfo.flags + '" data-has-active-children="' + postInfo.has_active_children + '" data-has-children="' + postInfo.has_children + '" data-large-height="' + postInfo.large_height + '" data-large-width="' + postInfo.large_width + '" data-original-height="' + postInfo.image_height + '" data-original-width="' + postInfo.image_width + '" data-rating="' + postInfo.rating + '" data-score="' + postInfo.score + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;" />';
 
 				bbb.el.bbbLoader = document.getElementById("bbb-loader");
 
@@ -3344,6 +3343,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						bbbNotice("As of version 7.4.1, the options related to hidden/censored posts have been changed to placeholder options due to Danbooru finally fixing their loopholes.", 0);
 
 					deleteData("bbb_thumb_cache");
+				case "8.0":
 					break;
 			}
 
@@ -7140,7 +7140,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	}
 
 	function restoreSearchGroups(string, groups) {
-		// Replace all group placeholders with their corresponding group.
+		// Replace all group placeholders with their corresponding group and restore leftover parenthesis placeholders.
 		var searchString = string;
 
 		for (var i = 0, il = groups.length; i < il; i++) {
@@ -7149,7 +7149,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			searchString = searchString.replace(groupPlaceholder, "( " + groups[i].bbbSpaceClean() + " )");
 		}
 
-		return searchString;
+		return searchString.replace(/BBBPARENSOPEN/g, "(").replace(/BBBPARENSCLOSE/g, ")");
 	}
 
 	function cleanSearchGroups(string) {
@@ -9384,6 +9384,14 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				if (tagRegEx.test(inputValue))
 					input.value = inputValue.replace(tagRegEx, "$1").bbbSpaceClean();
 				break;
+		}
+
+		// Trigger the tag input width adjustment.
+		try {
+			$("#tags").keypress();
+		}
+		catch (error) {
+			// Do nothing.
 		}
 
 		event.preventDefault();
