@@ -64,9 +64,9 @@ Features
 Installation
 ------------
 1. Installing a userscript manager is strongly recommended and sometimes required. Suggestions:
-  * [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) (Firefox)
   * [Tampermonkey](http://tampermonkey.net/) (Chrome, Opera)
   * [Violentmonkey](https://addons.opera.com/extensions/details/violent-monkey/) (Opera)
+  * [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) (Firefox) (Note: Setting/data storage is not fully supported.)
 2. Open/install the script from a site or local computer file**. Please be sure you're using a trustworthy source. Recommendations:
   * [Greasy Fork](https://greasyfork.org/scripts/3575-better-better-booru)
   * [GitHub](https://github.com/pseudonymous/better-better-booru)
