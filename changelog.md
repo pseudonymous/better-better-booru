@@ -1,5 +1,7 @@
 Changelog
 ----------
+* Version 8.0.2:
+  * Updated to notify Greasemonkey users about the upcoming changes Firefox 57 and Greasemonkey 4 will bring.
 * Version 8.0.1:
   * Removed the description text below images since Danbooru no longer displays it.
   * Fixed nested/grouped tags within other nested/grouped tags not having their parentheses processed properly.

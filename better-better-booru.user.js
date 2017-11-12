@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better.
-// @version        8.0.1
+// @version        8.0.2
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -315,7 +315,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "8.0.1",
+			bbb_version: "8.0.2",
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the \"thumbnail count\" option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
@@ -2557,7 +2557,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		helpButton.href = "#";
 		helpButton.innerHTML = "Help";
 		helpButton.className = "bbb-list-button";
-		helpButton.bbbSetTip("<b>Name:</b> The name you want to refer to this group of tags by when using the group metatag. Names may not contain spaces or commas. <tipdesc>Tags:</tipdesc> Describes the posts that the group should match. Please read the \"thumbnail matching rules\" section under the help tab for information about creating rules. When used, all tags in a group are treated as if they're grouped/nested together (enclosed in parentheses). <tipdesc>Move:</tipdesc> Move the group to a new position. The order of groups affects the order they display in for tag autocomplete. <tipdesc>Delete:</tipdesc> Remove the group and its settings.<tipdesc>New:</tipdesc> Create a new group. <tiphead>Example</tiphead>If given a group named\"hidden\" that contains \"~loli ~shota ~toddlercon ~status:banned\" for its tags, a search for \"rating:questionable -group:hidden\" would behave like \"rating:questionable -( ~loli ~shota ~toddlercon ~status:banned )\".<tiphead>Tips</tiphead>The \"group\" metatag can be shortened to \"g\". <br><br>Groups used by themselves with the quick search option can provide a saved search functionality.<br><br>A blacklist or border entry (especially a complex one) that you want to work exclusively from other entries can be assigned to a group and excluded from other entries by using \"-group:entryname\". Updating that group will then update all entries linked to it. Similarly, tags you want shared across multiple entries can just use \"group:entryname\".");
+		helpButton.bbbSetTip("<b>Name:</b> The name you want to refer to this group of tags by when using the group metatag. Names may not contain spaces or commas. <tipdesc>Tags:</tipdesc> Describes the posts that the group should match. Please read the \"thumbnail matching rules\" section under the help tab for information about creating rules. When used, all tags in a group are treated as if they're grouped/nested together (enclosed in parentheses). <tipdesc>Move:</tipdesc> Move the group to a new position. The order of groups affects the order they display in for tag autocomplete. <tipdesc>Delete:</tipdesc> Remove the group and its settings.<tipdesc>New:</tipdesc> Create a new group. <tiphead>Example</tiphead>If given a group named \"hidden\" that contains \"~loli ~shota ~toddlercon ~status:banned\" for its tags, a search for \"rating:questionable -group:hidden\" would behave like \"rating:questionable -( ~loli ~shota ~toddlercon ~status:banned )\".<tiphead>Tips</tiphead>The \"group\" metatag can be shortened to \"g\". <br><br>Groups used by themselves with the quick search option can provide a saved search functionality.<br><br>A blacklist or border entry (especially a complex one) that you want to work exclusively from other entries can be assigned to a group and excluded from other entries by using \"-group:entryname\". Updating that group will then update all entries linked to it. Similarly, tags you want shared across multiple entries can just use \"group:entryname\".");
 		editSpan.appendChild(helpButton);
 
 		var groupSettingsDiv = document.createElement("div");
@@ -3344,6 +3344,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 					deleteData("bbb_thumb_cache");
 				case "8.0":
+				case "8.0.1":
+					if (reason !== "backup") {
+						cleanLocalStorage("autocomplete");
+						localStorage.bbbSetItem("bbb_settings", JSON.stringify(bbb.user));
+						bbbNotice("Upon the release of Firefox 57 and the move over to Greasemonkey 4, BBB will not be able to fully support Greasemonkey due to decisions the developers have made about loading and saving data. Greasemonkey users will have to revert back to using an older storage method that will still work while suffering a few disadvantages. Those disadvantages include: 1) A much more limited amount of space for storage. 2) The inability to have your settings persist across all Danbooru subdomains and during private browsing. If you are reading this, a copy of your settings has already been saved using the old method, but it is advised that you create a separate backup before updating to Firefox 57 to collect any new changes and/or guard against any unforeseen problems.", 0);
+					}
 					break;
 			}
 
