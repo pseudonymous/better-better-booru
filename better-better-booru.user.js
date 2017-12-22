@@ -353,6 +353,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar never completely vertically scroll out of view for posts, favorites listings, and/or searches by fixing it to the top or bottom of the window when it would normally start scrolling out of view. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window and the Danbooru location being modified, the \"tag scrollbars\", \"collapsible sidebar\", and/or \"remove tag headers\" options may be needed for best results.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			hide_ban_notice: newOption("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 			hide_comment_notice: newOption("checkbox", false, "Hide Comment Guide Notice", "Hide the Danbooru comment guide notice."),
+			hide_fav_button: newOption ("checkbox", false, "Hide Favorite Button", "Hide the favorite button below post content."),
 			hide_pool_notice: newOption("checkbox", false, "Hide Pool Guide Notice", "Hide the Danbooru pool guide notice."),
 			hide_sign_up_notice: newOption("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
 			hide_tag_notice: newOption("checkbox", false, "Hide Tag Guide Notice", "Hide the Danbooru tag guide notice."),
@@ -421,7 +422,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_hidden_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
-			misc_layout: newSection("general", ["fixed_paginator"], "Misc."),
+			misc_layout: newSection("general", ["fixed_paginator", "hide_fav_button"], "Misc."),
 			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "enable_menu_autocomplete", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumbnail_count_default"], "Script Settings"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
@@ -489,6 +490,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var disable_tagged_filenames = bbb.user.disable_tagged_filenames;
 	var track_new = bbb.user.track_new;
 
+	var hide_fav_button = bbb.user.hide_fav_button;
 	var show_resized_notice = bbb.user.show_resized_notice;
 	var hide_sign_up_notice = bbb.user.hide_sign_up_notice;
 	var hide_upgrade_notice = bbb.user.hide_upgrade_notice;
@@ -7791,6 +7793,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		if (hide_hidden_notice)
 			styles += '.hidden-posts-notice {display: none !important;}';
+
+		if (hide_fav_button)
+			styles += '.fav-buttons {display: none !important;}';
 
 		customStyles.innerHTML = styles;
 		document.getElementsByTagName("head")[0].appendChild(customStyles);
