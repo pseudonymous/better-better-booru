@@ -316,6 +316,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		},
 		options: { // Setting options and data.
 			bbb_version: "8.0.2",
+			add_popular_link: newOption("checkbox", false, "Add Popular Link", "Add a link to the popular listing to the \"posts\" submenu"),
 			add_random_post_link: newOption("checkbox", false, "Add Random Link", "Add a link to a random post to the post sidebar options menu."),
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the \"thumbnail count\" option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
@@ -423,7 +424,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_hidden_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
-			misc_layout: newSection("general", ["fixed_paginator", "hide_fav_button", "add_random_post_link"], "Misc."),
+			misc_layout: newSection("general", ["fixed_paginator", "hide_fav_button", "add_popular_link", "add_random_post_link"], "Misc."),
 			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "enable_menu_autocomplete", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumbnail_count_default"], "Script Settings"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
@@ -491,6 +492,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var disable_tagged_filenames = bbb.user.disable_tagged_filenames;
 	var track_new = bbb.user.track_new;
 
+	var add_popular_link = bbb.user.add_popular_link;
 	var add_random_post_link = bbb.user.add_random_post_link;
 	var hide_fav_button = bbb.user.hide_fav_button;
 	var show_resized_notice = bbb.user.show_resized_notice;
@@ -558,6 +560,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	customCSS(); // Contains the portions related to notices.
 
 	thumbInfo();
+
+	addPopularLink();
 
 	removeTagHeaders();
 
@@ -9443,6 +9447,24 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		}
 
 		event.preventDefault();
+	}
+
+	function addPopularLink() {
+		// Add the popular link back to the posts submenu.
+		var subListItem = document.getElementById("secondary-links-posts-hot") || document.getElementById("secondary-links-posts-favorites");
+
+		if (!subListItem || !add_popular_link)
+			return;
+
+		var popularListItem = document.createElement("li");
+		popularListItem.id = "secondary-links-posts-popular";
+
+		var popularLink = document.createElement("a");
+		popularLink.href = "/explore/posts/popular";
+		popularLink.innerHTML = "Popular";
+		popularListItem.appendChild(popularLink);
+
+		subListItem.parentNode.insertBefore(popularListItem, subListItem);
 	}
 
 	function eraseSettingDialog() {
