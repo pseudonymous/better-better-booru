@@ -6383,9 +6383,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			postInfo.file_img_src = postInfo.file_url.replace(postInfo.file_url_desc, "");
 			postInfo.large_file_img_src = postInfo.large_file_url.replace(postInfo.file_url_desc, "");
 		}
-		else if (!disable_tagged_filenames && postInfo.file_url.indexOf("__") < 0) {
-			postInfo.file_img_src = postInfo.file_url.replace(/\/(?=[\w\_]+\.\w+$)/, "/" + postInfo.file_url_desc);
-			postInfo.large_file_img_src = postInfo.large_file_url.replace(/\/(?=[\w\_]+\.\w+$)/, "/" + postInfo.file_url_desc);
+		else if (!disable_tagged_filenames && postInfo.file_url.indexOf("__") < 0 && postInfo.file_url.indexOf("raikou1.donmai.us") < 0) {
+			postInfo.file_img_src = postInfo.file_url.replace(/\/(?=[\w\-]+\.\w+$)/, "/" + postInfo.file_url_desc);
+			postInfo.large_file_img_src = postInfo.large_file_url.replace(/\/(?=[\w\-]+\.\w+$)/, "/" + postInfo.file_url_desc);
 		}
 		else {
 			postInfo.file_img_src = postInfo.file_url;
