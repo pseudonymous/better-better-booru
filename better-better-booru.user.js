@@ -10052,6 +10052,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			Danbooru.Autocomplete.static_metatags.group = Danbooru.Autocomplete.static_metatags.g = groups;
 			Danbooru.Autocomplete.static_metatags.parent = ["any", "none"];
 			Danbooru.Autocomplete.static_metatags.isfav = ["true", "false"];
+			Danbooru.Autocomplete.static_metatags.pool = ["series", "collection", "any", "none", "active", "inactive"];
 
 			// Counter normal autocomplete getting turned back on after submitting an input.
 			document.body.addEventListener("focus", function(event) {
@@ -10128,6 +10129,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						case "group":
 						case "g":
 						case "isfav":
+						case "pool":
 							Danbooru.Autocomplete.static_metatag_source(term, resp, metatag);
 							return;
 					}
