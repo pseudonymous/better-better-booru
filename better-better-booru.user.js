@@ -7127,7 +7127,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		if (string.indexOf("BBBPARENS") < 0) {
 			// Replace parentheses that are not part of a tag with placeholders.
-			var parensRegex = /(?:^|([\s,]))([-~])*\(%?(?=$|[\s,])|(?:^|([\s,]))%?\)(?=$|[\s,])/;
+			var parensRegex = /(?:^|([\s,]))([-~]*)\(%?(?=$|[\s,])|(?:^|([\s,]))%?\)(?=$|[\s,])/;
 
 			if (!parensRegex.test(string))
 				return {search: string, groups: []};
@@ -7147,7 +7147,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		// Remove unpaired opening parentheses near the end of the search.
 		while (parens[parens.length - 1] === "BBBPARENSOPEN") {
-			searchString = searchString.replace(/^(.*\s)?[~-]*\BBBPARENSOPEN/, "$1");
+			searchString = searchString.replace(/^(.*\s)?[~-]*BBBPARENSOPEN/, "$1");
 			parens.pop();
 		}
 
@@ -7182,7 +7182,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				groups.push(groupMatch.substring(13, groupMatch.length - 14));
 			}
 			else if (!nextParen && startCount > 0 && endCount === 0 ) // Remove leftover unpaired opening parentheses.
-				searchString = searchString.replace(/^(.*\s)?[~-]*\BBBPARENSOPEN/, "$1");
+				searchString = searchString.replace(/^(.*\s)?[~-]*BBBPARENSOPEN/, "$1");
 		}
 
 		return {search: searchString, groups: groups};
