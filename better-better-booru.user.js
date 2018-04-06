@@ -6374,7 +6374,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function postFileUrlDesc(postInfo) {
 		// Create/return the file URL desc property.
-		if (typeof(postInfo.file_url_desc) === "string")
+		if (gLoc !== "post") // Danbooru doesn't provide this information for thumbnail listings.
+			return "";
+		else if (typeof(postInfo.file_url_desc) === "string")
 			return postInfo.file_url_desc;
 		else if (postInfo.file_url.indexOf("__") > -1)
 			return "__" + postInfo.file_url.split("__")[1] + "__";
