@@ -169,8 +169,15 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return this.getAttribute("data-" + name);
 		else if (this.bbbHasClass("post-preview"))
 			return scrapeThumb(this);
-		else
-			return scrapePost(this);
+		else {
+			// Always try to send the HTML element in order to provide the most information.
+			var parent = this;
+
+			while (parent.parentNode)
+				parent = parent.parentNode;
+
+			return scrapePost(parent);
+		}
 	};
 
 	document.bbbInfo = function(name, value) {
@@ -1402,32 +1409,32 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		var postEl = postContent.el;
 		var postTag = (postEl ? postEl.tagName : undefined);
-		var flags = imgContainer.getAttribute("data-flags");
+		var flags = imgContainer.getAttribute("data-flags") || "";
 
 		var imgInfo = {
-			md5: imgContainer.getAttribute("data-md5"),
-			file_ext: imgContainer.getAttribute("data-file-ext"),
-			file_url: imgContainer.getAttribute("data-file-url"),
-			large_file_url: imgContainer.getAttribute("data-large-file-url"),
-			preview_file_url: imgContainer.getAttribute("data-preview-file-url"),
+			md5: imgContainer.getAttribute("data-md5") || "",
+			file_ext: imgContainer.getAttribute("data-file-ext") || "",
+			file_url: imgContainer.getAttribute("data-file-url") || "",
+			large_file_url: imgContainer.getAttribute("data-large-file-url") || "",
+			preview_file_url: imgContainer.getAttribute("data-preview-file-url") || "",
 			has_large: undefined,
-			id: Number(imgContainer.getAttribute("data-id")),
+			id: Number(imgContainer.getAttribute("data-id")) || 0,
 			pixiv_id: Number(imgContainer.getAttribute("data-pixiv-id")) || null,
-			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
+			fav_count: Number(imgContainer.getAttribute("data-fav-count")) || 0,
 			has_children: (imgContainer.getAttribute("data-has-children") === "true"),
 			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent")[0]),
 			fav_string: getMeta("favorites", docEl),
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
-			rating: imgContainer.getAttribute("data-rating"),
-			score: Number(imgContainer.getAttribute("data-score")),
-			source: imgContainer.getAttribute("data-source"),
-			tag_string: imgContainer.getAttribute("data-tags"),
+			rating: imgContainer.getAttribute("data-rating") || "",
+			score: Number(imgContainer.getAttribute("data-score")) || 0,
+			source: imgContainer.getAttribute("data-source") || "",
+			tag_string: imgContainer.getAttribute("data-tags") || "",
 			tag_string_artist: scrapePostTags("artist", target),
 			tag_string_character: scrapePostTags("character", target),
 			tag_string_copyright: scrapePostTags("copyright", target),
 			tag_string_general: scrapePostTags("general", target),
-			pool_string: imgContainer.getAttribute("data-pools"),
-			uploader_name: imgContainer.getAttribute("data-uploader"),
+			pool_string: imgContainer.getAttribute("data-pools") || "",
+			uploader_name: imgContainer.getAttribute("data-uploader") || "",
 			approver_id: imgContainer.getAttribute("data-approver-id") || null,
 			is_deleted: (flags.indexOf("deleted") > -1),
 			is_flagged: (flags.indexOf("flagged") > -1),
@@ -1486,7 +1493,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function scrapeThumb(post) {
 		// Retrieve info from a thumbnail and return it as API styled info. Mainly for remaking thumbnails.
-		var flags = post.getAttribute("data-flags");
+		var flags = post.getAttribute("data-flags") || "";
 		var imgInfo = {
 			md5: post.getAttribute("data-md5") || "",
 			file_ext: post.getAttribute("data-file-ext") || "",
@@ -1495,19 +1502,19 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			preview_file_url: post.getAttribute("data-preview-file-url") || "",
 			file_url_desc: post.getAttribute("data-file-url-desc") || undefined,
 			has_large: undefined,
-			id: Number(post.getAttribute("data-id")),
+			id: Number(post.getAttribute("data-id")) || 0,
 			pixiv_id: Number(post.getAttribute("data-pixiv-id")) || null,
-			fav_count: Number(post.getAttribute("data-fav-count")),
+			fav_count: Number(post.getAttribute("data-fav-count")) || 0,
 			has_children: (post.getAttribute("data-has-children") === "true"),
 			has_active_children: post.bbbHasClass("post-status-has-children"), // Assumption. Basically a flag for the children class.
 			fav_string: (post.getAttribute("data-is-favorited") === "true" ? "fav:" + getMeta("current-user-id") : ""), // Faked since thumbnails don't provide the full list of favorites.
 			parent_id: (post.getAttribute("data-parent-id") ? Number(post.getAttribute("data-parent-id")) : null),
-			rating: post.getAttribute("data-rating"),
-			score: Number(post.getAttribute("data-score")),
-			source: post.getAttribute("data-source"),
-			tag_string: post.getAttribute("data-tags"),
-			pool_string: post.getAttribute("data-pools"),
-			uploader_name: post.getAttribute("data-uploader"),
+			rating: post.getAttribute("data-rating") || "",
+			score: Number(post.getAttribute("data-score")) || 0,
+			source: post.getAttribute("data-source") || "",
+			tag_string: post.getAttribute("data-tags") || "",
+			pool_string: post.getAttribute("data-pools") || "",
+			uploader_name: post.getAttribute("data-uploader") || "",
 			approver_id: post.getAttribute("data-approver-id") || null,
 			is_deleted: (flags.indexOf("deleted") > -1),
 			is_flagged: (flags.indexOf("flagged") > -1),
