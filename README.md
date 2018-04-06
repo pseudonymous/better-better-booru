@@ -43,7 +43,9 @@ Features
   * Fixed sidebar - Fix/stick the sidebar to the left side of the page and prevent it from vertically scrolling out of view.
   * Collapsible sidebar - Allow sections of the sidebar to be minimized and expanded.
   * Fixed paginator - Fix/stick the paginator to the bottom of the window and prevent it from scrolling out of view.
-  * Move save search - Move the "save this search" button into the sidebar.
+  * Hide favorite button - Remove the button below post content.
+  * Add random link - Allow random post access from each post.
+  * Add popular link - Allow easier popular post listing access from most post pages.
   * Various options for easily modifying status borders to your liking and creating your own secondary custom borders that match images based on your criteria.
   * Various options for customizing the majority of notices by either altering or hiding them.
 * Several other miscellaneous options:

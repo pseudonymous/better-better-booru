@@ -1,5 +1,14 @@
 Changelog
 ----------
+* Version 8.1:
+  * Added a "hide favorite button" layout option for hiding the button underneath post content.
+  * Added an "add random link" layout option for placing a link to a random post in the sidebar options menu of posts.
+  * Added an "add popular link" layout option for placing a link to the popular listing in the submenu of the posts section.
+  * Added the custom pool metatag values ("active", etc.) to tag autocomplete.
+  * Updated to support Danbooru removing uploader names from thumbnail listings ("user" metatag will no longer work on them).
+  * Updated to support Danbooru removing description tags from thumbnail listing information.
+  * Fixed the insertion of description tags into sample post URLs.
+  * Fixed the operators for the "group" metatag so that both "or" (~) and "exclude" (-) can be used at the same time.
 * Version 8.0.2:
   * Updated to notify Greasemonkey users about the upcoming changes Firefox 57 and Greasemonkey 4 will bring.
 * Version 8.0.1:

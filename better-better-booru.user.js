@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better.
-// @version        8.0.2
+// @version        8.1
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -169,8 +169,15 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return this.getAttribute("data-" + name);
 		else if (this.bbbHasClass("post-preview"))
 			return scrapeThumb(this);
-		else
-			return scrapePost(this);
+		else {
+			// Always try to send the HTML element in order to provide the most information.
+			var parent = this;
+
+			while (parent.parentNode)
+				parent = parent.parentNode;
+
+			return scrapePost(parent);
+		}
 	};
 
 	document.bbbInfo = function(name, value) {
@@ -315,7 +322,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "8.0.2",
+			bbb_version: "8.1",
+			add_popular_link: newOption("checkbox", false, "Add Popular Link", "Add a link to the popular listing to the \"posts\" submenu"),
+			add_random_post_link: newOption("checkbox", false, "Add Random Link", "Add a link to a random post to the post sidebar options menu."),
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
 			autohide_sidebar: newOption("dropdown", "none", "Auto-hide Sidebar", "Hide the sidebar for posts, favorites listings, and/or searches until the mouse comes close to the left side of the window or the sidebar gains focus.<tiphead>Tips</tiphead>By using Danbooru's hotkey for the letter \"Q\" to place focus on the search box, you can unhide the sidebar.<br><br>Use the \"thumbnail count\" option to get the most out of this feature on search listings.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			autoscroll_post: newOption("dropdown", "none", "Auto-scroll Post", "Automatically scroll a post to a particular point. <tipdesc>Below Header:</tipdesc> Scroll the window down until the header is no longer visible or scrolling is no longer possible. <tipdesc>Post Content:</tipdesc> Position the post content as close as possible to the left and top edges of the window viewport when initially loading a post. Using this option will also scroll past any notices above the content.", {txtOptions:["Disabled:none", "Below Header:header", "Post Content:post"]}),
@@ -353,6 +362,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fixed_sidebar: newOption("dropdown", "none", "Fixed Sidebar", "Make the sidebar never completely vertically scroll out of view for posts, favorites listings, and/or searches by fixing it to the top or bottom of the window when it would normally start scrolling out of view. <tiphead>Note</tiphead>The \"auto-hide sidebar\" option will override this option if both try to modify the same page. <tiphead>Tip</tiphead>Depending on the available height in the browser window and the Danbooru location being modified, the \"tag scrollbars\", \"collapsible sidebar\", and/or \"remove tag headers\" options may be needed for best results.", {txtOptions:["Disabled:none", "Favorites:favorites", "Posts:post", "Searches:search", "Favorites & Posts:favorites post", "Favorites & Searches:favorites search", "Posts & Searches:post search", "All:favorites post search"]}),
 			hide_ban_notice: newOption("checkbox", false, "Hide Ban Notice", "Hide the Danbooru ban notice."),
 			hide_comment_notice: newOption("checkbox", false, "Hide Comment Guide Notice", "Hide the Danbooru comment guide notice."),
+			hide_fav_button: newOption ("checkbox", false, "Hide Favorite Button", "Hide the favorite button below post content."),
 			hide_pool_notice: newOption("checkbox", false, "Hide Pool Guide Notice", "Hide the Danbooru pool guide notice."),
 			hide_sign_up_notice: newOption("checkbox", false, "Hide Sign Up Notice", "Hide the Danbooru account sign up notice."),
 			hide_tag_notice: newOption("checkbox", false, "Hide Tag Guide Notice", "Hide the Danbooru tag guide notice."),
@@ -421,7 +431,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_hidden_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
-			misc_layout: newSection("general", ["fixed_paginator"], "Misc."),
+			misc_layout: newSection("general", ["fixed_paginator", "hide_fav_button", "add_popular_link", "add_random_post_link"], "Misc."),
 			script_settings: newSection("general", ["bypass_api", "manage_cookies", "enable_status_message", "enable_menu_autocomplete", "resize_link_style", "override_blacklist", "override_resize", "override_sample", "disable_tagged_filenames", "thumbnail_count_default"], "Script Settings"),
 			status_borders: newSection("border", "status_borders", "Custom Status Borders", "When using custom status borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>."),
 			tag_borders: newSection("border", "tag_borders", "Custom Tag Borders", "When using custom tag borders, the borders can be edited here. For easy color selection, use one of the many free tools on the internet like <a target=\"_blank\" href=\"http://www.quackit.com/css/css_color_codes.cfm\">this one</a>.")
@@ -489,6 +499,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var disable_tagged_filenames = bbb.user.disable_tagged_filenames;
 	var track_new = bbb.user.track_new;
 
+	var add_popular_link = bbb.user.add_popular_link;
+	var add_random_post_link = bbb.user.add_random_post_link;
+	var hide_fav_button = bbb.user.hide_fav_button;
 	var show_resized_notice = bbb.user.show_resized_notice;
 	var hide_sign_up_notice = bbb.user.hide_sign_up_notice;
 	var hide_upgrade_notice = bbb.user.hide_upgrade_notice;
@@ -554,6 +567,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	customCSS(); // Contains the portions related to notices.
 
 	thumbInfo();
+
+	addPopularLink();
 
 	removeTagHeaders();
 
@@ -804,6 +819,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			// Enable the "Toggle Notes", "Random Post", and "Find similar" options for logged out users.
 			fixOptionsSection();
 
+			// Add the random post link.
+			addRandomPostLink();
+
 			// Replace the "resize to window" link with new resize links.
 			modifyResizeLink();
 
@@ -822,6 +840,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			// Fix the post links in the sidebar.
 			fixPostDownloadLinks();
+
+			// Add the random post link.
+			addRandomPostLink();
 
 			// Replace the "resize to window" link with new resize links.
 			modifyResizeLink();
@@ -1388,32 +1409,32 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		var postEl = postContent.el;
 		var postTag = (postEl ? postEl.tagName : undefined);
-		var flags = imgContainer.getAttribute("data-flags");
+		var flags = imgContainer.getAttribute("data-flags") || "";
 
 		var imgInfo = {
-			md5: imgContainer.getAttribute("data-md5"),
-			file_ext: imgContainer.getAttribute("data-file-ext"),
-			file_url: imgContainer.getAttribute("data-file-url"),
-			large_file_url: imgContainer.getAttribute("data-large-file-url"),
-			preview_file_url: imgContainer.getAttribute("data-preview-file-url"),
+			md5: imgContainer.getAttribute("data-md5") || "",
+			file_ext: imgContainer.getAttribute("data-file-ext") || "",
+			file_url: imgContainer.getAttribute("data-file-url") || "",
+			large_file_url: imgContainer.getAttribute("data-large-file-url") || "",
+			preview_file_url: imgContainer.getAttribute("data-preview-file-url") || "",
 			has_large: undefined,
-			id: Number(imgContainer.getAttribute("data-id")),
+			id: Number(imgContainer.getAttribute("data-id")) || 0,
 			pixiv_id: Number(imgContainer.getAttribute("data-pixiv-id")) || null,
-			fav_count: Number(imgContainer.getAttribute("data-fav-count")),
+			fav_count: Number(imgContainer.getAttribute("data-fav-count")) || 0,
 			has_children: (imgContainer.getAttribute("data-has-children") === "true"),
 			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent")[0]),
 			fav_string: getMeta("favorites", docEl),
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
-			rating: imgContainer.getAttribute("data-rating"),
-			score: Number(imgContainer.getAttribute("data-score")),
-			source: imgContainer.getAttribute("data-source"),
-			tag_string: imgContainer.getAttribute("data-tags"),
+			rating: imgContainer.getAttribute("data-rating") || "",
+			score: Number(imgContainer.getAttribute("data-score")) || 0,
+			source: imgContainer.getAttribute("data-source") || "",
+			tag_string: imgContainer.getAttribute("data-tags") || "",
 			tag_string_artist: scrapePostTags("artist", target),
 			tag_string_character: scrapePostTags("character", target),
 			tag_string_copyright: scrapePostTags("copyright", target),
 			tag_string_general: scrapePostTags("general", target),
-			pool_string: imgContainer.getAttribute("data-pools"),
-			uploader_name: imgContainer.getAttribute("data-uploader"),
+			pool_string: imgContainer.getAttribute("data-pools") || "",
+			uploader_name: imgContainer.getAttribute("data-uploader") || "",
 			approver_id: imgContainer.getAttribute("data-approver-id") || null,
 			is_deleted: (flags.indexOf("deleted") > -1),
 			is_flagged: (flags.indexOf("flagged") > -1),
@@ -1472,7 +1493,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function scrapeThumb(post) {
 		// Retrieve info from a thumbnail and return it as API styled info. Mainly for remaking thumbnails.
-		var flags = post.getAttribute("data-flags");
+		var flags = post.getAttribute("data-flags") || "";
 		var imgInfo = {
 			md5: post.getAttribute("data-md5") || "",
 			file_ext: post.getAttribute("data-file-ext") || "",
@@ -1481,19 +1502,19 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			preview_file_url: post.getAttribute("data-preview-file-url") || "",
 			file_url_desc: post.getAttribute("data-file-url-desc") || undefined,
 			has_large: undefined,
-			id: Number(post.getAttribute("data-id")),
+			id: Number(post.getAttribute("data-id")) || 0,
 			pixiv_id: Number(post.getAttribute("data-pixiv-id")) || null,
-			fav_count: Number(post.getAttribute("data-fav-count")),
+			fav_count: Number(post.getAttribute("data-fav-count")) || 0,
 			has_children: (post.getAttribute("data-has-children") === "true"),
 			has_active_children: post.bbbHasClass("post-status-has-children"), // Assumption. Basically a flag for the children class.
 			fav_string: (post.getAttribute("data-is-favorited") === "true" ? "fav:" + getMeta("current-user-id") : ""), // Faked since thumbnails don't provide the full list of favorites.
 			parent_id: (post.getAttribute("data-parent-id") ? Number(post.getAttribute("data-parent-id")) : null),
-			rating: post.getAttribute("data-rating"),
-			score: Number(post.getAttribute("data-score")),
-			source: post.getAttribute("data-source"),
-			tag_string: post.getAttribute("data-tags"),
-			pool_string: post.getAttribute("data-pools"),
-			uploader_name: post.getAttribute("data-uploader"),
+			rating: post.getAttribute("data-rating") || "",
+			score: Number(post.getAttribute("data-score")) || 0,
+			source: post.getAttribute("data-source") || "",
+			tag_string: post.getAttribute("data-tags") || "",
+			pool_string: post.getAttribute("data-pools") || "",
+			uploader_name: post.getAttribute("data-uploader") || "",
 			approver_id: post.getAttribute("data-approver-id") || null,
 			is_deleted: (flags.indexOf("deleted") > -1),
 			is_flagged: (flags.indexOf("flagged") > -1),
@@ -1985,7 +2006,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert. Note that this tag will only work when viewing posts since Danbooru doesn\'t provide uploader information for thumbnail listings.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
@@ -3345,11 +3366,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					deleteData("bbb_thumb_cache");
 				case "8.0":
 				case "8.0.1":
-					if (reason !== "backup") {
-						cleanLocalStorage("autocomplete");
-						localStorage.bbbSetItem("bbb_settings", JSON.stringify(bbb.user));
-						bbbNotice("Upon the release of Firefox 57 and the move over to Greasemonkey 4, BBB will not be able to fully support Greasemonkey due to decisions the developers have made about loading and saving data. Greasemonkey users will have to revert back to using an older storage method that will still work while suffering a few disadvantages. Those disadvantages include: 1) A much more limited amount of space for storage. 2) The inability to have your settings persist across all Danbooru subdomains and during private browsing. If you are reading this, a copy of your settings has already been saved using the old method, but it is advised that you create a separate backup before updating to Firefox 57 to collect any new changes and/or guard against any unforeseen problems.", 0);
-					}
+				case "8.0.2":
 					break;
 			}
 
@@ -3794,6 +3811,35 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var optionsSection = document.getElementById("post-options");
 
 		optionsSection.innerHTML = '<h1>Options</h1><ul><li><a href="#" id="image-resize-to-window-link">Resize to window</a></li><li>Download</li><li><a id="random-post" href="http://danbooru.donmai.us/posts/random">Random post</a></li>' + (postInfo.preview_file_url ? '<li><a href="http://danbooru.iqdb.org/db-search.php?url=http://danbooru.donmai.us' + postInfo.preview_file_url + '">Find similar</a></li>' : '') + '</ul>';
+	}
+
+	function addRandomPostLink() {
+		// Add the random post link and hotkey back to posts.
+		var optionListItem = document.getElementById("add-to-pool-list") || document.getElementById("add-notes-list") || document.getElementById("add-artist-commentary-list");
+
+		if (!optionListItem || !add_random_post_link || gLoc !== "post")
+			return;
+
+		// Create the link.
+		var searchTags = getVar("tags");
+
+		var randomListItem = document.createElement("li");
+		randomListItem.id = "random-post-list";
+
+		var randomLink = document.createElement("a");
+		randomLink.id = "random-post";
+		randomLink.href = "/posts/random" + (searchTags ? "?tags=" + searchTags : "");
+		randomLink.innerHTML = "Random post";
+		randomListItem.appendChild(randomLink);
+
+		optionListItem.parentNode.insertBefore(randomListItem, optionListItem);
+
+		// Create the hotkey.
+		function randomHotkey() {
+			location.href = randomLink.href;
+		}
+
+		createHotkey("82", randomHotkey); // R
 	}
 
 	function fixPostDownloadLinks() {
@@ -6324,7 +6370,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function postFileUrlDesc(postInfo) {
 		// Create/return the file URL desc property.
-		if (typeof(postInfo.file_url_desc) === "string")
+		if (gLoc !== "post") // Danbooru doesn't provide this information for thumbnail listings.
+			return "";
+		else if (typeof(postInfo.file_url_desc) === "string")
 			return postInfo.file_url_desc;
 		else if (postInfo.file_url.indexOf("__") > -1)
 			return "__" + postInfo.file_url.split("__")[1] + "__";
@@ -6341,8 +6389,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			postInfo.large_file_img_src = postInfo.large_file_url.replace(postInfo.file_url_desc, "");
 		}
 		else if (!disable_tagged_filenames && postInfo.file_url.indexOf("__") < 0) {
-			postInfo.file_img_src = postInfo.file_url.replace(/\/(?=[\w\_]+\.\w+$)/, "/" + postInfo.file_url_desc);
-			postInfo.large_file_img_src = postInfo.large_file_url.replace(/\/(?=[\w\_]+\.\w+$)/, "/" + postInfo.file_url_desc);
+			postInfo.file_img_src = postInfo.file_url.replace(/\/(?=[\w\-]+\.\w+$)/, "/" + postInfo.file_url_desc);
+			postInfo.large_file_img_src = postInfo.large_file_url.replace(/\/(?=[\w\-]+\.\w+$)/, "/" + postInfo.file_url_desc);
 		}
 		else {
 			postInfo.file_img_src = postInfo.file_url;
@@ -7084,7 +7132,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		if (string.indexOf("BBBPARENS") < 0) {
 			// Replace parentheses that are not part of a tag with placeholders.
-			var parensRegex = /(?:^|([\s,]))([-~])*\(%?(?=$|[\s,])|(?:^|([\s,]))%?\)(?=$|[\s,])/;
+			var parensRegex = /(?:^|([\s,]))([-~]*)\(%?(?=$|[\s,])|(?:^|([\s,]))%?\)(?=$|[\s,])/;
 
 			if (!parensRegex.test(string))
 				return {search: string, groups: []};
@@ -7104,7 +7152,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		// Remove unpaired opening parentheses near the end of the search.
 		while (parens[parens.length - 1] === "BBBPARENSOPEN") {
-			searchString = searchString.replace(/^(.*\s)?[~-]*\BBBPARENSOPEN/, "$1");
+			searchString = searchString.replace(/^(.*\s)?[~-]*BBBPARENSOPEN/, "$1");
 			parens.pop();
 		}
 
@@ -7139,7 +7187,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				groups.push(groupMatch.substring(13, groupMatch.length - 14));
 			}
 			else if (!nextParen && startCount > 0 && endCount === 0 ) // Remove leftover unpaired opening parentheses.
-				searchString = searchString.replace(/^(.*\s)?[~-]*\BBBPARENSOPEN/, "$1");
+				searchString = searchString.replace(/^(.*\s)?[~-]*BBBPARENSOPEN/, "$1");
 		}
 
 		return {search: searchString, groups: groups};
@@ -7791,6 +7839,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		if (hide_hidden_notice)
 			styles += '.hidden-posts-notice {display: none !important;}';
+
+		if (hide_fav_button)
+			styles += '.fav-buttons {display: none !important;}';
 
 		customStyles.innerHTML = styles;
 		document.getElementsByTagName("head")[0].appendChild(customStyles);
@@ -9403,6 +9454,24 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		event.preventDefault();
 	}
 
+	function addPopularLink() {
+		// Add the popular link back to the posts submenu.
+		var subListItem = document.getElementById("secondary-links-posts-hot") || document.getElementById("secondary-links-posts-favorites");
+
+		if (!subListItem || !add_popular_link)
+			return;
+
+		var popularListItem = document.createElement("li");
+		popularListItem.id = "secondary-links-posts-popular";
+
+		var popularLink = document.createElement("a");
+		popularLink.href = "/explore/posts/popular";
+		popularLink.innerHTML = "Popular";
+		popularListItem.appendChild(popularLink);
+
+		subListItem.parentNode.insertBefore(popularListItem, subListItem);
+	}
+
 	function eraseSettingDialog() {
 		// Open a dialog box for erasing various BBB information.
 		var options = [
@@ -9988,6 +10057,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			Danbooru.Autocomplete.static_metatags.group = Danbooru.Autocomplete.static_metatags.g = groups;
 			Danbooru.Autocomplete.static_metatags.parent = ["any", "none"];
 			Danbooru.Autocomplete.static_metatags.isfav = ["true", "false"];
+			Danbooru.Autocomplete.static_metatags.pool = ["series", "collection", "any", "none", "active", "inactive"];
 
 			// Counter normal autocomplete getting turned back on after submitting an input.
 			document.body.addEventListener("focus", function(event) {
@@ -10064,6 +10134,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						case "group":
 						case "g":
 						case "isfav":
+						case "pool":
 							Danbooru.Autocomplete.static_metatag_source(term, resp, metatag);
 							return;
 					}
