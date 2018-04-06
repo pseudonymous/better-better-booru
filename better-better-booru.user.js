@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better.
-// @version        8.0.2
+// @version        8.1
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -322,7 +322,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "8.0.2",
+			bbb_version: "8.1",
 			add_popular_link: newOption("checkbox", false, "Add Popular Link", "Add a link to the popular listing to the \"posts\" submenu"),
 			add_random_post_link: newOption("checkbox", false, "Add Random Link", "Add a link to a random post to the post sidebar options menu."),
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
@@ -3366,11 +3366,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					deleteData("bbb_thumb_cache");
 				case "8.0":
 				case "8.0.1":
-					if (reason !== "backup") {
-						cleanLocalStorage("autocomplete");
-						localStorage.bbbSetItem("bbb_settings", JSON.stringify(bbb.user));
-						bbbNotice("Upon the release of Firefox 57 and the move over to Greasemonkey 4, BBB will not be able to fully support Greasemonkey due to decisions the developers have made about loading and saving data. Greasemonkey users will have to revert back to using an older storage method that will still work while suffering a few disadvantages. Those disadvantages include: 1) A much more limited amount of space for storage. 2) The inability to have your settings persist across all Danbooru subdomains and during private browsing. If you are reading this, a copy of your settings has already been saved using the old method, but it is advised that you create a separate backup before updating to Firefox 57 to collect any new changes and/or guard against any unforeseen problems.", 0);
-					}
+				case "8.0.2":
 					break;
 			}
 
