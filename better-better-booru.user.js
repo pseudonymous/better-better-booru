@@ -2697,17 +2697,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		buttonDiv.appendChild(textBackup);
 
 		var pageBackup = document.createElement("a");
-		pageBackup.innerHTML = "Create Backup Page";
-		pageBackup.href = "#";
+		pageBackup.innerHTML = "Create Backup Text File";
+		pageBackup.download = "Better Better Booru v" + bbb.user.bbb_version + " Backup (" + timestamp() + ").txt";
+		pageBackup.target = "_blank";
+		pageBackup.href = ('data:,Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + timestamp() + '):%0D%0D' + JSON.stringify(bbb.user)).replace(/#/g, encodeURIComponent("#"));
 		pageBackup.className = "bbb-button";
 		pageBackup.style.marginRight = "15px";
-		pageBackup.addEventListener("click", function(event) {
-			if (event.button !== 0)
-				return;
-
-			createBackupPage();
-			event.preventDefault();
-		}, false);
 		buttonDiv.appendChild(pageBackup);
 
 		var rightButtons = document.createElement("span");
@@ -2732,7 +2727,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		helpButton.innerHTML = "Help";
 		helpButton.href = "#";
 		helpButton.className = "bbb-button";
-		helpButton.bbbSetTip("Create copies of your settings that can be used for recovering lost/corrupted settings or transferring settings.<tiphead>Directions</tiphead>There are two options for creating a backup. Creating a text backup will provide a plain text format backup in the area provided that can be copied and saved where desired. Creating a backup page will open a new page that can be saved with the browser's \"save page\" or bookmark options. <br><br>To restore a backup, copy and paste the desired backup into the provided area and click \"restore backup\".");
+		helpButton.bbbSetTip("Create copies of your settings that can be used for recovering lost/corrupted settings or transferring settings.<tiphead>Directions</tiphead>There are two options for creating a backup. Creating backup text will provide a plain text format backup in the area provided that can be copied and saved where desired. Creating a backup text file will attempt to download a plain text copy of your settings or open a new tab containing the plain text copy. <br><br>To restore a backup, copy and paste the desired backup into the provided area and click \"restore backup\".");
 		rightButtons.appendChild(helpButton);
 
 		return sectionFrag;
@@ -3447,11 +3442,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		textarea.value = "Better Better Booru v" + bbb.user.bbb_version + " Backup (" + timestamp() + "):\r\n\r\n" + JSON.stringify(bbb.user) + "\r\n";
 		textarea.focus();
 		textarea.setSelectionRange(0,0);
-	}
-
-	function createBackupPage() {
-		// Open a new tab/window and place the setting text in it.
-		window.open(('data:text/html,<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + timestamp() + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(bbb.user) + '</body></html>').replace(/#/g, encodeURIComponent("#")));
 	}
 
 	function restoreBackupText() {
