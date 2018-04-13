@@ -55,6 +55,24 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		return hash >>> 0;
 	};
 
+	Number.prototype.bbbEncode62 = function() {
+		// Encode a number to base62.
+		var encodeChars = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"];
+		var encoded = "";
+		var num = this;
+
+		if (num === 0)
+			encoded = encodeChars[0];
+		else {
+			while (num > 0) {
+				encoded = encodeChars[num % 62] + encoded;
+				num = Math.floor(num / 62);
+			}
+		}
+
+		return encoded;
+	};
+
 	Element.prototype.bbbGetPadding = function() {
 		// Get all the padding measurements of an element including the total width and height.
 		if (window.getComputedStyle) {
@@ -1424,6 +1442,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			has_children: (imgContainer.getAttribute("data-has-children") === "true"),
 			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent")[0]),
 			fav_string: getMeta("favorites", docEl),
+			normalized_source: imgContainer.getAttribute("data-normalized-source") || "",
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
 			rating: imgContainer.getAttribute("data-rating") || "",
 			score: Number(imgContainer.getAttribute("data-score")) || 0,
@@ -1435,6 +1454,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			tag_string_general: scrapePostTags("general", target),
 			pool_string: imgContainer.getAttribute("data-pools") || "",
 			uploader_name: imgContainer.getAttribute("data-uploader") || "",
+			uploader_id: Number(imgContainer.getAttribute("data-uploader-id")) || 0,
 			approver_id: imgContainer.getAttribute("data-approver-id") || null,
 			is_deleted: (flags.indexOf("deleted") > -1),
 			is_flagged: (flags.indexOf("flagged") > -1),
@@ -1444,6 +1464,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			image_width: Number(imgContainer.getAttribute("data-width")) || null
 		};
 
+		imgInfo.keeper_data = {uid: Number(imgContainer.getAttribute("data-top-tagger")) || imgInfo.uploader_id || 0};
 		imgInfo.has_large = (imgInfo.large_file_url !== imgInfo.file_url);
 
 		// Grab any available Ugoira data.
@@ -1508,6 +1529,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			has_children: (post.getAttribute("data-has-children") === "true"),
 			has_active_children: post.bbbHasClass("post-status-has-children"), // Assumption. Basically a flag for the children class.
 			fav_string: (post.getAttribute("data-is-favorited") === "true" ? "fav:" + getMeta("current-user-id") : ""), // Faked since thumbnails don't provide the full list of favorites.
+			normalized_source: post.getAttribute("data-normalized-source") || "",
 			parent_id: (post.getAttribute("data-parent-id") ? Number(post.getAttribute("data-parent-id")) : null),
 			rating: post.getAttribute("data-rating") || "",
 			score: Number(post.getAttribute("data-score")) || 0,
@@ -1515,6 +1537,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			tag_string: post.getAttribute("data-tags") || "",
 			pool_string: post.getAttribute("data-pools") || "",
 			uploader_name: post.getAttribute("data-uploader") || "",
+			uploader_id: Number(post.getAttribute("data-uploader-id")) || 0,
 			approver_id: post.getAttribute("data-approver-id") || null,
 			is_deleted: (flags.indexOf("deleted") > -1),
 			is_flagged: (flags.indexOf("flagged") > -1),
@@ -1523,6 +1546,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			image_height: Number(post.getAttribute("data-height")) || null,
 			image_width: Number(post.getAttribute("data-width")) || null
 		};
+
+		imgInfo.keeper_data = {uid: Number(post.getAttribute("data-top-tagger")) || imgInfo.uploader_id || 0};
 
 		if (imgInfo.file_url)
 			imgInfo.has_large = (imgInfo.file_url !== imgInfo.large_file_url);
@@ -4795,7 +4820,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function createThumbHTML(postInfo, query) {
 		// Create a thumbnail HTML string.
-		return '<article class="post-preview' + postInfo.thumb_class + '" id="post_' + postInfo.id + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + (isModLevel() ? postInfo.uploader_name : "") + '" data-rating="' + postInfo.rating + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-flags="' + postInfo.flags + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-score="' + postInfo.score + '" data-fav-count="' + postInfo.fav_count + '" data-approver-id="' + postInfo.approver_id + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '" data-source="' + postInfo.source + '" data-is-favorited="' + postInfo.is_favorited + '" data-file-url-desc="' + postInfo.file_url_desc + '"><a href="/posts/' + postInfo.id + query + '"><img src="' + postInfo.preview_img_src + '" alt="' + postInfo.tag_string + '"></a></article>';
+		return '<article class="post-preview' + postInfo.thumb_class + '" id="post_' + postInfo.id + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + (isModLevel() ? postInfo.uploader_name : "") + '" data-rating="' + postInfo.rating + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-flags="' + postInfo.flags + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-score="' + postInfo.score + '" data-fav-count="' + postInfo.fav_count + '" data-approver-id="' + postInfo.approver_id + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '" data-source="' + postInfo.source + '" data-top-tagger="' + postInfo.keeper_data.uid + '" data-uploader-id="' + postInfo.uploader_id + '" data-normalized-source="' + postInfo.normalized_source + '" data-is-favorited="' + postInfo.is_favorited + '" data-file-url-desc="' + postInfo.file_url_desc + '"><a href="/posts/' + postInfo.id + query + '"><img src="' + postInfo.preview_img_src + '" alt="' + postInfo.tag_string + '"></a></article>';
 	}
 
 	function createThumb(postInfo, query) {
@@ -6246,6 +6271,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		postInfo.has_sound = /(?:^|\s)(?:video|flash)_with_sound(?:$|\s)/.test(postInfo.tag_string);
 		postInfo.flags = postFlags(postInfo);
 		postInfo.is_favorited = new RegExp("(?:^|\\s)fav:" + getMeta("current-user-id") + "(?:$|\\s)").test(postInfo.fav_string);
+		postInfo.normalized_source = postInfo.normalized_source || normalizedSource(postInfo);
+		postInfo.keeper_data = postInfo.keeper_data || {uid: postInfo.uploader_id};
 
 		// Custom BBB properties.
 		postInfo.file_url_desc = postFileUrlDesc(postInfo);
@@ -6276,6 +6303,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		delete postInfo.preview_img_src;
 		delete postInfo.file_img_src;
 		delete postInfo.large_file_img_src;
+		delete postInfo.normalized_source;
 
 		return postInfo;
 	}
@@ -6396,6 +6424,103 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			postInfo.file_img_src = postInfo.file_url;
 			postInfo.large_file_img_src = postInfo.large_file_url;
 		}
+	}
+
+	function normalizedSource(postInfo) {
+		// Produce a normalized source from a post's source information.
+		var source = postInfo.source;
+		var urlReg, url, id, artist, title; // If/else variables.
+
+		if (!!(urlReg = source.match(/^https?:\/\/img\d+\.pixiv\.net\/img\/[^\/]+\/(\d+)/i) || source.match(/^https?:\/\/i\d\.pixiv\.net\/img\d+\/img\/[^\/]+\/(\d+)/i)))
+			url = "http://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/img-(?:master|original)\/img\/(?:\d+\/)+(\d+)_p/i) || source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/c\/\d+x\d+\/img-master\/img\/(?:\d+\/)+(\d+)_p/i) || source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/img-zip-ugoira\/img\/(?:\d+\/)+(\d+)_ugoira\d+x\d+\.zip/i)))
+			url = "http://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/lohas\.nicoseiga\.jp\/priv\/(\d+)\?e=\d+&h=[a-f0-9]+/i) || source.match(/^https?:\/\/lohas\.nicoseiga\.jp\/priv\/[a-f0-9]+\/\d+\/(\d+)/i)))
+			url = "http://seiga.nicovideo.jp/seiga/im" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:d3j5vwomefv46c|dn3pm25xmtlyu)\.cloudfront\.net\/photos\/large\/(\d+)\./i))) {
+			id = parseInt(urlReg[1]).toString(36);
+			url = "http://twitpic.com/" + id;
+		}
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:fc|th|pre|orig|img|prnt)\d{2}\.deviantart\.net\/.+\/([a-z0-9_]+)_by_([a-z0-9_]+)-d([a-z0-9]+)\./i))) {
+			title = urlReg[1].replace(/[^A-Za-z0-9]/g, " ").bbbSpaceClean().replace(/[ ]/g, "-");
+			artist = urlReg[2].replace(/_/g, "-");
+			id = parseInt(urlReg[3], 36);
+			url = "http://" + artist + ".deviantart.com/art/" + title + "-" + id;
+		}
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:fc|th|pre|orig|img|prnt)\d{2}\.deviantart\.net\/.+\/[a-f0-9]{32}-d([a-z0-9]+)\./i))) {
+			id = parseInt(urlReg[1], 36);
+			url = "http://deviantart.com/deviation/" + id;
+		}
+		else if (!!(urlReg = source.match(/^http:\/\/www\.karabako\.net\/images(?:ub)?\/karabako_(\d+)(?:_\d+)?\./i)))
+			url = "http://www.karabako.net/post/view/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^http:\/\/p\.twpl\.jp\/show\/orig\/([a-z0-9]+)/i)))
+			url = "http://p.twipple.jp/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/pictures\.hentai-foundry\.com\/\/?[^\/]\/([^\/]+)\/(\d+)/i)))
+			url = "http://www.hentai-foundry.com/pictures/user/" + urlReg[1] + "/" + urlReg[2];
+		else if (!!(urlReg = source.match(/^http:\/\/blog(?:(?:-imgs-)?\d*(?:-origin)?)?\.fc2\.com\/(?:(?:[^\/]\/){3}|(?:[^\/]\/))([^\/]+)\/(?:file\/)?([^\.]+\.[^\?]+)/i)))
+			url = "http://" + urlReg[1] + ".blog.fc2.com/img/" + urlReg[2] + "/";
+		else if (!!(urlReg = source.match(/^http:\/\/diary(\d?)\.fc2\.com\/user\/([^\/]+)\/img\/(\d+)_(\d+)\/(\d+)\./i)))
+			url = "http://diary" + urlReg[1] + ".fc2.com/cgi-sys/ed.cgi/" + urlReg[2] + "?Y=" + urlReg[3] + "&M=" + urlReg[4] + "&D=" + urlReg[5];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:fbcdn-)?s(?:content|photos)-[^\/]+\.(?:fbcdn|akamaihd)\.net\/hphotos-.+\/\d+_(\d+)_(?:\d+_){1,3}[no]\./i)))
+			url = "https://www.facebook.com/photo.php?fbid=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/c(?:s|han|[1-4])\.sankakucomplex\.com\/data(?:\/sample)?\/(?:[a-f0-9]{2}\/){2}(?:sample-|preview)?([a-f0-9]{32})/i)))
+			url = "http://chan.sankakucomplex.com/en/post/show?md5=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^http:\/\/s(?:tatic|[1-4])\.zerochan\.net\/.+(?:\.|\/)(\d+)\.(?:jpe?g?)$/i)))
+			url = "http://www.zerochan.net/" + urlReg[1] + "#full";
+		else if (!!(urlReg = source.match(/^http:\/\/static[1-6]?\.minitokyo\.net\/(?:downloads|view)\/(?:\d{2}\/){2}(\d+)/i)))
+			url = "http://gallery.minitokyo.net/download/" + urlReg[1];
+		else if (postInfo.md5 && !!(urlReg = source.match(/^https?:\/\/(?:(?:s?img|cdn|www)\d?\.)?gelbooru\.com\/{1,2}(?:images|samples)\/(?:\d+|[a-f0-9]{2}\/[a-f0-9]{2})\/(?:sample_)?(?:[a-f0-9]{32}|[a-f0-9]{40})\./i)))
+			url = "http://gelbooru.com/index.php?page=post&s=list&md5=" + postInfo.md5;
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:slot\d*\.)?im(?:g|ages)\d*\.wikia\.(?:nocookie\.net|com)\/(?:_{2}cb\d{14}\/)?([^\/]+)(?:\/[a-z]{2})?\/images\/(?:(?:thumb|archive)?\/)?[a-f0-9]\/[a-f0-9]{2}\/(?:\d{14}(?:!|%21))?([^\/]+)/i)))
+			url = "http://" + urlReg[1] + ".wikia.com/wiki/File:" + urlReg[2];
+		else if (!!(urlReg = source.match(/^https?:\/\/vignette(?:\d*)\.wikia\.nocookie\.net\/([^\/]+)\/images\/[a-f0-9]\/[a-f0-9]{2}\/([^\/]+)/i)))
+			url = "http://" + urlReg[1] + ".wikia.com/wiki/File:" + urlReg[2];
+		else if (!!(urlReg = source.match(/^http:\/\/(?:(?:\d{1,3}\.){3}\d{1,3}):(?:\d{1,5})\/h\/([a-f0-9]{40})-(?:\d+-){3}(?:png|gif|(?:jpe?g?))\/keystamp=\d+-[a-f0-9]{10}\/([^\/]+)/i)))
+			url = "http://g.e-hentai.org/?f_shash=" + urlReg[1] + "&fs_from=" + urlReg[2];
+		else if (!!(urlReg = source.match(/^http:\/\/e-shuushuu.net\/images\/\d{4}-(?:\d{2}-){2}(\d+)/i)))
+			url = "http://e-shuushuu.net/image/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^http:\/\/jpg\.nijigen-daiaru\.com\/(\d+)/i)))
+			url = "http://nijigen-daiaru.com/book.php?idb=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/sozai\.doujinantena\.com\/contents_jpg\/([a-f0-9]{32})\//i)))
+			url = "http://doujinantena.com/page.php?id=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^http:\/\/rule34-(?:data-\d{3}|images)\.paheal\.net\/(?:_images\/)?([a-f0-9]{32})/i)))
+			url = "http://rule34.paheal.net/post/list/md5:" + urlReg[1] + "/1";
+		else if (!!(urlReg = source.match(/^http:\/\/shimmie\.katawa-shoujo\.com\/image\/(\d+)/i)))
+			url = "http://shimmie.katawa-shoujo.com/post/view/" + urlReg[1];
+		else if (postInfo.md5 && !!(urlReg = source.match(/^http:\/\/(?:(?:(?:img\d?|cdn)\.)?rule34\.xxx|img\.booru\.org\/(?:rule34|r34))(?:\/(?:img\/rule34|r34))?\/{1,2}images\/\d+\/(?:[a-f0-9]{32}|[a-f0-9]{40})\./i)))
+			url = "http://rule34.xxx/index.php?page=post&s=list&md5=" + postInfo.md5;
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:s3\.amazonaws\.com\/imgly_production|img\.ly\/system\/uploads)\/((?:\d{3}\/){3}|\d+\/)/i))) {
+			id = parseInt((urlReg[1].replace(/[^0-9]/g, '')) || 0).bbbEncode62();
+			url = "http://img.ly/" + id;
+		}
+		else if (!!(urlReg = source.match(/^(http:\/\/.+)\/diarypro\/d(?:ata\/upfile\/|iary\.cgi\?mode=image&upfile=)(\d+)/i)))
+			url = urlReg[1] + "/diarypro/diary.cgi?no=" + urlReg[2];
+		else if (!!(urlReg = source.match(/^http:\/\/i(?:\d)?\.minus\.com\/(?:i|j)([^\.]{12,})/i)))
+			url = "http://minus.com/i/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/pic0[1-4]\.nijie\.info\/nijie_picture\/(?:diff\/main\/)?\d+_(\d+)_(?:\d{10}|\d+_\d{14})/i)))
+			url = "http://nijie.info/view.php?id=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:sample|image)\/[a-z0-9]{32}\/yande\.re%20([0-9]+)%20/i)))
+			url = "https://yande.re/post/show/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:image|jpeg|sample)\/([a-z0-9]{32})(?:\/yande\.re.*|\/?\.(?:jpg|png))$/i)))
+			url = "https://yande.re/post?tags=md5:" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.artstation.com\/(?:artwork|projects)\/([a-z0-9-]+)$/i)))
+			url = "https://www.artstation.com/artwork/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:o|image-proxy-origin)\.twimg\.com\/\d\/proxy\.jpg\?t=(\w+)&/i))) {
+			url = window.atob(urlReg[1]).match(/https?:\/\/[\x20-\x7e]+/i);
+
+			if (url[0]) {
+				url = url[0];
+
+				if (url.match(/^https?:\/\/twitpic.com\/show\/large\/[a-z0-9]+/i))
+					url = url.substring(0, url.lastIndexOf('.')).replace("show/large/", "");
+			}
+			else
+				url = source;
+		}
+		else
+			url = source;
+
+		return url;
 	}
 
 	function fixPaginator(target) {
@@ -8945,10 +9070,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Test a URL to find which section of Danbooru the script is running on.
 		var target; // If/else variable.
 
-		if (url) {
-			target = document.createElement("a");
-			target.href = url;
-		}
+		if (url)
+			target = new URL(url);
 		else
 			target = location;
 
