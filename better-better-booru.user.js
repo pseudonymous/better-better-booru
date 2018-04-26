@@ -6431,7 +6431,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			id = parseInt(urlReg[1]).toString(36);
 			url = "http://twitpic.com/" + id;
 		}
-		else if (!!(urlReg = source.match(/^https?:\/\/(?:fc|th|pre|orig|img|prnt)\d{2}\.deviantart\.net\/.+\/([a-z0-9_]+)_by_([a-z0-9_]+)-d([a-z0-9]+)\./i))) {
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:(?:fc|th|pre|orig|img|prnt)\d{2}|origin-orig)\.deviantart\.net\/.+\/([a-z0-9_]+)_by_([a-z0-9_]+)-d([a-z0-9]+)\./i))) {
 			title = urlReg[1].replace(/[^A-Za-z0-9]/g, " ").bbbSpaceClean().replace(/[ ]/g, "-");
 			artist = urlReg[2].replace(/_/g, "-");
 			id = parseInt(urlReg[3], 36);
