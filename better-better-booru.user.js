@@ -2031,7 +2031,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert. Note that this tag will only work if you have a <b>moderator</b> level account or higher.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert. Note that this tag will only work if you have a <b>moderator</b> level account or higher.</li><li><b>userid:1</b> - Match posts made by the user with an ID number of 1.</li><li><b>taggerid:1</b> - Match posts mostly tagged by the user with an ID number of 1.</li><li><b>source:http://www.4chan.org/</b> - Match posts with a source starting with http://www.4chan.org/. Accepted values include "any" for all posts with sources, "none" for all posts without sources, wildcard searches such as "*pixiv.net*" for posts with sources that contain pixiv.net, and non-wildcard searches that start matching at the beginning of a source.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
@@ -6913,6 +6913,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var rating = " rating:" + postInfo.rating;
 			var status = " status:" + (flags === "flagged" ? flags + " active" : flags).replace(/\s/g, " status:");
 			var user = " user:" + postInfo.uploader_name.replace(/\s/g, "_").toLowerCase();
+			var userId = " userid:" + postInfo.uploader_id;
+			var taggerId = " taggerid:" + postInfo.keeper_data.uid;
+			var source = (postInfo.source ? " source:" + postInfo.source + " source:" + postInfo.normalized_source : "");
 			var pools = " " + (/pool:\d+/.test(postInfo.pool_string) && !/pool:(collection|series)/.test(postInfo.pool_string) ? postInfo.pool_string + " pool:inactive" : postInfo.pool_string);
 			var parent = (postInfo.parent_id ? " parent:" + postInfo.parent_id : "");
 			var child = (postInfo.has_children === true ? " child:true" : "");
@@ -6920,7 +6923,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			postSearchInfo = {
 				tags: postInfo.tag_string.bbbSpacePad(),
-				metatags:(rating + status + user + pools + parent + child + isFav).bbbSpacePad(),
+				metatags:(rating + status + user + pools + parent + child + isFav + userId + taggerId + source).bbbSpacePad(),
 				score: postInfo.score,
 				favcount: postInfo.fav_count,
 				id: postInfo.id,
@@ -7186,9 +7189,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						if (!tagValue)
 							continue;
 
-						if (tagValue === "any" && (tagName === "pool" || tagName === "parent" || tagName === "child"))
+						if (tagValue === "any" && (tagName === "pool" || tagName === "parent" || tagName === "child" || tagName === "source"))
 							mode.push(new RegExp((tagName + ":\\S*").bbbSpacePad()));
-						else if (tagValue === "none" && (tagName === "pool" || tagName === "parent" || tagName === "child")) {
+						else if (tagValue === "none" && (tagName === "pool" || tagName === "parent" || tagName === "child" || tagName === "source")) {
 							secondaryMode = (secondaryMode === "includes" ? "excludes" : "includes"); // Flip the include/exclude mode.
 							mode = searchObject[primaryMode][secondaryMode];
 
@@ -7196,6 +7199,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						}
 						else if (tagValue === "active" && tagName === "pool")
 							mode.push(new RegExp((tagName + ":(collection|series)").bbbSpacePad()));
+						else if (tagName === "source") // Append a wildcard to the end of "sources starting with the given value" searches.
+							mode.push(new RegExp((escapeRegEx(searchTerm) + "\\S*").bbbSpacePad()));
 						else // Allow all other values through (ex: parent:# & pool:series).
 							mode.push(searchTerm.bbbSpacePad());
 					}
@@ -10024,7 +10029,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else {
 			var tagName = tag.split(":", 1)[0].bbbSpaceClean();
 
-			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating" || tagName === "parent" || tagName === "child" || tagName === "isfav")
+			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating" || tagName === "parent" || tagName === "child" || tagName === "isfav" || tagName === "userid" || tagName === "taggerid" || tagName === "source")
 				return true;
 			else
 				return false;
@@ -10176,6 +10181,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			Danbooru.Autocomplete.static_metatags.parent = ["any", "none"];
 			Danbooru.Autocomplete.static_metatags.isfav = ["true", "false"];
 			Danbooru.Autocomplete.static_metatags.pool = ["series", "collection", "any", "none", "active", "inactive"];
+			Danbooru.Autocomplete.static_metatags.source = ["any", "none"];
 
 			// Counter normal autocomplete getting turned back on after submitting an input.
 			document.body.addEventListener("focus", function(event) {
@@ -10197,7 +10203,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var $fields_multiple = $(searchInputs);
 
 			var prefixes = "-~";
-			var metatags = "status|rating|parent|child|user|pool|group|g|isfav";
+			var metatags = "status|rating|parent|child|user|pool|group|g|isfav|userid|taggerid|source|id|score|favcount|height|width";
 
 			$fields_multiple.autocomplete({
 				delay: 100,
@@ -10245,6 +10251,15 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					}
 
 					switch(metatag) {
+						case "userid":
+						case "taggerid":
+						case "id":
+						case "score":
+						case "favcount":
+						case "height":
+						case "width":
+							this.close();
+							return;
 						case "status":
 						case "rating":
 						case "parent":
@@ -10253,6 +10268,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						case "g":
 						case "isfav":
 						case "pool":
+						case "source":
 							Danbooru.Autocomplete.static_metatag_source(term, resp, metatag);
 							return;
 					}
