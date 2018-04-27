@@ -3892,7 +3892,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				var optionItem = optionItems[i];
 
 				if (downloadRegex.test(optionItem.textContent)) {
-					optionItem.innerHTML = '<a download="' + downloadName + postInfo.md5 + '.' + postInfo.file_ext + '" href="' + postInfo.file_img_src + '">Download</a>';
+					optionItem.innerHTML = '<a download="' + downloadName + postInfo.md5 + '.' + postInfo.file_ext + '" href="' + postInfo.file_img_src + '?download=1">Download</a>';
 					break;
 				}
 			}
