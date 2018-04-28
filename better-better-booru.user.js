@@ -1441,7 +1441,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")) || 0,
 			has_children: (imgContainer.getAttribute("data-has-children") === "true"),
 			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent")[0]),
-			fav_string: getMeta("favorites", docEl),
+			is_favorited: (imgContainer.getAttribute("data-is-favorited") === "true"),
 			normalized_source: imgContainer.getAttribute("data-normalized-source") || "",
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
 			rating: imgContainer.getAttribute("data-rating") || "",
@@ -1528,7 +1528,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fav_count: Number(post.getAttribute("data-fav-count")) || 0,
 			has_children: (post.getAttribute("data-has-children") === "true"),
 			has_active_children: post.bbbHasClass("post-status-has-children"), // Assumption. Basically a flag for the children class.
-			fav_string: (post.getAttribute("data-is-favorited") === "true" ? "fav:" + getMeta("current-user-id") : ""), // Faked since thumbnails don't provide the full list of favorites.
+			is_favorited: (post.getAttribute("data-is-favorited") === "true"),
 			normalized_source: post.getAttribute("data-normalized-source") || "",
 			parent_id: (post.getAttribute("data-parent-id") ? Number(post.getAttribute("data-parent-id")) : null),
 			rating: post.getAttribute("data-rating") || "",
@@ -6260,7 +6260,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Missing API/data fixes.
 		postInfo.has_sound = /(?:^|\s)(?:video|flash)_with_sound(?:$|\s)/.test(postInfo.tag_string);
 		postInfo.flags = postFlags(postInfo);
-		postInfo.is_favorited = new RegExp("(?:^|\\s)fav:" + getMeta("current-user-id") + "(?:$|\\s)").test(postInfo.fav_string);
 		postInfo.normalized_source = postInfo.normalized_source || normalizedSource(postInfo);
 		postInfo.keeper_data = postInfo.keeper_data || {uid: postInfo.uploader_id};
 
