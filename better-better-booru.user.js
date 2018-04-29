@@ -4712,11 +4712,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			var postInfo = post.bbbInfo();
 			var link = img.parentNode;
-			var tagsStr = postInfo.tag_string || "";
-			var userStr = (postInfo.uploader_name ? " user:" + postInfo.uploader_name : "");
-			var ratingStr = (postInfo.rating ? " rating:" + postInfo.rating : "");
-			var scoreStr = (postInfo.score ? " score:" + postInfo.score : "");
-			var title = tagsStr + userStr + ratingStr + scoreStr;
 			var secondary = [];
 			var secondaryLength = 0;
 			var styleList = bbb.custom_tag.style_list;
@@ -4725,9 +4720,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			// Skip thumbnails that have already been done.
 			if (link.bbbHasClass("bbb-thumb-link"))
 				continue;
-
-			// Create title.
-			img.title = title;
 
 			// Add custom data attributes.
 			post.bbbInfo("file-url-desc", postInfo.file_url_desc);
@@ -6557,7 +6549,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			var thumb = document.createElement("a");
 			thumb.href = "/posts/" + postInfo.id;
-			thumb.innerHTML = '<img src="' + postInfo.preview_img_src + '" alt="' + postInfo.md5 + '" title="' + tags + ' user:' + postInfo.uploader_name + ' rating:' + postInfo.rating + ' score:' + postInfo.score + '">';
+			thumb.innerHTML = '<img src="' + postInfo.preview_img_src + '" alt="' + postInfo.md5 + '">';
 
 			if (before)
 				preview.insertBefore(thumb, before);
