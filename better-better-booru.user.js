@@ -4712,6 +4712,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			var postInfo = post.bbbInfo();
 			var link = img.parentNode;
+			var tagsStr = postInfo.tag_string || "";
+			var userStr = (postInfo.uploader_name ? " user:" + postInfo.uploader_name : "");
+			var ratingStr = (postInfo.rating ? " rating:" + postInfo.rating : "");
+			var scoreStr = (typeof(postInfo.score) === "number" ? " score:" + postInfo.score : "");
+			var titleStr = tagsStr + userStr + ratingStr + scoreStr;
+			var titleAttr = (getMeta("disable-post-tooltips") === "false" ? "oldtitle" : "title");
 			var secondary = [];
 			var secondaryLength = 0;
 			var styleList = bbb.custom_tag.style_list;
@@ -4720,6 +4726,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			// Skip thumbnails that have already been done.
 			if (link.bbbHasClass("bbb-thumb-link"))
 				continue;
+
+			// Create title information.
+			img.setAttribute(titleAttr, titleStr);
 
 			// Add custom data attributes.
 			post.bbbInfo("file-url-desc", postInfo.file_url_desc);
@@ -4960,6 +4969,60 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return undefined;
 		else
 			return idCache.join(" ");
+	}
+
+	function thumbInfo(target) {
+		// Add score, favorite count, and rating info to thumbnails.
+		var posts = getPosts(target);
+
+		if (thumb_info === "disabled")
+			return;
+
+		for (var i = 0, il = posts.length; i < il; i++) {
+			var post = posts[i];
+
+			// Skip thumbnails that already have the info added.
+			if (post.getElementsByClassName("bbb-thumb-info")[0])
+				continue;
+
+			var postInfo = post.bbbInfo();
+			var tooShort = (150 / postInfo.image_width * postInfo.image_height < 30); // Short thumbnails will need the info div position adjusted.
+
+			if (gLoc === "comments") { // Add favorites info to the existing info in the comments listing.
+				var firstInfo = post.getElementsByClassName("info")[0];
+				var infoParent = (firstInfo ? firstInfo.parentNode : undefined);
+
+				if (infoParent) {
+					var favSpan = document.createElement("span");
+					favSpan.className = "info bbb-thumb-info";
+					favSpan.innerHTML = '<strong>Favorites</strong> ' + postInfo.fav_count;
+					infoParent.appendChild(favSpan);
+				}
+			}
+			else { // Add extra information inside of the thumbnail's parent element.
+				var thumbImg = post.getElementsByTagName("img")[0];
+
+				// Don't add the info if there isn't a thumbnail.
+				if (!thumbImg)
+					continue;
+
+				var thumbEl = post.getElementsByClassName("preview")[0] || post;
+				thumbEl.bbbAddClass("bbb-thumb-info-parent");
+
+				var postLink = thumbEl.getElementsByTagName("a")[0];
+				var before = (postLink ? postLink.nextElementSibling : undefined);
+				var scoreStr = (postInfo.score < 0 ? '<span style="color: #CC0000;">' + postInfo.score + '</span>' : postInfo.score);
+
+				var infoDiv = document.createElement("div");
+				infoDiv.className = "bbb-thumb-info" + (tooShort ? " bbb-thumb-info-short" : "");
+				infoDiv.innerHTML = "&#x2605;" + scoreStr + "&nbsp;&nbsp;&nbsp;&hearts;" + postInfo.fav_count + (location.host.indexOf("safebooru") < 0 ? "&nbsp;&nbsp;&nbsp;&nbsp;" + postInfo.rating.toUpperCase() : "");
+
+				if (before)
+					thumbEl.insertBefore(infoDiv, before);
+				else
+					thumbEl.appendChild(infoDiv);
+			}
+		}
 	}
 
 	function postDDL(target) {
@@ -8369,60 +8432,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				menu.insertBefore(scoreItem, listingItemSibling);
 			else
 				menu.appendChild(scoreItem);
-		}
-	}
-
-	function thumbInfo(target) {
-		// Add score, favorite count, and rating info to thumbnails.
-		var posts = getPosts(target);
-
-		if (thumb_info === "disabled")
-			return;
-
-		for (var i = 0, il = posts.length; i < il; i++) {
-			var post = posts[i];
-
-			// Skip thumbnails that already have the info added.
-			if (post.getElementsByClassName("bbb-thumb-info")[0])
-				continue;
-
-			var postInfo = post.bbbInfo();
-			var tooShort = (150 / postInfo.image_width * postInfo.image_height < 30); // Short thumbnails will need the info div position adjusted.
-
-			if (gLoc === "comments") { // Add favorites info to the existing info in the comments listing.
-				var firstInfo = post.getElementsByClassName("info")[0];
-				var infoParent = (firstInfo ? firstInfo.parentNode : undefined);
-
-				if (infoParent) {
-					var favSpan = document.createElement("span");
-					favSpan.className = "info bbb-thumb-info";
-					favSpan.innerHTML = '<strong>Favorites</strong> ' + postInfo.fav_count;
-					infoParent.appendChild(favSpan);
-				}
-			}
-			else { // Add extra information inside of the thumbnail's parent element.
-				var thumbImg = post.getElementsByTagName("img")[0];
-
-				// Don't add the info if there isn't a thumbnail.
-				if (!thumbImg)
-					continue;
-
-				var thumbEl = post.getElementsByClassName("preview")[0] || post;
-				thumbEl.bbbAddClass("bbb-thumb-info-parent");
-
-				var postLink = thumbEl.getElementsByTagName("a")[0];
-				var before = (postLink ? postLink.nextElementSibling : undefined);
-				var scoreStr = (postInfo.score < 0 ? '<span style="color: #CC0000;">' + postInfo.score + '</span>' : postInfo.score);
-
-				var infoDiv = document.createElement("div");
-				infoDiv.className = "bbb-thumb-info" + (tooShort ? " bbb-thumb-info-short" : "");
-				infoDiv.innerHTML = "&#x2605;" + scoreStr + "&nbsp;&nbsp;&nbsp;&hearts;" + postInfo.fav_count + (location.host.indexOf("safebooru") < 0 ? "&nbsp;&nbsp;&nbsp;&nbsp;" + postInfo.rating.toUpperCase() : "");
-
-				if (before)
-					thumbEl.insertBefore(infoDiv, before);
-				else
-					thumbEl.appendChild(infoDiv);
-			}
 		}
 	}
 
