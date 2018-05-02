@@ -1,5 +1,13 @@
 Changelog
 ----------
+* Version 8.2:
+  * Added "userid", "taggerid", "approverid", and "source" to the script metatags.
+  * Updated the "user" metatag help text to clarify it can only be used by users at or above the moderator level.
+  * Updated thumbnail image titles to support Danbooru's new tooltips.
+  * Updated download links to support server changes on Danbooru.
+  * Fixed autocomplete behavior for some metatags.
+  * Fixed the backup page option to make it compatible with browser security changes for data URLs.
+  * Fixed the date information for hidden posts in the comments section.
 * Version 8.1:
   * Added a "hide favorite button" layout option for hiding the button underneath post content.
   * Added an "add random link" layout option for placing a link to a random post in the sidebar options menu of posts.

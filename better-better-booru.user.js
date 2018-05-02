@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better.
-// @version        8.1
+// @version        8.2
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -53,6 +53,24 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			hash = (hash * 33) ^ this.charCodeAt(--i);
 
 		return hash >>> 0;
+	};
+
+	Number.prototype.bbbEncode62 = function() {
+		// Encode a number to base62.
+		var encodeChars = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"];
+		var encoded = "";
+		var num = this;
+
+		if (num === 0)
+			encoded = encodeChars[0];
+		else {
+			while (num > 0) {
+				encoded = encodeChars[num % 62] + encoded;
+				num = Math.floor(num / 62);
+			}
+		}
+
+		return encoded;
 	};
 
 	Element.prototype.bbbGetPadding = function() {
@@ -322,7 +340,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "8.1",
+			bbb_version: "8.2",
 			add_popular_link: newOption("checkbox", false, "Add Popular Link", "Add a link to the popular listing to the \"posts\" submenu"),
 			add_random_post_link: newOption("checkbox", false, "Add Random Link", "Add a link to a random post to the post sidebar options menu."),
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
@@ -1002,7 +1020,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				// Create the new post.
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div id="post_' + postInfo.id + '" class="post post-preview' + postInfo.thumb_class + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-flags="' + postInfo.flags + '" data-score="' + postInfo.score + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-approver-id="' + postInfo.approver_id + '" data-fav-count="' + postInfo.fav_count + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '"> <div class="preview"> <a href="/posts/' + postInfo.id + '"> <img alt="' + postInfo.md5 + '" src="' + postInfo.preview_img_src + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + postInfo.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + postInfo.created_at + '" title="' + postInfo.created_at.replace(/(.+)T(.+)-(.+)/, "$1 $2 -$3") + '">' + postInfo.created_at.replace(/(.+)T(.+):\d+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>User</strong> <a href="/users/' + postInfo.uploader_id + '">' + postInfo.uploader_name + '</a> </span> <span class="info"> <strong>Rating</strong> ' + postInfo.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + postInfo.id + '">' + postInfo.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div id="post_' + postInfo.id + '" class="post post-preview' + postInfo.thumb_class + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-flags="' + postInfo.flags + '" data-score="' + postInfo.score + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-approver-id="' + postInfo.approver_id + '" data-fav-count="' + postInfo.fav_count + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '"> <div class="preview"> <a href="/posts/' + postInfo.id + '"> <img alt="' + postInfo.md5 + '" src="' + postInfo.preview_img_src + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + postInfo.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + postInfo.created_at + '" title="' + postInfo.created_at.replace(/(.+)T(.+)\..+-(.+)/, "$1 $2 -$3") + '">' + postInfo.created_at.replace(/(.+)T(.+):.+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>Rating</strong> ' + postInfo.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + postInfo.id + '">' + postInfo.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				// Prepare thumbnails.
 				prepThumbnails(childSpan);
@@ -1423,7 +1441,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fav_count: Number(imgContainer.getAttribute("data-fav-count")) || 0,
 			has_children: (imgContainer.getAttribute("data-has-children") === "true"),
 			has_active_children: (postTag === "IMG" || postTag === "CANVAS" ? postEl.getAttribute("data-has-active-children") === "true" : !!target.getElementsByClassName("notice-parent")[0]),
-			fav_string: getMeta("favorites", docEl),
+			is_favorited: (imgContainer.getAttribute("data-is-favorited") === "true"),
+			normalized_source: imgContainer.getAttribute("data-normalized-source") || "",
 			parent_id: (imgContainer.getAttribute("data-parent-id") ? Number(imgContainer.getAttribute("data-parent-id")) : null),
 			rating: imgContainer.getAttribute("data-rating") || "",
 			score: Number(imgContainer.getAttribute("data-score")) || 0,
@@ -1435,6 +1454,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			tag_string_general: scrapePostTags("general", target),
 			pool_string: imgContainer.getAttribute("data-pools") || "",
 			uploader_name: imgContainer.getAttribute("data-uploader") || "",
+			uploader_id: Number(imgContainer.getAttribute("data-uploader-id")) || 0,
 			approver_id: imgContainer.getAttribute("data-approver-id") || null,
 			is_deleted: (flags.indexOf("deleted") > -1),
 			is_flagged: (flags.indexOf("flagged") > -1),
@@ -1444,6 +1464,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			image_width: Number(imgContainer.getAttribute("data-width")) || null
 		};
 
+		imgInfo.keeper_data = {uid: Number(imgContainer.getAttribute("data-top-tagger")) || imgInfo.uploader_id || 0};
 		imgInfo.has_large = (imgInfo.large_file_url !== imgInfo.file_url);
 
 		// Grab any available Ugoira data.
@@ -1507,7 +1528,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			fav_count: Number(post.getAttribute("data-fav-count")) || 0,
 			has_children: (post.getAttribute("data-has-children") === "true"),
 			has_active_children: post.bbbHasClass("post-status-has-children"), // Assumption. Basically a flag for the children class.
-			fav_string: (post.getAttribute("data-is-favorited") === "true" ? "fav:" + getMeta("current-user-id") : ""), // Faked since thumbnails don't provide the full list of favorites.
+			is_favorited: (post.getAttribute("data-is-favorited") === "true"),
+			normalized_source: post.getAttribute("data-normalized-source") || "",
 			parent_id: (post.getAttribute("data-parent-id") ? Number(post.getAttribute("data-parent-id")) : null),
 			rating: post.getAttribute("data-rating") || "",
 			score: Number(post.getAttribute("data-score")) || 0,
@@ -1515,6 +1537,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			tag_string: post.getAttribute("data-tags") || "",
 			pool_string: post.getAttribute("data-pools") || "",
 			uploader_name: post.getAttribute("data-uploader") || "",
+			uploader_id: Number(post.getAttribute("data-uploader-id")) || 0,
 			approver_id: post.getAttribute("data-approver-id") || null,
 			is_deleted: (flags.indexOf("deleted") > -1),
 			is_flagged: (flags.indexOf("flagged") > -1),
@@ -1523,6 +1546,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			image_height: Number(post.getAttribute("data-height")) || null,
 			image_width: Number(post.getAttribute("data-width")) || null
 		};
+
+		imgInfo.keeper_data = {uid: Number(post.getAttribute("data-top-tagger")) || imgInfo.uploader_id || 0};
 
 		if (imgInfo.file_url)
 			imgInfo.has_large = (imgInfo.file_url !== imgInfo.large_file_url);
@@ -2006,7 +2031,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert. Note that this tag will only work when viewing posts since Danbooru doesn\'t provide uploader information for thumbnail listings.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert. Note that this tag will only work if you have a <b>moderator</b> level account or higher.</li><li><b>userid:1</b> - Match posts made by the user with an ID number of 1.</li><li><b>taggerid:1</b> - Match posts mostly tagged by the user with an ID number of 1.</li><li><b>approverid:1</b> - Match posts approved by the user with an ID number of 1. Accepted values include numbers, "any" for all posts with an approver, and "none" for posts without an approver.</li><li><b>source:http://www.4chan.org/</b> - Match posts with a source starting with http://www.4chan.org/. Accepted values include "any" for all posts with sources, "none" for all posts without sources, wildcard searches such as "*pixiv.net*" for posts with sources that contain pixiv.net, and non-wildcard searches that start matching at the beginning of a source.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
@@ -2672,17 +2697,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		buttonDiv.appendChild(textBackup);
 
 		var pageBackup = document.createElement("a");
-		pageBackup.innerHTML = "Create Backup Page";
-		pageBackup.href = "#";
+		pageBackup.innerHTML = "Create Backup Text File";
+		pageBackup.download = "Better Better Booru v" + bbb.user.bbb_version + " Backup (" + timestamp() + ").txt";
+		pageBackup.target = "_blank";
+		pageBackup.href = ('data:,Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + timestamp() + '):%0D%0D' + JSON.stringify(bbb.user)).replace(/#/g, encodeURIComponent("#"));
 		pageBackup.className = "bbb-button";
 		pageBackup.style.marginRight = "15px";
-		pageBackup.addEventListener("click", function(event) {
-			if (event.button !== 0)
-				return;
-
-			createBackupPage();
-			event.preventDefault();
-		}, false);
 		buttonDiv.appendChild(pageBackup);
 
 		var rightButtons = document.createElement("span");
@@ -2707,7 +2727,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		helpButton.innerHTML = "Help";
 		helpButton.href = "#";
 		helpButton.className = "bbb-button";
-		helpButton.bbbSetTip("Create copies of your settings that can be used for recovering lost/corrupted settings or transferring settings.<tiphead>Directions</tiphead>There are two options for creating a backup. Creating a text backup will provide a plain text format backup in the area provided that can be copied and saved where desired. Creating a backup page will open a new page that can be saved with the browser's \"save page\" or bookmark options. <br><br>To restore a backup, copy and paste the desired backup into the provided area and click \"restore backup\".");
+		helpButton.bbbSetTip("Create copies of your settings that can be used for recovering lost/corrupted settings or transferring settings.<tiphead>Directions</tiphead>There are two options for creating a backup. Creating backup text will provide a plain text format backup in the area provided that can be copied and saved where desired. Creating a backup text file will attempt to download a plain text copy of your settings or open a new tab containing the plain text copy. <br><br>To restore a backup, copy and paste the desired backup into the provided area and click \"restore backup\".");
 		rightButtons.appendChild(helpButton);
 
 		return sectionFrag;
@@ -3367,6 +3387,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				case "8.0":
 				case "8.0.1":
 				case "8.0.2":
+				case "8.1":
 					break;
 			}
 
@@ -3422,11 +3443,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		textarea.value = "Better Better Booru v" + bbb.user.bbb_version + " Backup (" + timestamp() + "):\r\n\r\n" + JSON.stringify(bbb.user) + "\r\n";
 		textarea.focus();
 		textarea.setSelectionRange(0,0);
-	}
-
-	function createBackupPage() {
-		// Open a new tab/window and place the setting text in it.
-		window.open(('data:text/html,<!doctype html><html style="background-color: #FFFFFF;"><head><meta charset="UTF-8" /><title>Better Better Booru v' + bbb.user.bbb_version + ' Backup (' + timestamp() + ')</title></head><body style="background-color: #FFFFFF; color: #000000; padding: 20px; word-wrap: break-word;">' + JSON.stringify(bbb.user) + '</body></html>').replace(/#/g, encodeURIComponent("#")));
 	}
 
 	function restoreBackupText() {
@@ -3877,7 +3893,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				var optionItem = optionItems[i];
 
 				if (downloadRegex.test(optionItem.textContent)) {
-					optionItem.innerHTML = '<a download="' + downloadName + postInfo.md5 + '.' + postInfo.file_ext + '" href="' + postInfo.file_img_src + '">Download</a>';
+					optionItem.innerHTML = '<a download="' + downloadName + postInfo.md5 + '.' + postInfo.file_ext + '" href="' + postInfo.file_img_src + '?download=1">Download</a>';
 					break;
 				}
 			}
@@ -4700,8 +4716,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var tagsStr = postInfo.tag_string || "";
 			var userStr = (postInfo.uploader_name ? " user:" + postInfo.uploader_name : "");
 			var ratingStr = (postInfo.rating ? " rating:" + postInfo.rating : "");
-			var scoreStr = (postInfo.score ? " score:" + postInfo.score : "");
-			var title = tagsStr + userStr + ratingStr + scoreStr;
+			var scoreStr = (typeof(postInfo.score) === "number" ? " score:" + postInfo.score : "");
+			var titleStr = tagsStr + userStr + ratingStr + scoreStr;
+			var titleAttr = (getMeta("disable-post-tooltips") === "false" ? "oldtitle" : "title");
 			var secondary = [];
 			var secondaryLength = 0;
 			var styleList = bbb.custom_tag.style_list;
@@ -4711,8 +4728,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			if (link.bbbHasClass("bbb-thumb-link"))
 				continue;
 
-			// Create title.
-			img.title = title;
+			// Create title information.
+			img.setAttribute(titleAttr, titleStr);
 
 			// Add custom data attributes.
 			post.bbbInfo("file-url-desc", postInfo.file_url_desc);
@@ -4795,7 +4812,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function createThumbHTML(postInfo, query) {
 		// Create a thumbnail HTML string.
-		return '<article class="post-preview' + postInfo.thumb_class + '" id="post_' + postInfo.id + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-flags="' + postInfo.flags + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-score="' + postInfo.score + '" data-fav-count="' + postInfo.fav_count + '" data-approver-id="' + postInfo.approver_id + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '" data-source="' + postInfo.source + '" data-is-favorited="' + postInfo.is_favorited + '" data-file-url-desc="' + postInfo.file_url_desc + '"><a href="/posts/' + postInfo.id + query + '"><img src="' + postInfo.preview_img_src + '" alt="' + postInfo.tag_string + '"></a></article>';
+		return '<article class="post-preview' + postInfo.thumb_class + '" id="post_' + postInfo.id + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-flags="' + postInfo.flags + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-score="' + postInfo.score + '" data-fav-count="' + postInfo.fav_count + '" data-approver-id="' + postInfo.approver_id + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '" data-source="' + postInfo.source + '" data-top-tagger="' + postInfo.keeper_data.uid + '" data-uploader-id="' + postInfo.uploader_id + '" data-normalized-source="' + postInfo.normalized_source + '" data-is-favorited="' + postInfo.is_favorited + '" data-file-url-desc="' + postInfo.file_url_desc + '"><a href="/posts/' + postInfo.id + query + '"><img src="' + postInfo.preview_img_src + '" alt="' + postInfo.tag_string + '"></a></article>';
 	}
 
 	function createThumb(postInfo, query) {
@@ -4953,6 +4970,60 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return undefined;
 		else
 			return idCache.join(" ");
+	}
+
+	function thumbInfo(target) {
+		// Add score, favorite count, and rating info to thumbnails.
+		var posts = getPosts(target);
+
+		if (thumb_info === "disabled")
+			return;
+
+		for (var i = 0, il = posts.length; i < il; i++) {
+			var post = posts[i];
+
+			// Skip thumbnails that already have the info added.
+			if (post.getElementsByClassName("bbb-thumb-info")[0])
+				continue;
+
+			var postInfo = post.bbbInfo();
+			var tooShort = (150 / postInfo.image_width * postInfo.image_height < 30); // Short thumbnails will need the info div position adjusted.
+
+			if (gLoc === "comments") { // Add favorites info to the existing info in the comments listing.
+				var firstInfo = post.getElementsByClassName("info")[0];
+				var infoParent = (firstInfo ? firstInfo.parentNode : undefined);
+
+				if (infoParent) {
+					var favSpan = document.createElement("span");
+					favSpan.className = "info bbb-thumb-info";
+					favSpan.innerHTML = '<strong>Favorites</strong> ' + postInfo.fav_count;
+					infoParent.appendChild(favSpan);
+				}
+			}
+			else { // Add extra information inside of the thumbnail's parent element.
+				var thumbImg = post.getElementsByTagName("img")[0];
+
+				// Don't add the info if there isn't a thumbnail.
+				if (!thumbImg)
+					continue;
+
+				var thumbEl = post.getElementsByClassName("preview")[0] || post;
+				thumbEl.bbbAddClass("bbb-thumb-info-parent");
+
+				var postLink = thumbEl.getElementsByTagName("a")[0];
+				var before = (postLink ? postLink.nextElementSibling : undefined);
+				var scoreStr = (postInfo.score < 0 ? '<span style="color: #CC0000;">' + postInfo.score + '</span>' : postInfo.score);
+
+				var infoDiv = document.createElement("div");
+				infoDiv.className = "bbb-thumb-info" + (tooShort ? " bbb-thumb-info-short" : "");
+				infoDiv.innerHTML = "&#x2605;" + scoreStr + "&nbsp;&nbsp;&nbsp;&hearts;" + postInfo.fav_count + (location.host.indexOf("safebooru") < 0 ? "&nbsp;&nbsp;&nbsp;&nbsp;" + postInfo.rating.toUpperCase() : "");
+
+				if (before)
+					thumbEl.insertBefore(infoDiv, before);
+				else
+					thumbEl.appendChild(infoDiv);
+			}
+		}
 	}
 
 	function postDDL(target) {
@@ -6245,7 +6316,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Missing API/data fixes.
 		postInfo.has_sound = /(?:^|\s)(?:video|flash)_with_sound(?:$|\s)/.test(postInfo.tag_string);
 		postInfo.flags = postFlags(postInfo);
-		postInfo.is_favorited = new RegExp("(?:^|\\s)fav:" + getMeta("current-user-id") + "(?:$|\\s)").test(postInfo.fav_string);
+		postInfo.normalized_source = postInfo.normalized_source || normalizedSource(postInfo);
+		postInfo.keeper_data = postInfo.keeper_data || {uid: postInfo.uploader_id};
+		postInfo.uploader_name = (isModLevel() ? postInfo.uploader_name : "");
 
 		// Custom BBB properties.
 		postInfo.file_url_desc = postFileUrlDesc(postInfo);
@@ -6276,6 +6349,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		delete postInfo.preview_img_src;
 		delete postInfo.file_img_src;
 		delete postInfo.large_file_img_src;
+		delete postInfo.normalized_source;
 
 		return postInfo;
 	}
@@ -6398,6 +6472,103 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		}
 	}
 
+	function normalizedSource(postInfo) {
+		// Produce a normalized source from a post's source information.
+		var source = postInfo.source;
+		var urlReg, url, id, artist, title; // If/else variables.
+
+		if (!!(urlReg = source.match(/^https?:\/\/img\d+\.pixiv\.net\/img\/[^\/]+\/(\d+)/i) || source.match(/^https?:\/\/i\d\.pixiv\.net\/img\d+\/img\/[^\/]+\/(\d+)/i)))
+			url = "http://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/img-(?:master|original)\/img\/(?:\d+\/)+(\d+)_p/i) || source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/c\/\d+x\d+\/img-master\/img\/(?:\d+\/)+(\d+)_p/i) || source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/img-zip-ugoira\/img\/(?:\d+\/)+(\d+)_ugoira\d+x\d+\.zip/i)))
+			url = "http://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/lohas\.nicoseiga\.jp\/priv\/(\d+)\?e=\d+&h=[a-f0-9]+/i) || source.match(/^https?:\/\/lohas\.nicoseiga\.jp\/priv\/[a-f0-9]+\/\d+\/(\d+)/i)))
+			url = "http://seiga.nicovideo.jp/seiga/im" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:d3j5vwomefv46c|dn3pm25xmtlyu)\.cloudfront\.net\/photos\/large\/(\d+)\./i))) {
+			id = parseInt(urlReg[1]).toString(36);
+			url = "http://twitpic.com/" + id;
+		}
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:(?:fc|th|pre|orig|img|prnt)\d{2}|origin-orig)\.deviantart\.net\/.+\/([a-z0-9_]+)_by_([a-z0-9_]+)-d([a-z0-9]+)\./i))) {
+			title = urlReg[1].replace(/[^A-Za-z0-9]/g, " ").bbbSpaceClean().replace(/[ ]/g, "-");
+			artist = urlReg[2].replace(/_/g, "-");
+			id = parseInt(urlReg[3], 36);
+			url = "http://" + artist + ".deviantart.com/art/" + title + "-" + id;
+		}
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:fc|th|pre|orig|img|prnt)\d{2}\.deviantart\.net\/.+\/[a-f0-9]{32}-d([a-z0-9]+)\./i))) {
+			id = parseInt(urlReg[1], 36);
+			url = "http://deviantart.com/deviation/" + id;
+		}
+		else if (!!(urlReg = source.match(/^http:\/\/www\.karabako\.net\/images(?:ub)?\/karabako_(\d+)(?:_\d+)?\./i)))
+			url = "http://www.karabako.net/post/view/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^http:\/\/p\.twpl\.jp\/show\/orig\/([a-z0-9]+)/i)))
+			url = "http://p.twipple.jp/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/pictures\.hentai-foundry\.com\/\/?[^\/]\/([^\/]+)\/(\d+)/i)))
+			url = "http://www.hentai-foundry.com/pictures/user/" + urlReg[1] + "/" + urlReg[2];
+		else if (!!(urlReg = source.match(/^http:\/\/blog(?:(?:-imgs-)?\d*(?:-origin)?)?\.fc2\.com\/(?:(?:[^\/]\/){3}|(?:[^\/]\/))([^\/]+)\/(?:file\/)?([^\.]+\.[^\?]+)/i)))
+			url = "http://" + urlReg[1] + ".blog.fc2.com/img/" + urlReg[2] + "/";
+		else if (!!(urlReg = source.match(/^http:\/\/diary(\d?)\.fc2\.com\/user\/([^\/]+)\/img\/(\d+)_(\d+)\/(\d+)\./i)))
+			url = "http://diary" + urlReg[1] + ".fc2.com/cgi-sys/ed.cgi/" + urlReg[2] + "?Y=" + urlReg[3] + "&M=" + urlReg[4] + "&D=" + urlReg[5];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:fbcdn-)?s(?:content|photos)-[^\/]+\.(?:fbcdn|akamaihd)\.net\/hphotos-.+\/\d+_(\d+)_(?:\d+_){1,3}[no]\./i)))
+			url = "https://www.facebook.com/photo.php?fbid=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/c(?:s|han|[1-4])\.sankakucomplex\.com\/data(?:\/sample)?\/(?:[a-f0-9]{2}\/){2}(?:sample-|preview)?([a-f0-9]{32})/i)))
+			url = "http://chan.sankakucomplex.com/en/post/show?md5=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^http:\/\/s(?:tatic|[1-4])\.zerochan\.net\/.+(?:\.|\/)(\d+)\.(?:jpe?g?)$/i)))
+			url = "http://www.zerochan.net/" + urlReg[1] + "#full";
+		else if (!!(urlReg = source.match(/^http:\/\/static[1-6]?\.minitokyo\.net\/(?:downloads|view)\/(?:\d{2}\/){2}(\d+)/i)))
+			url = "http://gallery.minitokyo.net/download/" + urlReg[1];
+		else if (postInfo.md5 && !!(urlReg = source.match(/^https?:\/\/(?:(?:s?img|cdn|www)\d?\.)?gelbooru\.com\/{1,2}(?:images|samples)\/(?:\d+|[a-f0-9]{2}\/[a-f0-9]{2})\/(?:sample_)?(?:[a-f0-9]{32}|[a-f0-9]{40})\./i)))
+			url = "http://gelbooru.com/index.php?page=post&s=list&md5=" + postInfo.md5;
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:slot\d*\.)?im(?:g|ages)\d*\.wikia\.(?:nocookie\.net|com)\/(?:_{2}cb\d{14}\/)?([^\/]+)(?:\/[a-z]{2})?\/images\/(?:(?:thumb|archive)?\/)?[a-f0-9]\/[a-f0-9]{2}\/(?:\d{14}(?:!|%21))?([^\/]+)/i)))
+			url = "http://" + urlReg[1] + ".wikia.com/wiki/File:" + urlReg[2];
+		else if (!!(urlReg = source.match(/^https?:\/\/vignette(?:\d*)\.wikia\.nocookie\.net\/([^\/]+)\/images\/[a-f0-9]\/[a-f0-9]{2}\/([^\/]+)/i)))
+			url = "http://" + urlReg[1] + ".wikia.com/wiki/File:" + urlReg[2];
+		else if (!!(urlReg = source.match(/^http:\/\/(?:(?:\d{1,3}\.){3}\d{1,3}):(?:\d{1,5})\/h\/([a-f0-9]{40})-(?:\d+-){3}(?:png|gif|(?:jpe?g?))\/keystamp=\d+-[a-f0-9]{10}\/([^\/]+)/i)))
+			url = "http://g.e-hentai.org/?f_shash=" + urlReg[1] + "&fs_from=" + urlReg[2];
+		else if (!!(urlReg = source.match(/^http:\/\/e-shuushuu.net\/images\/\d{4}-(?:\d{2}-){2}(\d+)/i)))
+			url = "http://e-shuushuu.net/image/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^http:\/\/jpg\.nijigen-daiaru\.com\/(\d+)/i)))
+			url = "http://nijigen-daiaru.com/book.php?idb=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/sozai\.doujinantena\.com\/contents_jpg\/([a-f0-9]{32})\//i)))
+			url = "http://doujinantena.com/page.php?id=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^http:\/\/rule34-(?:data-\d{3}|images)\.paheal\.net\/(?:_images\/)?([a-f0-9]{32})/i)))
+			url = "http://rule34.paheal.net/post/list/md5:" + urlReg[1] + "/1";
+		else if (!!(urlReg = source.match(/^http:\/\/shimmie\.katawa-shoujo\.com\/image\/(\d+)/i)))
+			url = "http://shimmie.katawa-shoujo.com/post/view/" + urlReg[1];
+		else if (postInfo.md5 && !!(urlReg = source.match(/^http:\/\/(?:(?:(?:img\d?|cdn)\.)?rule34\.xxx|img\.booru\.org\/(?:rule34|r34))(?:\/(?:img\/rule34|r34))?\/{1,2}images\/\d+\/(?:[a-f0-9]{32}|[a-f0-9]{40})\./i)))
+			url = "http://rule34.xxx/index.php?page=post&s=list&md5=" + postInfo.md5;
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:s3\.amazonaws\.com\/imgly_production|img\.ly\/system\/uploads)\/((?:\d{3}\/){3}|\d+\/)/i))) {
+			id = parseInt((urlReg[1].replace(/[^0-9]/g, '')) || 0).bbbEncode62();
+			url = "http://img.ly/" + id;
+		}
+		else if (!!(urlReg = source.match(/^(http:\/\/.+)\/diarypro\/d(?:ata\/upfile\/|iary\.cgi\?mode=image&upfile=)(\d+)/i)))
+			url = urlReg[1] + "/diarypro/diary.cgi?no=" + urlReg[2];
+		else if (!!(urlReg = source.match(/^http:\/\/i(?:\d)?\.minus\.com\/(?:i|j)([^\.]{12,})/i)))
+			url = "http://minus.com/i/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/pic0[1-4]\.nijie\.info\/nijie_picture\/(?:diff\/main\/)?\d+_(\d+)_(?:\d{10}|\d+_\d{14})/i)))
+			url = "http://nijie.info/view.php?id=" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:sample|image)\/[a-z0-9]{32}\/yande\.re%20([0-9]+)%20/i)))
+			url = "https://yande.re/post/show/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:image|jpeg|sample)\/([a-z0-9]{32})(?:\/yande\.re.*|\/?\.(?:jpg|png))$/i)))
+			url = "https://yande.re/post?tags=md5:" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.artstation.com\/(?:artwork|projects)\/([a-z0-9-]+)$/i)))
+			url = "https://www.artstation.com/artwork/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:o|image-proxy-origin)\.twimg\.com\/\d\/proxy\.jpg\?t=(\w+)&/i))) {
+			url = window.atob(urlReg[1]).match(/https?:\/\/[\x20-\x7e]+/i);
+
+			if (url[0]) {
+				url = url[0];
+
+				if (url.match(/^https?:\/\/twitpic.com\/show\/large\/[a-z0-9]+/i))
+					url = url.substring(0, url.lastIndexOf('.')).replace("show/large/", "");
+			}
+			else
+				url = source;
+		}
+		else
+			url = source;
+
+		return url;
+	}
+
 	function fixPaginator(target) {
 		// Determine whether the paginator needs to be updated and request one as needed.
 		var paginator = getPaginator(target);
@@ -6442,7 +6613,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			var thumb = document.createElement("a");
 			thumb.href = "/posts/" + postInfo.id;
-			thumb.innerHTML = '<img src="' + postInfo.preview_img_src + '" alt="' + postInfo.md5 + '" title="' + tags + ' user:' + postInfo.uploader_name + ' rating:' + postInfo.rating + ' score:' + postInfo.score + '">';
+			thumb.innerHTML = '<img src="' + postInfo.preview_img_src + '" alt="' + postInfo.md5 + '">';
 
 			if (before)
 				preview.insertBefore(thumb, before);
@@ -6797,7 +6968,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var flags = postInfo.flags || "active";
 			var rating = " rating:" + postInfo.rating;
 			var status = " status:" + (flags === "flagged" ? flags + " active" : flags).replace(/\s/g, " status:");
-			var user = " user:" + postInfo.uploader_name.replace(/\s/g, "_").toLowerCase();
+			var user = (postInfo.uploader_name ? " user:" + postInfo.uploader_name.replace(/\s/g, "_").toLowerCase() : "");
+			var userId = " userid:" + postInfo.uploader_id;
+			var taggerId = " taggerid:" + postInfo.keeper_data.uid;
+			var approverId = (postInfo.approver_id ? " approverid:" + postInfo.approver_id : "");
+			var source = (postInfo.source ? " source:" + postInfo.source + " source:" + postInfo.normalized_source : "");
 			var pools = " " + (/pool:\d+/.test(postInfo.pool_string) && !/pool:(collection|series)/.test(postInfo.pool_string) ? postInfo.pool_string + " pool:inactive" : postInfo.pool_string);
 			var parent = (postInfo.parent_id ? " parent:" + postInfo.parent_id : "");
 			var child = (postInfo.has_children === true ? " child:true" : "");
@@ -6805,7 +6980,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			postSearchInfo = {
 				tags: postInfo.tag_string.bbbSpacePad(),
-				metatags:(rating + status + user + pools + parent + child + isFav).bbbSpacePad(),
+				metatags:(rating + status + user + pools + parent + child + isFav + userId + taggerId + source + approverId).bbbSpacePad(),
 				score: postInfo.score,
 				favcount: postInfo.fav_count,
 				id: postInfo.id,
@@ -7071,9 +7246,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						if (!tagValue)
 							continue;
 
-						if (tagValue === "any" && (tagName === "pool" || tagName === "parent" || tagName === "child"))
+						if (tagValue === "any" && (tagName === "pool" || tagName === "parent" || tagName === "child" || tagName === "source" || tagName === "approverid"))
 							mode.push(new RegExp((tagName + ":\\S*").bbbSpacePad()));
-						else if (tagValue === "none" && (tagName === "pool" || tagName === "parent" || tagName === "child")) {
+						else if (tagValue === "none" && (tagName === "pool" || tagName === "parent" || tagName === "child" || tagName === "source" || tagName === "approverid")) {
 							secondaryMode = (secondaryMode === "includes" ? "excludes" : "includes"); // Flip the include/exclude mode.
 							mode = searchObject[primaryMode][secondaryMode];
 
@@ -7081,6 +7256,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						}
 						else if (tagValue === "active" && tagName === "pool")
 							mode.push(new RegExp((tagName + ":(collection|series)").bbbSpacePad()));
+						else if (tagName === "source") // Append a wildcard to the end of "sources starting with the given value" searches.
+							mode.push(new RegExp((escapeRegEx(searchTerm) + "\\S*").bbbSpacePad()));
 						else // Allow all other values through (ex: parent:# & pool:series).
 							mode.push(searchTerm.bbbSpacePad());
 					}
@@ -8259,60 +8436,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		}
 	}
 
-	function thumbInfo(target) {
-		// Add score, favorite count, and rating info to thumbnails.
-		var posts = getPosts(target);
-
-		if (thumb_info === "disabled")
-			return;
-
-		for (var i = 0, il = posts.length; i < il; i++) {
-			var post = posts[i];
-
-			// Skip thumbnails that already have the info added.
-			if (post.getElementsByClassName("bbb-thumb-info")[0])
-				continue;
-
-			var postInfo = post.bbbInfo();
-			var tooShort = (150 / postInfo.image_width * postInfo.image_height < 30); // Short thumbnails will need the info div position adjusted.
-
-			if (gLoc === "comments") { // Add favorites info to the existing info in the comments listing.
-				var firstInfo = post.getElementsByClassName("info")[0];
-				var infoParent = (firstInfo ? firstInfo.parentNode : undefined);
-
-				if (infoParent) {
-					var favSpan = document.createElement("span");
-					favSpan.className = "info bbb-thumb-info";
-					favSpan.innerHTML = '<strong>Favorites</strong> ' + postInfo.fav_count;
-					infoParent.appendChild(favSpan);
-				}
-			}
-			else { // Add extra information inside of the thumbnail's parent element.
-				var thumbImg = post.getElementsByTagName("img")[0];
-
-				// Don't add the info if there isn't a thumbnail.
-				if (!thumbImg)
-					continue;
-
-				var thumbEl = post.getElementsByClassName("preview")[0] || post;
-				thumbEl.bbbAddClass("bbb-thumb-info-parent");
-
-				var postLink = thumbEl.getElementsByTagName("a")[0];
-				var before = (postLink ? postLink.nextElementSibling : undefined);
-				var scoreStr = (postInfo.score < 0 ? '<span style="color: #CC0000;">' + postInfo.score + '</span>' : postInfo.score);
-
-				var infoDiv = document.createElement("div");
-				infoDiv.className = "bbb-thumb-info" + (tooShort ? " bbb-thumb-info-short" : "");
-				infoDiv.innerHTML = "&#x2605;" + scoreStr + "&nbsp;&nbsp;&nbsp;&hearts;" + postInfo.fav_count + (location.host.indexOf("safebooru") < 0 ? "&nbsp;&nbsp;&nbsp;&nbsp;" + postInfo.rating.toUpperCase() : "");
-
-				if (before)
-					thumbEl.insertBefore(infoDiv, before);
-				else
-					thumbEl.appendChild(infoDiv);
-			}
-		}
-	}
-
 	function postLinkNewWindow() {
 		// Make thumbnail clicks open in a new tab/window.
 		if (post_link_new_window === "disabled" || (gLoc !== "search" && gLoc !== "pool" && gLoc !== "favorites" && gLoc !== "popular" && gLoc !== "popular_view" && gLoc !== "favorite_group"))
@@ -8945,10 +9068,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Test a URL to find which section of Danbooru the script is running on.
 		var target; // If/else variable.
 
-		if (url) {
-			target = document.createElement("a");
-			target.href = url;
-		}
+		if (url)
+			target = new URL(url);
 		else
 			target = location;
 
@@ -9061,6 +9182,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function isGoldLevel() {
 		// Determine whether the user is at the gold account level or higher.
 		return (getUserData("level") >= 30);
+	}
+
+	function isModLevel() {
+		// Determine whether the user is at the moderator account level or higher.
+		return (getUserData("level") >= 40);
 	}
 
 	function accountSettingCheck(scriptSetting) {
@@ -9906,7 +10032,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else {
 			var tagName = tag.split(":", 1)[0].bbbSpaceClean();
 
-			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating" || tagName === "parent" || tagName === "child" || tagName === "isfav")
+			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating" || tagName === "parent" || tagName === "child" || tagName === "isfav" || tagName === "userid" || tagName === "taggerid" || tagName === "source" || tagName === "approverid")
 				return true;
 			else
 				return false;
@@ -10058,6 +10184,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			Danbooru.Autocomplete.static_metatags.parent = ["any", "none"];
 			Danbooru.Autocomplete.static_metatags.isfav = ["true", "false"];
 			Danbooru.Autocomplete.static_metatags.pool = ["series", "collection", "any", "none", "active", "inactive"];
+			Danbooru.Autocomplete.static_metatags.source = ["any", "none"];
+			Danbooru.Autocomplete.static_metatags.approverid = ["any", "none"];
 
 			// Counter normal autocomplete getting turned back on after submitting an input.
 			document.body.addEventListener("focus", function(event) {
@@ -10079,7 +10207,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var $fields_multiple = $(searchInputs);
 
 			var prefixes = "-~";
-			var metatags = "status|rating|parent|child|user|pool|group|g|isfav";
+			var metatags = "status|rating|parent|child|user|pool|group|g|isfav|userid|taggerid|approverid|source|id|score|favcount|height|width";
 
 			$fields_multiple.autocomplete({
 				delay: 100,
@@ -10127,6 +10255,15 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					}
 
 					switch(metatag) {
+						case "userid":
+						case "taggerid":
+						case "id":
+						case "score":
+						case "favcount":
+						case "height":
+						case "width":
+							this.close();
+							return;
 						case "status":
 						case "rating":
 						case "parent":
@@ -10135,6 +10272,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						case "g":
 						case "isfav":
 						case "pool":
+						case "source":
+						case "approverid":
 							Danbooru.Autocomplete.static_metatag_source(term, resp, metatag);
 							return;
 					}
