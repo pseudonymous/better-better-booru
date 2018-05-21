@@ -6422,7 +6422,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return "";
 
 		var artists = tagStringList(postInfo.tag_string_artist.replace(/(?:^|\s)banned_artist(?:$|\s)/, " "));
-		var characters = tagStringList(postInfo.tag_string_character.replace(/_\([^)]+\)(?:$|\s)/g, ""));
+		var characters = tagStringList(postInfo.tag_string_character.replace(/_\([^)]+\)($|\s)/g, "$1"));
 		var copyrights = tagStringList(postInfo.tag_string_copyright);
 
 		if (characters !== "" && copyrights !== "")
