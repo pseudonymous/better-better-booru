@@ -10211,7 +10211,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			$fields_multiple.autocomplete({
 				delay: 100,
-				autoFocus: true,
+				autoFocus: false,
 				focus: function() { return false; },
 				select: function(event, ui) {
 					var before_caret_text = this.value.substring(0, this.selectionStart);
