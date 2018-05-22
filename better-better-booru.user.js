@@ -370,7 +370,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			enable_status_message: newOption("checkbox", true, "Enable Status Message", "When requesting information from Danbooru, display the request status in the lower right corner."),
 			endless_default: newOption("dropdown", "disabled", "Default", "Enable endless pages on the favorites, search, pool, and favorite group listings. <tipdesc>Off:</tipdesc> Start up with all features off. <tipdesc>On:</tipdesc> Start up with all features on.<tipdesc>Paused:</tipdesc> Start up with all features on, but do not append new pages until the \"load more\" button is clicked. <tiphead>Note</tiphead>When not set to disabled, endless pages can be toggled between off and on/paused by using the \"E\" hotkey or the \"endless\" link next to the \"listing\" link in the page submenu. <tiphead>Tip</tiphead>The \"new tab/window\" and \"fixed paginator\" options can provide additional customization for endless pages.", {txtOptions:["Disabled:disabled", "Off:off", "On:on", "Paused:paused"]}),
 			endless_fill: newOption("checkbox", false, "Fill Pages", "When appending pages with missing thumbnails caused by hidden posts or removed duplicate posts, retrieve thumbnails from the following pages and add them to the new page until the desired number of thumbnails is reached. <tiphead>Note</tiphead>If using page separators, the displayed page number for appended pages composed of thumbnails from multiple Danbooru pages will be replaced by a range consisting of the first and last pages from which thumbnails were retrieved."),
-			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
+			endless_pause_interval: newOption("dropdown", 0, "Pause Interval", "Pause endless pages each time the number of pages reaches a multiple of the selected amount. <tiphead>Note</tiphead> When this option is enabled, the \"Shift + E\" hotkey can be used to continue loading more pages after pausing.", {txtOptions:["Disabled:0"], numRange:[1,100]}),
 			endless_preload: newOption("checkbox", false, "Preload Next Page", "Start loading the next page as soon as possible.<tiphead>Note</tiphead>A preloaded page will not be appended until the scroll limit is reached."),
 			endless_remove_dup: newOption("checkbox", false, "Remove Duplicates", "When appending new pages, remove posts that already exist in the listing from the new page.<tiphead>Note</tiphead>Duplicate posts are caused by the addition of new posts to the beginning of a listing or changes to the order of the posts."),
 			endless_scroll_limit: newOption("dropdown", 500, "Scroll Limit", "Set the minimum amount of pixels that the window can have left to vertically scroll before it starts appending the next page.", {numList:[0,50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
@@ -2032,7 +2032,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		scrollDiv.appendChild(helpPage);
 
 		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert. Note that this tag will only work if you have a <b>moderator</b> level account or higher.</li><li><b>userid:1</b> - Match posts made by the user with an ID number of 1.</li><li><b>taggerid:1</b> - Match posts mostly tagged by the user with an ID number of 1.</li><li><b>approverid:1</b> - Match posts approved by the user with an ID number of 1. Accepted values include numbers, "any" for all posts with an approver, and "none" for posts without an approver.</li><li><b>source:http://www.4chan.org/</b> - Match posts with a source starting with http://www.4chan.org/. Accepted values include "any" for all posts with sources, "none" for all posts without sources, wildcard searches such as "*pixiv.net*" for posts with sources that contain pixiv.net, and non-wildcard searches that start matching at the beginning of a source.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
-		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
+		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>Shift + E</b> - Continue loading more pages after pausing during endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
 
@@ -5309,6 +5309,18 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		loadButtonDiv.id = "bbb-endless-load-div";
 		buttonDiv.appendChild(loadButtonDiv);
 
+		var loadToggle = function() {
+			// Continue page loading after hitting the pause interval.
+			if (bbb.endless.paused !== true)
+				return;
+
+			bbb.el.endlessLoadButton.style.display = "none";
+			bbb.el.endlessLoadButton.blur();
+			bbb.endless.paused = false;
+			bbb.endless.append_page = true;
+			endlessCheck();
+		};
+
 		var loadButton = bbb.el.endlessLoadButton = document.createElement("a");
 		loadButton.innerHTML = "Load More";
 		loadButton.href = "#";
@@ -5318,11 +5330,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			if (event.button !== 0)
 				return;
 
-			loadButton.style.display = "none";
-			loadButton.blur();
-			bbb.endless.paused = false;
-			bbb.endless.append_page = true;
-			endlessCheck();
+			loadToggle();
 			event.preventDefault();
 		}, false);
 		loadButtonDiv.appendChild(loadButton);
@@ -5348,8 +5356,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		paginatorParent.insertBefore(buttonDiv, paginator);
 
-		// Create the hotkey.
+		// Create the hotkeys.
 		createHotkey("69", endlessToggle); // E
+		createHotkey("s69", loadToggle); // Shift + E
 
 		// Check the session default or original default value to see if endless pages should be enabled.
 		var sessionDefault = sessionStorage.getItem("bbb_endless_default");
