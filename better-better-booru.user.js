@@ -773,14 +773,14 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 							bbbNotice("Error retrieving post information. Your Danbooru API access is currently throttled. Please try again later.", -1);
 							bbbStatus("posts", "error");
 						}
-						else if (xmlhttp.status !== 0) {
-							if (xmlRetries < 1) {
+						else if (!bbb.flags.unloading) {
+							if (xmlhttp.status !== 0 && xmlRetries < 1) {
 								xmlRetries++;
 								fetchJSON(url, mode, optArg, xmlSession, xmlRetries);
 							}
 							else {
 								var linkId = uniqueIdNum(); // Create a unique ID.
-								var noticeMsg = bbbNotice('Error retrieving post information (JSON Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
+								var noticeMsg = bbbNotice('Error retrieving post information (JSON Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). ' + (xmlhttp.status === 0 ? 'The connection was unexpectedly cancelled or timed out. ' : '') + '(<a id="' + linkId + '" href="#">Retry</a>)', -1);
 
 								bbbStatus("posts", "error");
 
@@ -798,6 +798,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				}
 			};
 			xmlhttp.open("GET", url, true);
+			xmlhttp.timeout = 120000;
 			xmlhttp.send(null);
 		}
 	}
@@ -1285,8 +1286,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						else if (mode === "account_check")
 							accountUpdateHandler(docEl);
 					}
-					else if (xmlhttp.status !== 0) {
-						if (xmlRetries < 1) {
+					else if (!bbb.flags.unloading) {
+						if (xmlhttp.status !== 0 && xmlRetries < 1) {
 							xmlRetries++;
 							fetchPages(url, mode, optArg, xmlSession, xmlRetries);
 						}
@@ -1307,7 +1308,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 							else if (mode === "account_check")
 								msg = "Error checking account settings";
 
-							var noticeMsg = bbbNotice(msg + ' (HTML Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). (<a id="' + linkId + '" href="#">Retry</a>)', -1);
+							var noticeMsg = bbbNotice(msg + ' (HTML Code: ' + xmlhttp.status + ' ' + xmlhttp.statusText + '). ' + (xmlhttp.status === 0 ? 'The connection was unexpectedly cancelled or timed out. ' : '') + '(<a id="' + linkId + '" href="#">Retry</a>)', -1);
 
 							document.getElementById(linkId).addEventListener("click", function(event) {
 								if (event.button !== 0)
@@ -1322,6 +1323,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				}
 			};
 			xmlhttp.open("GET", url, true);
+			xmlhttp.timeout = 120000;
 			xmlhttp.send(null);
 		}
 	}
@@ -6298,6 +6300,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		// Cache any necessary info before leaving the page.
 		window.addEventListener("beforeunload", saveStateCache);
+
+		// Flag if the page is being unloaded in order to differentiate it from other potential XML interruptions.
+		window.addEventListener("beforeunload", function(){ bbb.flags.unloading = true; });
 	}
 
 	function formatInfo(postInfo) {
