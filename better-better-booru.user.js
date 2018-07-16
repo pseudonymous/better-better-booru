@@ -929,7 +929,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					newUrl = postInfo.file_img_src;
 				}
 
-				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + postInfo.tag_string + '" data-fav-count="' + postInfo.fav_count + '" data-flags="' + postInfo.flags + '" data-has-active-children="' + postInfo.has_active_children + '" data-has-children="' + postInfo.has_children + '" data-large-height="' + postInfo.large_height + '" data-large-width="' + postInfo.large_width + '" data-original-height="' + postInfo.image_height + '" data-original-width="' + postInfo.image_width + '" data-rating="' + postInfo.rating + '" data-score="' + postInfo.score + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;" />';
+				imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <img alt="' + postInfo.tag_string_desc + '" data-fav-count="' + postInfo.fav_count + '" data-flags="' + postInfo.flags + '" data-has-active-children="' + postInfo.has_active_children + '" data-has-children="' + postInfo.has_children + '" data-large-height="' + postInfo.large_height + '" data-large-width="' + postInfo.large_width + '" data-original-height="' + postInfo.image_height + '" data-original-width="' + postInfo.image_width + '" data-rating="' + postInfo.rating + '" data-score="' + postInfo.score + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" height="' + newHeight + '" width="' + newWidth + '" id="image" src="' + newUrl + '" /> <img src="about:blank" height="1" width="1" id="bbb-loader" style="position: absolute; right: 0px; top: 0px; display: none;" />';
 
 				bbb.el.bbbLoader = document.getElementById("bbb-loader");
 
@@ -1021,7 +1021,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				// Create the new post.
 				var childSpan = document.createElement("span");
 
-				childSpan.innerHTML = '<div id="post_' + postInfo.id + '" class="post post-preview' + postInfo.thumb_class + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-flags="' + postInfo.flags + '" data-score="' + postInfo.score + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-approver-id="' + postInfo.approver_id + '" data-fav-count="' + postInfo.fav_count + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '"> <div class="preview"> <a href="/posts/' + postInfo.id + '"> <img alt="' + postInfo.md5 + '" src="' + postInfo.preview_img_src + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + postInfo.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + postInfo.created_at + '" title="' + postInfo.created_at.replace(/(.+)T(.+)\..+-(.+)/, "$1 $2 -$3") + '">' + postInfo.created_at.replace(/(.+)T(.+):.+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>Rating</strong> ' + postInfo.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + postInfo.id + '">' + postInfo.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
+				childSpan.innerHTML = '<div id="post_' + postInfo.id + '" class="post post-preview' + postInfo.thumb_class + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-flags="' + postInfo.flags + '" data-score="' + postInfo.score + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-approver-id="' + postInfo.approver_id + '" data-fav-count="' + postInfo.fav_count + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '"> <div class="preview"> <a href="/posts/' + postInfo.id + '"> <img src="' + postInfo.preview_img_src + '" /> </a> </div> <div class="comments-for-post" data-post-id="' + postInfo.id + '"> <div class="header"> <div class="row"> <span class="info"> <strong>Date</strong> <time datetime="' + postInfo.created_at + '" title="' + postInfo.created_at.replace(/(.+)T(.+)\..+-(.+)/, "$1 $2 -$3") + '">' + postInfo.created_at.replace(/(.+)T(.+):.+-.+/, "$1 $2") + '</time> </span> <span class="info"> <strong>Rating</strong> ' + postInfo.rating + ' </span> <span class="info"> <strong>Score</strong> <span> <span id="score-for-post-' + postInfo.id + '">' + postInfo.score + '</span> </span> </span> </div> <div class="row list-of-tags"> <strong>Tags</strong>' + tagLinks + '</div> </div> </div> <div class="clearfix"></div> </div>';
 
 				// Prepare thumbnails.
 				prepThumbnails(childSpan);
@@ -3889,13 +3889,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		if (optionsSection) {
 			var optionItems = optionsSection.getElementsByTagName("li");
 			var downloadRegex = /^\s*Download\s*$/i;
-			var downloadName = (getMeta("og:title") || "").replace(" - Danbooru", " - ");
 
 			for (i = 0, il = optionItems.length; i < il; i++) {
 				var optionItem = optionItems[i];
 
 				if (downloadRegex.test(optionItem.textContent)) {
-					optionItem.innerHTML = '<a download="' + downloadName + postInfo.md5 + '.' + postInfo.file_ext + '" href="' + postInfo.file_img_src + '?download=1">Download</a>';
+					optionItem.innerHTML = '<a download="' + postInfo.tag_string_desc + " - " + postInfo.md5 + '.' + postInfo.file_ext + '" href="' + postInfo.file_img_src + '?download=1">Download</a>';
 					break;
 				}
 			}
@@ -6335,6 +6334,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		postInfo.uploader_name = (isModLevel() ? postInfo.uploader_name : "");
 
 		// Custom BBB properties.
+		postInfo.tag_string_desc = tagStringDesc(postInfo);
 		postInfo.file_url_desc = postFileUrlDesc(postInfo);
 		postInfo.thumb_class = postClasses(postInfo);
 		postFileSrcs(postInfo);
@@ -6363,6 +6363,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		delete postInfo.preview_img_src;
 		delete postInfo.file_img_src;
 		delete postInfo.large_file_img_src;
+		delete postInfo.tag_string_desc;
 		delete postInfo.normalized_source;
 
 		return postInfo;
@@ -6432,26 +6433,33 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function tagStringDesc(postInfo) {
 		// Create a Danbooru style post description.
-		if (typeof(postInfo.tag_string_artist) !== "string")
-			return "";
+		var downloadName = (getMeta("og:title") || "").replace(" - Danbooru", "");
+		var desc;
 
-		var artists = tagStringList(postInfo.tag_string_artist.replace(/(?:^|\s)banned_artist(?:$|\s)/, " "));
-		var characters = tagStringList(postInfo.tag_string_character.replace(/_\([^)]+\)($|\s)/g, "$1"));
-		var copyrights = tagStringList(postInfo.tag_string_copyright);
+		if (gLoc === "post" && downloadName)
+			desc = downloadName;
+		else if (typeof(postInfo.tag_string_artist) === "string") {
+			var artists = tagStringList(postInfo.tag_string_artist.replace(/(?:^|\s)banned_artist(?:$|\s)/, " "));
+			var characters = tagStringList(postInfo.tag_string_character.replace(/_\([^)]+\)($|\s)/g, "$1"));
+			var copyrights = tagStringList(postInfo.tag_string_copyright);
 
-		if (characters !== "" && copyrights !== "")
-			copyrights = " (" + copyrights + ")";
+			if (characters !== "" && copyrights !== "")
+				copyrights = " (" + copyrights + ")";
 
-		if (artists !== "")
-			artists = " drawn by " + artists;
+			if (artists !== "")
+				artists = " drawn by " + artists;
 
-		return (characters + copyrights + artists).bbbSpaceClean() || "#" + postInfo.id;
+			desc = (characters + copyrights + artists).bbbSpaceClean() || "#" + postInfo.id;
+		}
+		else
+			desc = "";
+
+		return desc;
 	}
 
 	function tagStringFileUrlDesc(postInfo) {
 		// Create a Danbooru style post file/download description.
-		var desc = tagStringDesc(postInfo);
-		var fileDesc = (desc ? "__" + desc.replace(/[^0-9a-z]+/g, "_").replace(/^_+|_+$/g, "") + "__" : "");
+		var fileDesc = (postInfo.tag_string_desc ? "__" + postInfo.tag_string_desc.replace(/[^0-9a-z]+/g, "_").replace(/^_+|_+$/g, "") + "__" : "");
 
 		return fileDesc;
 	}
@@ -6627,7 +6635,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			var thumb = document.createElement("a");
 			thumb.href = "/posts/" + postInfo.id;
-			thumb.innerHTML = '<img src="' + postInfo.preview_img_src + '" alt="' + postInfo.md5 + '">';
+			thumb.innerHTML = '<img src="' + postInfo.preview_img_src + '">';
 
 			if (before)
 				preview.insertBefore(thumb, before);
