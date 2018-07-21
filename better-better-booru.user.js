@@ -73,6 +73,23 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		return encoded;
 	};
 
+	Element.prototype.bbbParent = function(parentName, limit) {
+		// Search an element's successive parent nodes for a specific tag name or until the amount limit is hit.
+		var el = this;
+		var search = parentName.toUpperCase();
+
+		for (var i = 0, il = limit || 1; i < il; i++) {
+			var parent = el.parentNode;
+
+			if (parent && parent.tagName === search)
+				return parent;
+			else
+				el = parent;
+		}
+
+		return null;
+	};
+
 	Element.prototype.bbbGetPadding = function() {
 		// Get all the padding measurements of an element including the total width and height.
 		if (window.getComputedStyle) {
@@ -4707,13 +4724,18 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Cycle through each post and apply titles and borders.
 		for (i = 0, il = posts.length; i < il; i++) {
 			var post = posts[i];
+			var postSibling = post.nextSibling;
 			var img = post.getElementsByTagName("img")[0];
+
+			// Clean out text nodes between thumbnail articles.
+			if (postSibling && postSibling.nodeType === 3)
+				postSibling.parentNode.removeChild(postSibling);
 
 			if (!img)
 				continue;
 
 			var postInfo = post.bbbInfo();
-			var link = img.parentNode;
+			var link = img.bbbParent("A", 3);
 			var tagsStr = postInfo.tag_string || "";
 			var userStr = (postInfo.uploader_name ? " user:" + postInfo.uploader_name : "");
 			var ratingStr = (postInfo.rating ? " rating:" + postInfo.rating : "");
@@ -4813,7 +4835,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function createThumbHTML(postInfo, query) {
 		// Create a thumbnail HTML string.
-		return '<article class="post-preview' + postInfo.thumb_class + '" id="post_' + postInfo.id + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-flags="' + postInfo.flags + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-score="' + postInfo.score + '" data-fav-count="' + postInfo.fav_count + '" data-approver-id="' + postInfo.approver_id + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '" data-source="' + postInfo.source + '" data-top-tagger="' + postInfo.keeper_data.uid + '" data-uploader-id="' + postInfo.uploader_id + '" data-normalized-source="' + postInfo.normalized_source + '" data-is-favorited="' + postInfo.is_favorited + '" data-file-url-desc="' + postInfo.file_url_desc + '"><a href="/posts/' + postInfo.id + query + '"><img src="' + postInfo.preview_img_src + '" alt="' + postInfo.tag_string + '"></a></article>';
+		return '<article class="post-preview' + postInfo.thumb_class + '" id="post_' + postInfo.id + '" data-id="' + postInfo.id + '" data-has-sound="' + postInfo.has_sound + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" data-rating="' + postInfo.rating + '" data-width="' + postInfo.image_width + '" data-height="' + postInfo.image_height + '" data-flags="' + postInfo.flags + '" data-parent-id="' + postInfo.parent_id + '" data-has-children="' + postInfo.has_children + '" data-score="' + postInfo.score + '" data-fav-count="' + postInfo.fav_count + '" data-approver-id="' + postInfo.approver_id + '" data-pixiv-id="' + postInfo.pixiv_id + '" data-md5="' + postInfo.md5 + '" data-file-ext="' + postInfo.file_ext + '" data-file-url="' + postInfo.file_url + '" data-large-file-url="' + postInfo.large_file_url + '" data-preview-file-url="' + postInfo.preview_file_url + '" data-source="' + postInfo.source + '" data-top-tagger="' + postInfo.keeper_data.uid + '" data-uploader-id="' + postInfo.uploader_id + '" data-normalized-source="' + postInfo.normalized_source + '" data-is-favorited="' + postInfo.is_favorited + '" data-file-url-desc="' + postInfo.file_url_desc + '"><a href="/posts/' + postInfo.id + query + '"><picture><source media="(max-width: 660px)" srcset="' + postInfo.crop_img_src + '"><source media="(min-width: 660px)" srcset="' + postInfo.preview_img_src + '"><img src="' + postInfo.preview_img_src + '" alt="' + postInfo.tag_string + '"></picture></a></article>';
 	}
 
 	function createThumb(postInfo, query) {
@@ -6162,7 +6184,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function blacklistSmartView(el) {
 		// Set up the smart view event listeners.
 		var img = el.getElementsByTagName("img")[0];
-		var link = (img ? img.parentNode : undefined);
+		var link = (img ? img.bbbParent("A", 3) : undefined);
 
 		if (!link)
 			return;
@@ -6360,6 +6382,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		delete postInfo.has_sound;
 		delete postInfo.flags;
 		delete postInfo.thumb_class;
+		delete postInfo.crop_img_src
 		delete postInfo.preview_img_src;
 		delete postInfo.file_img_src;
 		delete postInfo.large_file_img_src;
@@ -6479,6 +6502,14 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function postFileSrcs(postInfo) {
 		// Add the BBB file URL properties to post info.
 		postInfo.preview_img_src = postInfo.preview_file_url || bbbHiddenImg;
+
+		if (postInfo.md5) {
+			var pathChars = postInfo.md5.match(/^(..)(..)/);
+
+			postInfo.crop_img_src = "https://raikou3.donmai.us/crop/" + pathChars[1] + "/" + pathChars[2] + "/" + postInfo.md5 + ".jpg";
+		}
+		else
+			postInfo.crop_img_src = bbbHiddenImg;
 
 		if (disable_tagged_filenames && postInfo.file_url.indexOf("__") > -1) {
 			postInfo.file_img_src = postInfo.file_url.replace(postInfo.file_url_desc, "");
@@ -8481,8 +8512,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var targetTag = target.tagName;
 			var url; // If/else variable.
 
-			if (targetTag === "IMG" && target.parentNode)
-				url = target.parentNode.href;
+			if (targetTag === "IMG" && target.bbbParent("A", 3))
+				url = target.bbbParent("A", 3).href;
 			else if (targetTag === "A" && target.bbbHasClass("bbb-post-link", "bbb-thumb-link"))
 				url = target.href;
 
