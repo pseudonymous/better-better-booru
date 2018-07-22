@@ -419,7 +419,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			post_resize_mode: newOption("dropdown", "width", "Resize Mode", "Choose how to shrink large post content to fit the browser window when initially loading a post.", {txtOptions:["Width:width", "Height:height", "Width & Height:all"]}),
 			post_tag_scrollbars: newOption("dropdown", 0, "Post Tag Scrollbars", "Limit the length of the sidebar tag lists for posts by restricting them to a set height in pixels. For lists that exceed the set height, a scrollbar will be added to allow the rest of the list to be viewed.<tiphead>Note</tiphead>When using \"remove tag headers\", this option will limit the overall length of the combined list.", {txtOptions:["Disabled:0"], numList:[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500]}),
 			post_tag_titles: newOption("checkbox", false, "Post Tag Titles", "Change the page titles for posts to a full list of the post tags."),
-			quick_search: newOption("dropdown", "disabled", "Quick Search", "Add a new search box to the upper right corner of the window viewport that allows searching through the current thumbnails for specific posts. <tipdesc>Fade:</tipdesc> Fade all posts that don't match in the thumbnail listing. <tipdesc>Remove:</tipdesc> Remove all posts that don't match from the thumbnail listing. <tiphead>Directions</tiphead>Please read the \"thumbnail matching rules\" section under the help tab for information about creating searches. <br><br>The search starts minimized in the upper right corner. Left clicking the main icon will open and close the search. Right clicking the main icon will completely reset the search. Holding down shift while left clicking the main icon will toggle an active search's pinned status. <br><br>While open, the search can be entered/updated in the search box and the pinned status can be toggled by clicking the pushpin icon. Clicking the negative icon next to the pushpin icon will tell quick search to negate/invert the search being submitted. If no changes are made to an active search, submitting it a second time will reset the quick search. <tiphead>Notes</tiphead>Options labeled with \"pinned\" will make searches default to being pinned. <br><br>A pinned search will persist across other pages in the same browsing session for that tab until it ends or the search is unpinned. <br><br>When not set to disabled, the quick search can be opened by using the \"F\" hotkey. Additionally, an active search can be reset by using \"Shift + F\". Pressing \"Escape\" while the quick search is open will close it.", {txtOptions:["Disabled:disabled", "Fade:fade", "Fade (Pinned):fade pinned", "Remove:remove", "Remove (Pinned):remove pinned"]}),
+			quick_search: newOption("dropdown", "disabled", "Quick Search", "Add a new search box to the upper right corner of the window viewport that allows searching through the current thumbnails for specific posts. <tipdesc>Fade:</tipdesc> Fade all posts that don't match in the thumbnail listing. <tipdesc>Remove:</tipdesc> Remove all posts that don't match from the thumbnail listing. <tiphead>Directions</tiphead>Please read the \"thumbnail matching rules\" section under the help tab for information about creating searches. <br><br>The search starts minimized in the upper right corner. Left clicking the main icon will open and close the search. Right clicking the main icon will completely reset the search. Holding down shift while left clicking the main icon will toggle an active search's pinned status. Holding down control while left clicking the main icon will toggle an active search's negated status.<br><br>While open, the search can be entered/updated in the search box and the pinned status can be toggled by clicking the pushpin icon. Clicking the negative icon next to the pushpin icon will tell quick search to negate/invert the search being submitted. If no changes are made to an active search, submitting it a second time will reset the quick search. <tiphead>Notes</tiphead>Options labeled with \"pinned\" will make searches default to being pinned. <br><br>A pinned search will persist across other pages in the same browsing session for that tab until it ends or the search is unpinned. <br><br>When not set to disabled, the quick search can be opened by using the \"F\" hotkey. Additionally, an active search can be reset by using \"Shift + F\". Pressing \"Escape\" while the quick search is open will close it.", {txtOptions:["Disabled:disabled", "Fade:fade", "Fade (Pinned):fade pinned", "Remove:remove", "Remove (Pinned):remove pinned"]}),
 			remove_tag_headers: newOption("checkbox", false, "Remove Tag Headers", "Remove the \"copyrights\", \"characters\", and \"artist\" headers from the sidebar tag list."),
 			resize_link_style: newOption("dropdown", "full", "Resize Link Style", "Set how the resize links in the post sidebar options section will display. <tipdesc>Full:</tipdesc> Show the \"resize to window\", \"resize to window width\", and \"resize to window height\" links on separate lines. <tipdesc>Minimal:</tipdesc> Show the \"resize to window\" (W&H), \"resize to window width\" (W), and \"resize to window height\" (H) links on one line.", {txtOptions:["Full:full", "Minimal:minimal"]}),
 			search_add: newOption("dropdown", "disabled", "Search Add", "Modify the sidebar tag list by adding, removing, or replacing links in the sidebar tag list that modify the current search's tags. <tipdesc>Remove:</tipdesc> Remove any preexisting \"+\" and \"&ndash;\" links. <tipdesc>Link:</tipdesc> Add \"+\" and \"&ndash;\" links to modified versions of the current search that include or exclude their respective tags. <tipdesc>Toggle:</tipdesc> Add toggle links that modify the search box with their respective tags. Clicking a toggle link will switch between a tag being included (+), excluded (&ndash;), potentially included among other tags (~), and removed (&raquo;). Right clicking a toggle link will immediately remove its tag. If a tag already exists in the search box or gets entered/removed through alternative means, the toggle link will automatically update to reflect the tag's current status. <tiphead>Note</tiphead>The remove option is intended for users above the basic user level that want to remove the links. For users that can't normally see the links and do not wish to see them, this setting should be set to disabled.", {txtOptions:["Disabled:disabled", "Remove:remove", "Link:link", "Toggle:toggle"]}),
@@ -6382,7 +6382,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		delete postInfo.has_sound;
 		delete postInfo.flags;
 		delete postInfo.thumb_class;
-		delete postInfo.crop_img_src
+		delete postInfo.crop_img_src;
 		delete postInfo.preview_img_src;
 		delete postInfo.file_img_src;
 		delete postInfo.large_file_img_src;
@@ -7979,6 +7979,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			'.bbb-quick-search-pinned #bbb-quick-search-pin, .bbb-quick-search-active.bbb-quick-search-pinned #bbb-quick-search-status {background-position: -144px -144px;}' + // Vertical pin.
 			'#bbb-quick-search-negate {background-position: -48px -129px;}' + // Negative sign.
 			'.bbb-quick-search-negated #bbb-quick-search-negate {background-position: -15px -192px;}' + // Negative sign in a dark circle.
+			'#bbb-quick-search.bbb-quick-search-negated {filter: invert(0.75);}' +
+			'#bbb-quick-search.bbb-quick-search-negated.bbb-quick-search-show {filter: invert(0);}' +
 			'#bbb-quick-search.bbb-quick-search-active {background-color: #DDDDDD;}' +
 			'#bbb-quick-search.bbb-quick-search-active.bbb-quick-search-show {background-color: #FFFFFF;}' +
 			'#bbb-quick-search-pin:focus, #bbb-quick-search-pin:hover, #bbb-quick-search-negate:focus, #bbb-quick-search-negate:hover {background-color: #CCCCCC;}' +
@@ -8162,24 +8164,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		// Make the submit event search posts or reset the search.
 		searchForm.addEventListener("submit", function(event) {
-			var oldValue = bbb.quick_search.tags.bbbSpaceClean();
-			var oldNegate = bbb.quick_search.negated;
-			var curValue = searchInput.value.bbbSpaceClean();
-			var curNegate = searchDiv.bbbHasClass("bbb-quick-search-negated");
-
-			if (curValue === "" || (curValue === oldValue && curNegate === oldNegate))
-				quickSearchReset();
-			else {
-				bbb.quick_search.tags = searchInput.value;
-				bbb.quick_search.negated = searchDiv.bbbHasClass("bbb-quick-search-negated");
-
-				if (searchDiv.bbbHasClass("bbb-quick-search-pinned"))
-					sessionStorage.bbbSetItem("bbb_quick_search", JSON.stringify(bbb.quick_search));
-				else if (quick_search.indexOf("pinned") > -1)
-					quickSearchPinEnable();
-
-				quickSearchTest();
-			}
+			quickSearchToggle();
 
 			// Make autocomplete close without getting too tricky.
 			searchSubmit.focus();
@@ -8226,6 +8211,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			if (event.button === 0) {
 				if (event.shiftKey)
 					quickSearchPinToggle();
+				else if (event.ctrlKey) {
+					quickSearchNegateToggle();
+					quickSearchToggle();
+				}
 				else if (!searchDiv.bbbHasClass("bbb-quick-search-show"))
 					quickSearchOpen();
 				else
@@ -8288,6 +8277,30 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Create the hotkeys.
 		createHotkey("70", quickSearchOpen); // F
 		createHotkey("s70", quickSearchReset); // SHIFT + F
+	}
+
+	function quickSearchToggle() {
+		// Submit the quick search or reset it if the current search is active.
+		var searchInput = bbb.el.quickSearchInput;
+		var searchDiv = bbb.el.quickSearchDiv;
+		var oldValue = bbb.quick_search.tags.bbbSpaceClean();
+		var oldNegate = bbb.quick_search.negated;
+		var curValue = searchInput.value.bbbSpaceClean();
+		var curNegate = searchDiv.bbbHasClass("bbb-quick-search-negated");
+
+		if (curValue === "" || (curValue === oldValue && curNegate === oldNegate))
+			quickSearchReset();
+		else {
+			bbb.quick_search.tags = searchInput.value;
+			bbb.quick_search.negated = searchDiv.bbbHasClass("bbb-quick-search-negated");
+
+			if (searchDiv.bbbHasClass("bbb-quick-search-pinned"))
+				sessionStorage.bbbSetItem("bbb_quick_search", JSON.stringify(bbb.quick_search));
+			else if (quick_search.indexOf("pinned") > -1)
+				quickSearchPinEnable();
+
+			quickSearchTest();
+		}
 	}
 
 	function quickSearchCheck() {
