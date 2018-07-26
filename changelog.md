@@ -1,5 +1,13 @@
 Changelog
 ----------
+* Version 8.2.1:
+  * Added "Shift + E" as a hotkey for loading more pages when endless pages pauses.
+  * Added "Control + Left Click" on the quick search icon as a shortcut for negating the current search.
+  * Updated the error handling for requests from Danbooru in order to better support unexpected errors.
+  * Updated thumbnail formats and information in response to changes on Danbooru.
+  * Updated autocomplete to not automatically choose the first entry in response to changes on Danbooru.
+  * Updated the alternate text for thumbnails and posts in response to changes on Danbooru.
+  * Fixed character names containing copyright names in tagged filenames.
 * Version 8.2:
   * Added "userid", "taggerid", "approverid", and "source" to the script metatags.
   * Updated the "user" metatag help text to clarify it can only be used by users at or above the moderator level.
