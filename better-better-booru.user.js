@@ -1012,6 +1012,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				var artistTags = postInfo.tag_string_artist.split(" ");
 				var copyrightTags = postInfo.tag_string_copyright.split(" ");
 				var characterTags = postInfo.tag_string_character.split(" ");
+				var metaTags = postInfo.tag_string_meta.split(" ");
 				var limit = (thumbnail_count ? "&limit=" + thumbnail_count : "");
 				var j, jl, tag; // Loop variables.
 
@@ -1033,6 +1034,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				for (j = 0, jl = characterTags.length; j < jl; j++) {
 					tag = characterTags[j];
 					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-4"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
+				}
+
+				for (j = 0, jl = metaTags.length; j < jl; j++) {
+					tag = metaTags[j];
+					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-5"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
 				}
 
 				// Create the new post.
@@ -1471,6 +1477,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			tag_string_character: scrapePostTags("character", target),
 			tag_string_copyright: scrapePostTags("copyright", target),
 			tag_string_general: scrapePostTags("general", target),
+			tag_string_meta: scrapePostTags("meta", target),
 			pool_string: imgContainer.getAttribute("data-pools") || "",
 			uploader_name: imgContainer.getAttribute("data-uploader") || "",
 			uploader_id: Number(imgContainer.getAttribute("data-uploader-id")) || 0,
@@ -1516,6 +1523,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			categoryClass = "category-1";
 		else if (category === "general")
 			categoryClass = "category-0";
+		else if (category === "meta")
+			categoryClass = "category-5";
 
 		var categoryTags = tagList.getElementsByClassName(categoryClass);
 		var categoryString = "";
