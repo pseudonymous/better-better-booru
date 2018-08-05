@@ -926,8 +926,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					// Prep the "toggle notes" link. The "toggle notes" link is added here just for consistency's sake.
 					noteToggleLinkInit();
 
-					if (postInfo.pixiv_ugoira_frame_data.data) // Set up the post.
-						ugoiraInit();
+					if (postInfo.pixiv_ugoira_frame_data.data && Danbooru.Ugoira && Danbooru.Ugoira.create_player) // Set up the post.
+						Danbooru.Ugoira.create_player(postInfo.pixiv_ugoira_frame_data.content_type, postInfo.pixiv_ugoira_frame_data.data, postInfo.file_url);
 				}
 			}
 			else if (!postInfo.image_height) // Create manual download.
@@ -4611,75 +4611,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var pageTop = page.offsetTop;
 
 			window.scroll(0, pageTop);
-		}
-	}
-
-	function ugoiraInit() {
-		// Execute a static copy of Danbooru's embedded JavaScript for setting up the post.
-		var postInfo = bbb.post.info;
-
-		try {
-			Danbooru.Ugoira = {};
-
-			Danbooru.Ugoira.create_player = function() {
-				var meta_data = {
-					mime_type: postInfo.pixiv_ugoira_frame_data.content_type,
-					frames: postInfo.pixiv_ugoira_frame_data.data
-				};
-				var options = {
-					canvas: document.getElementById("image"),
-					source: postInfo.file_url,
-					metadata: meta_data,
-					chunkSize: 300000,
-					loop: true,
-					autoStart: true,
-					debug: false
-				};
-
-				this.player = new ZipImagePlayer(options);
-			};
-
-			Danbooru.Ugoira.player = null;
-
-			$(function() {
-				var player_manually_paused = false;
-
-				Danbooru.Ugoira.create_player();
-				$(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) { $("#seek-slider").progressbar("value", Math.floor(progress * 100)); });
-				$("#ugoira-play").click(function(event) {
-					Danbooru.Ugoira.player.play();
-					$(this).hide();
-					$("#ugoira-pause").show();
-					player_manually_paused = false;
-					event.preventDefault();
-				});
-				$("#ugoira-pause").click(function(event) {
-					Danbooru.Ugoira.player.pause();
-					$(this).hide();
-					$("#ugoira-play").show();
-					player_manually_paused = true;
-					event.preventDefault();
-				});
-				$("#seek-slider").progressbar({value: 0});
-				$("#seek-slider").slider({
-					min: 0,
-					max: Danbooru.Ugoira.player._frameCount-1,
-					start: function() { Danbooru.Ugoira.player.pause(); },
-					slide: function(event, ui) {
-						Danbooru.Ugoira.player._frame = ui.value;
-						Danbooru.Ugoira.player._displayFrame();
-					},
-					stop: function() {
-						if (!(player_manually_paused)) {
-							Danbooru.Ugoira.player.play();
-						}
-					}
-				});
-				$(Danbooru.Ugoira.player).on("frame", function(frame, frame_number) { $("#seek-slider").slider("option", "value", frame_number); });
-			});
-		}
-		catch (error) {
-			bbbNotice("Unexpected error creating the ugoira post. (Error: " + error.message + ")", -1);
 		}
 	}
 
