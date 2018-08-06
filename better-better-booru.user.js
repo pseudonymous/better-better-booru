@@ -6971,10 +6971,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var parent = (postInfo.parent_id ? " parent:" + postInfo.parent_id : "");
 			var child = (postInfo.has_children === true ? " child:true" : "");
 			var isFav = " isfav:" + postInfo.is_favorited;
+			var filetype = " filetype:" + postInfo.file_ext;
 
 			postSearchInfo = {
 				tags: postInfo.tag_string.bbbSpacePad(),
-				metatags:(rating + status + user + pools + parent + child + isFav + userId + taggerId + source + approverId).bbbSpacePad(),
+				metatags:(rating + status + user + pools + parent + child + isFav + userId + taggerId + source + approverId + filetype).bbbSpacePad(),
 				score: postInfo.score,
 				favcount: postInfo.fav_count,
 				id: postInfo.id,
@@ -10039,7 +10040,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else {
 			var tagName = tag.split(":", 1)[0].bbbSpaceClean();
 
-			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating" || tagName === "parent" || tagName === "child" || tagName === "isfav" || tagName === "userid" || tagName === "taggerid" || tagName === "source" || tagName === "approverid")
+			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating" || tagName === "parent" || tagName === "child" || tagName === "isfav" || tagName === "userid" || tagName === "taggerid" || tagName === "source" || tagName === "approverid" || tagName === "filetype")
 				return true;
 			else
 				return false;
