@@ -293,6 +293,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
+		autocomplete: {},
 		blacklist: {
 			entries: [],
 			match_list: {},
@@ -640,8 +641,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	bbbHotkeys();
 
 	endlessInit();
-
-	bbbAutocompleteInit();
 
 	delayMe(formatThumbnails); // Delayed to allow Danbooru to run first.
 
@@ -2059,7 +2058,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert. Note that this tag will only work if you have a <b>moderator</b> level account or higher.</li><li><b>userid:1</b> - Match posts made by the user with an ID number of 1.</li><li><b>taggerid:1</b> - Match posts mostly tagged by the user with an ID number of 1.</li><li><b>approverid:1</b> - Match posts approved by the user with an ID number of 1. Accepted values include numbers, "any" for all posts with an approver, and "none" for posts without an approver.</li><li><b>source:http://www.4chan.org/</b> - Match posts with a source starting with http://www.4chan.org/. Accepted values include "any" for all posts with sources, "none" for all posts without sources, wildcard searches such as "*pixiv.net*" for posts with sources that contain pixiv.net, and non-wildcard searches that start matching at the beginning of a source.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert. Note that this tag will only work if you have a <b>moderator</b> level account or higher.</li><li><b>userid:1</b> - Match posts made by the user with an ID number of 1.</li><li><b>taggerid:1</b> - Match posts mostly tagged by the user with an ID number of 1.</li><li><b>approverid:1</b> - Match posts approved by the user with an ID number of 1. Accepted values include numbers, "any" for all posts with an approver, and "none" for posts without an approver.</li><li><b>source:http://www.4chan.org/</b> - Match posts with a source starting with http://www.4chan.org/. Accepted values include "any" for all posts with sources, "none" for all posts without sources, wildcard searches such as "*pixiv.net*" for posts with sources that contain pixiv.net, and non-wildcard searches that start matching at the beginning of a source.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>filetype:jpg</b> - Match posts that are in the jpg format. Accepted values include jpg, png, gif, swf, zip, webm, and mp4.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>Shift + E</b> - Continue loading more pages after pausing during endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
@@ -10178,31 +10177,191 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	}
 
 	function bbbAutocompleteInit() {
-		// Add custom tags to Danbooru's autocomplete and fix other issues.
-		if (!Danbooru.Autocomplete)
-			return;
-
+		// Set up a modified version of Danbooru's autocomplete.
 		try {
-			// Add custom metatags.
+			var Autocomplete = bbb.autocomplete;
+
+			Autocomplete.AUTOCOMPLETE_VERSION = 1;
+			Autocomplete.PREFIXES = /^([-~]*)(.*)$/i;
+			Autocomplete.METATAGS = /^(status|rating|parent|child|user|pool|group|g|isfav|userid|taggerid|approverid|source|id|score|favcount|height|width|filetype):(.*)$/i;
+
+			Autocomplete.initialize_all = function() {
+				if (Danbooru.Utility.meta("enable-auto-complete") === "true") {
+					$.widget("ui.autocomplete", $.ui.autocomplete, {
+						options: {delay: 0, minLength: 1, autoFocus: false, focus: function() { return false; }},
+						_create: function() {
+							this.element.on("keydown.Autocomplete.tab", null, "tab", Autocomplete.on_tab);
+							this._super();
+						},
+						_renderItem: Autocomplete.render_item,
+					});
+				}
+			};
+
+			Autocomplete.normal_source = function(term, resp) {
+				$.ajax({
+					url: "/tags/autocomplete.json",
+					data: {"search[name_matches]": term, "expiry": 7},
+					method: "get",
+					success: function(data) {
+						var d = $.map(data, function(tag) {
+							return {type: "tag", label: tag.name.replace(/_/g, " "), antecedent: tag.antecedent_name, value: tag.name, category: tag.category, post_count: tag.post_count};
+						});
+
+						resp(d);
+					}
+				});
+			};
+
+			Autocomplete.parse_query = function(text, caret) {
+				var metatag = "";
+				var term = "";
+				var before_caret_text = text.substring(0, caret);
+				var match = before_caret_text.match(/\S+$/g);
+
+				if (match)
+					term = match[0];
+				else
+					return {};
+
+				if (!!(match = term.match(Autocomplete.PREFIXES))) {
+					metatag = match[1].toLowerCase();
+					term = match[2];
+				}
+
+				if (!!(match = term.match(Autocomplete.METATAGS))) {
+					metatag = match[1].toLowerCase();
+					term = match[2];
+				}
+
+				return {metatag: metatag, term: term};
+			};
+
+			Autocomplete.insert_completion = function(input, completion) {
+				var before_caret_text = input.value.substring(0, input.selectionStart);
+				var after_caret_text = input.value.substring(input.selectionStart);
+
+				var prefixes = "-~";
+				var regexp = new RegExp("([" + prefixes + "]*)\\S+$", "g");
+				before_caret_text = before_caret_text.replace(regexp, "$1") + completion + " ";
+
+				input.value = before_caret_text + after_caret_text;
+				input.selectionStart = input.selectionEnd = before_caret_text.length;
+			};
+
+			Autocomplete.on_tab = function(event) {
+				var input = this;
+				var autocomplete = $(input).autocomplete("instance");
+				var $autocomplete_menu = autocomplete.menu.element;
+
+				if (!$autocomplete_menu.is(":visible"))
+					return;
+
+				if ($autocomplete_menu.has(".ui-state-active").length === 0) {
+					var $first_item = $autocomplete_menu.find(".ui-menu-item").first();
+					var completion = $first_item.data().uiAutocompleteItem.value;
+
+					Autocomplete.insert_completion(input, completion);
+					autocomplete.close();
+				}
+
+				event.preventDefault();
+			};
+
+			Autocomplete.render_item = function(list, item) {
+				var $link = $("<a/>");
+				$link.text(item.label);
+				$link.attr("href", "/posts?tags=" + encodeURIComponent(item.value));
+				$link.click(function(e) {e.preventDefault();});
+
+				if (item.antecedent) {
+					var antecedent = item.antecedent.replace(/_/g, " ");
+					var arrow = $("<span/>").html(" &rarr; ").addClass("autocomplete-arrow");
+					var antecedent_element = $("<span/>").text(antecedent).addClass("autocomplete-antecedent");
+
+					$link.prepend([antecedent_element, arrow]);
+				}
+
+				if (item.post_count !== undefined) {
+					var count = item.post_count;
+
+					if (count >= 1000)
+						count = Math.floor(count / 1000) + "k";
+
+					var $post_count = $("<span/>").addClass("post-count").css("float", "right").text(count);
+
+					$link.append($post_count);
+				}
+
+				if (item.type === "tag" || item.type === "metatag")
+					$link.addClass("tag-type-" + item.category);
+				else if (item.type === "user") {
+					var level_class = "user-" + item.level.toLowerCase();
+
+					$link.addClass(level_class);
+
+					if (Danbooru.Utility.meta("style-usernames") === "true")
+						$link.addClass("with-style");
+				}
+
+				var $menu_item = $("<div/>").append($link);
+
+				return $("<li/>").data("item.autocomplete", item).append($menu_item).appendTo(list);
+			};
+
 			var groups = [];
 
 			for (var i = 0, il = tag_groups.length; i < il; i++)
 				groups.push(tag_groups[i].name);
 
-			Danbooru.Autocomplete.static_metatags.group = Danbooru.Autocomplete.static_metatags.g = groups;
-			Danbooru.Autocomplete.static_metatags.parent = ["any", "none"];
-			Danbooru.Autocomplete.static_metatags.isfav = ["true", "false"];
-			Danbooru.Autocomplete.static_metatags.pool = ["series", "collection", "any", "none", "active", "inactive"];
-			Danbooru.Autocomplete.static_metatags.source = ["any", "none"];
-			Danbooru.Autocomplete.static_metatags.approverid = ["any", "none"];
+			Autocomplete.static_metatags = {
+				status: ["any", "deleted", "active", "pending", "flagged", "banned"],
+				rating: ["safe", "questionable", "explicit"],
+				child: ["any", "none"],
+				parent: ["any", "none"],
+				filetype: ["jpg", "png", "gif", "swf", "zip", "webm", "mp4"],
+				isfav: ["true", "false"],
+				pool: ["series", "collection", "any", "none", "active", "inactive"],
+				source: ["any", "none"],
+				approverid: ["any", "none"],
+				group: groups,
+				g: groups
+			};
 
-			// Counter normal autocomplete getting turned back on after submitting an input.
-			document.body.addEventListener("focus", function(event) {
-				var target = event.target;
+			Autocomplete.static_metatag_source = function(term, resp, metatag) {
+				var sub_metatags = this.static_metatags[metatag];
 
-				if (target.bbbHasClass("ui-autocomplete-input"))
-					target.setAttribute("autocomplete", "off");
-			}, true);
+				var regexp = new RegExp("^" + $.ui.autocomplete.escapeRegex(term), "i");
+				var matches = $.grep(sub_metatags, function (sub_metatag) {
+					return regexp.test(sub_metatag);
+				});
+
+				var d = $.map(matches, function(sub_metatag) {
+					return {type: "metatag", category: 5, label: sub_metatag, value: metatag + ":" + sub_metatag};
+				});
+
+				if (d.length > 10)
+					d = d.slice(0, 10);
+
+				resp(d);
+			};
+
+			Autocomplete.user_source = function(term, resp, metatag) {
+				$.ajax({
+					url: "/users.json",
+					data: {"search[order]": "post_upload_count", "search[current_user_first]": "true", "search[name_matches]": term + "*", "limit": 10},
+					method: "get",
+					success: function(data) {
+						var display_name = function(name) {return name.replace(/_/g, " ");};
+
+						resp($.map(data, function(user) {
+							return {type: "user", label: display_name(user.name), value: metatag + ":" + user.name, level: user.level_string};
+						}));
+					}
+				});
+			};
+
+			Autocomplete.initialize_all();
 		}
 		catch (error) {
 			bbbNotice("Unexpected error while trying to initialize autocomplete. (Error: " + error.message + ")", -1);
@@ -10211,112 +10370,83 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	}
 
 	function bbbAutocomplete(searchInputs) {
-		// Use a modified copy of Danbooru's autocomplete.
-		try {
-			var $fields_multiple = $(searchInputs);
+		// Apply a modified copy of Danbooru's autocomplete to inputs after Danbooru has finished.
+		delayMe(function() {
+			if (!bbb.autocomplete.AUTOCOMPLETE_VERSION)
+				bbbAutocompleteInit();
 
-			var prefixes = "-~";
-			var metatags = "status|rating|parent|child|user|pool|group|g|isfav|userid|taggerid|approverid|source|id|score|favcount|height|width";
+			try {
+				var Autocomplete = bbb.autocomplete;
+				var $fields_multiple = $(searchInputs);
 
-			$fields_multiple.autocomplete({
-				delay: 100,
-				autoFocus: false,
-				focus: function() { return false; },
-				select: function(event, ui) {
-					var before_caret_text = this.value.substring(0, this.selectionStart);
-					var after_caret_text = this.value.substring(this.selectionStart);
-					var regexp = new RegExp("([" + prefixes + "]*)\\S+$", "g");
+				$fields_multiple.autocomplete({
+					search: function() {
+						if ($(this).data("ui-autocomplete"))
+							$(this).data("ui-autocomplete").menu.bindings = $();
+					},
+					select: function(event, ui) {
+						if (event.key === "Enter")
+							event.stopImmediatePropagation();
 
-					this.value = before_caret_text.replace(regexp, "$1" + ui.item.value + " ");
+						Autocomplete.insert_completion(this, ui.item.value);
+						return false;
+					},
+					source: function(req, resp) {
+						var query = Autocomplete.parse_query(req.term, this.element.get(0).selectionStart);
+						var metatag = query.metatag;
+						var term = query.term;
 
-					var original_start = this.selectionStart;
-
-					this.value += after_caret_text;
-					this.selectionStart = this.selectionEnd = original_start;
-
-					return false;
-				},
-				source: function(req, resp) {
-					var before_caret_text = req.term.substring(req.term.substring(0, this.element.get(0).selectionStart).lastIndexOf("\n"), this.element.get(0).selectionStart);
-
-					if (before_caret_text.match(/ $/)) {
-						this.close();
-						return;
-					}
-
-					var term = before_caret_text.match(/\S+/g).pop();
-					var regexp = new RegExp("^[" + prefixes + "]*(.*)$", "i");
-					var match = term.match(regexp);
-					var metatag;
-
-					if (match)
-						term = match[1];
-
-					if (term === "")
-						return;
-
-					regexp = new RegExp("^(" + metatags + "):(.*)$", "i");
-					match = term.match(regexp);
-
-					if (match) {
-						metatag = match[1].toLowerCase();
-						term = match[2];
-					}
-
-					switch(metatag) {
-						case "userid":
-						case "taggerid":
-						case "id":
-						case "score":
-						case "favcount":
-						case "height":
-						case "width":
+						if (!metatag && !term) {
 							this.close();
 							return;
-						case "status":
-						case "rating":
-						case "parent":
-						case "child":
-						case "group":
-						case "g":
-						case "isfav":
-						case "pool":
-						case "source":
-						case "approverid":
-							Danbooru.Autocomplete.static_metatag_source(term, resp, metatag);
-							return;
+						}
+
+						switch (metatag) {
+							case "userid":
+							case "taggerid":
+							case "id":
+							case "score":
+							case "favcount":
+							case "height":
+							case "width":
+								resp([]);
+								return;
+							case "status":
+							case "rating":
+							case "parent":
+							case "child":
+							case "group":
+							case "g":
+							case "isfav":
+							case "pool":
+							case "source":
+							case "filetype":
+							case "approverid":
+								Autocomplete.static_metatag_source(term, resp, metatag);
+								return;
+							case "user":
+								Autocomplete.user_source(term, resp, metatag);
+								break;
+							default:
+								Autocomplete.normal_source(term, resp);
+								break;
+						}
 					}
+				});
 
-					if (term === "")
-						return;
-
-					switch(metatag) {
-						case "user":
-							Danbooru.Autocomplete.user_source(term, resp, metatag);
-							break;
-						default:
-							Danbooru.Autocomplete.normal_source(term, resp);
-							break;
-					}
-				}
-			});
-
-			$fields_multiple.on("autocompleteselect", function() { Danbooru.autocompleting = true; });
-			$fields_multiple.on("autocompleteclose", function() { setTimeout(function() {Danbooru.autocompleting = false;}, 100); });
-			$fields_multiple.each(function(i, field) { $(field).data("uiAutocomplete")._renderItem = Danbooru.Autocomplete.render_item; });
-
-			// Make autocomplete fixed like the quick search and menu and allow it to be on top of inputs if there is more space there.
-			$(searchInputs).autocomplete("widget").css("position", "fixed");
-			$(searchInputs).autocomplete("option", "position", {my: "left top", at: "left bottom", collision: "flip"});
-		}
-		catch (error) {
-			bbbNotice("Unexpected error while trying to initialize autocomplete. (Error: " + error.message + ")", -1);
-		}
+				// Make autocomplete fixed like the quick search and menu and allow it to be on top of inputs if there is more space there.
+				$(searchInputs).autocomplete("widget").css("position", "fixed");
+				$(searchInputs).autocomplete("option", "position", {my: "left top", at: "left bottom", collision: "flip"});
+			}
+			catch (error) {
+				bbbNotice("Unexpected error while trying to initialize autocomplete. (Error: " + error.message + ")", -1);
+			}
+		});
 	}
 
 	function menuAutocomplete(searchInputs) {
 		// Use autocomplete on a BBB menu input if allowed by the option.
-		if (enable_menu_autocomplete && Danbooru.Autocomplete)
+		if (enable_menu_autocomplete)
 			bbbAutocomplete(searchInputs);
 	}
 
@@ -10324,7 +10454,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Use autocomplete on an input outside of the BBB menu if allowed for Danbooru.
 		var allowAutocomplete = (getMeta("enable-auto-complete") === "true");
 
-		if (allowAutocomplete && Danbooru.Autocomplete)
+		if (allowAutocomplete)
 			bbbAutocomplete(searchInputs);
 	}
 
