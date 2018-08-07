@@ -7545,10 +7545,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					// Update the mark link if the paginator updates.
 					if (paginator) {
 						paginator.bbbWatchNodes(function() {
-							var activePage = paginator.getElementsByTagName("span")[0];
+							var activePage = paginator.getElementsByClassName("current-page")[0];
+							var pageNumber = (activePage ? activePage.textContent.bbbSpaceClean() : "1") || "1";
 
-							if (activePage)
-								markLink.innerHTML = "Mark pages 1-" + activePage.textContent.bbbSpaceClean() + " viewed";
+							if (pageNumber && pageNumber !== "1")
+								markLink.innerHTML = "Mark pages 1-" + pageNumber + " viewed";
 						});
 					}
 				}
