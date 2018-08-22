@@ -4359,7 +4359,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function postTagTitles() {
 		// Replace the post title with the full set of tags.
 		if (post_tag_titles && gLoc === "post")
-			document.title = getMeta("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
+			document.title = document.bbbInfo("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
 	}
 
 	function minimizeStatusNotices() {
