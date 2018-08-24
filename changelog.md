@@ -1,5 +1,13 @@
 Changelog
 ----------
+* Version 8.2.2:
+  * Added "filetype" to the script metatags.
+  * Updated to support Danbooru's new orange metatags.
+  * Updated to support Danbooru's ugoira update.
+  * Updated to support Danbooru's autocomplete update.
+  * Updated to support Danbooru's normalized source update.
+  * Fixed the "post tag titles" option.
+  * Fixed the mark link for the "track new posts" listing when using endless pages.
 * Version 8.2.1:
   * Added "Shift + E" as a hotkey for loading more pages when endless pages pauses.
   * Added "Control + Left Click" on the quick search icon as a shortcut for negating the current search.

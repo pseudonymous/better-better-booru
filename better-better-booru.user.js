@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better.
-// @version        8.2.1
+// @version        8.2.2
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -293,6 +293,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	/* Global Variables */
 	var bbb = { // Container for script info.
+		autocomplete: {},
 		blacklist: {
 			entries: [],
 			match_list: {},
@@ -357,7 +358,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "8.2.1",
+			bbb_version: "8.2.2",
 			add_popular_link: newOption("checkbox", false, "Add Popular Link", "Add a link to the popular listing to the \"posts\" submenu"),
 			add_random_post_link: newOption("checkbox", false, "Add Random Link", "Add a link to a random post to the post sidebar options menu."),
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
@@ -640,8 +641,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	bbbHotkeys();
 
 	endlessInit();
-
-	bbbAutocompleteInit();
 
 	delayMe(formatThumbnails); // Delayed to allow Danbooru to run first.
 
@@ -926,8 +925,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					// Prep the "toggle notes" link. The "toggle notes" link is added here just for consistency's sake.
 					noteToggleLinkInit();
 
-					if (postInfo.pixiv_ugoira_frame_data.data) // Set up the post.
-						ugoiraInit();
+					if (postInfo.pixiv_ugoira_frame_data.data && Danbooru.Ugoira && Danbooru.Ugoira.create_player) // Set up the post.
+						Danbooru.Ugoira.create_player(postInfo.pixiv_ugoira_frame_data.content_type, postInfo.pixiv_ugoira_frame_data.data, postInfo.file_url);
 				}
 			}
 			else if (!postInfo.image_height) // Create manual download.
@@ -1012,6 +1011,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				var artistTags = postInfo.tag_string_artist.split(" ");
 				var copyrightTags = postInfo.tag_string_copyright.split(" ");
 				var characterTags = postInfo.tag_string_character.split(" ");
+				var metaTags = postInfo.tag_string_meta.split(" ");
 				var limit = (thumbnail_count ? "&limit=" + thumbnail_count : "");
 				var j, jl, tag; // Loop variables.
 
@@ -1033,6 +1033,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				for (j = 0, jl = characterTags.length; j < jl; j++) {
 					tag = characterTags[j];
 					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-4"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
+				}
+
+				for (j = 0, jl = metaTags.length; j < jl; j++) {
+					tag = metaTags[j];
+					tagLinks = tagLinks.replace(tag.bbbSpacePad(), ' <span class="category-5"> <a href="/posts?tags=' + encodeURIComponent(tag) + limit + '">' + tag.replace(/_/g, " ") + '</a> </span> ');
 				}
 
 				// Create the new post.
@@ -1471,6 +1476,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			tag_string_character: scrapePostTags("character", target),
 			tag_string_copyright: scrapePostTags("copyright", target),
 			tag_string_general: scrapePostTags("general", target),
+			tag_string_meta: scrapePostTags("meta", target),
 			pool_string: imgContainer.getAttribute("data-pools") || "",
 			uploader_name: imgContainer.getAttribute("data-uploader") || "",
 			uploader_id: Number(imgContainer.getAttribute("data-uploader-id")) || 0,
@@ -1516,6 +1522,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			categoryClass = "category-1";
 		else if (category === "general")
 			categoryClass = "category-0";
+		else if (category === "meta")
+			categoryClass = "category-5";
 
 		var categoryTags = tagList.getElementsByClassName(categoryClass);
 		var categoryString = "";
@@ -2050,7 +2058,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		helpPage.className = "bbb-page";
 		scrollDiv.appendChild(helpPage);
 
-		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert. Note that this tag will only work if you have a <b>moderator</b> level account or higher.</li><li><b>userid:1</b> - Match posts made by the user with an ID number of 1.</li><li><b>taggerid:1</b> - Match posts mostly tagged by the user with an ID number of 1.</li><li><b>approverid:1</b> - Match posts approved by the user with an ID number of 1. Accepted values include numbers, "any" for all posts with an approver, and "none" for posts without an approver.</li><li><b>source:http://www.4chan.org/</b> - Match posts with a source starting with http://www.4chan.org/. Accepted values include "any" for all posts with sources, "none" for all posts without sources, wildcard searches such as "*pixiv.net*" for posts with sources that contain pixiv.net, and non-wildcard searches that start matching at the beginning of a source.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
+		helpPage.bbbTextSection('Thumbnail Matching Rules', 'For creating thumbnail matching rules, please consult the following examples:<ul><li><b>tag1</b> - Match posts with tag1.</li><li><b>tag1 tag2</b> - Match posts with tag1 AND tag2.</li><li><b>-tag1</b> - Match posts without tag1.</li><li><b>tag1 -tag2</b> - Match posts with tag1 AND without tag2.</li><li><b>~tag1 ~tag2</b> - Match posts with tag1 OR tag2.</li><li><b>~tag1 ~-tag2</b> - Match posts with tag1 OR without tag2.</li><li><b>tag1 ~tag2 ~tag3</b> - Match posts with tag1 AND either tag2 OR tag3.</li></ul><br>Wildcards can be used with any of the above methods:<ul><li><b>~tag1* ~-*tag2</b> - Match posts with tags starting with tag1 or posts without tags ending with tag2.</li></ul><br>Multiple match rules can be specified by using commas or separate lines when possible:<ul><li><b>tag1 tag2, tag3 tag4</b> - Match posts with tag1 AND tag2 or posts with tag3 AND tag4.</li><li><b>tag1 ~tag2 ~tag3, tag4</b> - Match posts with tag1 AND either tag2 OR tag3 or posts with tag4.</li></ul><br>Tags can be nested/grouped together by using parentheses that only have spaces or commas next to them:<ul><li><b>( ~tag1 ~tag2 ) ( ~tag3 ~tag3 )</b> - Match posts with either tag1 OR tag2 AND either tag3 OR tag4.</li><li><b>tag1 ( tag2, tag3 tag4 )</b> - Match posts with tag1 AND tag2 or posts with tag1 AND tag3 AND tag4.</li><li><b>tag1 -( tag2 tag3 )</b> - Match posts with tag1 AND without tag2 AND tag3.</li><li><b>tag1 ~tag2 ~( tag3 tag4 )</b> - Match posts with tag1 and either tag2 OR tag3 AND tag4.</li></ul><br>The following metatags are supported:<ul><li><b>rating:safe</b> - Match posts rated safe. Accepted values include safe, explicit, and questionable.</li><li><b>status:pending</b> - Match pending posts. Accepted values include active, pending, flagged, banned, and deleted. Note that flagged posts also count as active posts.</li><li><b>user:albert</b> - Match posts made by the user Albert. Note that this tag will only work if you have a <b>moderator</b> level account or higher.</li><li><b>userid:1</b> - Match posts made by the user with an ID number of 1.</li><li><b>taggerid:1</b> - Match posts mostly tagged by the user with an ID number of 1.</li><li><b>approverid:1</b> - Match posts approved by the user with an ID number of 1. Accepted values include numbers, "any" for all posts with an approver, and "none" for posts without an approver.</li><li><b>source:http://www.4chan.org/</b> - Match posts with a source starting with http://www.4chan.org/. Accepted values include "any" for all posts with sources, "none" for all posts without sources, wildcard searches such as "*pixiv.net*" for posts with sources that contain pixiv.net, and non-wildcard searches that start matching at the beginning of a source.</li><li><b>isfav:true</b> - Match posts favorited under your current account. Accepted values include true and false.</li><li><b>filetype:jpg</b> - Match posts that are in the jpg format. Accepted values include jpg, png, gif, swf, zip, webm, and mp4.</li><li><b>group:hidden</b> or <b>g:hidden</b> - Match posts that match the tags in your group named \"hidden\".</li><li><b>pool:1</b> - Match posts that are in the pool with an ID number of 1. Accepted values include pool ID numbers, "series" for posts in series category pools, "collection" for posts in collection category pools, "any" for posts in any pool, "none" for posts not in a pool, "active" for posts in an active (not deleted) pool, and "inactive" for posts only in an inactive (deleted) pool.</li><li><b>parent:1</b> - Match posts that have the post with an ID number of 1 as a parent. Accepted values include post ID numbers, "any" for any posts with a parent, and "none" for posts without a parent.</li><li><b>child:any</b> - Match any posts that have children. Accepted values include "any" for any posts with children and "none" for posts without children.</li><li><b>id:1</b> - Match posts with an ID number of 1.</li><li><b>score:1</b> - Match posts with a score of 1.</li><li><b>favcount:1</b> - Match posts with a favorite count of 1.</li><li><b>height:1</b> - Match posts with a height of 1.</li><li><b>width:1</b> - Match posts with a width of 1.</li></ul><br>The id, score, favcount, width, and height metatags can also use number ranges for matching:<ul><li><b>score:&lt;5</b> - Match posts with a score less than 5.</li><li><b>score:&gt;5</b> - Match posts with a score greater than 5.</li><li><b>score:&lt;=5</b> or <b>score:..5</b> - Match posts with a score equal to OR less than 5.</li><li><b>score:&gt;=5</b> or <b>score:5..</b> - Match posts with a score equal to OR greater than 5.</li><li><b>score:1..5</b> - Match posts with a score equal to OR greater than 1 AND equal to OR less than 5.</li></ul>');
 		helpPage.bbbTextSection('Hotkeys', '<b>Posts</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>1</b> - Resize to window.</li><li><b>2</b> - Resize to window width.</li><li><b>3</b> - Resize to window height.</li><li><b>4</b> - Reset/remove resizing.</li></ul><div style="font-size: smaller;">Note: Numbers refer to the main typing keypad and not the numeric keypad.</div><br><b>General</b><ul><li><b>B</b> - Open BBB menu.</li><li><b>E</b> - Toggle endless pages.</li><li><b>Shift + E</b> - Continue loading more pages after pausing during endless pages.</li><li><b>F</b> - Open quick search.</li><li><b>Shift + F</b> - Reset quick search.</li></ul>');
 		helpPage.bbbTextSection('Questions, Suggestions, or Bugs?', 'If you have any questions, please use the Greasy Fork feedback forums located <a target="_blank" href="https://greasyfork.org/scripts/3575-better-better-booru/feedback">here</a>. If you\'d like to report a bug or make a suggestion, please create an issue on GitHub <a target="_blank" href="https://github.com/pseudonymous/better-better-booru/issues">here</a>.');
 		helpPage.bbbTocSection();
@@ -3408,6 +3416,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				case "8.0.2":
 				case "8.1":
 				case "8.2":
+				case "8.2.1":
 					break;
 			}
 
@@ -4351,7 +4360,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function postTagTitles() {
 		// Replace the post title with the full set of tags.
 		if (post_tag_titles && gLoc === "post")
-			document.title = getMeta("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
+			document.title = document.bbbInfo("tags").replace(/\s/g, ", ").replace(/_/g, " ") + " - Danbooru";
 	}
 
 	function minimizeStatusNotices() {
@@ -4602,75 +4611,6 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var pageTop = page.offsetTop;
 
 			window.scroll(0, pageTop);
-		}
-	}
-
-	function ugoiraInit() {
-		// Execute a static copy of Danbooru's embedded JavaScript for setting up the post.
-		var postInfo = bbb.post.info;
-
-		try {
-			Danbooru.Ugoira = {};
-
-			Danbooru.Ugoira.create_player = function() {
-				var meta_data = {
-					mime_type: postInfo.pixiv_ugoira_frame_data.content_type,
-					frames: postInfo.pixiv_ugoira_frame_data.data
-				};
-				var options = {
-					canvas: document.getElementById("image"),
-					source: postInfo.file_url,
-					metadata: meta_data,
-					chunkSize: 300000,
-					loop: true,
-					autoStart: true,
-					debug: false
-				};
-
-				this.player = new ZipImagePlayer(options);
-			};
-
-			Danbooru.Ugoira.player = null;
-
-			$(function() {
-				var player_manually_paused = false;
-
-				Danbooru.Ugoira.create_player();
-				$(Danbooru.Ugoira.player).on("loadProgress", function(event, progress) { $("#seek-slider").progressbar("value", Math.floor(progress * 100)); });
-				$("#ugoira-play").click(function(event) {
-					Danbooru.Ugoira.player.play();
-					$(this).hide();
-					$("#ugoira-pause").show();
-					player_manually_paused = false;
-					event.preventDefault();
-				});
-				$("#ugoira-pause").click(function(event) {
-					Danbooru.Ugoira.player.pause();
-					$(this).hide();
-					$("#ugoira-play").show();
-					player_manually_paused = true;
-					event.preventDefault();
-				});
-				$("#seek-slider").progressbar({value: 0});
-				$("#seek-slider").slider({
-					min: 0,
-					max: Danbooru.Ugoira.player._frameCount-1,
-					start: function() { Danbooru.Ugoira.player.pause(); },
-					slide: function(event, ui) {
-						Danbooru.Ugoira.player._frame = ui.value;
-						Danbooru.Ugoira.player._displayFrame();
-					},
-					stop: function() {
-						if (!(player_manually_paused)) {
-							Danbooru.Ugoira.player.play();
-						}
-					}
-				});
-				$(Danbooru.Ugoira.player).on("frame", function(frame, frame_number) { $("#seek-slider").slider("option", "value", frame_number); });
-			});
-		}
-		catch (error) {
-			bbbNotice("Unexpected error creating the ugoira post. (Error: " + error.message + ")", -1);
 		}
 	}
 
@@ -6532,31 +6472,31 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var urlReg, url, id, artist, title; // If/else variables.
 
 		if (!!(urlReg = source.match(/^https?:\/\/img\d+\.pixiv\.net\/img\/[^\/]+\/(\d+)/i) || source.match(/^https?:\/\/i\d\.pixiv\.net\/img\d+\/img\/[^\/]+\/(\d+)/i)))
-			url = "http://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
+			url = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/img-(?:master|original)\/img\/(?:\d+\/)+(\d+)_p/i) || source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/c\/\d+x\d+\/img-master\/img\/(?:\d+\/)+(\d+)_p/i) || source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/img-zip-ugoira\/img\/(?:\d+\/)+(\d+)_ugoira\d+x\d+\.zip/i)))
-			url = "http://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
+			url = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/lohas\.nicoseiga\.jp\/priv\/(\d+)\?e=\d+&h=[a-f0-9]+/i) || source.match(/^https?:\/\/lohas\.nicoseiga\.jp\/priv\/[a-f0-9]+\/\d+\/(\d+)/i)))
-			url = "http://seiga.nicovideo.jp/seiga/im" + urlReg[1];
+			url = "https://seiga.nicovideo.jp/seiga/im" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:d3j5vwomefv46c|dn3pm25xmtlyu)\.cloudfront\.net\/photos\/large\/(\d+)\./i))) {
 			id = parseInt(urlReg[1]).toString(36);
-			url = "http://twitpic.com/" + id;
+			url = "https://twitpic.com/" + id;
 		}
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:(?:fc|th|pre|orig|img|prnt)\d{2}|origin-orig)\.deviantart\.net\/.+\/([a-z0-9_]+)_by_([a-z0-9_]+)-d([a-z0-9]+)\./i))) {
 			title = urlReg[1].replace(/[^A-Za-z0-9]/g, " ").bbbSpaceClean().replace(/[ ]/g, "-");
 			artist = urlReg[2].replace(/_/g, "-");
 			id = parseInt(urlReg[3], 36);
-			url = "http://" + artist + ".deviantart.com/art/" + title + "-" + id;
+			url = "https://" + artist + ".deviantart.com/art/" + title + "-" + id;
 		}
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:fc|th|pre|orig|img|prnt)\d{2}\.deviantart\.net\/.+\/[a-f0-9]{32}-d([a-z0-9]+)\./i))) {
 			id = parseInt(urlReg[1], 36);
-			url = "http://deviantart.com/deviation/" + id;
+			url = "https://deviantart.com/deviation/" + id;
 		}
 		else if (!!(urlReg = source.match(/^http:\/\/www\.karabako\.net\/images(?:ub)?\/karabako_(\d+)(?:_\d+)?\./i)))
 			url = "http://www.karabako.net/post/view/" + urlReg[1];
-		else if (!!(urlReg = source.match(/^http:\/\/p\.twpl\.jp\/show\/orig\/([a-z0-9]+)/i)))
+		else if (!!(urlReg = source.match(/^http:\/\/p\.twpl\.jp\/show\/(?:large|orig)\/([a-z0-9]+)/i)))
 			url = "http://p.twipple.jp/" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/pictures\.hentai-foundry\.com\/\/?[^\/]\/([^\/]+)\/(\d+)/i)))
-			url = "http://www.hentai-foundry.com/pictures/user/" + urlReg[1] + "/" + urlReg[2];
+			url = "https://www.hentai-foundry.com/pictures/user/" + urlReg[1] + "/" + urlReg[2];
 		else if (!!(urlReg = source.match(/^http:\/\/blog(?:(?:-imgs-)?\d*(?:-origin)?)?\.fc2\.com\/(?:(?:[^\/]\/){3}|(?:[^\/]\/))([^\/]+)\/(?:file\/)?([^\.]+\.[^\?]+)/i)))
 			url = "http://" + urlReg[1] + ".blog.fc2.com/img/" + urlReg[2] + "/";
 		else if (!!(urlReg = source.match(/^http:\/\/diary(\d?)\.fc2\.com\/user\/([^\/]+)\/img\/(\d+)_(\d+)\/(\d+)\./i)))
@@ -6564,13 +6504,13 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:fbcdn-)?s(?:content|photos)-[^\/]+\.(?:fbcdn|akamaihd)\.net\/hphotos-.+\/\d+_(\d+)_(?:\d+_){1,3}[no]\./i)))
 			url = "https://www.facebook.com/photo.php?fbid=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/c(?:s|han|[1-4])\.sankakucomplex\.com\/data(?:\/sample)?\/(?:[a-f0-9]{2}\/){2}(?:sample-|preview)?([a-f0-9]{32})/i)))
-			url = "http://chan.sankakucomplex.com/en/post/show?md5=" + urlReg[1];
+			url = "https://chan.sankakucomplex.com/en/post/show?md5=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^http:\/\/s(?:tatic|[1-4])\.zerochan\.net\/.+(?:\.|\/)(\d+)\.(?:jpe?g?)$/i)))
-			url = "http://www.zerochan.net/" + urlReg[1] + "#full";
+			url = "https://www.zerochan.net/" + urlReg[1] + "#full";
 		else if (!!(urlReg = source.match(/^http:\/\/static[1-6]?\.minitokyo\.net\/(?:downloads|view)\/(?:\d{2}\/){2}(\d+)/i)))
 			url = "http://gallery.minitokyo.net/download/" + urlReg[1];
-		else if (postInfo.md5 && !!(urlReg = source.match(/^https?:\/\/(?:(?:s?img|cdn|www)\d?\.)?gelbooru\.com\/{1,2}(?:images|samples)\/(?:\d+|[a-f0-9]{2}\/[a-f0-9]{2})\/(?:sample_)?(?:[a-f0-9]{32}|[a-f0-9]{40})\./i)))
-			url = "http://gelbooru.com/index.php?page=post&s=list&md5=" + postInfo.md5;
+		else if (postInfo.md5 && !!(urlReg = source.match(/^https?:\/\/(?:\w+\.)?gelbooru\.com\/\/?(?:images|samples)\/(?:\d+|[a-f0-9]{2}\/[a-f0-9]{2})\/(?:sample_)?(?:[a-f0-9]{32}|[a-f0-9]{40})\./i)))
+			url = "https://gelbooru.com/index.php?page=post&s=list&md5=" + postInfo.md5;
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:slot\d*\.)?im(?:g|ages)\d*\.wikia\.(?:nocookie\.net|com)\/(?:_{2}cb\d{14}\/)?([^\/]+)(?:\/[a-z]{2})?\/images\/(?:(?:thumb|archive)?\/)?[a-f0-9]\/[a-f0-9]{2}\/(?:\d{14}(?:!|%21))?([^\/]+)/i)))
 			url = "http://" + urlReg[1] + ".wikia.com/wiki/File:" + urlReg[2];
 		else if (!!(urlReg = source.match(/^https?:\/\/vignette(?:\d*)\.wikia\.nocookie\.net\/([^\/]+)\/images\/[a-f0-9]\/[a-f0-9]{2}\/([^\/]+)/i)))
@@ -6584,21 +6524,21 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else if (!!(urlReg = source.match(/^https?:\/\/sozai\.doujinantena\.com\/contents_jpg\/([a-f0-9]{32})\//i)))
 			url = "http://doujinantena.com/page.php?id=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^http:\/\/rule34-(?:data-\d{3}|images)\.paheal\.net\/(?:_images\/)?([a-f0-9]{32})/i)))
-			url = "http://rule34.paheal.net/post/list/md5:" + urlReg[1] + "/1";
+			url = "https://rule34.paheal.net/post/list/md5:" + urlReg[1] + "/1";
 		else if (!!(urlReg = source.match(/^http:\/\/shimmie\.katawa-shoujo\.com\/image\/(\d+)/i)))
-			url = "http://shimmie.katawa-shoujo.com/post/view/" + urlReg[1];
+			url = "https://shimmie.katawa-shoujo.com/post/view/" + urlReg[1];
 		else if (postInfo.md5 && !!(urlReg = source.match(/^http:\/\/(?:(?:(?:img\d?|cdn)\.)?rule34\.xxx|img\.booru\.org\/(?:rule34|r34))(?:\/(?:img\/rule34|r34))?\/{1,2}images\/\d+\/(?:[a-f0-9]{32}|[a-f0-9]{40})\./i)))
-			url = "http://rule34.xxx/index.php?page=post&s=list&md5=" + postInfo.md5;
+			url = "https://rule34.xxx/index.php?page=post&s=list&md5=" + postInfo.md5;
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:s3\.amazonaws\.com\/imgly_production|img\.ly\/system\/uploads)\/((?:\d{3}\/){3}|\d+\/)/i))) {
 			id = parseInt((urlReg[1].replace(/[^0-9]/g, '')) || 0).bbbEncode62();
-			url = "http://img.ly/" + id;
+			url = "https://img.ly/" + id;
 		}
 		else if (!!(urlReg = source.match(/^(http:\/\/.+)\/diarypro\/d(?:ata\/upfile\/|iary\.cgi\?mode=image&upfile=)(\d+)/i)))
 			url = urlReg[1] + "/diarypro/diary.cgi?no=" + urlReg[2];
 		else if (!!(urlReg = source.match(/^http:\/\/i(?:\d)?\.minus\.com\/(?:i|j)([^\.]{12,})/i)))
 			url = "http://minus.com/i/" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/pic0[1-4]\.nijie\.info\/nijie_picture\/(?:diff\/main\/)?\d+_(\d+)_(?:\d{10}|\d+_\d{14})/i)))
-			url = "http://nijie.info/view.php?id=" + urlReg[1];
+			url = "https://nijie.info/view.php?id=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:sample|image)\/[a-z0-9]{32}\/yande\.re%20([0-9]+)%20/i)))
 			url = "https://yande.re/post/show/" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:image|jpeg|sample)\/([a-z0-9]{32})(?:\/yande\.re.*|\/?\.(?:jpg|png))$/i)))
@@ -6617,6 +6557,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			else
 				url = source;
 		}
+		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.photozou\.jp\/pub\/\d+\/(\d+)\/photo\/(\d+)_.*$/i)))
+			url = "https://photozou.jp/photo/show/" + urlReg[1] + "/" + urlReg[2];
+		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.?toranoana\.jp\/(?:popup_(?:bl)?img\d*|ec\/img)\/\d{2}\/\d{4}\/\d{2}\/\d{2}\/(\d+)/i)))
+			url = "https://ec.toranoana.jp/tora_r/ec/item/" + urlReg[1] + "/";
 		else
 			url = source;
 
@@ -7031,10 +6975,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			var parent = (postInfo.parent_id ? " parent:" + postInfo.parent_id : "");
 			var child = (postInfo.has_children === true ? " child:true" : "");
 			var isFav = " isfav:" + postInfo.is_favorited;
+			var filetype = " filetype:" + postInfo.file_ext;
 
 			postSearchInfo = {
 				tags: postInfo.tag_string.bbbSpacePad(),
-				metatags:(rating + status + user + pools + parent + child + isFav + userId + taggerId + source + approverId).bbbSpacePad(),
+				metatags:(rating + status + user + pools + parent + child + isFav + userId + taggerId + source + approverId + filetype).bbbSpacePad(),
 				score: postInfo.score,
 				favcount: postInfo.fav_count,
 				id: postInfo.id,
@@ -7604,10 +7549,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					// Update the mark link if the paginator updates.
 					if (paginator) {
 						paginator.bbbWatchNodes(function() {
-							var activePage = paginator.getElementsByTagName("span")[0];
+							var activePage = paginator.getElementsByClassName("current-page")[0];
+							var pageNumber = (activePage ? activePage.textContent.bbbSpaceClean() : "1") || "1";
 
-							if (activePage)
-								markLink.innerHTML = "Mark pages 1-" + activePage.textContent.bbbSpaceClean() + " viewed";
+							if (pageNumber && pageNumber !== "1")
+								markLink.innerHTML = "Mark pages 1-" + pageNumber + " viewed";
 						});
 					}
 				}
@@ -10099,7 +10045,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else {
 			var tagName = tag.split(":", 1)[0].bbbSpaceClean();
 
-			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating" || tagName === "parent" || tagName === "child" || tagName === "isfav" || tagName === "userid" || tagName === "taggerid" || tagName === "source" || tagName === "approverid")
+			if (tagName === "pool" || tagName === "user" || tagName === "status" || tagName === "rating" || tagName === "parent" || tagName === "child" || tagName === "isfav" || tagName === "userid" || tagName === "taggerid" || tagName === "source" || tagName === "approverid" || tagName === "filetype")
 				return true;
 			else
 				return false;
@@ -10236,31 +10182,191 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	}
 
 	function bbbAutocompleteInit() {
-		// Add custom tags to Danbooru's autocomplete and fix other issues.
-		if (!Danbooru.Autocomplete)
-			return;
-
+		// Set up a modified version of Danbooru's autocomplete.
 		try {
-			// Add custom metatags.
+			var Autocomplete = bbb.autocomplete;
+
+			Autocomplete.AUTOCOMPLETE_VERSION = 1;
+			Autocomplete.PREFIXES = /^([-~]*)(.*)$/i;
+			Autocomplete.METATAGS = /^(status|rating|parent|child|user|pool|group|g|isfav|userid|taggerid|approverid|source|id|score|favcount|height|width|filetype):(.*)$/i;
+
+			Autocomplete.initialize_all = function() {
+				if (Danbooru.Utility.meta("enable-auto-complete") === "true") {
+					$.widget("ui.autocomplete", $.ui.autocomplete, {
+						options: {delay: 0, minLength: 1, autoFocus: false, focus: function() { return false; }},
+						_create: function() {
+							this.element.on("keydown.Autocomplete.tab", null, "tab", Autocomplete.on_tab);
+							this._super();
+						},
+						_renderItem: Autocomplete.render_item,
+					});
+				}
+			};
+
+			Autocomplete.normal_source = function(term, resp) {
+				$.ajax({
+					url: "/tags/autocomplete.json",
+					data: {"search[name_matches]": term, "expiry": 7},
+					method: "get",
+					success: function(data) {
+						var d = $.map(data, function(tag) {
+							return {type: "tag", label: tag.name.replace(/_/g, " "), antecedent: tag.antecedent_name, value: tag.name, category: tag.category, post_count: tag.post_count};
+						});
+
+						resp(d);
+					}
+				});
+			};
+
+			Autocomplete.parse_query = function(text, caret) {
+				var metatag = "";
+				var term = "";
+				var before_caret_text = text.substring(0, caret);
+				var match = before_caret_text.match(/\S+$/g);
+
+				if (match)
+					term = match[0];
+				else
+					return {};
+
+				if (!!(match = term.match(Autocomplete.PREFIXES))) {
+					metatag = match[1].toLowerCase();
+					term = match[2];
+				}
+
+				if (!!(match = term.match(Autocomplete.METATAGS))) {
+					metatag = match[1].toLowerCase();
+					term = match[2];
+				}
+
+				return {metatag: metatag, term: term};
+			};
+
+			Autocomplete.insert_completion = function(input, completion) {
+				var before_caret_text = input.value.substring(0, input.selectionStart);
+				var after_caret_text = input.value.substring(input.selectionStart);
+
+				var prefixes = "-~";
+				var regexp = new RegExp("([" + prefixes + "]*)\\S+$", "g");
+				before_caret_text = before_caret_text.replace(regexp, "$1") + completion + " ";
+
+				input.value = before_caret_text + after_caret_text;
+				input.selectionStart = input.selectionEnd = before_caret_text.length;
+			};
+
+			Autocomplete.on_tab = function(event) {
+				var input = this;
+				var autocomplete = $(input).autocomplete("instance");
+				var $autocomplete_menu = autocomplete.menu.element;
+
+				if (!$autocomplete_menu.is(":visible"))
+					return;
+
+				if ($autocomplete_menu.has(".ui-state-active").length === 0) {
+					var $first_item = $autocomplete_menu.find(".ui-menu-item").first();
+					var completion = $first_item.data().uiAutocompleteItem.value;
+
+					Autocomplete.insert_completion(input, completion);
+					autocomplete.close();
+				}
+
+				event.preventDefault();
+			};
+
+			Autocomplete.render_item = function(list, item) {
+				var $link = $("<a/>");
+				$link.text(item.label);
+				$link.attr("href", "/posts?tags=" + encodeURIComponent(item.value));
+				$link.click(function(e) {e.preventDefault();});
+
+				if (item.antecedent) {
+					var antecedent = item.antecedent.replace(/_/g, " ");
+					var arrow = $("<span/>").html(" &rarr; ").addClass("autocomplete-arrow");
+					var antecedent_element = $("<span/>").text(antecedent).addClass("autocomplete-antecedent");
+
+					$link.prepend([antecedent_element, arrow]);
+				}
+
+				if (item.post_count !== undefined) {
+					var count = item.post_count;
+
+					if (count >= 1000)
+						count = Math.floor(count / 1000) + "k";
+
+					var $post_count = $("<span/>").addClass("post-count").css("float", "right").text(count);
+
+					$link.append($post_count);
+				}
+
+				if (item.type === "tag" || item.type === "metatag")
+					$link.addClass("tag-type-" + item.category);
+				else if (item.type === "user") {
+					var level_class = "user-" + item.level.toLowerCase();
+
+					$link.addClass(level_class);
+
+					if (Danbooru.Utility.meta("style-usernames") === "true")
+						$link.addClass("with-style");
+				}
+
+				var $menu_item = $("<div/>").append($link);
+
+				return $("<li/>").data("item.autocomplete", item).append($menu_item).appendTo(list);
+			};
+
 			var groups = [];
 
 			for (var i = 0, il = tag_groups.length; i < il; i++)
 				groups.push(tag_groups[i].name);
 
-			Danbooru.Autocomplete.static_metatags.group = Danbooru.Autocomplete.static_metatags.g = groups;
-			Danbooru.Autocomplete.static_metatags.parent = ["any", "none"];
-			Danbooru.Autocomplete.static_metatags.isfav = ["true", "false"];
-			Danbooru.Autocomplete.static_metatags.pool = ["series", "collection", "any", "none", "active", "inactive"];
-			Danbooru.Autocomplete.static_metatags.source = ["any", "none"];
-			Danbooru.Autocomplete.static_metatags.approverid = ["any", "none"];
+			Autocomplete.static_metatags = {
+				status: ["any", "deleted", "active", "pending", "flagged", "banned"],
+				rating: ["safe", "questionable", "explicit"],
+				child: ["any", "none"],
+				parent: ["any", "none"],
+				filetype: ["jpg", "png", "gif", "swf", "zip", "webm", "mp4"],
+				isfav: ["true", "false"],
+				pool: ["series", "collection", "any", "none", "active", "inactive"],
+				source: ["any", "none"],
+				approverid: ["any", "none"],
+				group: groups,
+				g: groups
+			};
 
-			// Counter normal autocomplete getting turned back on after submitting an input.
-			document.body.addEventListener("focus", function(event) {
-				var target = event.target;
+			Autocomplete.static_metatag_source = function(term, resp, metatag) {
+				var sub_metatags = this.static_metatags[metatag];
 
-				if (target.bbbHasClass("ui-autocomplete-input"))
-					target.setAttribute("autocomplete", "off");
-			}, true);
+				var regexp = new RegExp("^" + $.ui.autocomplete.escapeRegex(term), "i");
+				var matches = $.grep(sub_metatags, function (sub_metatag) {
+					return regexp.test(sub_metatag);
+				});
+
+				var d = $.map(matches, function(sub_metatag) {
+					return {type: "metatag", category: 5, label: sub_metatag, value: metatag + ":" + sub_metatag};
+				});
+
+				if (d.length > 10)
+					d = d.slice(0, 10);
+
+				resp(d);
+			};
+
+			Autocomplete.user_source = function(term, resp, metatag) {
+				$.ajax({
+					url: "/users.json",
+					data: {"search[order]": "post_upload_count", "search[current_user_first]": "true", "search[name_matches]": term + "*", "limit": 10},
+					method: "get",
+					success: function(data) {
+						var display_name = function(name) {return name.replace(/_/g, " ");};
+
+						resp($.map(data, function(user) {
+							return {type: "user", label: display_name(user.name), value: metatag + ":" + user.name, level: user.level_string};
+						}));
+					}
+				});
+			};
+
+			Autocomplete.initialize_all();
 		}
 		catch (error) {
 			bbbNotice("Unexpected error while trying to initialize autocomplete. (Error: " + error.message + ")", -1);
@@ -10269,112 +10375,83 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	}
 
 	function bbbAutocomplete(searchInputs) {
-		// Use a modified copy of Danbooru's autocomplete.
-		try {
-			var $fields_multiple = $(searchInputs);
+		// Apply a modified copy of Danbooru's autocomplete to inputs after Danbooru has finished.
+		delayMe(function() {
+			if (!bbb.autocomplete.AUTOCOMPLETE_VERSION)
+				bbbAutocompleteInit();
 
-			var prefixes = "-~";
-			var metatags = "status|rating|parent|child|user|pool|group|g|isfav|userid|taggerid|approverid|source|id|score|favcount|height|width";
+			try {
+				var Autocomplete = bbb.autocomplete;
+				var $fields_multiple = $(searchInputs);
 
-			$fields_multiple.autocomplete({
-				delay: 100,
-				autoFocus: false,
-				focus: function() { return false; },
-				select: function(event, ui) {
-					var before_caret_text = this.value.substring(0, this.selectionStart);
-					var after_caret_text = this.value.substring(this.selectionStart);
-					var regexp = new RegExp("([" + prefixes + "]*)\\S+$", "g");
+				$fields_multiple.autocomplete({
+					search: function() {
+						if ($(this).data("ui-autocomplete"))
+							$(this).data("ui-autocomplete").menu.bindings = $();
+					},
+					select: function(event, ui) {
+						if (event.key === "Enter")
+							event.stopImmediatePropagation();
 
-					this.value = before_caret_text.replace(regexp, "$1" + ui.item.value + " ");
+						Autocomplete.insert_completion(this, ui.item.value);
+						return false;
+					},
+					source: function(req, resp) {
+						var query = Autocomplete.parse_query(req.term, this.element.get(0).selectionStart);
+						var metatag = query.metatag;
+						var term = query.term;
 
-					var original_start = this.selectionStart;
-
-					this.value += after_caret_text;
-					this.selectionStart = this.selectionEnd = original_start;
-
-					return false;
-				},
-				source: function(req, resp) {
-					var before_caret_text = req.term.substring(req.term.substring(0, this.element.get(0).selectionStart).lastIndexOf("\n"), this.element.get(0).selectionStart);
-
-					if (before_caret_text.match(/ $/)) {
-						this.close();
-						return;
-					}
-
-					var term = before_caret_text.match(/\S+/g).pop();
-					var regexp = new RegExp("^[" + prefixes + "]*(.*)$", "i");
-					var match = term.match(regexp);
-					var metatag;
-
-					if (match)
-						term = match[1];
-
-					if (term === "")
-						return;
-
-					regexp = new RegExp("^(" + metatags + "):(.*)$", "i");
-					match = term.match(regexp);
-
-					if (match) {
-						metatag = match[1].toLowerCase();
-						term = match[2];
-					}
-
-					switch(metatag) {
-						case "userid":
-						case "taggerid":
-						case "id":
-						case "score":
-						case "favcount":
-						case "height":
-						case "width":
+						if (!metatag && !term) {
 							this.close();
 							return;
-						case "status":
-						case "rating":
-						case "parent":
-						case "child":
-						case "group":
-						case "g":
-						case "isfav":
-						case "pool":
-						case "source":
-						case "approverid":
-							Danbooru.Autocomplete.static_metatag_source(term, resp, metatag);
-							return;
+						}
+
+						switch (metatag) {
+							case "userid":
+							case "taggerid":
+							case "id":
+							case "score":
+							case "favcount":
+							case "height":
+							case "width":
+								resp([]);
+								return;
+							case "status":
+							case "rating":
+							case "parent":
+							case "child":
+							case "group":
+							case "g":
+							case "isfav":
+							case "pool":
+							case "source":
+							case "filetype":
+							case "approverid":
+								Autocomplete.static_metatag_source(term, resp, metatag);
+								return;
+							case "user":
+								Autocomplete.user_source(term, resp, metatag);
+								break;
+							default:
+								Autocomplete.normal_source(term, resp);
+								break;
+						}
 					}
+				});
 
-					if (term === "")
-						return;
-
-					switch(metatag) {
-						case "user":
-							Danbooru.Autocomplete.user_source(term, resp, metatag);
-							break;
-						default:
-							Danbooru.Autocomplete.normal_source(term, resp);
-							break;
-					}
-				}
-			});
-
-			$fields_multiple.on("autocompleteselect", function() { Danbooru.autocompleting = true; });
-			$fields_multiple.on("autocompleteclose", function() { setTimeout(function() {Danbooru.autocompleting = false;}, 100); });
-			$fields_multiple.each(function(i, field) { $(field).data("uiAutocomplete")._renderItem = Danbooru.Autocomplete.render_item; });
-
-			// Make autocomplete fixed like the quick search and menu and allow it to be on top of inputs if there is more space there.
-			$(searchInputs).autocomplete("widget").css("position", "fixed");
-			$(searchInputs).autocomplete("option", "position", {my: "left top", at: "left bottom", collision: "flip"});
-		}
-		catch (error) {
-			bbbNotice("Unexpected error while trying to initialize autocomplete. (Error: " + error.message + ")", -1);
-		}
+				// Make autocomplete fixed like the quick search and menu and allow it to be on top of inputs if there is more space there.
+				$(searchInputs).autocomplete("widget").css("position", "fixed");
+				$(searchInputs).autocomplete("option", "position", {my: "left top", at: "left bottom", collision: "flip"});
+			}
+			catch (error) {
+				bbbNotice("Unexpected error while trying to initialize autocomplete. (Error: " + error.message + ")", -1);
+			}
+		});
 	}
 
 	function menuAutocomplete(searchInputs) {
 		// Use autocomplete on a BBB menu input if allowed by the option.
-		if (enable_menu_autocomplete && Danbooru.Autocomplete)
+		if (enable_menu_autocomplete)
 			bbbAutocomplete(searchInputs);
 	}
 
@@ -10382,7 +10459,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Use autocomplete on an input outside of the BBB menu if allowed for Danbooru.
 		var allowAutocomplete = (getMeta("enable-auto-complete") === "true");
 
-		if (allowAutocomplete && Danbooru.Autocomplete)
+		if (allowAutocomplete)
 			bbbAutocomplete(searchInputs);
 	}
 
