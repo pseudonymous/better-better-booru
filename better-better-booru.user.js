@@ -6471,31 +6471,31 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var urlReg, url, id, artist, title; // If/else variables.
 
 		if (!!(urlReg = source.match(/^https?:\/\/img\d+\.pixiv\.net\/img\/[^\/]+\/(\d+)/i) || source.match(/^https?:\/\/i\d\.pixiv\.net\/img\d+\/img\/[^\/]+\/(\d+)/i)))
-			url = "http://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
+			url = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/img-(?:master|original)\/img\/(?:\d+\/)+(\d+)_p/i) || source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/c\/\d+x\d+\/img-master\/img\/(?:\d+\/)+(\d+)_p/i) || source.match(/^https?:\/\/(?:i\d+\.pixiv\.net|i\.pximg\.net)\/img-zip-ugoira\/img\/(?:\d+\/)+(\d+)_ugoira\d+x\d+\.zip/i)))
-			url = "http://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
+			url = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/lohas\.nicoseiga\.jp\/priv\/(\d+)\?e=\d+&h=[a-f0-9]+/i) || source.match(/^https?:\/\/lohas\.nicoseiga\.jp\/priv\/[a-f0-9]+\/\d+\/(\d+)/i)))
-			url = "http://seiga.nicovideo.jp/seiga/im" + urlReg[1];
+			url = "https://seiga.nicovideo.jp/seiga/im" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:d3j5vwomefv46c|dn3pm25xmtlyu)\.cloudfront\.net\/photos\/large\/(\d+)\./i))) {
 			id = parseInt(urlReg[1]).toString(36);
-			url = "http://twitpic.com/" + id;
+			url = "https://twitpic.com/" + id;
 		}
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:(?:fc|th|pre|orig|img|prnt)\d{2}|origin-orig)\.deviantart\.net\/.+\/([a-z0-9_]+)_by_([a-z0-9_]+)-d([a-z0-9]+)\./i))) {
 			title = urlReg[1].replace(/[^A-Za-z0-9]/g, " ").bbbSpaceClean().replace(/[ ]/g, "-");
 			artist = urlReg[2].replace(/_/g, "-");
 			id = parseInt(urlReg[3], 36);
-			url = "http://" + artist + ".deviantart.com/art/" + title + "-" + id;
+			url = "https://" + artist + ".deviantart.com/art/" + title + "-" + id;
 		}
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:fc|th|pre|orig|img|prnt)\d{2}\.deviantart\.net\/.+\/[a-f0-9]{32}-d([a-z0-9]+)\./i))) {
 			id = parseInt(urlReg[1], 36);
-			url = "http://deviantart.com/deviation/" + id;
+			url = "https://deviantart.com/deviation/" + id;
 		}
 		else if (!!(urlReg = source.match(/^http:\/\/www\.karabako\.net\/images(?:ub)?\/karabako_(\d+)(?:_\d+)?\./i)))
 			url = "http://www.karabako.net/post/view/" + urlReg[1];
-		else if (!!(urlReg = source.match(/^http:\/\/p\.twpl\.jp\/show\/orig\/([a-z0-9]+)/i)))
+		else if (!!(urlReg = source.match(/^http:\/\/p\.twpl\.jp\/show\/(?:large|orig)\/([a-z0-9]+)/i)))
 			url = "http://p.twipple.jp/" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/pictures\.hentai-foundry\.com\/\/?[^\/]\/([^\/]+)\/(\d+)/i)))
-			url = "http://www.hentai-foundry.com/pictures/user/" + urlReg[1] + "/" + urlReg[2];
+			url = "https://www.hentai-foundry.com/pictures/user/" + urlReg[1] + "/" + urlReg[2];
 		else if (!!(urlReg = source.match(/^http:\/\/blog(?:(?:-imgs-)?\d*(?:-origin)?)?\.fc2\.com\/(?:(?:[^\/]\/){3}|(?:[^\/]\/))([^\/]+)\/(?:file\/)?([^\.]+\.[^\?]+)/i)))
 			url = "http://" + urlReg[1] + ".blog.fc2.com/img/" + urlReg[2] + "/";
 		else if (!!(urlReg = source.match(/^http:\/\/diary(\d?)\.fc2\.com\/user\/([^\/]+)\/img\/(\d+)_(\d+)\/(\d+)\./i)))
@@ -6503,13 +6503,13 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:fbcdn-)?s(?:content|photos)-[^\/]+\.(?:fbcdn|akamaihd)\.net\/hphotos-.+\/\d+_(\d+)_(?:\d+_){1,3}[no]\./i)))
 			url = "https://www.facebook.com/photo.php?fbid=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/c(?:s|han|[1-4])\.sankakucomplex\.com\/data(?:\/sample)?\/(?:[a-f0-9]{2}\/){2}(?:sample-|preview)?([a-f0-9]{32})/i)))
-			url = "http://chan.sankakucomplex.com/en/post/show?md5=" + urlReg[1];
+			url = "https://chan.sankakucomplex.com/en/post/show?md5=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^http:\/\/s(?:tatic|[1-4])\.zerochan\.net\/.+(?:\.|\/)(\d+)\.(?:jpe?g?)$/i)))
-			url = "http://www.zerochan.net/" + urlReg[1] + "#full";
+			url = "https://www.zerochan.net/" + urlReg[1] + "#full";
 		else if (!!(urlReg = source.match(/^http:\/\/static[1-6]?\.minitokyo\.net\/(?:downloads|view)\/(?:\d{2}\/){2}(\d+)/i)))
 			url = "http://gallery.minitokyo.net/download/" + urlReg[1];
-		else if (postInfo.md5 && !!(urlReg = source.match(/^https?:\/\/(?:(?:s?img|cdn|www)\d?\.)?gelbooru\.com\/{1,2}(?:images|samples)\/(?:\d+|[a-f0-9]{2}\/[a-f0-9]{2})\/(?:sample_)?(?:[a-f0-9]{32}|[a-f0-9]{40})\./i)))
-			url = "http://gelbooru.com/index.php?page=post&s=list&md5=" + postInfo.md5;
+		else if (postInfo.md5 && !!(urlReg = source.match(/^https?:\/\/(?:\w+\.)?gelbooru\.com\/\/?(?:images|samples)\/(?:\d+|[a-f0-9]{2}\/[a-f0-9]{2})\/(?:sample_)?(?:[a-f0-9]{32}|[a-f0-9]{40})\./i)))
+			url = "https://gelbooru.com/index.php?page=post&s=list&md5=" + postInfo.md5;
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:slot\d*\.)?im(?:g|ages)\d*\.wikia\.(?:nocookie\.net|com)\/(?:_{2}cb\d{14}\/)?([^\/]+)(?:\/[a-z]{2})?\/images\/(?:(?:thumb|archive)?\/)?[a-f0-9]\/[a-f0-9]{2}\/(?:\d{14}(?:!|%21))?([^\/]+)/i)))
 			url = "http://" + urlReg[1] + ".wikia.com/wiki/File:" + urlReg[2];
 		else if (!!(urlReg = source.match(/^https?:\/\/vignette(?:\d*)\.wikia\.nocookie\.net\/([^\/]+)\/images\/[a-f0-9]\/[a-f0-9]{2}\/([^\/]+)/i)))
@@ -6523,21 +6523,21 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		else if (!!(urlReg = source.match(/^https?:\/\/sozai\.doujinantena\.com\/contents_jpg\/([a-f0-9]{32})\//i)))
 			url = "http://doujinantena.com/page.php?id=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^http:\/\/rule34-(?:data-\d{3}|images)\.paheal\.net\/(?:_images\/)?([a-f0-9]{32})/i)))
-			url = "http://rule34.paheal.net/post/list/md5:" + urlReg[1] + "/1";
+			url = "https://rule34.paheal.net/post/list/md5:" + urlReg[1] + "/1";
 		else if (!!(urlReg = source.match(/^http:\/\/shimmie\.katawa-shoujo\.com\/image\/(\d+)/i)))
-			url = "http://shimmie.katawa-shoujo.com/post/view/" + urlReg[1];
+			url = "https://shimmie.katawa-shoujo.com/post/view/" + urlReg[1];
 		else if (postInfo.md5 && !!(urlReg = source.match(/^http:\/\/(?:(?:(?:img\d?|cdn)\.)?rule34\.xxx|img\.booru\.org\/(?:rule34|r34))(?:\/(?:img\/rule34|r34))?\/{1,2}images\/\d+\/(?:[a-f0-9]{32}|[a-f0-9]{40})\./i)))
-			url = "http://rule34.xxx/index.php?page=post&s=list&md5=" + postInfo.md5;
+			url = "https://rule34.xxx/index.php?page=post&s=list&md5=" + postInfo.md5;
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:s3\.amazonaws\.com\/imgly_production|img\.ly\/system\/uploads)\/((?:\d{3}\/){3}|\d+\/)/i))) {
 			id = parseInt((urlReg[1].replace(/[^0-9]/g, '')) || 0).bbbEncode62();
-			url = "http://img.ly/" + id;
+			url = "https://img.ly/" + id;
 		}
 		else if (!!(urlReg = source.match(/^(http:\/\/.+)\/diarypro\/d(?:ata\/upfile\/|iary\.cgi\?mode=image&upfile=)(\d+)/i)))
 			url = urlReg[1] + "/diarypro/diary.cgi?no=" + urlReg[2];
 		else if (!!(urlReg = source.match(/^http:\/\/i(?:\d)?\.minus\.com\/(?:i|j)([^\.]{12,})/i)))
 			url = "http://minus.com/i/" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/pic0[1-4]\.nijie\.info\/nijie_picture\/(?:diff\/main\/)?\d+_(\d+)_(?:\d{10}|\d+_\d{14})/i)))
-			url = "http://nijie.info/view.php?id=" + urlReg[1];
+			url = "https://nijie.info/view.php?id=" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:sample|image)\/[a-z0-9]{32}\/yande\.re%20([0-9]+)%20/i)))
 			url = "https://yande.re/post/show/" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:image|jpeg|sample)\/([a-z0-9]{32})(?:\/yande\.re.*|\/?\.(?:jpg|png))$/i)))
@@ -6556,6 +6556,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			else
 				url = source;
 		}
+		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.photozou\.jp\/pub\/\d+\/(\d+)\/photo\/(\d+)_.*$/i)))
+			url = "https://photozou.jp/photo/show/" + urlReg[1] + "/" + urlReg[2];
+		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.?toranoana\.jp\/(?:popup_(?:bl)?img\d*|ec\/img)\/\d{2}\/\d{4}\/\d{2}\/\d{2}\/(\d+)/i)))
+			url = "https://ec.toranoana.jp/tora_r/ec/item/" + urlReg[1] + "/";
 		else
 			url = source;
 
