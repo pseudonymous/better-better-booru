@@ -5213,27 +5213,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return;
 
 		// Add the endless link to the menu.
-		var menu = document.getElementById("top");
-		menu = (menu ? menu.getElementsByTagName("menu")[1] : undefined);
+		var listingItem = document.getElementById("subnav-listing");
 
-		if (menu) {
-			var menuItems = menu.getElementsByTagName("li");
-			var numMenuItems = menu.getElementsByTagName("li").length;
-			var listingItemSibling = menuItems[1];
-
-			for (var i = 0; i < numMenuItems; i++) {
-				var menuLink = menuItems[i];
-				var nextLink = menuItems[i + 1];
-
-				if (menuLink.textContent.indexOf("Listing") > -1) {
-					if (nextLink)
-						listingItemSibling = nextLink;
-					else
-						listingItemSibling = undefined;
-
-					break;
-				}
-			}
+		if (listingItem) {
+			var menu = listingItem.parentNode;
+			var listingItemSibling = listingItem.nextElementSibling;
 
 			var link = bbb.el.endlessLink = document.createElement("a");
 			link.href = "#";
@@ -7426,27 +7410,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return;
 
 		var activeMenu = header.getElementsByClassName("current")[0];
-		var secondMenu = header.getElementsByTagName("menu")[1];
+		var listingItem = document.getElementById("subnav-listing");
 
 		// Insert new posts link.
-		if (activeMenu && activeMenu.textContent === "Posts" && secondMenu) {
-			var menuItems = secondMenu.getElementsByTagName("li");
-			var numMenuItems = secondMenu.getElementsByTagName("li").length;
-			var listingItemSibling = menuItems[1];
-
-			for (var i = 0; i < numMenuItems; i++) {
-				var menuLink = menuItems[i];
-				var nextLink = menuItems[i + 1];
-
-				if (menuLink.textContent.indexOf("Listing") > -1) {
-					if (nextLink)
-						listingItemSibling = nextLink;
-					else
-						listingItemSibling = undefined;
-
-					break;
-				}
-			}
+		if (activeMenu && activeMenu.id === "nav-posts" && listingItem) {
+			var secondMenu = listingItem.parentNode;
+			var listingItemSibling = listingItem.nextElementSibling;
 
 			var link = document.createElement("a");
 			link.href = "/posts?new_posts=redirect&page=b1";
@@ -9593,7 +9562,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function addPopularLink() {
 		// Add the popular link back to the posts submenu.
-		var subListItem = document.getElementById("secondary-links-posts-hot") || document.getElementById("secondary-links-posts-favorites");
+		var subListItem = document.getElementById("subnav-hot") || document.getElementById("subnav-favorites");
 
 		if (!subListItem || !add_popular_link)
 			return;
