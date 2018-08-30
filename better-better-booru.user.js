@@ -1648,15 +1648,13 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var target = docEl || document;
 		var container; // If/else variable.
 
-		if (mode === "search") {
-			container = getId("posts", target);
-			container = (container ? container.getElementsByTagName("div")[0] : undefined);
-		}
+		if (mode === "search")
+			container = getId("posts-container", target);
 		else if (mode === "popular" || mode === "popular_view")
-			container = getId("a-index", target);
+			container = getId("a-popular", target);
 		else if (mode === "pool" || mode === "favorite_group") {
 			container = getId("a-show", target);
-			container = (container ? container.getElementsByTagName("section")[0] : undefined);
+			container = (container ? container.getElementsByTagName("section")[1] : undefined);
 		}
 		else if (mode === "favorites")
 			container = getId("posts", target);
