@@ -5213,7 +5213,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return;
 
 		// Add the endless link to the menu.
-		var listingItem = document.getElementById("subnav-listing");
+		var listingItem = document.getElementById("subnav-listing") || document.getElementById("subnav-view-posts");
 
 		if (listingItem) {
 			var menu = listingItem.parentNode;
