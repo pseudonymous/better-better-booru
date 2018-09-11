@@ -5737,6 +5737,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					blacklistItem.style.display = "none";
 
 					var blacklistLink = document.createElement("a");
+					blacklistLink.href = "#";
 					blacklistLink.innerHTML = (blacklistTag.length < 19 ? blacklistTag + " " : blacklistTag.substring(0, 18).bbbSpaceClean() + "... ");
 					blacklistLink.className = "bbb-blacklist-entry-" + i + (entryDisabled ? " blacklisted-active" : "");
 					blacklistLink.bbbInfo("bbb-blacklist-entry", i);
