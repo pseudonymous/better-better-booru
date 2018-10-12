@@ -3,7 +3,7 @@
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
 // @description    Several changes to make Danbooru much better.
-// @version        8.2.2
+// @version        8.2.3
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -358,7 +358,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			swapped: false // Whether the post content has been changed between the original and sample versions.
 		},
 		options: { // Setting options and data.
-			bbb_version: "8.2.2",
+			bbb_version: "8.2.3",
 			add_popular_link: newOption("checkbox", false, "Add Popular Link", "Add a link to the popular listing to the \"posts\" submenu"),
 			add_random_post_link: newOption("checkbox", false, "Add Random Link", "Add a link to a random post to the post sidebar options menu."),
 			alternate_image_swap: newOption("checkbox", false, "Alternate Image Swap", "Switch between the sample and original image by clicking the image. <tiphead>Note</tiphead>Notes can be toggled by using the link in the sidebar options section."),
@@ -1648,15 +1648,13 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var target = docEl || document;
 		var container; // If/else variable.
 
-		if (mode === "search") {
-			container = getId("posts", target);
-			container = (container ? container.getElementsByTagName("div")[0] : undefined);
-		}
+		if (mode === "search")
+			container = getId("posts-container", target);
 		else if (mode === "popular" || mode === "popular_view")
-			container = getId("a-index", target);
+			container = getId("a-popular", target);
 		else if (mode === "pool" || mode === "favorite_group") {
 			container = getId("a-show", target);
-			container = (container ? container.getElementsByTagName("section")[0] : undefined);
+			container = (container ? container.getElementsByTagName("section")[1] : undefined);
 		}
 		else if (mode === "favorites")
 			container = getId("posts", target);
@@ -3417,6 +3415,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				case "8.1":
 				case "8.2":
 				case "8.2.1":
+				case "8.2.2":
 					break;
 			}
 
@@ -4068,7 +4067,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var resizeLinkWidth = bbb.el.resizeLinkWidth;
 		var resizeLinkHeight = bbb.el.resizeLinkHeight;
 		var availableWidth = imgContainer.clientWidth || contentDiv.clientWidth - contentDiv.bbbGetPadding().width;
-		var availableHeight = document.documentElement.clientHeight - 40;
+		var availableHeight = document.documentElement.clientHeight - 10;
 		var targetCurrentWidth = target.clientWidth || parseFloat(target.style.width) || target.getAttribute("width");
 		var targetCurrentHeight = target.clientHeight || parseFloat(target.style.height) || target.getAttribute("height");
 		var useDataDim = targetTag === "EMBED" || targetTag === "VIDEO";
@@ -5215,27 +5214,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return;
 
 		// Add the endless link to the menu.
-		var menu = document.getElementById("top");
-		menu = (menu ? menu.getElementsByTagName("menu")[1] : undefined);
+		var listingItem = document.getElementById("subnav-listing") || document.getElementById("subnav-view-posts");
 
-		if (menu) {
-			var menuItems = menu.getElementsByTagName("li");
-			var numMenuItems = menu.getElementsByTagName("li").length;
-			var listingItemSibling = menuItems[1];
-
-			for (var i = 0; i < numMenuItems; i++) {
-				var menuLink = menuItems[i];
-				var nextLink = menuItems[i + 1];
-
-				if (menuLink.textContent.indexOf("Listing") > -1) {
-					if (nextLink)
-						listingItemSibling = nextLink;
-					else
-						listingItemSibling = undefined;
-
-					break;
-				}
-			}
+		if (listingItem) {
+			var menu = listingItem.parentNode;
+			var listingItemSibling = listingItem.nextElementSibling;
 
 			var link = bbb.el.endlessLink = document.createElement("a");
 			link.href = "#";
@@ -5755,6 +5738,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					blacklistItem.style.display = "none";
 
 					var blacklistLink = document.createElement("a");
+					blacklistLink.href = "#";
 					blacklistLink.innerHTML = (blacklistTag.length < 19 ? blacklistTag + " " : blacklistTag.substring(0, 18).bbbSpaceClean() + "... ");
 					blacklistLink.className = "bbb-blacklist-entry-" + i + (entryDisabled ? " blacklisted-active" : "");
 					blacklistLink.bbbInfo("bbb-blacklist-entry", i);
@@ -6485,7 +6469,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			title = urlReg[1].replace(/[^A-Za-z0-9]/g, " ").bbbSpaceClean().replace(/[ ]/g, "-");
 			artist = urlReg[2].replace(/_/g, "-");
 			id = parseInt(urlReg[3], 36);
-			url = "https://" + artist + ".deviantart.com/art/" + title + "-" + id;
+			url = "https://www.deviantart.com/" + artist + "/art/" + title + "-" + id;
 		}
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:fc|th|pre|orig|img|prnt)\d{2}\.deviantart\.net\/.+\/[a-f0-9]{32}-d([a-z0-9]+)\./i))) {
 			id = parseInt(urlReg[1], 36);
@@ -6539,10 +6523,14 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			url = "http://minus.com/i/" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/pic0[1-4]\.nijie\.info\/nijie_picture\/(?:diff\/main\/)?\d+_(\d+)_(?:\d{10}|\d+_\d{14})/i)))
 			url = "https://nijie.info/view.php?id=" + urlReg[1];
-		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:sample|image)\/[a-z0-9]{32}\/yande\.re%20([0-9]+)%20/i)))
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:[^.]+\.)?yande\.re\/(?:image|jpeg|sample)\/[a-f0-9]{32}\/yande\.re%20(\d+)/i)))
 			url = "https://yande.re/post/show/" + urlReg[1];
-		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:image|jpeg|sample)\/([a-z0-9]{32})(?:\/yande\.re.*|\/?\.(?:jpg|png))$/i)))
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:[^.]+\.)?yande\.re\/(?:image|jpeg|sample)\/([a-f0-9]{32})(?:\/yande\.re.*|\/?\.(?:jpg|png))$/i)))
 			url = "https://yande.re/post?tags=md5:" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:[^.]+\.)?konachan\.com\/(?:image|jpeg|sample)\/[a-f0-9]{32}\/Konachan\.com%20-%20(\d+)/i)))
+			url = "https://konachan.com/post/show/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:[^.]+\.)?konachan\.com\/(?:image|jpeg|sample)\/([a-f0-9]{32})(?:\/Konachan\.com%20-%20.*|\/?\.(?:jpg|png))$/i)))
+			url = "https://konachan.com/post?tags=md5:" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.artstation.com\/(?:artwork|projects)\/([a-z0-9-]+)$/i)))
 			url = "https://www.artstation.com/artwork/" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:o|image-proxy-origin)\.twimg\.com\/\d\/proxy\.jpg\?t=(\w+)&/i))) {
@@ -6561,6 +6549,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			url = "https://photozou.jp/photo/show/" + urlReg[1] + "/" + urlReg[2];
 		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.?toranoana\.jp\/(?:popup_(?:bl)?img\d*|ec\/img)\/\d{2}\/\d{4}\/\d{2}\/\d{2}\/(\d+)/i)))
 			url = "https://ec.toranoana.jp/tora_r/ec/item/" + urlReg[1] + "/";
+		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.hitomi\.la\/galleries\/(\d+)\/(?:page)?(\d+)\w*\.[a-z]+$/i)))
+			url = "https://hitomi.la/reader/" + urlReg[1] + ".html#" + parseInt(urlReg[2], 10);
+		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.hitomi\.la\/galleries\/(\d+)\/\w*\.[a-z]+$/i)))
+			url = "https://hitomi.la/galleries/" + urlReg[1] + ".html";
 		else
 			url = source;
 
@@ -7428,27 +7420,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			return;
 
 		var activeMenu = header.getElementsByClassName("current")[0];
-		var secondMenu = header.getElementsByTagName("menu")[1];
+		var listingItem = document.getElementById("subnav-listing");
 
 		// Insert new posts link.
-		if (activeMenu && activeMenu.textContent === "Posts" && secondMenu) {
-			var menuItems = secondMenu.getElementsByTagName("li");
-			var numMenuItems = secondMenu.getElementsByTagName("li").length;
-			var listingItemSibling = menuItems[1];
-
-			for (var i = 0; i < numMenuItems; i++) {
-				var menuLink = menuItems[i];
-				var nextLink = menuItems[i + 1];
-
-				if (menuLink.textContent.indexOf("Listing") > -1) {
-					if (nextLink)
-						listingItemSibling = nextLink;
-					else
-						listingItemSibling = undefined;
-
-					break;
-				}
-			}
+		if (activeMenu && activeMenu.id === "nav-posts" && listingItem) {
+			var secondMenu = listingItem.parentNode;
+			var listingItemSibling = listingItem.nextElementSibling;
 
 			var link = document.createElement("a");
 			link.href = "/posts?new_posts=redirect&page=b1";
@@ -9595,7 +9572,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	function addPopularLink() {
 		// Add the popular link back to the posts submenu.
-		var subListItem = document.getElementById("secondary-links-posts-hot") || document.getElementById("secondary-links-posts-favorites");
+		var subListItem = document.getElementById("subnav-hot") || document.getElementById("subnav-favorites");
 
 		if (!subListItem || !add_popular_link)
 			return;
