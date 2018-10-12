@@ -6468,7 +6468,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			title = urlReg[1].replace(/[^A-Za-z0-9]/g, " ").bbbSpaceClean().replace(/[ ]/g, "-");
 			artist = urlReg[2].replace(/_/g, "-");
 			id = parseInt(urlReg[3], 36);
-			url = "https://" + artist + ".deviantart.com/art/" + title + "-" + id;
+			url = "https://www.deviantart.com/" + artist + "/art/" + title + "-" + id;
 		}
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:fc|th|pre|orig|img|prnt)\d{2}\.deviantart\.net\/.+\/[a-f0-9]{32}-d([a-z0-9]+)\./i))) {
 			id = parseInt(urlReg[1], 36);
@@ -6522,10 +6522,14 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			url = "http://minus.com/i/" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/pic0[1-4]\.nijie\.info\/nijie_picture\/(?:diff\/main\/)?\d+_(\d+)_(?:\d{10}|\d+_\d{14})/i)))
 			url = "https://nijie.info/view.php?id=" + urlReg[1];
-		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:sample|image)\/[a-z0-9]{32}\/yande\.re%20([0-9]+)%20/i)))
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:[^.]+\.)?yande\.re\/(?:image|jpeg|sample)\/[a-f0-9]{32}\/yande\.re%20(\d+)/i)))
 			url = "https://yande.re/post/show/" + urlReg[1];
-		else if (!!(urlReg = source.match(/^https?:\/\/(?:ayase\.|yuno\.|files\.)?yande\.re\/(?:image|jpeg|sample)\/([a-z0-9]{32})(?:\/yande\.re.*|\/?\.(?:jpg|png))$/i)))
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:[^.]+\.)?yande\.re\/(?:image|jpeg|sample)\/([a-f0-9]{32})(?:\/yande\.re.*|\/?\.(?:jpg|png))$/i)))
 			url = "https://yande.re/post?tags=md5:" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:[^.]+\.)?konachan\.com\/(?:image|jpeg|sample)\/[a-f0-9]{32}\/Konachan\.com%20-%20(\d+)/i)))
+			url = "https://konachan.com/post/show/" + urlReg[1];
+		else if (!!(urlReg = source.match(/^https?:\/\/(?:[^.]+\.)?konachan\.com\/(?:image|jpeg|sample)\/([a-f0-9]{32})(?:\/Konachan\.com%20-%20.*|\/?\.(?:jpg|png))$/i)))
+			url = "https://konachan.com/post?tags=md5:" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.artstation.com\/(?:artwork|projects)\/([a-z0-9-]+)$/i)))
 			url = "https://www.artstation.com/artwork/" + urlReg[1];
 		else if (!!(urlReg = source.match(/^https?:\/\/(?:o|image-proxy-origin)\.twimg\.com\/\d\/proxy\.jpg\?t=(\w+)&/i))) {
@@ -6544,6 +6548,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			url = "https://photozou.jp/photo/show/" + urlReg[1] + "/" + urlReg[2];
 		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.?toranoana\.jp\/(?:popup_(?:bl)?img\d*|ec\/img)\/\d{2}\/\d{4}\/\d{2}\/\d{2}\/(\d+)/i)))
 			url = "https://ec.toranoana.jp/tora_r/ec/item/" + urlReg[1] + "/";
+		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.hitomi\.la\/galleries\/(\d+)\/(?:page)?(\d+)\w*\.[a-z]+$/i)))
+			url = "https://hitomi.la/reader/" + urlReg[1] + ".html#" + parseInt(urlReg[2], 10);
+		else if (!!(urlReg = source.match(/^https?:\/\/\w+\.hitomi\.la\/galleries\/(\d+)\/\w*\.[a-z]+$/i)))
+			url = "https://hitomi.la/galleries/" + urlReg[1] + ".html";
 		else
 			url = source;
 
