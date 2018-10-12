@@ -1,5 +1,11 @@
 Changelog
 ----------
+* Version 8.2.3:
+  * Updated the post resizing to make it leave less empty vertical space.
+  * Updated to support Danbooru's normalized source update.
+  * Fixed endless pages for pools and favorite groups.
+  * Fixed the "add popular link" option.
+  * Fixed the blacklist link color.
 * Version 8.2.2:
   * Added "filetype" to the script metatags.
   * Updated to support Danbooru's new orange metatags.

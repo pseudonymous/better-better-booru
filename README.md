@@ -23,7 +23,7 @@ Features
   * Additional bars - Add a blacklist bar to thumbnail sections without it so that blacklist entries can be toggled as needed.
   * Video playback - When viewing a blacklisted video post, control whether it pauses and plays based on its hidden status.
   * Ignore favorites - Exclude your favorited posts from being hidden.
-  * Added support for wildcards (*), the "or/any" operator (~), nesting/grouping, and additional metatags.
+  * Added support for wildcards (*), nesting/grouping, and additional metatags.
 * Multiple options and features for altering post viewing:
   * Alternate image swap - Swap between the sample and original image by clicking the image.
   * Resize image mode - Set the initial automatic resizing of an image to be by width, height, or both.
