@@ -4061,9 +4061,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 			resizeListParent.insertBefore(resizeList, resizeListItem);
 
-			var allWidth = resizeLinkAll.clientWidth;
-			var widthWidth = resizeLinkWidth.clientWidth;
-			var heightWidth = resizeLinkHeight.clientWidth;
+			var allWidth = resizeLinkAll.clientWidth + 2;
+			var widthWidth = resizeLinkWidth.clientWidth + 2;
+			var heightWidth = resizeLinkHeight.clientWidth + 2;
 
 			resizeLinkAll.style.width = allWidth + "px";
 			resizeLinkWidth.style.width = widthWidth + "px";
