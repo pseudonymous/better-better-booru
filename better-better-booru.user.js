@@ -758,6 +758,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 						else if (mode === "pool_cache" || mode === "favorite_group_cache") {
 							var collId = location.href.match(/\/(?:pools|favorite_groups)\/(\d+)/)[1];
 
+							xml.post_ids = xml.post_ids.join(" ");
 							sessionStorage.bbbSetItem("bbb_" + mode + "_" + collId, new Date().getTime() + " " + xml.post_ids);
 							searchJSON(optArg, xml);
 						}
