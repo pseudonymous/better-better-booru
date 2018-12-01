@@ -7730,7 +7730,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		styles += 'article.post-preview a.bbb-thumb-link, .post-preview div.preview a.bbb-thumb-link {display: inline-block !important;}' +
 		'article.post-preview {height: ' + thumbMaxHeight + 'px !important; width: ' + thumbMaxWidth + 'px !important; margin: 0px ' + listingExtraSpace + 'px ' + listingExtraSpace + 'px 0px !important;}' +
-		'article.post-preview.pooled {height: ' + (thumbMaxHeight + 60) + 'px !important;}' + // Pool gallery view thumb height adjustment.
+		'article.post-preview.captioned {height: auto !important;}' + // Pool gallery view thumb height adjustment.
 		'#has-parent-relationship-preview article.post-preview, #has-children-relationship-preview article.post-preview {padding: 5px 5px 10px !important; width: auto !important; max-width: ' + thumbMaxWidth + 'px !important; margin: 0px !important;}' +
 		'article.post-preview a.bbb-thumb-link {line-height: 0px !important;}' +
 		'.post-preview div.preview {height: ' + thumbMaxHeight + 'px !important; width: ' + thumbMaxWidth + 'px !important; margin-right: ' + commentExtraSpace + 'px !important;}' +
