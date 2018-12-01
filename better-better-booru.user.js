@@ -410,6 +410,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			load_sample_first: newOption("checkbox", true, "Load Sample First", "Load sample images first when viewing a post.<tiphead>Note</tiphead>When logged in, the account's \"default image width\" setting will override this option. This behavior can be changed with the \"override sample setting\" option under the preferences tab."),
 			manage_cookies: newOption("checkbox", false, "Manage Notice Cookies", "When using the \"hide upgrade notice\", \"hide sign up notice\", and/or \"hide TOS notice\" options, also create cookies to disable these notices at the server level.<tiphead>Tip</tiphead>Use this feature if the notices keep flashing on your screen before being removed."),
 			minimize_status_notices: newOption("checkbox", false, "Minimize Status Notices", "Hide the Danbooru deleted, banned, flagged, appealed, and pending notices. When you want to see a hidden notice, you can click the appropriate status link in the information section of the sidebar."),
+			move_relation_notices: newOption("dropdown", "disabled", "Move Relation Notices", "Move the Danbooru parent and child post notices. <tipdesc>Below:</tipdesc> Move the notices below the post content. <tipdesc>Minimize:</tipdesc> Hide the notices and create a relations area in the information section of the sidebar that will allow you to view them.", {txtOptions:["Disabled:disabled", "Below:below", "Minimize:minimize"]}),
 			override_blacklist: newOption("dropdown", "logged_out", "Override Blacklist", "Allow the \"blacklist\" setting to override the default blacklist for logged out users and/or account blacklist for logged in users. <tipdesc>Logged out:</tipdesc> Override the default blacklist for logged out users. <tipdesc>Always:</tipdesc> Override the default blacklist for logged out users and account blacklist for logged in users.", {txtOptions:["Disabled:disabled", "Logged out:logged_out", "Always:always"]}),
 			override_resize: newOption("checkbox", false, "Override Resize Setting", "Allow the \"resize post\" setting to override the account \"fit images to window\" setting when logged in."),
 			override_sample: newOption("checkbox", false, "Override Sample Setting", "Allow the \"load sample first\" setting to override the account \"default image width\" setting when logged in. <tiphead>Note</tiphead>When using this option, your Danbooru account settings should have \"default image width\" set to the corresponding value of the \"load sample first\" script setting. Not doing so will cause your browser to always download both the sample and original image. If you often change the \"load sample first\" setting, leaving your account to always load the sample/850px image first is your best option."),
@@ -464,7 +465,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			control: newSection("general", ["load_sample_first", "alternate_image_swap", "image_swap_mode", "post_resize", "post_resize_mode", "post_drag_scroll", "autoscroll_post", "disable_embedded_notes", "video_volume", "video_autoplay", "video_loop", "video_controls"], "Post Control"),
 			endless: newSection("general", ["endless_default", "endless_session_toggle", "endless_separator", "endless_scroll_limit", "endless_remove_dup", "endless_pause_interval", "endless_fill", "endless_preload"], "Endless Pages"),
 			groups: newSection("group", "tag_groups", "Groups", "Tags that are frequently used together or that need to be coordinated between multiple places may be grouped together and saved here for use with the \"group\" metatag."),
-			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_hidden_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
+			notices: newSection("general", ["show_resized_notice", "minimize_status_notices", "move_relation_notices", "hide_sign_up_notice", "hide_upgrade_notice", "hide_hidden_notice", "hide_tos_notice", "hide_comment_notice", "hide_tag_notice", "hide_upload_notice", "hide_pool_notice", "hide_ban_notice"], "Notices"),
 			sidebar: newSection("general", ["remove_tag_headers", "post_tag_scrollbars", "search_tag_scrollbars", "autohide_sidebar", "fixed_sidebar", "collapse_sidebar"], "Tag Sidebar"),
 			misc: newSection("general", ["direct_downloads", "track_new", "clean_links", "post_tag_titles", "search_add", "page_counter", "comment_score", "quick_search"], "Misc."),
 			misc_layout: newSection("general", ["fixed_paginator", "hide_fav_button", "add_popular_link", "add_random_post_link"], "Misc."),
@@ -542,6 +543,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	var hide_sign_up_notice = bbb.user.hide_sign_up_notice;
 	var hide_upgrade_notice = bbb.user.hide_upgrade_notice;
 	var minimize_status_notices = bbb.user.minimize_status_notices;
+	var move_relation_notices = bbb.user.move_relation_notices;
 	var hide_tos_notice = bbb.user.hide_tos_notice;
 	var hide_comment_notice = bbb.user.hide_comment_notice;
 	var hide_tag_notice = bbb.user.hide_tag_notice;
@@ -980,6 +982,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			// Blacklist.
 			blacklistUpdate();
 
+			// Modify the parent/child notice(s) display.
+			moveRelationNotices();
+
 			// Fix the parent/child notice(s).
 			checkRelations();
 		}
@@ -1217,6 +1222,8 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			target = bbb.el.resizeNotice || document.getElementById("image-container");
 			target.parentNode.insertBefore(newNotice, target);
 		}
+
+		moveRelationNotices();
 	}
 
 	function endlessXMLJSONHandler(xml, optArg) {
@@ -1621,6 +1628,35 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var secondaryEl = swfObj; // Other elements related to the main element. Only applies to flash for now.
 
 		return {container: imgContainer, el: el, secEl: secondaryEl};
+	}
+
+	function getInfoList(item) {
+		// Retrieve the info list or a specific item from the info list.
+		var infoSection = document.getElementById("post-information");
+		var infoItems = (infoSection ? infoSection.getElementsByTagName("li") : []);
+		var textRegex;
+		var i, il; // Loop variables.
+
+		if (!infoItems.length)
+			return null;
+
+		if (!item)
+			return infoSection.getElementsByTagName("ul")[0];
+		else if (item === "size")
+			textRegex = /^\s*Size:/i;
+		else if (item === "status")
+			textRegex = /^\s*Status:/i;
+		else if (item === "relations")
+			textRegex = /^\s*Relations:/i;
+
+		for (i = 0, il = infoItems.length; i < il; i++) {
+			var infoItem = infoItems[i];
+
+			if (textRegex.test(infoItem.textContent))
+				return infoItem;
+		}
+
+		return null;
 	}
 
 	function getPosts(target) {
@@ -3892,21 +3928,13 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var i, il; // Loop variables.
 
 		// Fix the "size" link.
-		var infoSection = document.getElementById("post-information");
+		var sizeItem = getInfoList("size");
 
-		if (infoSection) {
-			var infoItems = infoSection.getElementsByTagName("li");
-			var sizeRegex = /^(\s*Size:\s+)([\d\.]+\s+\S+)(\s+[\s\S]+)$/i;
+		if (sizeItem) {
+			var sizeText = sizeItem.textContent.match(/^(\s*Size:\s+)([\d\.]+\s+\S+)(\s+[\s\S]+)$/i);
 
-			for (i = 0, il = infoItems.length; i < il; i++) {
-				var infoItem = infoItems[i];
-				var infoText = infoItem.textContent.match(sizeRegex);
-
-				if (infoText) {
-					infoItem.innerHTML = infoText[1] + '<a href="' + postInfo.file_img_src + '">' + infoText[2] + '</a>' + infoText[3];
-					break;
-				}
-			}
+			if (sizeText)
+				sizeItem.innerHTML = sizeText[1] + '<a href="' + postInfo.file_img_src + '">' + sizeText[2] + '</a>' + sizeText[3];
 		}
 
 		// Fix the "download" link.
@@ -4367,100 +4395,117 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		if (!minimize_status_notices || gLoc !== "post")
 			return;
 
-		var infoSection = document.getElementById("post-information");
-		var infoListItems = (infoSection ? infoSection.getElementsByTagName("li") : null);
+		var statusListItem = getInfoList("status");
 		var flaggedNotice = document.getElementsByClassName("notice-flagged")[0];
 		var appealedNotice = document.getElementsByClassName("notice-appealed")[0];
 		var pendingNotice = document.getElementsByClassName("notice-pending")[0];
 		var deletedNotices = document.getElementsByClassName("notice-deleted");
-		var i, il, statusListItem, newStatusContent, deletedNotice, bannedNotice; // Loop variables.
+		var i, il, newStatusContent, deletedNotice, bannedNotice; // Loop variables.
 
-		if (infoListItems) {
-			// Locate the status portion of the information section.
-			for (i = infoListItems.length - 1; i >= 0; i--) {
-				var infoListItem = infoListItems[i];
+		// Create the appropriate status links.
+		if (statusListItem) {
+			newStatusContent = statusListItem.textContent;
 
-				if (infoListItem.textContent.indexOf("Status:") > -1) {
-					statusListItem = infoListItem;
-					newStatusContent = statusListItem.textContent;
-					break;
+			if (flaggedNotice)
+				newStatusContent = newStatusContent.replace("Flagged", '<a href="#" id="bbb-flagged-link">Flagged</a>');
+
+			if (pendingNotice)
+				newStatusContent = newStatusContent.replace("Pending", '<a href="#" id="bbb-pending-link">Pending</a>');
+
+			for (i = 0, il = deletedNotices.length; i < il; i++) {
+				if (deletedNotices[i].textContent.indexOf("This post was deleted") > -1) {
+					deletedNotice = deletedNotices[i];
+					newStatusContent = newStatusContent.replace("Deleted", '<a href="#" id="bbb-deleted-link">Deleted</a>');
+				}
+				else {
+					bannedNotice = deletedNotices[i];
+					newStatusContent = newStatusContent.replace("Banned", '<a href="#" id="bbb-banned-link">Banned</a>');
 				}
 			}
 
-			// Hide and alter the notices and create the appropriate status links.
-			if (statusListItem) {
-				if (flaggedNotice) {
-					flaggedNotice.style.display = "none";
-					flaggedNotice.style.position = "absolute";
-					flaggedNotice.style.zIndex = "2003";
-					newStatusContent = newStatusContent.replace("Flagged", '<a href="#" id="bbb-flagged-link">Flagged</a>');
-				}
+			if (appealedNotice)
+				newStatusContent = newStatusContent + ' <a href="#" id="bbb-appealed-link">Appealed</a>';
 
-				if (pendingNotice) {
-					pendingNotice.style.display = "none";
-					pendingNotice.style.position = "absolute";
-					pendingNotice.style.zIndex = "2003";
-					newStatusContent = newStatusContent.replace("Pending", '<a href="#" id="bbb-pending-link">Pending</a>');
-				}
+			statusListItem.innerHTML = newStatusContent;
+		}
 
-				for (i = 0, il = deletedNotices.length; i < il; i++) {
-					deletedNotices[i].style.display = "none";
-					deletedNotices[i].style.position = "absolute";
-					deletedNotices[i].style.zIndex = "2003";
+		// Prepare the links and notices.
+		var flaggedLink = document.getElementById("bbb-flagged-link");
+		var appealedLink = document.getElementById("bbb-appealed-link");
+		var pendingLink = document.getElementById("bbb-pending-link");
+		var deletedLink = document.getElementById("bbb-deleted-link");
+		var bannedLink = document.getElementById("bbb-banned-link");
 
-					if (deletedNotices[i].textContent.indexOf("This post was deleted") > -1) {
-						deletedNotice = deletedNotices[i];
-						newStatusContent = newStatusContent.replace("Deleted", '<a href="#" id="bbb-deleted-link">Deleted</a>');
-					}
-					else {
-						bannedNotice = deletedNotices[i];
-						newStatusContent = newStatusContent.replace("Banned", '<a href="#" id="bbb-banned-link">Banned</a>');
-					}
-				}
+		if (flaggedLink)
+			infoLinkNotice(flaggedLink, flaggedNotice);
+		if (appealedLink)
+			infoLinkNotice(appealedLink, appealedNotice);
+		if (pendingLink)
+			infoLinkNotice(pendingLink, pendingNotice);
+		if (deletedLink)
+			infoLinkNotice(deletedLink, deletedNotice);
+		if (bannedLink)
+			infoLinkNotice(bannedLink, bannedNotice);
+	}
 
-				if (appealedNotice) {
-					appealedNotice.style.display = "none";
-					appealedNotice.style.position = "absolute";
-					appealedNotice.style.zIndex = "2003";
-					newStatusContent = newStatusContent + ' <a href="#" id="bbb-appealed-link">Appealed</a>';
-				}
+	function moveRelationNotices() {
+		// Move/minimize the parent and/or child notices as desired.
+		var childNotice = document.getElementsByClassName("notice-child")[0];
+		var parentNotice = document.getElementsByClassName("notice-parent")[0];
 
-				statusListItem.innerHTML = newStatusContent;
-			}
+		if (move_relation_notices === "disabled" || gLoc !== "post" || (!childNotice && !parentNotice))
+			return;
 
-			// Prepare the links.
-			var flaggedLink = document.getElementById("bbb-flagged-link");
-			var appealedLink = document.getElementById("bbb-appealed-link");
-			var pendingLink = document.getElementById("bbb-pending-link");
-			var deletedLink = document.getElementById("bbb-deleted-link");
-			var bannedLink = document.getElementById("bbb-banned-link");
+		if (move_relation_notices === "below") {
+			var imgContainer = document.getElementById("image-container");
+			var containerSibling = imgContainer.nextSibling;
+			var containerParent = imgContainer.parentNode;
 
-			if (flaggedLink)
-				statusLinkEvents(flaggedLink, flaggedNotice);
-			if (appealedLink)
-				statusLinkEvents(appealedLink, appealedNotice);
-			if (pendingLink)
-				statusLinkEvents(pendingLink, pendingNotice);
-			if (deletedLink)
-				statusLinkEvents(deletedLink, deletedNotice);
-			if (bannedLink)
-				statusLinkEvents(bannedLink, bannedNotice);
+			if (parentNotice)
+				containerParent.insertBefore(parentNotice, containerSibling);
+			if (childNotice)
+				containerParent.insertBefore(childNotice, parentNotice || containerSibling);
+
+			imgContainer.style.marginBottom = "0.5em";
+		}
+		else if (move_relation_notices === "minimize") {
+			var infoList = getInfoList();
+			var relationItem = getInfoList("relations") || document.createElement("li");
+			var relationHTML = "Relations: ";
+
+			if (childNotice)
+				relationHTML += '<a href="#" id="bbb-child-link">Parent</a> ';
+			if (parentNotice)
+				relationHTML += '<a href="#" id="bbb-parent-link">Children</a>';
+
+			relationItem.innerHTML = relationHTML;
+			infoList.appendChild(relationItem);
+
+			var childLink = document.getElementById("bbb-child-link");
+			var parentLink = document.getElementById("bbb-parent-link");
+
+			if (childLink)
+				infoLinkNotice(childLink, childNotice);
+			if (parentLink)
+				infoLinkNotice(parentLink, parentNotice);
 		}
 	}
 
-	function statusLinkEvents(link, notice) {
-		// Attach events to the status links to enable a tooltip style notice.
+	function infoLinkNotice(link, notice) {
+		// Attach events to the info links to enable a tooltip style notice.
+		var hideNotice = function() {
+			bbb.timers.minNotice = window.setTimeout(function() {
+				notice.style.display = "none";
+			}, 200);
+		};
+
 		link.addEventListener("click", function(event) {
 			if (event.button === 0)
 				showStatusNotice(event, notice);
 		}, false);
-		link.addEventListener("mouseout", function() {
-			bbb.timers.minNotice = window.setTimeout(function() {
-				notice.style.display = "none";
-			}, 200);
-		}, false);
+		link.addEventListener("mouseout", hideNotice, false);
 		notice.addEventListener("mouseover", function() { window.clearTimeout(bbb.timers.minNotice); }, false);
-		notice.addEventListener("mouseleave", function() { notice.style.display = "none"; }, false);
+		notice.addEventListener("mouseleave", hideNotice, false);
 	}
 
 	function showStatusNotice(event, noticeEl) {
@@ -7930,6 +7975,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		if (search_tag_scrollbars)
 			styles += '#tag-box ul {max-height: ' + search_tag_scrollbars + 'px !important; overflow-y: auto !important; font-size: 87.5% !important; margin-right: 2px !important; word-wrap: break-word !important;}';
+
+		if (minimize_status_notices)
+			styles += '.notice-flagged, .notice-appealed, .notice-deleted, .notice-pending {display: none; position: absolute; z-index: 2003;}';
+
+		if (move_relation_notices === "minimize")
+			styles += '.notice-child, .notice-parent {display: none; position: absolute; z-index: 2003;}';
 
 		if (hide_tos_notice && document.getElementById("tos-notice")) {
 			styles += '#tos-notice {display: none !important;}';
