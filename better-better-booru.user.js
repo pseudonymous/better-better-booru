@@ -7707,11 +7707,13 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		'#bbb-dialog-window .bbb-edit-area {height: 300px; width: 800px;}' +
 		'.ui-autocomplete {z-index: 9004 !important;}';
 
+		// Provide some extra space throughout various areas.
+		if ((thumbnail_count && (gLoc === "search" || gLoc === "favorites")) || gLoc === "post")
+			styles += 'div#page {margin: 0px 5px 0px 20px !important; padding: 0px 5px 0px 10px !important;}';
+
 		// Provide a little extra space for listings that allow thumbnail_count.
-		if (thumbnail_count && (gLoc === "search" || gLoc === "favorites")) {
-			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
-			'section#content {padding: 0px !important;}';
-		}
+		if (thumbnail_count && (gLoc === "search" || gLoc === "favorites"))
+			styles += 'section#content {padding: 0px !important;}';
 
 		// Calculate some dimensions.
 		var totalBorderWidth = (custom_tag_borders ? border_width * 2 + (border_spacing * 2 || 1) : border_width + border_spacing);
@@ -7864,7 +7866,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		// Hide sidebar.
 		if (autohide_sidebar) {
-			styles += 'div#page {margin: 0px 10px 0px 20px !important;}' +
+			styles += 'div#page {margin: 0px 5px 0px 20px !important; padding: 0px 5px 0px 10px !important;}' +
 			'aside#sidebar {background-color: transparent !important; border-width: 0px !important; height: 100% !important; width: 250px !important; position: fixed !important; left: -285px !important; opacity: 0 !important; overflow: hidden !important; padding: 0px 25px !important; top: 0px !important; z-index: 2001 !important; word-wrap: break-word !important;}' +
 			'aside#sidebar.bbb-sidebar-show, aside#sidebar:hover {background-color: #FFFFFF !important; border-right: 1px solid #CCCCCC !important; left: 0px !important; opacity: 1 !important; overflow-y: auto !important; padding: 0px 15px !important;}' +
 			'section#content {margin-left: 0px !important;}';
