@@ -916,13 +916,15 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					$(Danbooru.Ugoira.player).unbind();
 
 				if ((load_sample_first && useUgoiraOrig !== "1") || useUgoiraOrig === "0") { // Load sample webm version.
-					imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + postInfo.large_file_img_src + '" height="' + postInfo.image_height + '" width="' + postInfo.image_width + '" data-fav-count="' + postInfo.fav_count + '" data-flags="' + postInfo.flags + '" data-has-active-children="' + postInfo.has_active_children + '" data-has-children="' + postInfo.has_children + '" data-large-height="' + postInfo.large_height + '" data-large-width="' + postInfo.large_width + '" data-original-height="' + postInfo.image_height + '" data-original-width="' + postInfo.image_width + '" data-rating="' + postInfo.rating + '" data-score="' + postInfo.score + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '"></video> <p><a href="' + postInfo.large_file_img_src + '">Save this video (right click and save)</a> | <a href="' + updateURLQuery(location.href, {original: "1"}) + '">View original</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p>';
+					imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <video id="image" autoplay="autoplay" loop="loop" controls="controls" src="' + postInfo.large_file_img_src + '" height="' + postInfo.image_height + '" width="' + postInfo.image_width + '" data-fav-count="' + postInfo.fav_count + '" data-flags="' + postInfo.flags + '" data-has-active-children="' + postInfo.has_active_children + '" data-has-children="' + postInfo.has_children + '" data-large-height="' + postInfo.large_height + '" data-large-width="' + postInfo.large_width + '" data-original-height="' + postInfo.image_height + '" data-original-width="' + postInfo.image_width + '" data-rating="' + postInfo.rating + '" data-score="' + postInfo.score + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '"></video> <p><a href="' + postInfo.large_file_img_src + '">Save this video (right click and save)</a> | <a href="' + updateURLQuery(location.href, {original: 1}) + '">View original</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p>';
 
 					// Prep the "toggle notes" link.
 					noteToggleLinkInit();
 				}
+				else if (getMeta("default-image-size") === "large" && useUgoiraOrig !== "1") //Reload the page with the ugoira version if the user's script settings don't match their account settings.
+						location.replace(updateURLQuery(location.href,{original: 1}));
 				else { // Load original ugoira version.
-					imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + postInfo.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(postInfo.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + postInfo.fav_count + '" data-flags="' + postInfo.flags + '" data-has-active-children="' + postInfo.has_active_children + '" data-has-children="' + postInfo.has_children + '" data-large-height="' + postInfo.image_height + '" data-large-width="' + postInfo.image_width + '" data-original-height="' + postInfo.image_height + '" data-original-width="' + postInfo.image_width + '" data-rating="' + postInfo.rating + '" data-score="' + postInfo.score + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" height="' + postInfo.image_height + '" width="' + postInfo.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + postInfo.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <div id="seek-slider" style="width: ' + (postInfo.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + postInfo.large_file_img_src + '">Save as video (right click and save)</a> | <a href="' + updateURLQuery(location.href, {original: "0"}) + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
+					imgContainer.innerHTML = '<div id="note-container"></div> <div id="note-preview"></div> <canvas data-ugoira-content-type="' + postInfo.pixiv_ugoira_frame_data.content_type.replace(/"/g, "&quot;") + '" data-ugoira-frames="' + JSON.stringify(postInfo.pixiv_ugoira_frame_data.data).replace(/"/g, "&quot;") + '" data-fav-count="' + postInfo.fav_count + '" data-flags="' + postInfo.flags + '" data-has-active-children="' + postInfo.has_active_children + '" data-has-children="' + postInfo.has_children + '" data-large-height="' + postInfo.image_height + '" data-large-width="' + postInfo.image_width + '" data-original-height="' + postInfo.image_height + '" data-original-width="' + postInfo.image_width + '" data-rating="' + postInfo.rating + '" data-score="' + postInfo.score + '" data-tags="' + postInfo.tag_string + '" data-pools="' + postInfo.pool_string + '" data-uploader="' + postInfo.uploader_name + '" height="' + postInfo.image_height + '" width="' + postInfo.image_width + '" id="image"></canvas> <div id="ugoira-controls"> <div id="ugoira-control-panel" style="width: ' + postInfo.image_width + 'px; min-width: 350px;"> <button id="ugoira-play" name="button" style="display: none;" type="submit">Play</button> <button id="ugoira-pause" name="button" type="submit">Pause</button> <div id="seek-slider" style="width: ' + (postInfo.image_width - 81) + 'px; min-width: 269px;"></div> </div> <p id="save-video-link"><a href="' + postInfo.large_file_img_src + '">Save as video (right click and save)</a> | <a href="' + updateURLQuery(location.href, {original: 0}) + '">View sample</a> | <a href="#" id="bbb-note-toggle">Toggle notes</a></p> </div>';
 
 					// Make notes toggle when clicking the ugoira animation.
 					noteToggleInit();
@@ -3773,7 +3775,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			}
 			else { // Allow note viewing on ugoira webm video samples, but don't allow editing.
 				toggleFunction = function(event) {
-					bbbNotice('Note editing is not allowed while using the ugoira video sample. Please use the <a href="' + updateURLQuery(location.href, {original: "1"}) + '">original</a> ugoira version for note editing.', -1);
+					bbbNotice('Note editing is not allowed while using the ugoira video sample. Please use the <a href="' + updateURLQuery(location.href, {original: 1}) + '">original</a> ugoira version for note editing.', -1);
 					event.preventDefault();
 				};
 
@@ -4187,9 +4189,9 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		if (postInfo.file_ext === "zip" && /(?:^|\s)ugoira(?:$|\s)/.test(postInfo.tag_string)) {
 			if (targetTag === "CANVAS")
-				location.href = updateURLQuery(location.href, {original: "0"});
+				location.href = updateURLQuery(location.href, {original: 0});
 			else if (targetTag === "VIDEO")
-				location.href = updateURLQuery(location.href, {original: "1"});
+				location.href = updateURLQuery(location.href, {original: 1});
 		}
 		else if (targetTag === "IMG") {
 			if (image_swap_mode === "load") { // Load image and then view mode.
@@ -8103,7 +8105,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 				var value = pageInput.value.bbbSpaceClean();
 
 				if (value !== "")
-					location.href = updateURLQuery(location.href, {page:value});
+					location.href = updateURLQuery(location.href, {page: value});
 
 				event.preventDefault();
 			}, false);
