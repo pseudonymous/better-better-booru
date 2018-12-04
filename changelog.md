@@ -1,11 +1,5 @@
 Changelog
 ----------
-* Version 8.3:
-  * Added a "move relation notices" layout option for modifying the parent/child notices.
-  * Fixed the share section not collapsing when using the collapsible sidebar option.
-  * Fixed the pool listing information request for hidden content.
-  * Fixed the work wrap/line break in the minimal resize links for Chrome.
-  * Fixed the cut off content in the pool gallery view.
 * Version 8.2.3:
   * Updated the post resizing to make it leave less empty vertical space.
   * Updated to support Danbooru's normalized source update.
