@@ -1179,7 +1179,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 			if ((!show_loli && /(?:^|\s)loli(?:$|\s)/.test(post.tag_string)) || (!show_shota && /(?:^|\s)shota(?:$|\s)/.test(post.tag_string)) || (!show_toddlercon && /(?:^|\s)toddlercon(?:$|\s)/.test(post.tag_string)) || (!show_deleted && post.is_deleted && !forceShowDeleted) || (!show_banned && post.is_banned) || safebPostTest(post))
 				continue;
 
-			var thumb = createThumbHTML(post, (clean_links ? "" : query)) + " ";
+			var thumb = createThumbHTML(post, query) + " ";
 
 			if (post.id === parentId)
 				thumbs = thumb + thumbs;
@@ -5103,14 +5103,10 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		if (target)
 			targetContainer = target;
+		else if (gLoc === "pool" || gLoc === "favorite_group" || gLoc === "search" || gLoc === "favorites")
+			targetContainer = getThumbContainer(gLoc);
 		else if (gLoc === "post")
 			targetContainer = document.getElementById("content");
-		else if (gLoc === "pool" || gLoc === "favorite_group") {
-			targetContainer = document.getElementById("a-show");
-			targetContainer = (targetContainer ? targetContainer.getElementsByTagName("section")[0] : undefined);
-		}
-		else if (gLoc === "search" || gLoc === "favorites")
-			targetContainer = document.getElementById("posts");
 		else if (gLoc === "intro")
 			targetContainer = document.getElementById("a-intro");
 
