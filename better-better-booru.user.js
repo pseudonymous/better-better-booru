@@ -4100,7 +4100,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var resizeLinkWidth = bbb.el.resizeLinkWidth;
 		var resizeLinkHeight = bbb.el.resizeLinkHeight;
 		var availableWidth = imgContainer.clientWidth || contentDiv.clientWidth - contentDiv.bbbGetPadding().width;
-		var availableHeight = document.documentElement.clientHeight - 10;
+		var availableHeight = window.innerHeight - 10;
 		var targetCurrentWidth = target.clientWidth || parseFloat(target.style.width) || target.getAttribute("width");
 		var targetCurrentHeight = target.clientHeight || parseFloat(target.style.height) || target.getAttribute("height");
 		var useDataDim = targetTag === "EMBED" || targetTag === "VIDEO";
@@ -4114,6 +4114,12 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		var switchMode = false;
 		var ratio = 1;
 		var linkWeight = {all: "normal", width: "normal", height: "normal"};
+
+		// Account for the horizontal scrollbar when resizing by height.
+		if (mode === "height" && widthRatio < heightRatio) {
+			availableHeight = availableHeight - scrollbarWidth();
+			heightRatio = availableHeight / targetHeight;
+		}
 
 		if (mode === "swap") { // The image is being swapped between the original and sample image so everything needs to be reset. Ignore the current mode.
 			switchMode = true;
